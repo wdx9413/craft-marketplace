@@ -1,19 +1,27 @@
 # Craft Marketplace
 
-Craft 是面向人和 AI 的通用工作运行时。它不替代 Codex、Claude 或 IDE 的模型与终端能力，而是为它们提供任务状态、能力选择、执行边界、验证证据和受控演进。
+Craft 是一个拥有知识、记忆和能力资产，并能通过验证持续进化的通用Agent 。
+
+它让 AI 不只完成眼前一次对话，还能把项目知识、用户偏好、重要决定、执行证据和已验证的做事方法沉淀下来；下次遇到相似任务时，AI 能找到合适的 Skill、MCP 或 Workflow，并在验证后复用更可靠的方法。
+
+## 你能用 Craft 得到什么
+
+- **知识库与长期记忆**：接入 README、项目文档、Obsidian、Serena、Wiki 等来源；记录项目背景、偏好、决定、未完成事项和已验证经验。新会话按需读取，不必反复解释上下文。
+- **Skill / MCP 自动发现**：提供独立的 `craft-capability` 插件，扫描本地或外接的 Skill、MCP、Workflow、Adapter；识别重复、失效和高风险能力，并根据当前任务推荐最合适、最少的一组能力，而不是让模型面对一百多个工具盲选。
+- **可验证的工作流**：把“任务目标 → 执行 → 真实结果验收”留下证据。模型说完成不算完成，测试、文件状态、外部回执或人工确认才算。
+- **受控自进化**：从多次脱敏执行记录中提炼候选 Workflow；候选先经过评测、灰度和回滚保护，证明有效后才会进入可复用能力库，不会直接改坏已有方法。
 
 ```text
-用户目标 → Craft 选择最小能力与约束 → Host 执行 → 真实状态验收 → 证据与评测 → 可复用 Workflow
+知识 / 记忆 / 执行记录
+        ↓
+Craft 发现合适能力并组织执行
+        ↓
+验收结果、保存证据、沉淀经验
+        ↓
+评测通过后，成为下一次可复用的 Workflow
 ```
 
-## Craft 能做什么
-
-- **可靠完成工作**：把目标、输入、权限、执行回执和验收结果串起来；模型声称完成不等于交付完成。
-- **按需使用能力**：从 Skill、MCP、Workflow、项目知识中选择最小必要集合，避免把大量工具和上下文全部塞给模型。
-- **保留可检查的积累**：管理知识、记忆、证据与 Checkpoint；新会话可按需恢复有效背景，而不是依赖聊天记录。
-- **让方法可验证地演进**：真实执行记录只能生成 Workflow 草案；必须经过评测、Signoff 与 Canary，才会成为后续任务可选的已验证 Workflow。
-
-Craft 可以作为 Codex、Claude、IDE 或其他 MCP Host 的运行控制台；未来也可以在同一套 Policy、State、Receipt 和 Eval 之上独立运行。它的核心价值是让模型负责理解和提议，让运行时负责事实、边界、恢复与验证。
+Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替代模型本身，而是让模型的知识、记忆、工具选择和自我改进变得可管理、可验证、可回滚。
 
 ## 本仓库
 
@@ -25,7 +33,7 @@ Craft 可以作为 Codex、Claude、IDE 或其他 MCP Host 的运行控制台；
 
 - `craft`：默认精简 MCP 面，以及 full/HTTP bundle。
 - `craft-knowledge`、`craft-memory`：知识、记忆与受控上下文组件。
-- `craft-capability`：Skill、MCP、Workflow 等能力资产发现组件。
+- `craft-capability`：可独立安装的 Skill、MCP、Workflow 自动发现、推荐与健康管理组件。
 - `craft-skill-quality`：评测、质量门与验证组件。
 - `craft-workflow-evolution`：从脱敏执行记录生成并验证 Workflow 草案的组件。
 
