@@ -1,0 +1,31 @@
+{
+  "name": "craft",
+  "version": "0.12.26",
+  "description": "Capability discovery, durable tasks, verified workflows, evidence, and multi-agent orchestration.",
+  "author": {
+    "name": "wdx9413",
+    "url": "https://github.com/wdx9413"
+  },
+  "homepage": "https://github.com/wdx9413/craft",
+  "repository": "https://github.com/wdx9413/craft",
+  "license": "MIT",
+  "keywords": ["agent", "skills", "workflow", "memory", "mcp"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Craft",
+    "shortDescription": "Discover, orchestrate, evaluate, and reuse capabilities.",
+    "longDescription": "The complete Craft runtime composes Core, Knowledge, Memory, Capability, and Skill Quality behind a minimal route-first surface. In Codex it uses the current app as an embedded execution host and never launches a second Codex CLI by default.",
+    "developerName": "wdx9413",
+    "category": "Productivity",
+    "brandColor": "#000000",
+    "composerIcon": "./assets/craft-icon.svg",
+    "logo": "./assets/craft-icon.svg",
+    "capabilities": ["Capability search", "Task continuity", "Shared work objects", "Dependency impact analysis", "Bounded context assembly", "Scoped memory", "Execution trials", "Evidence records", "Multi-agent orchestration", "Evaluation signoff", "Version comparison", "Verified workflows", "Experience patterns", "Safe Skill publishing"],
+    "defaultPrompt": [
+      "Use Craft as the default orchestrator for this substantial goal.",
+      "Use Craft to create a safe incremental-development plan: preserve behavior, make the smallest change, then verify tests, coverage, and Git diff.",
+      "Use Craft to list experience candidates with enough Trial and Evidence history; do not publish anything."
+    ]
+  },
+  "mcpServers": "./.mcp.json"
+}

@@ -1,0 +1,14 @@
+{
+  "marketplace": "craft-marketplace",
+  "version": "0.12.26",
+  "source_repository": "https://github.com/wdx9413/craft.git",
+  "source_commit": "34ebe69",
+  "components": [
+    "craft",
+    "craft-knowledge",
+    "craft-memory",
+    "craft-capability",
+    "craft-skill-quality",
+    "craft-workflow-evolution"
+  ]
+}
