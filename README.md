@@ -21,7 +21,7 @@ Craft 发现合适能力并组织执行
 评测通过后，成为下一次可复用的 Workflow
 ```
 
-Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替代模型本身，而是让模型的知识、记忆、工具选择和自我改进变得可管理、可验证、可回滚。
+Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替代模型本身，而是让模型的知识、记忆、工具选择和自我改进变得可管理、可验证、可回滚。桌面端 Craft Studio 由源码仓库单独打包发布：它复用同一套本地运行时和数据目录，提供紧凑的任务、上下文和模型配置工作台；桌面壳不进入 MCP 插件包。
 
 ## 本仓库
 
@@ -46,7 +46,7 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 ## 发布来源
 
 - Craft 源码仓库：[wdx9413/craft](https://github.com/wdx9413/craft)
-- Source revision：`08a8231`
+- Source revision：`d543567`
 - Craft version：`0.12.30`
 
 发布前应从源码仓库运行打包与 MCP smoke 检查；不要在本仓库手工修改 bundle。
