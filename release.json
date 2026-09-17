@@ -2,7 +2,7 @@
   "marketplace": "craft-marketplace",
   "version": "0.12.31",
   "source_repository": "https://github.com/wdx9413/craft.git",
-  "source_commit": "f2b43fbff4568dbf7d864e433d99592c02087af7",
+  "source_commit": "50a85ea9a43bfdbc01ba43fa007c13732263f2cc",
   "components": [
     "craft",
     "craft-context",
