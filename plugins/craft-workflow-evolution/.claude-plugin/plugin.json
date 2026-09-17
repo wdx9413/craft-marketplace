@@ -1,0 +1,19 @@
+{
+  "name": "craft-workflow-evolution",
+  "version": "0.12.31",
+  "description": "Create bounded Workflow drafts from sanitized observations in Claude Code.",
+  "author": {
+    "name": "wdx9413"
+  },
+  "skills": "./skills/craft-workflow-evolution/",
+  "mcpServers": {
+    "craft-workflow-evolution": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/dist/plugin/craft-mcp.cjs",
+        "--product",
+        "evolution"
+      ]
+    }
+  }
+}

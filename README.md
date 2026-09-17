@@ -31,6 +31,19 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 
 将本仓库作为 Git Marketplace 添加到 Host。市场清单位于 `.agents/plugins/marketplace.json`。
 
+### Claude Code
+
+本仓库同时提供 Claude Code Marketplace，清单位于 `.claude-plugin/marketplace.json`。在 Claude Code 中添加市场后，可按需安装三个独立组件：
+
+```text
+/plugin marketplace add https://github.com/wdx9413/craft-marketplace.git
+/plugin install craft-knowledge@craft-marketplace
+/plugin install craft-memory@craft-marketplace
+/plugin install craft-workflow-evolution@craft-marketplace
+```
+
+三个组件各自包含对应 Skill 和 MCP Server，安装后会以插件名命名空间暴露；它们与 Codex 发布包共用同一版本和本地 Craft 数据协议。只需要完整 Craft 时，仍应使用源码仓库中的主插件；不要同时安装主插件与同域子插件，避免重复工具面。
+
 `craft` 是默认的**完整产品**，不是只有编排核心：它已包含知识库、记忆、能力发现、Skill 质量评测和 Workflow 演进，且这些能力共用一份 Craft 数据。为了避免把数百个工具定义同时塞给模型，它以固定的通用 MCP 动词按需访问底层能力；安装 `craft` 即可使用全套能力，**不需要再安装子插件**。首次需要知识或记忆时，可调用 `craft_knowledge_bootstrap_install` 幂等登记 Craft 内置 Evidence Wiki 与 Serena 描述符；它不会自动扫描外部文件或保存聊天。
 
 同时，市场也提供下列可单独安装的子插件。它们是同一运行时的单域投影，适合只想给现有 Agent 增强某一项能力的用户；通常应与 `craft` 二选一，避免重复工具面：
@@ -38,7 +51,6 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 - `craft`：完整 Craft 运行时；默认精简的 syscall MCP 面，以及 full/HTTP bundle。
 - `craft-knowledge`、`craft-memory`：仅知识或记忆与受控上下文；两者都可安全登记共享的内置知识来源。
 - `craft-capability`：可独立安装的 Skill、MCP、Workflow 自动发现、推荐与健康管理组件。
-- `craft-skill-quality`：评测、质量门与验证组件。
 - `craft-workflow-evolution`：从脱敏执行记录生成并验证 Workflow 草案的组件。
 
 每个插件都是自包含的：其 MCP 入口只引用本插件目录内的 `dist/plugin` bundle。

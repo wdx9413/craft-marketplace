@@ -5,12 +5,16 @@
   "source_commit": "cfa669b07bf670a902c56fa22e66fd46c9d23743",
   "components": [
     "craft",
-    "craft-context",
     "craft-quality",
     "craft-knowledge",
     "craft-memory",
     "craft-capability",
-    "craft-skill-quality",
     "craft-workflow-evolution"
-  ]
+  ],
+  "claude_components": [
+    "craft-knowledge",
+    "craft-memory",
+    "craft-workflow-evolution"
+  ],
+  "claude_marketplace": ".claude-plugin/marketplace.json"
 }

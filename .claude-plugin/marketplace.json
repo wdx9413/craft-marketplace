@@ -1,0 +1,29 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "craft-marketplace",
+  "version": "0.12.31",
+  "description": "Craft 的知识、记忆与 Workflow 演进组件，适用于 Claude Code。",
+  "owner": {
+    "name": "wdx9413"
+  },
+  "plugins": [
+    {
+      "name": "craft-knowledge",
+      "description": "受证据约束的知识源、Wiki 与上下文解析。",
+      "source": "./plugins/craft-knowledge",
+      "category": "productivity"
+    },
+    {
+      "name": "craft-memory",
+      "description": "按范围、来源、有效期和证据解析长期记忆。",
+      "source": "./plugins/craft-memory",
+      "category": "productivity"
+    },
+    {
+      "name": "craft-workflow-evolution",
+      "description": "从脱敏执行观察生成受限 Workflow 草案。",
+      "source": "./plugins/craft-workflow-evolution",
+      "category": "development"
+    }
+  ]
+}

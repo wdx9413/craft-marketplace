@@ -15,11 +15,11 @@ Memory), Capability discovery, Quality, and bounded Workflow Evolution are all a
 through the compact syscall surface. They are addressed on demand with
 `craft_describe` followed by a syscall verb and `(resource, operation)`; do not
 ask the user to install a sibling component merely to use one of those built-in
-capabilities. The recommended sibling plugins are `craft-context`,
-`craft-capability`, and `craft-quality`; they are optional standalone
-projections for a Host that wants only one bounded outcome. Knowledge and
-Memory remain first-class narrow products; `craft-skill-quality` remains a
-compatibility name, while Workflow Evolution alone creates drafts only.
+capabilities. The recommended sibling plugins are `craft-knowledge`,
+`craft-memory`, `craft-capability`, `craft-quality`, and
+`craft-workflow-evolution`; they are optional standalone projections for a
+Host that wants only one bounded outcome. Workflow Evolution alone creates
+drafts only.
 
 For a fresh Craft data store, call `craft_knowledge_bootstrap_install` once
 before the first governed knowledge or memory operation. It only registers the
