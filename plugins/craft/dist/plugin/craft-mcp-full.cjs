@@ -6032,9 +6032,9 @@ var require_lexer = __commonJS({
         }
       }
       *parseQuotedScalar() {
-        const quote = this.charAt(0);
-        let end = this.buffer.indexOf(quote, this.pos + 1);
-        if (quote === "'") {
+        const quote2 = this.charAt(0);
+        let end = this.buffer.indexOf(quote2, this.pos + 1);
+        if (quote2 === "'") {
           while (end !== -1 && this.buffer[end + 1] === "'")
             end = this.buffer.indexOf("'", end + 2);
         } else {
@@ -7238,7 +7238,7 @@ var require_public_api = __commonJS({
         return docs;
       return Object.assign([], { empty: true }, composer$1.streamInfo());
     }
-    function parseDocument(source, options = {}) {
+    function parseDocument2(source, options = {}) {
       const { lineCounter: lineCounter2, prettyErrors } = parseOptions(options);
       const parser$1 = new parser.Parser(lineCounter2?.addNewLine);
       const composer$1 = new composer.Composer(options);
@@ -7264,7 +7264,7 @@ var require_public_api = __commonJS({
       } else if (options === void 0 && reviver && typeof reviver === "object") {
         options = reviver;
       }
-      const doc = parseDocument(src, options);
+      const doc = parseDocument2(src, options);
       if (!doc)
         return null;
       doc.warnings.forEach((warning) => log.warn(doc.options.logLevel, warning));
@@ -7300,7 +7300,7 @@ var require_public_api = __commonJS({
     }
     exports2.parse = parse4;
     exports2.parseAllDocuments = parseAllDocuments;
-    exports2.parseDocument = parseDocument;
+    exports2.parseDocument = parseDocument2;
     exports2.stringify = stringify;
   }
 });
@@ -7361,14 +7361,14 @@ var require_dist = __commonJS({
 var import_node_readline = require("node:readline");
 
 // src/application/craft-service.ts
-var import_node_crypto131 = require("node:crypto");
-var import_node_fs18 = require("node:fs");
-var import_promises18 = require("node:fs/promises");
-var import_node_path29 = require("node:path");
+var import_node_crypto132 = require("node:crypto");
+var import_node_fs20 = require("node:fs");
+var import_promises19 = require("node:fs/promises");
+var import_node_path30 = require("node:path");
 var import_node_url5 = require("node:url");
 
 // src/store.ts
-var import_node_fs4 = require("node:fs");
+var import_node_fs5 = require("node:fs");
 var import_node_sqlite = require("node:sqlite");
 
 // src/store-migrations.ts
@@ -7603,7 +7603,15 @@ function craftPaths(root = dataRoot()) {
     backupsDir: (0, import_node_path2.join)(resolved, "backups"),
     runtimeDir: (0, import_node_path2.join)(resolved, "runtime"),
     artifactsDir: (0, import_node_path2.join)(resolved, "artifacts"),
-    knowledgeIndex: (0, import_node_path2.join)(resolved, "index", "knowledge.db")
+    knowledgeDir: (0, import_node_path2.join)(resolved, "knowledge"),
+    memoryDir: (0, import_node_path2.join)(resolved, "memory"),
+    knowledgeDatabaseFile: (0, import_node_path2.join)(resolved, "knowledge", "knowledge.db"),
+    memoryDatabaseFile: (0, import_node_path2.join)(resolved, "memory", "memory.db"),
+    knowledgeContentDir: (0, import_node_path2.join)(resolved, "knowledge", "md"),
+    memoryContentDir: (0, import_node_path2.join)(resolved, "memory", "md"),
+    // The searchable knowledge projection shares the knowledge domain DB;
+    // its tables are independent from the content-index projection.
+    knowledgeIndex: (0, import_node_path2.join)(resolved, "knowledge", "knowledge.db")
   };
 }
 async function ensureLayout(paths = craftPaths()) {
@@ -7615,9 +7623,212 @@ async function ensureLayout(paths = craftPaths()) {
     paths.cacheDir,
     paths.backupsDir,
     paths.runtimeDir,
-    paths.artifactsDir
+    paths.artifactsDir,
+    paths.knowledgeDir,
+    paths.memoryDir,
+    paths.knowledgeContentDir,
+    paths.memoryContentDir
   ].map((path2) => (0, import_promises.mkdir)(path2, { recursive: true })));
   return paths;
+}
+
+// src/content-store.ts
+var import_node_crypto = require("node:crypto");
+var import_promises2 = require("node:fs/promises");
+var import_node_fs4 = require("node:fs");
+var import_node_path3 = require("node:path");
+var SECRET = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
+var SAFE_ID = /^[A-Za-z0-9._-]+$/u;
+function bodyDigest(body2) {
+  return `sha256:${(0, import_node_crypto.createHash)("sha256").update(body2, "utf8").digest("hex")}`;
+}
+function validateContentBody(body2) {
+  if (typeof body2 !== "string" || !body2.trim()) throw new Error("Content body must not be empty");
+  if (SECRET.test(body2)) throw new Error("Content body must not contain credentials or secrets");
+}
+function quote(value) {
+  return JSON.stringify(value);
+}
+function parseScalar(value) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+function parseDocument(raw) {
+  const lines = raw.split(/\r?\n/u);
+  if (lines[0] !== "---") throw new Error("Content Markdown frontmatter is missing");
+  const end = lines.slice(1).findIndex((line2) => line2 === "---");
+  if (end < 0) throw new Error("Content Markdown frontmatter is not closed");
+  const fields2 = /* @__PURE__ */ new Map();
+  for (const line2 of lines.slice(1, end + 1)) {
+    const separator = line2.indexOf(":");
+    if (separator <= 0) throw new Error("Content Markdown frontmatter is invalid");
+    fields2.set(line2.slice(0, separator).trim(), parseScalar(line2.slice(separator + 1).trim()));
+  }
+  const manifest = {
+    schema_version: fields2.get("schema_version"),
+    record_kind: fields2.get("record_kind"),
+    record_id: fields2.get("record_id"),
+    record_version: Number(fields2.get("record_version")),
+    scope: fields2.get("scope"),
+    status: fields2.get("status"),
+    sensitivity: fields2.get("sensitivity"),
+    source_id: fields2.get("source_id"),
+    body_digest: fields2.get("body_digest"),
+    updated_at: fields2.get("updated_at")
+  };
+  if (manifest.schema_version !== "craft.content.v1" || manifest.record_kind !== "knowledge" && manifest.record_kind !== "memory" || !manifest.record_id || !Number.isSafeInteger(manifest.record_version) || !manifest.scope || !manifest.status || !manifest.sensitivity || !manifest.source_id || !manifest.body_digest || !manifest.updated_at) {
+    throw new Error("Content Markdown frontmatter is incomplete");
+  }
+  return { manifest, body: lines.slice(end + 2).join("\n") };
+}
+function safeFileName(id17) {
+  if (!id17.trim() || id17.includes("/") || id17.includes("\\") || id17.includes("..")) throw new Error("Content record_id is an unsafe identifier");
+  if (SAFE_ID.test(id17)) return id17;
+  const digest107 = (0, import_node_crypto.createHash)("sha256").update(id17).digest("hex").slice(0, 12);
+  return `${id17.replace(/[^A-Za-z0-9._-]/gu, "_")}-${digest107}`;
+}
+var MarkdownContentStore = class {
+  paths;
+  constructor(paths) {
+    this.paths = paths;
+  }
+  pathFor(kind2, recordId, version) {
+    const directory = kind2 === "knowledge" ? this.paths.knowledgeContentDir : this.paths.memoryContentDir;
+    return (0, import_node_path3.join)(directory, `${safeFileName(recordId)}${version === void 0 ? "" : `.v${version}`}.md`);
+  }
+  legacyPathFor(kind2, recordId, version) {
+    const directory = kind2 === "knowledge" ? (0, import_node_path3.join)(this.paths.root, "content", "knowledge", "md") : (0, import_node_path3.join)(this.paths.root, "content", "memory", "md");
+    return (0, import_node_path3.join)(directory, `${safeFileName(recordId)}${version === void 0 ? "" : `.v${version}`}.md`);
+  }
+  isCanonicalRef(ref2) {
+    return (0, import_node_path3.resolve)(ref2.path) === (0, import_node_path3.resolve)(this.pathFor(ref2.kind, ref2.record_id, ref2.version));
+  }
+  async write(input) {
+    if (!Number.isSafeInteger(input.version) || input.version < 1) throw new Error("Content version must be a positive integer");
+    validateContentBody(input.body);
+    const path2 = this.pathFor(input.kind, input.record_id, input.version);
+    await (0, import_promises2.mkdir)((0, import_node_path3.resolve)(path2, ".."), { recursive: true });
+    const digest107 = bodyDigest(input.body);
+    try {
+      const existing = await this.readPath(path2);
+      if (existing.manifest.record_id !== input.record_id || existing.manifest.record_kind !== input.kind) throw new Error("Content file identity conflict");
+      if (existing.manifest.body_digest === digest107 && existing.manifest.record_version === input.version) return this.ref(input.kind, input.record_id, input.version, path2, digest107, input.body);
+      throw new Error("Content version already exists with different body");
+    } catch (error) {
+      if (!(error instanceof Error) || !/ENOENT|no such file/iu.test(error.message)) throw error;
+    }
+    const manifest = this.manifest(input, digest107);
+    const raw = this.serialize(manifest, input.body);
+    const temporary = `${path2}.${process.pid}.${Date.now()}.tmp`;
+    await (0, import_promises2.writeFile)(temporary, raw, { encoding: "utf8", mode: 384 });
+    await (0, import_promises2.rename)(temporary, path2);
+    return this.ref(input.kind, input.record_id, input.version, path2, digest107, input.body);
+  }
+  writeSync(input) {
+    if (!Number.isSafeInteger(input.version) || input.version < 1) throw new Error("Content version must be a positive integer");
+    validateContentBody(input.body);
+    const path2 = this.pathFor(input.kind, input.record_id, input.version);
+    (0, import_node_fs4.mkdirSync)((0, import_node_path3.resolve)(path2, ".."), { recursive: true });
+    const digest107 = bodyDigest(input.body);
+    try {
+      const existing = parseDocument((0, import_node_fs4.readFileSync)(path2, "utf8"));
+      if (existing.manifest.record_id !== input.record_id || existing.manifest.record_kind !== input.kind) throw new Error("Content file identity conflict");
+      if (existing.manifest.body_digest === digest107 && existing.manifest.record_version === input.version) return this.ref(input.kind, input.record_id, input.version, path2, digest107, input.body);
+      throw new Error("Content version already exists with different body");
+    } catch (error) {
+      if (!(error instanceof Error) || !/ENOENT|no such file/iu.test(error.message)) throw error;
+    }
+    const raw = this.serialize(this.manifest(input, digest107), input.body);
+    const temporary = `${path2}.${process.pid}.${Date.now()}.tmp`;
+    (0, import_node_fs4.writeFileSync)(temporary, raw, { encoding: "utf8", mode: 384 });
+    (0, import_node_fs4.renameSync)(temporary, path2);
+    return this.ref(input.kind, input.record_id, input.version, path2, digest107, input.body);
+  }
+  async read(ref2) {
+    const expected = this.pathFor(ref2.kind, ref2.record_id, ref2.version);
+    if ((0, import_node_path3.resolve)(ref2.path) !== (0, import_node_path3.resolve)(expected)) throw new Error("Content reference path is outside the canonical directory");
+    const result = await this.readPath(ref2.path);
+    if (result.manifest.record_id !== ref2.record_id || result.manifest.record_kind !== ref2.kind || result.manifest.record_version !== ref2.version) throw new Error("Content reference metadata drifted");
+    if (result.manifest.body_digest !== ref2.digest || bodyDigest(result.body) !== ref2.digest) throw new Error("Content body digest drifted");
+    return result;
+  }
+  readSync(ref2) {
+    const expected = this.pathFor(ref2.kind, ref2.record_id, ref2.version);
+    if ((0, import_node_path3.resolve)(ref2.path) !== (0, import_node_path3.resolve)(expected)) throw new Error("Content reference path is outside the canonical directory");
+    const result = parseDocument((0, import_node_fs4.readFileSync)(ref2.path, "utf8"));
+    if (result.manifest.record_id !== ref2.record_id || result.manifest.record_kind !== ref2.kind || result.manifest.record_version !== ref2.version) throw new Error("Content reference metadata drifted");
+    if (result.manifest.body_digest !== ref2.digest || bodyDigest(result.body) !== ref2.digest) throw new Error("Content body digest drifted");
+    return result;
+  }
+  /** Read a reference from the current location or the pre-v0.12.31 content
+   * tree. Legacy reads are still digest-checked and are only a compatibility
+   * bridge for migration; new writes always use the canonical domain path. */
+  readCompatSync(ref2) {
+    if (this.isCanonicalRef(ref2)) return this.readSync(ref2);
+    if ((0, import_node_path3.resolve)(ref2.path) !== (0, import_node_path3.resolve)(this.legacyPathFor(ref2.kind, ref2.record_id, ref2.version))) {
+      throw new Error("Content reference path is outside the canonical directory");
+    }
+    const result = parseDocument((0, import_node_fs4.readFileSync)(ref2.path, "utf8"));
+    if (result.manifest.record_id !== ref2.record_id || result.manifest.record_kind !== ref2.kind || result.manifest.record_version !== ref2.version) throw new Error("Content reference metadata drifted");
+    if (result.manifest.body_digest !== ref2.digest || bodyDigest(result.body) !== ref2.digest) throw new Error("Content body digest drifted");
+    return result;
+  }
+  readUncheckedSync(path2) {
+    return parseDocument((0, import_node_fs4.readFileSync)(path2, "utf8"));
+  }
+  async verify(ref2) {
+    try {
+      await this.read(ref2);
+      return { status: "verified", path: ref2.path, digest: ref2.digest };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { status: /ENOENT|no such file/iu.test(message) ? "missing" : "drifted", path: ref2.path, digest: null };
+    }
+  }
+  verifySync(ref2) {
+    try {
+      this.readSync(ref2);
+      return { status: "verified", path: ref2.path, digest: ref2.digest };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { status: /ENOENT|no such file/iu.test(message) ? "missing" : "drifted", path: ref2.path, digest: null };
+    }
+  }
+  async readPath(path2) {
+    return parseDocument(await (0, import_promises2.readFile)(path2, "utf8"));
+  }
+  manifest(input, digest107) {
+    return {
+      schema_version: "craft.content.v1",
+      record_kind: input.kind,
+      record_id: input.record_id,
+      record_version: input.version,
+      scope: input.scope,
+      status: input.status,
+      sensitivity: input.sensitivity,
+      source_id: input.source_id,
+      body_digest: digest107,
+      updated_at: (/* @__PURE__ */ new Date()).toISOString()
+    };
+  }
+  ref(kind2, recordId, version, path2, digest107, body2) {
+    return { kind: kind2, record_id: recordId, version, path: path2, digest: digest107, bytes: Buffer.byteLength(body2, "utf8"), format: "markdown" };
+  }
+  serialize(manifest, body2) {
+    const lines = Object.entries(manifest).map(([key2, value]) => `${key2}: ${typeof value === "number" ? value : quote(value)}`);
+    return `---
+${lines.join("\n")}
+---
+${body2}`;
+  }
+};
+function contentReference(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const item = value;
+  return (item.kind === "knowledge" || item.kind === "memory") && typeof item.record_id === "string" && Number.isSafeInteger(item.version) && typeof item.path === "string" && typeof item.digest === "string" && item.format === "markdown";
 }
 
 // src/store.ts
@@ -7642,14 +7853,16 @@ function storedSchemaVersion(database) {
 }
 var CraftStore = class {
   paths;
+  contentStore;
   #database = null;
   constructor(paths = craftPaths()) {
     this.paths = paths;
+    this.contentStore = new MarkdownContentStore(paths);
   }
   async open() {
     if (this.#database) return this;
     await ensureLayout(this.paths);
-    const existed = (0, import_node_fs4.existsSync)(this.paths.databaseFile);
+    const existed = (0, import_node_fs5.existsSync)(this.paths.databaseFile);
     const database = new import_node_sqlite.DatabaseSync(this.paths.databaseFile);
     database.exec("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA busy_timeout=15000;");
     try {
@@ -7658,6 +7871,7 @@ var CraftStore = class {
         this.backup();
       }
       applyMigrations(database, SCHEMA_VERSION);
+      this.rebuildDomainIndexes(database);
     } catch (error) {
       database.close();
       throw error;
@@ -7677,6 +7891,25 @@ var CraftStore = class {
   backup(backupsDir = this.paths.backupsDir) {
     return backupDatabase(this.paths.databaseFile, backupsDir);
   }
+  rebuildDomainIndexes(database) {
+    const entries2 = [[this.paths.knowledgeDatabaseFile, "knowledge"], [this.paths.memoryDatabaseFile, "memory"]];
+    const rows = database.prepare("SELECT kind,id,version,payload_json,updated_at FROM records").all();
+    for (const [path2, domain] of entries2) {
+      const index = new import_node_sqlite.DatabaseSync(path2);
+      try {
+        index.exec("PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS content_index (kind TEXT NOT NULL, id TEXT NOT NULL, version INTEGER NOT NULL, content_ref TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(kind,id,version)); DELETE FROM content_index;");
+        const insert = index.prepare("INSERT INTO content_index(kind,id,version,content_ref,updated_at) VALUES(?,?,?,?,?)");
+        for (const row of rows) {
+          const payload75 = JSON.parse(String(row.payload_json));
+          const ref2 = payload75.content_ref;
+          if (!ref2 || typeof ref2 !== "object" || Array.isArray(ref2) || ref2.kind !== domain) continue;
+          insert.run(String(row.kind), String(row.id), Number(row.version), JSON.stringify(ref2), String(row.updated_at));
+        }
+      } finally {
+        index.close();
+      }
+    }
+  }
   get database() {
     if (!this.#database) throw new Error("CraftStore is not open.");
     return this.#database;
@@ -7694,7 +7927,7 @@ var CraftStore = class {
     }
   }
   legacyDatabaseDetected() {
-    return (0, import_node_fs4.existsSync)(this.paths.legacyDatabaseFile);
+    return (0, import_node_fs5.existsSync)(this.paths.legacyDatabaseFile);
   }
   save(kind2, id17, payload75, version) {
     return this.transaction((database) => this.insert(database, { kind: kind2, id: id17, payload: payload75, version }));
@@ -7757,6 +7990,40 @@ var CraftStore = class {
       SELECT id,MAX(version) version FROM records WHERE kind=? GROUP BY id
       ) latest ON latest.id=r.id AND latest.version=r.version WHERE r.kind=?`).get(kind2, kind2).count);
   }
+  /** Return every stored version without hydrating Markdown content. Used by
+   * reversible content migrations and integrity tooling only. */
+  rawRecords(kind2) {
+    const rows = kind2 === void 0 ? this.database.prepare("SELECT * FROM records ORDER BY kind,id,version").all() : this.database.prepare("SELECT * FROM records WHERE kind=? ORDER BY id,version").all(kind2);
+    return rows.map((row) => {
+      const item = row;
+      return {
+        kind: String(item.kind),
+        id: String(item.id),
+        version: Number(item.version),
+        payload: JSON.parse(String(item.payload_json)),
+        created_at: String(item.created_at),
+        updated_at: String(item.updated_at)
+      };
+    });
+  }
+  /** Migration-only in-place payload replacement. The caller must create a
+   * database backup first; ordinary domain updates remain append-only. */
+  replacePayload(kind2, id17, version, payload75) {
+    this.transaction((database) => {
+      const result = database.prepare("UPDATE records SET payload_json=?,updated_at=? WHERE kind=? AND id=? AND version=?").run(JSON.stringify(payloadOnly(payload75)), (/* @__PURE__ */ new Date()).toISOString(), kind2, id17, version);
+      if (Number(result.changes) !== 1) throw new Error(`Unknown record version: ${kind2}/${id17}/${version}`);
+    });
+  }
+  replacePayloadBatch(entries2) {
+    if (!entries2.length) return;
+    this.transaction((database) => {
+      const statement = database.prepare("UPDATE records SET payload_json=?,updated_at=? WHERE kind=? AND id=? AND version=?");
+      for (const entry2 of entries2) {
+        const result = statement.run(JSON.stringify(payloadOnly(entry2.payload)), (/* @__PURE__ */ new Date()).toISOString(), entry2.kind, entry2.id, entry2.version);
+        if (Number(result.changes) !== 1) throw new Error(`Unknown record version: ${entry2.kind}/${entry2.id}/${entry2.version}`);
+      }
+    });
+  }
   searchCapabilities(terms2, limit3) {
     const bounded2 = Math.min(validLimit(limit3), 20);
     if (!terms2.length) return [];
@@ -7808,13 +8075,16 @@ var CraftStore = class {
     });
   }
   record(row) {
-    return {
-      ...JSON.parse(String(row.payload_json)),
-      id: row.id,
-      version: row.version,
-      created_at: row.created_at,
-      updated_at: row.updated_at
-    };
+    const payload75 = JSON.parse(String(row.payload_json));
+    const record = { ...payload75, id: row.id, version: row.version, created_at: row.created_at, updated_at: row.updated_at };
+    if (record.content_ref && (row.kind === "knowledge_claim" || row.kind === "memory_ledger" || row.kind === "episodic_memory" || row.kind === "semantic_memory")) {
+      try {
+        record.content = this.contentStore.readCompatSync(record.content_ref).body;
+      } catch {
+        record.content_unavailable = true;
+      }
+    }
+    return record;
   }
   close() {
     this.#database?.close();
@@ -7890,8 +8160,8 @@ function validateJsonSchema(value, rawSchema, path2 = "$", depth = 0) {
 
 // src/workflow.ts
 var import_node_child_process = require("node:child_process");
-var import_node_fs5 = require("node:fs");
-var import_node_path3 = require("node:path");
+var import_node_fs6 = require("node:fs");
+var import_node_path4 = require("node:path");
 var PLACEHOLDER = /\{\{\s*([A-Za-z_][A-Za-z0-9_]*)\s*\}\}/g;
 var SENSITIVE = /((?:authorization\s*:\s*bearer|api[_-]?key|token|password|secret|cookie)\s*[=:]?\s*)\S+/gi;
 var SIDE_EFFECTS = /* @__PURE__ */ new Set(["read_only", "local_write", "external_write", "destructive"]);
@@ -7924,17 +8194,17 @@ function substitute(value, inputs) {
   });
 }
 function safePath(root, child = ".") {
-  const base = (0, import_node_fs5.realpathSync)((0, import_node_path3.resolve)(root));
-  const candidate2 = (0, import_node_path3.resolve)(base, child);
-  const relation = (0, import_node_path3.relative)(base, candidate2);
-  if (relation.startsWith("..") || (0, import_node_path3.isAbsolute)(relation)) throw new Error(`Workflow path escapes project root: ${child}`);
+  const base = (0, import_node_fs6.realpathSync)((0, import_node_path4.resolve)(root));
+  const candidate2 = (0, import_node_path4.resolve)(base, child);
+  const relation = (0, import_node_path4.relative)(base, candidate2);
+  if (relation.startsWith("..") || (0, import_node_path4.isAbsolute)(relation)) throw new Error(`Workflow path escapes project root: ${child}`);
   let existing = candidate2;
-  while (!(0, import_node_fs5.existsSync)(existing)) {
-    existing = (0, import_node_path3.dirname)(existing);
+  while (!(0, import_node_fs6.existsSync)(existing)) {
+    existing = (0, import_node_path4.dirname)(existing);
   }
-  const actual = (0, import_node_fs5.realpathSync)(existing);
-  const actualRelation = (0, import_node_path3.relative)(base, actual);
-  if (actualRelation.startsWith("..") || (0, import_node_path3.isAbsolute)(actualRelation)) {
+  const actual = (0, import_node_fs6.realpathSync)(existing);
+  const actualRelation = (0, import_node_path4.relative)(base, actual);
+  if (actualRelation.startsWith("..") || (0, import_node_path4.isAbsolute)(actualRelation)) {
     throw new Error(`Workflow path escapes project root through a link: ${child}`);
   }
   return candidate2;
@@ -7973,7 +8243,7 @@ function runStep(step, root, runtimeEnv = {}, runner = import_node_child_process
       throw new Error("Command steps require a non-empty string array in command");
     }
     const cwd = safePath(root, String(step.cwd ?? "."));
-    if (!(0, import_node_fs5.existsSync)(cwd) || !(0, import_node_fs5.statSync)(cwd).isDirectory()) throw new Error(`Workflow command cwd does not exist: ${cwd}`);
+    if (!(0, import_node_fs6.existsSync)(cwd) || !(0, import_node_fs6.statSync)(cwd).isDirectory()) throw new Error(`Workflow command cwd does not exist: ${cwd}`);
     const configured = step.env ?? {};
     if (!configured || typeof configured !== "object" || Array.isArray(configured)) throw new Error("Command step env must be an object");
     const configuredEntries = Object.entries(configured);
@@ -8010,7 +8280,7 @@ function runStep(step, root, runtimeEnv = {}, runner = import_node_child_process
     if (step.evaluator === "file_exists") {
       let actual = true;
       try {
-        (0, import_node_fs5.statSync)(safePath(root, String(step.path ?? "")));
+        (0, import_node_fs6.statSync)(safePath(root, String(step.path ?? "")));
       } catch {
         actual = false;
       }
@@ -8018,7 +8288,7 @@ function runStep(step, root, runtimeEnv = {}, runner = import_node_child_process
       return { passed: actual === expected, actual, expected };
     }
     if (step.evaluator === "json_value") {
-      let value = JSON.parse((0, import_node_fs5.readFileSync)(safePath(root, String(step.path ?? "")), "utf8"));
+      let value = JSON.parse((0, import_node_fs6.readFileSync)(safePath(root, String(step.path ?? "")), "utf8"));
       for (const part of String(step.field ?? "").split(".").filter(Boolean)) {
         if (Array.isArray(value)) {
           if (!/^\d+$/.test(part)) {
@@ -8037,7 +8307,7 @@ function runStep(step, root, runtimeEnv = {}, runner = import_node_child_process
     throw new Error(`Unsupported assertion evaluator: ${step.evaluator}`);
   }
   if (kind2 === "coverage_gate") {
-    const report = JSON.parse((0, import_node_fs5.readFileSync)(safePath(root, String(step.report ?? "coverage-summary.json")), "utf8"));
+    const report = JSON.parse((0, import_node_fs6.readFileSync)(safePath(root, String(step.report ?? "coverage-summary.json")), "utf8"));
     const total = report.total ?? report;
     const thresholds = {
       lines: Number(step.line_threshold ?? 100),
@@ -8087,7 +8357,7 @@ function executeSteps(steps, root, approved, executor = runStep) {
 }
 
 // src/orchestration.ts
-var import_node_crypto = require("node:crypto");
+var import_node_crypto2 = require("node:crypto");
 var PROVENANCE = /* @__PURE__ */ new Set(["agent_reported", "model_judged", "program_verified", "human_approved", "human_rejected"]);
 function addCosts(current2, addition) {
   const result = /* @__PURE__ */ new Map();
@@ -8185,7 +8455,7 @@ function dispatchNodes(nodes, capacity, owner, leaseTtlSeconds = 300, now3 = Dat
     if (!Number.isInteger(routeIndex) || routeIndex < 0 || routeIndex >= node.profile_ids.length) {
       throw new Error(`Node ${node.id} has an invalid route_index`);
     }
-    const leaseId = `lease_${(0, import_node_crypto.randomUUID)().replaceAll("-", "")}`;
+    const leaseId = `lease_${(0, import_node_crypto2.randomUUID)().replaceAll("-", "")}`;
     const leased = {
       ...node,
       status: "leased",
@@ -8367,13 +8637,13 @@ function compareEvaluationAggregates(baseline, candidate2) {
 }
 
 // src/skill-publisher.ts
-var import_node_crypto2 = require("node:crypto");
-var import_promises2 = require("node:fs/promises");
-var import_node_path4 = require("node:path");
-var digest = (value) => (0, import_node_crypto2.createHash)("sha256").update(value).digest("hex");
+var import_node_crypto3 = require("node:crypto");
+var import_promises3 = require("node:fs/promises");
+var import_node_path5 = require("node:path");
+var digest = (value) => (0, import_node_crypto3.createHash)("sha256").update(value).digest("hex");
 function targetInsideSource(sourceRoot, targetPath) {
-  if ((0, import_node_path4.basename)(targetPath).toLowerCase() !== "skill.md") throw new Error("target_path must name SKILL.md");
-  if (!targetPath.startsWith(`${(0, import_node_path4.resolve)(sourceRoot)}${import_node_path4.sep}`)) {
+  if ((0, import_node_path5.basename)(targetPath).toLowerCase() !== "skill.md") throw new Error("target_path must name SKILL.md");
+  if (!targetPath.startsWith(`${(0, import_node_path5.resolve)(sourceRoot)}${import_node_path5.sep}`)) {
     throw new Error("target_path must be inside the selected capability source");
   }
 }
@@ -8382,43 +8652,43 @@ function requireExternalWrite(value) {
 }
 async function replaceAtomically(path2, content, mode) {
   const temporary = `${path2}.${process.pid}.${Date.now()}.tmp`;
-  await (0, import_promises2.writeFile)(temporary, content, { encoding: "utf8", mode });
-  await (0, import_promises2.rename)(temporary, path2);
+  await (0, import_promises3.writeFile)(temporary, content, { encoding: "utf8", mode });
+  await (0, import_promises3.rename)(temporary, path2);
 }
 async function publishSkill(args) {
   requireExternalWrite(args.allowExternalWrite);
-  const targetPath = await (0, import_promises2.realpath)(args.targetPath);
+  const targetPath = await (0, import_promises3.realpath)(args.targetPath);
   targetInsideSource(args.sourceRoot, targetPath);
-  const previous = await (0, import_promises2.readFile)(targetPath, "utf8");
+  const previous = await (0, import_promises3.readFile)(targetPath, "utf8");
   const previousDigest = digest(previous);
   if (previousDigest !== args.expectedDigest) throw new Error("target digest mismatch; file changed since it was reviewed");
-  const backupPath = (0, import_node_path4.join)(args.backupsDir, "skill-publications", args.proposalId, `${previousDigest}.SKILL.md`);
-  await (0, import_promises2.mkdir)((0, import_node_path4.dirname)(backupPath), { recursive: true });
-  await (0, import_promises2.writeFile)(backupPath, previous, { encoding: "utf8", mode: 384 });
+  const backupPath = (0, import_node_path5.join)(args.backupsDir, "skill-publications", args.proposalId, `${previousDigest}.SKILL.md`);
+  await (0, import_promises3.mkdir)((0, import_node_path5.dirname)(backupPath), { recursive: true });
+  await (0, import_promises3.writeFile)(backupPath, previous, { encoding: "utf8", mode: 384 });
   if (args.onBeforeFinalCheck) await args.onBeforeFinalCheck();
-  const current2 = await (0, import_promises2.readFile)(targetPath, "utf8");
+  const current2 = await (0, import_promises3.readFile)(targetPath, "utf8");
   if (digest(current2) !== args.expectedDigest) throw new Error("target digest mismatch; file changed during publication");
-  const mode = (await (0, import_promises2.stat)(targetPath)).mode;
+  const mode = (await (0, import_promises3.stat)(targetPath)).mode;
   await replaceAtomically(targetPath, args.content, mode);
   return { target_path: targetPath, previous_digest: previousDigest, published_digest: digest(args.content), backup_path: backupPath };
 }
 async function rollbackSkillPublication(args) {
   requireExternalWrite(args.allowExternalWrite);
-  const targetPath = await (0, import_promises2.realpath)(args.targetPath);
-  const current2 = await (0, import_promises2.readFile)(targetPath, "utf8");
+  const targetPath = await (0, import_promises3.realpath)(args.targetPath);
+  const current2 = await (0, import_promises3.readFile)(targetPath, "utf8");
   if (digest(current2) !== args.expectedDigest) {
     throw new Error("target digest mismatch; refusing to overwrite a changed Skill");
   }
   if (args.expectedDigest !== args.publishedDigest) {
     throw new Error("target digest mismatch; refusing to overwrite a changed Skill");
   }
-  const backup = await (0, import_promises2.readFile)(args.backupPath, "utf8");
-  await replaceAtomically(targetPath, backup, (await (0, import_promises2.stat)(targetPath)).mode);
+  const backup = await (0, import_promises3.readFile)(args.backupPath, "utf8");
+  await replaceAtomically(targetPath, backup, (await (0, import_promises3.stat)(targetPath)).mode);
 }
 
 // src/config.ts
-var import_promises3 = require("node:fs/promises");
-var import_node_fs6 = require("node:fs");
+var import_promises4 = require("node:fs/promises");
+var import_node_fs7 = require("node:fs");
 
 // src/host-registry.ts
 var HOST_NAME = /^[a-z0-9][a-z0-9-]{0,62}$/u;
@@ -8552,7 +8822,7 @@ function renderHostArgv(template, values3) {
 }
 
 // src/semantic.ts
-var import_node_crypto3 = require("node:crypto");
+var import_node_crypto4 = require("node:crypto");
 var DEFAULT_TIMEOUT_MS = 5e3;
 function endpoint(baseUrl) {
   return `${baseUrl.replace(/\/$/, "")}/embeddings`;
@@ -8576,7 +8846,7 @@ function validateVectors(value, expected) {
   return vectors;
 }
 function embeddingFingerprint(config) {
-  return (0, import_node_crypto3.createHash)("sha256").update(JSON.stringify({ protocol: config.protocol, baseUrl: config.baseUrl, model: config.model })).digest("hex").slice(0, 24);
+  return (0, import_node_crypto4.createHash)("sha256").update(JSON.stringify({ protocol: config.protocol, baseUrl: config.baseUrl, model: config.model })).digest("hex").slice(0, 24);
 }
 function semanticFailureReason(error) {
   return failureReason(error);
@@ -8641,7 +8911,7 @@ var RUNTIMES = /* @__PURE__ */ new Set([
 var HOSTS = /* @__PURE__ */ new Set(["codex-cli", "claude-code", "generic-mcp"]);
 async function exists(path2) {
   try {
-    await (0, import_promises3.access)(path2, import_node_fs6.constants.F_OK);
+    await (0, import_promises4.access)(path2, import_node_fs7.constants.F_OK);
     return true;
   } catch {
     return false;
@@ -8649,7 +8919,7 @@ async function exists(path2) {
 }
 async function loadConfig(paths = craftPaths()) {
   if (!await exists(paths.configFile)) return null;
-  const parsed = JSON.parse(await (0, import_promises3.readFile)(paths.configFile, "utf8"));
+  const parsed = JSON.parse(await (0, import_promises4.readFile)(paths.configFile, "utf8"));
   validateConfig(parsed);
   return parsed;
 }
@@ -8730,29 +9000,29 @@ function validateConfig(value) {
 }
 
 // src/settings.ts
-var import_node_fs7 = require("node:fs");
-var import_node_crypto4 = require("node:crypto");
-var import_node_path5 = require("node:path");
+var import_node_fs8 = require("node:fs");
+var import_node_crypto5 = require("node:crypto");
 var import_node_path6 = require("node:path");
-function number(value, name, fallback, min, max) {
-  if (value === void 0) return fallback;
+var import_node_path7 = require("node:path");
+function number(value, name, fallback4, min, max) {
+  if (value === void 0) return fallback4;
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < min || parsed > max) throw new Error(`${name} must be an integer between ${min} and ${max}`);
   return parsed;
 }
-function boolean(value, name, fallback) {
-  if (value === void 0) return fallback;
+function boolean(value, name, fallback4) {
+  if (value === void 0) return fallback4;
   if (typeof value !== "boolean") throw new Error(`${name} must be a boolean`);
   return value;
 }
-function text2(value, name, fallback) {
-  if (value === void 0) return fallback;
+function text2(value, name, fallback4) {
+  if (value === void 0) return fallback4;
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must be a non-empty string`);
   return value.trim();
 }
-function httpUrl(value, name, fallback) {
-  if (value === void 0) return fallback;
-  const raw = text2(value, name, fallback);
+function httpUrl(value, name, fallback4) {
+  if (value === void 0) return fallback4;
+  const raw = text2(value, name, fallback4);
   let url2;
   try {
     url2 = new URL(raw);
@@ -8804,7 +9074,7 @@ function normalizeSettings(value, paths = craftPaths()) {
   const workbench = input.workbench && typeof input.workbench === "object" && !Array.isArray(input.workbench) ? input.workbench : {};
   const runtime = input.runtime && typeof input.runtime === "object" && !Array.isArray(input.runtime) ? input.runtime : {};
   const privacy = input.privacy && typeof input.privacy === "object" && !Array.isArray(input.privacy) ? input.privacy : {};
-  const dataRoot2 = (0, import_node_path6.resolve)(text2(input.dataRoot, "dataRoot", paths.root));
+  const dataRoot2 = (0, import_node_path7.resolve)(text2(input.dataRoot, "dataRoot", paths.root));
   const locale = text2(input.locale, "locale", "zh-CN");
   if (locale !== "zh-CN" && locale !== "en-US") throw new Error("locale must be zh-CN or en-US");
   const theme = text2(input.theme, "theme", "system");
@@ -8826,20 +9096,20 @@ function normalizeSettings(value, paths = craftPaths()) {
   };
 }
 function syncWrite(path2, value) {
-  (0, import_node_fs7.mkdirSync)((0, import_node_path5.dirname)(path2), { recursive: true });
-  const temporary = `${path2}.${process.pid}.${(0, import_node_crypto4.randomUUID)()}.tmp`;
-  (0, import_node_fs7.writeFileSync)(temporary, `${JSON.stringify(value, null, 2)}
+  (0, import_node_fs8.mkdirSync)((0, import_node_path6.dirname)(path2), { recursive: true });
+  const temporary = `${path2}.${process.pid}.${(0, import_node_crypto5.randomUUID)()}.tmp`;
+  (0, import_node_fs8.writeFileSync)(temporary, `${JSON.stringify(value, null, 2)}
 `, { encoding: "utf8", mode: 384 });
-  (0, import_node_fs7.renameSync)(temporary, path2);
+  (0, import_node_fs8.renameSync)(temporary, path2);
 }
 function loadSettingsSync(paths = craftPaths()) {
-  if (!(0, import_node_fs7.existsSync)(paths.settingsFile)) {
+  if (!(0, import_node_fs8.existsSync)(paths.settingsFile)) {
     const settings = defaultSettings(paths);
     syncWrite(paths.settingsFile, settings);
     return settings;
   }
   try {
-    return normalizeSettings(JSON.parse((0, import_node_fs7.readFileSync)(paths.settingsFile, "utf8")), paths);
+    return normalizeSettings(JSON.parse((0, import_node_fs8.readFileSync)(paths.settingsFile, "utf8")), paths);
   } catch {
     return defaultSettings(paths);
   }
@@ -9063,12 +9333,12 @@ function createFetchTransport(options = {}) {
           retryable = [408, 429, 500, 502, 503, 504].includes(response.status);
           if (!retryable || attempt === maxAttempts) throw lastError;
           const retryAfter = Number(response.headers.get("retry-after") ?? "0");
-          await new Promise((resolve23) => setTimeout(resolve23, Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter * 1e3, 1e4) : attempt * 250));
+          await new Promise((resolve24) => setTimeout(resolve24, Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter * 1e3, 1e4) : attempt * 250));
         } catch (error) {
           lastError = error instanceof Error ? error : new Error(String(error));
           if (!retryable || attempt === maxAttempts) throw lastError;
           if (lastError.name === "AbortError") lastError = new Error(`Model request timed out after ${timeoutMs}ms`);
-          await new Promise((resolve23) => setTimeout(resolve23, attempt * 250));
+          await new Promise((resolve24) => setTimeout(resolve24, attempt * 250));
         } finally {
           clearTimeout(timer);
         }
@@ -9084,15 +9354,15 @@ var unconfiguredTransport = {
 };
 
 // src/agent-loop.ts
-var import_node_crypto5 = require("node:crypto");
+var import_node_crypto6 = require("node:crypto");
 var DEFAULT_LOOP_LIMITS = {
   max_steps: 30,
   max_tokens: 2e5,
   max_wall_clock_ms: 30 * 6e4,
   no_progress_limit: 5
 };
-function integer2(value, name, fallback, minimum, maximum) {
-  const result = value === void 0 ? fallback : Number(value);
+function integer2(value, name, fallback4, minimum, maximum) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < minimum || result > maximum) {
     throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
   }
@@ -9121,7 +9391,7 @@ function beginLoop(now3) {
   };
 }
 function actionDigest(action, args = {}) {
-  return `sha256:${(0, import_node_crypto5.createHash)("sha256").update(JSON.stringify({ action, args })).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto6.createHash)("sha256").update(JSON.stringify({ action, args })).digest("hex")}`;
 }
 function budgetBand(state2, limits2) {
   const remaining = limits2.max_tokens - state2.tokens_used;
@@ -9188,7 +9458,7 @@ function loopSummary(state2, limits2) {
 }
 
 // src/assets.ts
-var import_node_crypto6 = require("node:crypto");
+var import_node_crypto7 = require("node:crypto");
 var KIND_IDS = ["capability", "knowledge", "workflow"];
 var TRUSTS = ["verified", "candidate", "unverified", "revoked"];
 var HEALTHS = ["healthy", "degraded", "blocked", "unknown"];
@@ -9214,14 +9484,14 @@ function stringList2(value, name, allowEmpty = true) {
   if (new Set(entries2).size !== entries2.length) throw new Error(`${name} must not repeat an entry`);
   return entries2;
 }
-function nonNegative(value, name, fallback) {
-  const result = value === void 0 ? fallback : Number(value);
+function nonNegative(value, name, fallback4) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isFinite(result) || result < 0) throw new Error(`${name} must be a non-negative number`);
   return Math.round(result);
 }
 function assetDigest(envelope) {
   const { kind: kind2, id: id17, version, source, trust, health, effect_scope, cost_profile, policy, tags: tags2, stability } = envelope;
-  return `sha256:${(0, import_node_crypto6.createHash)("sha256").update(JSON.stringify({
+  return `sha256:${(0, import_node_crypto7.createHash)("sha256").update(JSON.stringify({
     kind: kind2,
     id: id17,
     version,
@@ -9415,9 +9685,9 @@ function compareAcrossModels(trials, invariants) {
 }
 
 // src/workflow-registry.ts
-var import_node_crypto7 = require("node:crypto");
-var import_node_fs8 = require("node:fs");
-var import_node_path7 = require("node:path");
+var import_node_crypto8 = require("node:crypto");
+var import_node_fs9 = require("node:fs");
+var import_node_path8 = require("node:path");
 var WORKFLOW_FILE_SUFFIX = ".workflow.json";
 var WORKFLOW_ID = /^[a-z0-9][a-z0-9._-]{0,63}$/u;
 var STATUSES = ["active", "deprecated", "retired"];
@@ -9428,7 +9698,7 @@ function text5(value, name) {
   return value.trim();
 }
 function recordDigest(value) {
-  return `sha256:${(0, import_node_crypto7.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto8.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function optionalText2(value, name) {
   return value === void 0 || value === null ? null : text5(value, name);
@@ -9478,16 +9748,16 @@ function describeWorkflow(path2, definition) {
   };
 }
 function walk(root, current2, found, limit3) {
-  for (const entry2 of (0, import_node_fs8.readdirSync)(current2, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
-    const absolute = (0, import_node_path7.join)(current2, entry2.name);
-    const stat4 = (0, import_node_fs8.lstatSync)(absolute);
+  for (const entry2 of (0, import_node_fs9.readdirSync)(current2, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    const absolute = (0, import_node_path8.join)(current2, entry2.name);
+    const stat4 = (0, import_node_fs9.lstatSync)(absolute);
     if (stat4.isSymbolicLink()) continue;
     if (stat4.isDirectory()) {
       walk(root, absolute, found, limit3);
       continue;
     }
     if (!entry2.name.endsWith(WORKFLOW_FILE_SUFFIX)) continue;
-    found.push((0, import_node_path7.relative)(root, absolute).replaceAll("\\", "/"));
+    found.push((0, import_node_path8.relative)(root, absolute).replaceAll("\\", "/"));
     if (found.length > limit3) throw new Error(`Workflow registry exceeds ${limit3} files`);
   }
 }
@@ -9495,8 +9765,8 @@ function describeJsonFailure(path2, error) {
   return `Workflow file is not valid JSON: ${path2} (${error instanceof Error ? error.message : String(error)})`;
 }
 function discoverWorkflows(root, options = {}) {
-  const base = (0, import_node_path7.resolve)(root);
-  if (!(0, import_node_fs8.existsSync)(base)) throw new Error("Workflow registry root does not exist");
+  const base = (0, import_node_path8.resolve)(root);
+  if (!(0, import_node_fs9.existsSync)(base)) throw new Error("Workflow registry root does not exist");
   const limit3 = options.limit ?? MAX_FILES;
   if (!Number.isInteger(limit3) || limit3 < 1) throw new Error("Workflow registry limit must be a positive integer");
   const found = [];
@@ -9504,7 +9774,7 @@ function discoverWorkflows(root, options = {}) {
   const descriptors = found.map((path2) => {
     let parsed;
     try {
-      parsed = JSON.parse((0, import_node_fs8.readFileSync)((0, import_node_path7.join)(base, path2), "utf8"));
+      parsed = JSON.parse((0, import_node_fs9.readFileSync)((0, import_node_path8.join)(base, path2), "utf8"));
     } catch (error) {
       throw new Error(describeJsonFailure(path2, error));
     }
@@ -9561,9 +9831,9 @@ function planWorkflowRetirement(usage2, options) {
 }
 
 // src/knowledge-index.ts
-var import_node_crypto8 = require("node:crypto");
-var import_node_fs9 = require("node:fs");
-var import_node_path8 = require("node:path");
+var import_node_crypto9 = require("node:crypto");
+var import_node_fs10 = require("node:fs");
+var import_node_path9 = require("node:path");
 var import_node_sqlite2 = require("node:sqlite");
 var MAX_FILES2 = 2e3;
 var DEFAULT_CHUNK_CHARS = 4e3;
@@ -9573,12 +9843,12 @@ function text6(value, name) {
   return value.trim();
 }
 function digest2(value) {
-  return `sha256:${(0, import_node_crypto8.createHash)("sha256").update(value).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto9.createHash)("sha256").update(value).digest("hex")}`;
 }
 function walk2(current2, found, limit3) {
-  for (const entry2 of (0, import_node_fs9.readdirSync)(current2, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
-    const absolute = (0, import_node_path8.join)(current2, entry2.name);
-    if ((0, import_node_fs9.lstatSync)(absolute).isSymbolicLink()) continue;
+  for (const entry2 of (0, import_node_fs10.readdirSync)(current2, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    const absolute = (0, import_node_path9.join)(current2, entry2.name);
+    if ((0, import_node_fs10.lstatSync)(absolute).isSymbolicLink()) continue;
     if (entry2.isDirectory()) {
       walk2(absolute, found, limit3);
       continue;
@@ -9589,16 +9859,16 @@ function walk2(current2, found, limit3) {
   }
 }
 function scanKnowledgeBase(root, options = {}) {
-  const base = (0, import_node_path8.resolve)(root);
-  if (!(0, import_node_fs9.existsSync)(base)) throw new Error("Knowledge base root does not exist");
+  const base = (0, import_node_path9.resolve)(root);
+  if (!(0, import_node_fs10.existsSync)(base)) throw new Error("Knowledge base root does not exist");
   const limit3 = options.limit ?? MAX_FILES2;
   if (!Number.isInteger(limit3) || limit3 < 1) throw new Error("Knowledge base limit must be a positive integer");
   const found = [];
   walk2(base, found, limit3);
   return found.map((absolute) => {
-    const content = (0, import_node_fs9.readFileSync)(absolute, "utf8");
+    const content = (0, import_node_fs10.readFileSync)(absolute, "utf8");
     return {
-      path: (0, import_node_path8.relative)(base, absolute).replaceAll("\\", "/"),
+      path: (0, import_node_path9.relative)(base, absolute).replaceAll("\\", "/"),
       digest: digest2(content),
       size_bytes: Buffer.byteLength(content),
       chunks: chunkMarkdown(content).length
@@ -9656,8 +9926,8 @@ var KnowledgeIndex = class {
   file;
   db;
   constructor(file) {
-    this.file = (0, import_node_path8.resolve)(file);
-    (0, import_node_fs9.mkdirSync)((0, import_node_path8.dirname)(this.file), { recursive: true });
+    this.file = (0, import_node_path9.resolve)(file);
+    (0, import_node_fs10.mkdirSync)((0, import_node_path9.dirname)(this.file), { recursive: true });
     this.db = new import_node_sqlite2.DatabaseSync(this.file);
     this.db.exec("PRAGMA journal_mode=WAL;");
     this.db.exec("PRAGMA busy_timeout=15000;");
@@ -9735,12 +10005,12 @@ var KnowledgeIndex = class {
   }
   /** Apply a plan by re-reading the Markdown. The files win over the projection, always. */
   apply(plan, root) {
-    const base = (0, import_node_path8.resolve)(root);
+    const base = (0, import_node_path9.resolve)(root);
     const upserts = [...plan.added, ...plan.changed];
     this.db.exec("BEGIN");
     try {
       for (const document2 of upserts) {
-        const content = (0, import_node_fs9.readFileSync)((0, import_node_path8.join)(base, document2.path), "utf8");
+        const content = (0, import_node_fs10.readFileSync)((0, import_node_path9.join)(base, document2.path), "utf8");
         const chunks = chunkMarkdown(content);
         this.db.prepare("DELETE FROM knowledge_chunk WHERE path = ?").run(document2.path);
         this.db.prepare("DELETE FROM knowledge_document WHERE path = ?").run(document2.path);
@@ -9965,10 +10235,10 @@ function decideExecution(input) {
 }
 
 // src/docker-sandbox.ts
-var import_node_crypto9 = require("node:crypto");
-var import_promises4 = require("node:fs/promises");
+var import_node_crypto10 = require("node:crypto");
+var import_promises5 = require("node:fs/promises");
 var import_node_child_process2 = require("node:child_process");
-var import_node_path9 = require("node:path");
+var import_node_path10 = require("node:path");
 var OUTPUT_LIMIT = 1024 * 1024;
 function text9(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
@@ -9978,8 +10248,8 @@ function command(value) {
   if (!Array.isArray(value) || !value.length) throw new Error("command must be a non-empty string array");
   return value.map((item) => text9(item, "command"));
 }
-function numberLimit(limits2, name, fallback, minimum, maximum) {
-  const value = limits2[name] === void 0 ? fallback : Number(limits2[name]);
+function numberLimit(limits2, name, fallback4, minimum, maximum) {
+  const value = limits2[name] === void 0 ? fallback4 : Number(limits2[name]);
   if (!Number.isFinite(value) || value < minimum || value > maximum) throw new Error(`Docker ${name} limit is unsupported`);
   return value;
 }
@@ -9987,10 +10257,10 @@ function scrub(value) {
   return value.replace(/(api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]+/giu, "$1=[REDACTED]");
 }
 function dockerRequestDigest(image, requestedCommand) {
-  return `sha256:${(0, import_node_crypto9.createHash)("sha256").update(JSON.stringify({ image, command: requestedCommand })).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto10.createHash)("sha256").update(JSON.stringify({ image, command: requestedCommand })).digest("hex")}`;
 }
 function containerName(value) {
-  return `craft-${(0, import_node_crypto9.createHash)("sha256").update(value).digest("hex").slice(0, 24)}`;
+  return `craft-${(0, import_node_crypto10.createHash)("sha256").update(value).digest("hex").slice(0, 24)}`;
 }
 function runDocker(argv, timeoutMs, outputLimit = OUTPUT_LIMIT, spawnProcess = import_node_child_process2.spawn) {
   return new Promise((resolveResult, reject) => {
@@ -10102,8 +10372,8 @@ var DockerSandboxAdapter = class {
     const probeId = text9(probeIdValue, "probe_id");
     const image = text9(imageValue, "image");
     const runtimeRoot = text9(runtimeRootValue, "runtime_root");
-    const workspace = (0, import_node_path9.resolve)(runtimeRoot, containerName(probeId));
-    await (0, import_promises4.mkdir)(workspace, { recursive: true });
+    const workspace = (0, import_node_path10.resolve)(runtimeRoot, containerName(probeId));
+    await (0, import_promises5.mkdir)(workspace, { recursive: true });
     const configured = dockerFlags(capabilities, workspace);
     const name = containerName(probeId);
     const base = ["run", "--rm", "--name", name, ...configured.flags, image, "sh", "-c"];
@@ -10145,12 +10415,12 @@ var DockerSandboxAdapter = class {
     }
     const ticketId = text9(args.ticket_id, "ticket_id");
     const runtimeRoot = text9(args.runtime_root, "runtime_root");
-    const workspace = (0, import_node_path9.resolve)(runtimeRoot, ticketId);
-    const relativeWorkspace = (0, import_node_path9.relative)((0, import_node_path9.resolve)(runtimeRoot), workspace);
-    if (!relativeWorkspace || relativeWorkspace.startsWith("..") || (0, import_node_path9.isAbsolute)(relativeWorkspace)) {
+    const workspace = (0, import_node_path10.resolve)(runtimeRoot, ticketId);
+    const relativeWorkspace = (0, import_node_path10.relative)((0, import_node_path10.resolve)(runtimeRoot), workspace);
+    if (!relativeWorkspace || relativeWorkspace.startsWith("..") || (0, import_node_path10.isAbsolute)(relativeWorkspace)) {
       throw new Error("Docker workspace escapes the runtime root");
     }
-    await (0, import_promises4.mkdir)(workspace, { recursive: true });
+    await (0, import_promises5.mkdir)(workspace, { recursive: true });
     const configured = dockerFlags(args.capabilities, workspace);
     const name = containerName(ticketId);
     const result = await this.runner(["run", "--rm", "--name", name, ...configured.flags, image, ...requestedCommand], configured.timeoutMs, OUTPUT_LIMIT);
@@ -10182,8 +10452,8 @@ var DockerSandboxAdapter = class {
 };
 
 // src/egress.ts
-var import_node_crypto10 = require("node:crypto");
-var import_promises5 = require("node:dns/promises");
+var import_node_crypto11 = require("node:crypto");
+var import_promises6 = require("node:dns/promises");
 var import_node_https = require("node:https");
 var import_node_net = require("node:net");
 function text10(value, name) {
@@ -10215,7 +10485,7 @@ function egressRequestDigest(methodValue, urlValue, headersValue, bodyValue) {
   const target = new URL(text10(urlValue, "url"));
   const headers = canonicalHeaders(headersValue);
   const requestBody = body(bodyValue);
-  return `sha256:${(0, import_node_crypto10.createHash)("sha256").update(JSON.stringify({ method, url: target.toString(), headers, body: requestBody })).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto11.createHash)("sha256").update(JSON.stringify({ method, url: target.toString(), headers, body: requestBody })).digest("hex")}`;
 }
 function isPrivateEgressAddress(address) {
   const normalized = address.toLowerCase();
@@ -10231,7 +10501,7 @@ function redact2(value, secret) {
   const hidden = value.split(secret).join("[REDACTED]");
   return hidden.replace(/(api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]+/giu, "$1=[REDACTED]");
 }
-async function resolvePublic(hostname, resolver = import_promises5.lookup) {
+async function resolvePublic(hostname, resolver = import_promises6.lookup) {
   const answers = await resolver(hostname, { all: true, verbatim: true });
   if (!answers.length || answers.some((answer) => isPrivateEgressAddress(answer.address))) throw new Error("Egress DNS resolution returned a private or invalid address");
   return answers;
@@ -10324,18 +10594,18 @@ var TrustedEgressBroker = class {
       headers: Object.fromEntries(Object.entries(response.headers).filter(([name]) => !/^(set-cookie|www-authenticate|proxy-authenticate)$/iu.test(name)).map(([name, value]) => [name, redact2(value, secret)])),
       body: redact2(response.body, secret),
       output_limited: response.output_limited,
-      resolved_address_digest: (0, import_node_crypto10.createHash)("sha256").update(selected.address).digest("hex")
+      resolved_address_digest: (0, import_node_crypto11.createHash)("sha256").update(selected.address).digest("hex")
     };
   }
 };
 
 // src/catalog.ts
-var import_node_crypto11 = require("node:crypto");
-var import_promises6 = require("node:fs/promises");
-var import_node_path10 = require("node:path");
+var import_node_crypto12 = require("node:crypto");
+var import_promises7 = require("node:fs/promises");
+var import_node_path11 = require("node:path");
 var import_yaml = __toESM(require_dist(), 1);
 function stableId(prefix, value) {
-  return `${prefix}_${(0, import_node_crypto11.createHash)("sha256").update(value).digest("hex").slice(0, 20)}`;
+  return `${prefix}_${(0, import_node_crypto12.createHash)("sha256").update(value).digest("hex").slice(0, 20)}`;
 }
 function metadataTerms(metadata) {
   const aliases = metadata.aliases;
@@ -10369,7 +10639,7 @@ ${aliases}`.includes(term));
 function pathKey(path2, platform2 = process.platform) {
   return platform2 === "win32" ? path2.toLowerCase() : path2;
 }
-function parseSkill(text127, fallback) {
+function parseSkill(text127, fallback4) {
   let metadata = {};
   let body2 = text127;
   if (text127.startsWith("---\n") || text127.startsWith("---\r\n")) {
@@ -10381,7 +10651,7 @@ function parseSkill(text127, fallback) {
     }
   }
   return {
-    name: String(metadata.name || fallback),
+    name: String(metadata.name || fallback4),
     description: String(metadata.description || ""),
     version: String(metadata.version || "unversioned"),
     body: body2,
@@ -10392,16 +10662,16 @@ async function skillFiles(root, onError) {
   const found = [];
   const visited = /* @__PURE__ */ new Set();
   async function walk3(directory) {
-    const actual = await (0, import_promises6.realpath)(directory);
+    const actual = await (0, import_promises7.realpath)(directory);
     const key2 = pathKey(actual);
     if (visited.has(key2)) return;
     visited.add(key2);
-    const entries2 = await (0, import_promises6.readdir)(directory, { withFileTypes: true });
+    const entries2 = await (0, import_promises7.readdir)(directory, { withFileTypes: true });
     entries2.sort((a, b) => a.name.localeCompare(b.name));
     for (const entry2 of entries2) {
-      const path2 = (0, import_node_path10.join)(directory, entry2.name);
+      const path2 = (0, import_node_path11.join)(directory, entry2.name);
       try {
-        const info = await (0, import_promises6.stat)(path2);
+        const info = await (0, import_promises7.stat)(path2);
         if (info.isDirectory()) {
           await walk3(path2);
         } else if (info.isFile() && entry2.name.toLowerCase() === "skill.md") {
@@ -10426,16 +10696,16 @@ var Catalog = class {
     this.#semanticStatus = semanticProvider ? { mode: "configured", provider: semanticProvider.label, indexed_capabilities: 0 } : { mode: "disabled", reason: "not_configured", indexed_capabilities: 0 };
   }
   async addSource(path2, label, scan = true, priority = 0) {
-    const requested_path = (0, import_node_path10.resolve)(path2);
-    const root = await (0, import_promises6.realpath)(requested_path);
-    if (!(await (0, import_promises6.stat)(root)).isDirectory()) throw new Error("Capability source must be a directory.");
+    const requested_path = (0, import_node_path11.resolve)(path2);
+    const root = await (0, import_promises7.realpath)(requested_path);
+    if (!(await (0, import_promises7.stat)(root)).isDirectory()) throw new Error("Capability source must be a directory.");
     if (!Number.isInteger(priority) || priority < -1e3 || priority > 1e3) throw new Error("Capability source priority must be an integer between -1000 and 1000.");
     const mountKey = `${pathKey(requested_path)}:${label ?? ""}`;
     const duplicate = this.store.list("source", Number.MAX_SAFE_INTEGER).find((item) => item.mount_key === mountKey);
     if (duplicate) return scan && duplicate.enabled ? this.scanSource(String(duplicate.id)) : duplicate;
     const id17 = stableId("source", mountKey);
     this.store.save("source", id17, {
-      label: label || (0, import_node_path10.basename)(root),
+      label: label || (0, import_node_path11.basename)(root),
       requested_path,
       real_path: root,
       mount_key: mountKey,
@@ -10525,10 +10795,10 @@ var Catalog = class {
     let updated = 0;
     let unchanged = 0;
     for (const path2 of files4) {
-      const relative_path = (0, import_node_path10.relative)(String(source.real_path), path2).replaceAll("\\", "/");
+      const relative_path = (0, import_node_path11.relative)(String(source.real_path), path2).replaceAll("\\", "/");
       const assetId = stableId("cap", `${id17}:${relative_path}`);
       live.add(assetId);
-      const fileStat = await (0, import_promises6.stat)(path2);
+      const fileStat = await (0, import_promises7.stat)(path2);
       let previous;
       try {
         previous = this.store.get("capability", assetId);
@@ -10539,14 +10809,14 @@ var Catalog = class {
         unchanged += 1;
         continue;
       }
-      const text127 = await (0, import_promises6.readFile)(path2, "utf8");
-      const digest107 = (0, import_node_crypto11.createHash)("sha256").update(text127).digest("hex");
+      const text127 = await (0, import_promises7.readFile)(path2, "utf8");
+      const digest107 = (0, import_node_crypto12.createHash)("sha256").update(text127).digest("hex");
       if (previous?.digest === digest107) {
         this.store.save("capability", assetId, { ...previous, size: fileStat.size, mtime_ms: fileStat.mtimeMs });
         unchanged += 1;
         continue;
       }
-      const skill = parseSkill(text127, (0, import_node_path10.basename)((0, import_node_path10.resolve)(path2, "..")));
+      const skill = parseSkill(text127, (0, import_node_path11.basename)((0, import_node_path11.resolve)(path2, "..")));
       this.store.save("capability", assetId, {
         ...skill,
         kind: "skill",
@@ -10554,7 +10824,7 @@ var Catalog = class {
         search_text: `${skill.body}
 ${metadataTerms(skill.metadata).join("\n")}`,
         relative_path,
-        path: await (0, import_promises6.realpath)(path2),
+        path: await (0, import_promises7.realpath)(path2),
         digest: digest107,
         size: fileStat.size,
         mtime_ms: fileStat.mtimeMs
@@ -10704,10 +10974,10 @@ function summary(item) {
 }
 
 // src/isolated.ts
-var import_node_fs10 = require("node:fs");
-var import_promises7 = require("node:fs/promises");
+var import_node_fs11 = require("node:fs");
+var import_promises8 = require("node:fs/promises");
 var import_node_child_process3 = require("node:child_process");
-var import_node_path11 = require("node:path");
+var import_node_path12 = require("node:path");
 function processExitCode(code) {
   return code ?? 1;
 }
@@ -10743,7 +11013,7 @@ var LocalIsolatedAdapter = class {
   runner;
   constructor(options = {}) {
     this.platform = options.platform ?? process.platform;
-    this.helperAvailable = options.helperAvailable ?? import_node_fs10.existsSync;
+    this.helperAvailable = options.helperAvailable ?? import_node_fs11.existsSync;
     this.runner = options.runner ?? runLocalProcess;
   }
   async execute(input) {
@@ -10754,9 +11024,9 @@ var LocalIsolatedAdapter = class {
     if (input.effect !== "read_only" && !input.compensation) throw new Error("Write effects require compensation or human approval");
     const relativeCwd = input.cwd ?? ".";
     if (!pathAllowed(relativeCwd, input.path_allowlist)) throw new Error("Local isolated path is not in the allowlist");
-    const workspace = (0, import_node_path11.resolve)(input.runtime_root, input.run_id);
-    await (0, import_promises7.mkdir)(workspace, { recursive: true });
-    const cwd = (0, import_node_path11.resolve)(workspace, relativeCwd);
+    const workspace = (0, import_node_path12.resolve)(input.runtime_root, input.run_id);
+    await (0, import_promises8.mkdir)(workspace, { recursive: true });
+    const cwd = (0, import_node_path12.resolve)(workspace, relativeCwd);
     const profile = this.platform === "darwin" ? `(version 1) (allow default) (deny network*)${input.effect === "read_only" ? " (deny file-write*)" : ` (allow file-write* (subpath "${workspace.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"))`}` : "bwrap network disabled";
     const argv = this.platform === "darwin" ? ["-p", profile, input.command, ...input.args] : ["--unshare-net", "--", input.command, ...input.args];
     const result = await this.runner({ helper, argv, cwd, profile });
@@ -10765,11 +11035,11 @@ var LocalIsolatedAdapter = class {
 };
 
 // src/workspace.ts
-var import_node_crypto12 = require("node:crypto");
-var import_node_fs11 = require("node:fs");
-var import_node_path12 = require("node:path");
+var import_node_crypto13 = require("node:crypto");
+var import_node_fs12 = require("node:fs");
+var import_node_path13 = require("node:path");
 function identifier(value, name, prefix) {
-  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto12.randomUUID)().replaceAll("-", "")}` : String(value).trim();
+  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto13.randomUUID)().replaceAll("-", "")}` : String(value).trim();
   if (!/^[a-zA-Z0-9_-]+$/.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
@@ -10783,7 +11053,7 @@ function recordPayload(record) {
 }
 function relativePath(value, name) {
   const path2 = requiredText(value, name);
-  if ((0, import_node_path12.isAbsolute)(path2) || path2.split(/[\\/]+/).includes("..")) throw new Error(`${name} must be a relative path within the workspace`);
+  if ((0, import_node_path13.isAbsolute)(path2) || path2.split(/[\\/]+/).includes("..")) throw new Error(`${name} must be a relative path within the workspace`);
   return path2 === "." ? path2 : path2.replaceAll("\\", "/").replace(/^\.\//, "");
 }
 function includePaths(value) {
@@ -10793,14 +11063,14 @@ function includePaths(value) {
   return paths.sort();
 }
 function nested(root, path2) {
-  const target = (0, import_node_path12.resolve)(root, path2);
-  if ((0, import_node_path12.relative)(root, target).startsWith("..") || (0, import_node_path12.relative)(root, target) === "") {
+  const target = (0, import_node_path13.resolve)(root, path2);
+  if ((0, import_node_path13.relative)(root, target).startsWith("..") || (0, import_node_path13.relative)(root, target) === "") {
     if (target !== root) throw new Error("workspace path escapes root");
   }
   return target;
 }
 function digest3(path2) {
-  return (0, import_node_crypto12.createHash)("sha256").update((0, import_node_fs11.readFileSync)(path2)).digest("hex");
+  return (0, import_node_crypto13.createHash)("sha256").update((0, import_node_fs12.readFileSync)(path2)).digest("hex");
 }
 function snapshotNodeKind(stat4, path2) {
   if (stat4.isFile()) return "file";
@@ -10809,18 +11079,18 @@ function snapshotNodeKind(stat4, path2) {
 }
 function files(root, path2) {
   const absolute = nested(root, path2);
-  if (!(0, import_node_fs11.existsSync)(absolute)) return [];
-  const stat4 = (0, import_node_fs11.lstatSync)(absolute);
+  if (!(0, import_node_fs12.existsSync)(absolute)) return [];
+  const stat4 = (0, import_node_fs12.lstatSync)(absolute);
   if (stat4.isSymbolicLink()) throw new Error(`workspace snapshots do not follow symbolic links: ${path2}`);
   if (snapshotNodeKind(stat4, path2) === "file") return [{ path: path2, digest: digest3(absolute), size_bytes: stat4.size }];
-  return (0, import_node_fs11.readdirSync)(absolute, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name)).flatMap((entry2) => files(root, (0, import_node_path12.join)(path2, entry2.name).replaceAll("\\", "/")));
+  return (0, import_node_fs12.readdirSync)(absolute, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name)).flatMap((entry2) => files(root, (0, import_node_path13.join)(path2, entry2.name).replaceAll("\\", "/")));
 }
 function copyEntries(root, snapshotRoot, entries2) {
   for (const entry2 of entries2) {
     const source = nested(root, entry2.path);
     const target = nested(snapshotRoot, entry2.path);
-    (0, import_node_fs11.mkdirSync)((0, import_node_path12.dirname)(target), { recursive: true, mode: 448 });
-    (0, import_node_fs11.copyFileSync)(source, target);
+    (0, import_node_fs12.mkdirSync)((0, import_node_path13.dirname)(target), { recursive: true, mode: 448 });
+    (0, import_node_fs12.copyFileSync)(source, target);
   }
 }
 var WorkspaceState = class {
@@ -10832,8 +11102,8 @@ var WorkspaceState = class {
   }
   open(args) {
     const workspaceId = identifier(args.workspace_id, "workspace_id", "workspace");
-    const rootPath = (0, import_node_path12.resolve)(requiredText(args.root_path, "root_path"));
-    if (!(0, import_node_fs11.existsSync)(rootPath) || !(0, import_node_fs11.lstatSync)(rootPath).isDirectory()) throw new Error("root_path must exist and be a directory");
+    const rootPath = (0, import_node_path13.resolve)(requiredText(args.root_path, "root_path"));
+    if (!(0, import_node_fs12.existsSync)(rootPath) || !(0, import_node_fs12.lstatSync)(rootPath).isDirectory()) throw new Error("root_path must exist and be a directory");
     const includes = includePaths(args.include_paths);
     const workspace = this.store.create("workspace", workspaceId, {
       name: requiredText(args.name, "name"),
@@ -10853,7 +11123,7 @@ var WorkspaceState = class {
     const workspaceId = identifier(args.workspace_id, "workspace_id", "workspace");
     const workspace = this.store.get("workspace", workspaceId);
     const checkpointId = identifier(args.checkpoint_id, "checkpoint_id", "workspace_checkpoint");
-    const snapshotRoot = (0, import_node_path12.join)(this.paths.runtimeDir, "workspaces", workspaceId, "snapshots", checkpointId);
+    const snapshotRoot = (0, import_node_path13.join)(this.paths.runtimeDir, "workspaces", workspaceId, "snapshots", checkpointId);
     const root = requiredText(workspace.root_path, "workspace.root_path");
     const entries2 = workspace.include_paths.flatMap((path2) => files(root, path2)).sort((left, right) => left.path.localeCompare(right.path));
     if (new Set(entries2.map((entry2) => entry2.path)).size !== entries2.length) throw new Error("include_paths must not overlap");
@@ -10908,7 +11178,7 @@ var WorkspaceState = class {
     const root = requiredText(workspace.root_path, "workspace.root_path");
     const includes = workspace.include_paths;
     if (includes.includes(".")) throw new Error("workspace restore cannot replace the workspace root");
-    for (const path2 of includes) (0, import_node_fs11.rmSync)(nested(root, path2), { recursive: true, force: true });
+    for (const path2 of includes) (0, import_node_fs12.rmSync)(nested(root, path2), { recursive: true, force: true });
     copyEntries(requiredText(checkpoint.snapshot_root, "checkpoint.snapshot_root"), root, checkpoint.entries);
     const saved = this.store.save("workspace", workspaceId, {
       ...recordPayload(workspace),
@@ -10932,9 +11202,9 @@ var WorkspaceState = class {
 };
 
 // src/transaction.ts
-var import_node_crypto13 = require("node:crypto");
+var import_node_crypto14 = require("node:crypto");
 function id(value, name, prefix) {
-  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto13.randomUUID)().replaceAll("-", "")}` : String(value).trim();
+  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto14.randomUUID)().replaceAll("-", "")}` : String(value).trim();
   if (!/^[a-zA-Z0-9_-]+$/.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
@@ -11010,16 +11280,16 @@ var TransactionCoordinator = class {
 };
 
 // src/trajectory.ts
-var import_node_crypto14 = require("node:crypto");
-var SECRET = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]+/iu;
+var import_node_crypto15 = require("node:crypto");
+var SECRET2 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]+/iu;
 function id2(value, name, prefix) {
-  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto14.randomUUID)().replaceAll("-", "")}` : String(value).trim();
+  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto15.randomUUID)().replaceAll("-", "")}` : String(value).trim();
   if (!/^[a-zA-Z0-9_-]+$/.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
 function text12(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
-  if (SECRET.test(value)) throw new Error(`${name} must not contain sensitive assignments`);
+  if (SECRET2.test(value)) throw new Error(`${name} must not contain sensitive assignments`);
   return value.trim();
 }
 function object2(value, name) {
@@ -11056,7 +11326,7 @@ var TrajectoryCompiler = class {
       trial_ids: trialIds,
       operations: operations2,
       typescript,
-      source_digest: (0, import_node_crypto14.createHash)("sha256").update(JSON.stringify({ trialIds, operations: operations2 })).digest("hex"),
+      source_digest: (0, import_node_crypto15.createHash)("sha256").update(JSON.stringify({ trialIds, operations: operations2 })).digest("hex"),
       static_checks: { deterministic_template: true, imports: false, dynamic_execution: false },
       lifecycle: "draft"
     });
@@ -11101,9 +11371,9 @@ var TrajectoryCompiler = class {
 };
 
 // src/script-run.ts
-var import_node_crypto15 = require("node:crypto");
+var import_node_crypto16 = require("node:crypto");
 function id3(value, name, prefix) {
-  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto15.randomUUID)().replaceAll("-", "")}` : String(value).trim();
+  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto16.randomUUID)().replaceAll("-", "")}` : String(value).trim();
   if (!/^[a-zA-Z0-9_-]+$/.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
@@ -11169,15 +11439,15 @@ var VerifiedScriptRunner = class {
 };
 
 // src/workbench.ts
-var import_node_crypto16 = require("node:crypto");
+var import_node_crypto17 = require("node:crypto");
 var OBJECT_STATUS = /* @__PURE__ */ new Set(["draft", "accepted", "needs_review", "archived"]);
 var MEMORY_KINDS = /* @__PURE__ */ new Set(["fact", "preference", "decision", "experience"]);
 var MEMORY_STATUS = /* @__PURE__ */ new Set(["active", "superseded", "expired", "rejected"]);
 var TASK_GRAPH_NODE_KINDS = /* @__PURE__ */ new Set(["explore", "produce", "verify", "review", "deliver"]);
 var TASK_GRAPH_NODE_STATUS = /* @__PURE__ */ new Set(["pending", "active", "done", "skipped", "blocked"]);
-var SECRET2 = /(?:api[_-]?key|authorization|cookie|password|passwd|secret|token)\s*[:=]\s*[^\s]{6,}/iu;
+var SECRET3 = /(?:api[_-]?key|authorization|cookie|password|passwd|secret|token)\s*[:=]\s*[^\s]{6,}/iu;
 function id4(value, name, prefix) {
-  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto16.randomUUID)().replaceAll("-", "")}` : String(value).trim();
+  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto17.randomUUID)().replaceAll("-", "")}` : String(value).trim();
   if (!/^[a-zA-Z0-9_-]+$/.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
@@ -11196,8 +11466,8 @@ function payload(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
   return rest;
 }
-function revision(value, fallback) {
-  const result = value === void 0 ? fallback : Number(value);
+function revision(value, fallback4) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < 1) throw new Error("expected_state_revision must be a positive integer");
   return result;
 }
@@ -11398,7 +11668,7 @@ var WorkbenchKernel = class {
     }
     const content = text14(args.content, "content");
     const source = text14(args.source, "source");
-    if (SECRET2.test(content) || SECRET2.test(source)) throw new Error("Memory content and source must not contain credentials or secrets");
+    if (SECRET3.test(content) || SECRET3.test(source)) throw new Error("Memory content and source must not contain credentials or secrets");
     const memory = this.store.create("memory_item", id4(args.memory_id, "memory_id", "memory"), {
       kind: kind2,
       scope: scope3,
@@ -11591,9 +11861,9 @@ var WorkbenchKernel = class {
 };
 
 // src/changeset.ts
-var import_node_crypto17 = require("node:crypto");
+var import_node_crypto18 = require("node:crypto");
 function id5(value, name, prefix) {
-  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto17.randomUUID)().replaceAll("-", "")}` : String(value).trim();
+  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto18.randomUUID)().replaceAll("-", "")}` : String(value).trim();
   if (!/^[a-zA-Z0-9_-]+$/.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
@@ -11760,9 +12030,9 @@ var ChangeSetKernel = class {
 };
 
 // src/control-plane.ts
-var import_node_crypto18 = require("node:crypto");
+var import_node_crypto19 = require("node:crypto");
 function id6(value, name, prefix) {
-  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto18.randomUUID)().replaceAll("-", "")}` : String(value).trim();
+  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto19.randomUUID)().replaceAll("-", "")}` : String(value).trim();
   if (!/^[a-zA-Z0-9_-]+$/.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
@@ -12026,13 +12296,13 @@ var ControlPlaneKernel = class {
 };
 
 // src/security.ts
-var import_node_crypto19 = require("node:crypto");
+var import_node_crypto20 = require("node:crypto");
 function text17(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function id7(value, name, prefix) {
-  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto19.randomUUID)().replaceAll("-", "")}` : text17(value, name);
+  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto20.randomUUID)().replaceAll("-", "")}` : text17(value, name);
   if (!/^[a-zA-Z0-9_-]+$/.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
@@ -12063,7 +12333,7 @@ function payload4(record) {
   return rest;
 }
 function digest4(value) {
-  return (0, import_node_crypto19.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
+  return (0, import_node_crypto20.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
 }
 var SecurityBrokerKernel = class {
   store;
@@ -12289,7 +12559,7 @@ var SecurityBrokerKernel = class {
 };
 
 // src/untrusted-parser.ts
-var import_node_crypto20 = require("node:crypto");
+var import_node_crypto21 = require("node:crypto");
 var MAX_CONTENT_BYTES = 1024 * 1024;
 function requiredText2(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
@@ -12378,7 +12648,7 @@ var DataOnlyParserAdapter = class {
     const parserFormat = String(analysis.format);
     const parserSelectors = analysis.selectors;
     const content = this.security.store.get("untrusted_content", contentId);
-    const actualDigest = `sha256:${(0, import_node_crypto20.createHash)("sha256").update(raw).digest("hex")}`;
+    const actualDigest = `sha256:${(0, import_node_crypto21.createHash)("sha256").update(raw).digest("hex")}`;
     if (content.content_digest !== actualDigest) throw new Error("raw_content digest does not match the registered content envelope");
     const structuredData = analysis.structured_data;
     const fieldSources = {};
@@ -12426,7 +12696,7 @@ var DataOnlyParserAdapter = class {
       if (extractionMatch) extractionPassed += 1;
       return {
         case_id: caseId,
-        content_digest: `sha256:${(0, import_node_crypto20.createHash)("sha256").update(raw).digest("hex")}`,
+        content_digest: `sha256:${(0, import_node_crypto21.createHash)("sha256").update(raw).digest("hex")}`,
         actual_signals: actual,
         expected_signals: [...expectedSet],
         extraction_match: extractionMatch
@@ -12435,7 +12705,7 @@ var DataOnlyParserAdapter = class {
     if (new Set(results.map((result) => result.case_id)).size !== results.length) throw new Error("case_id values must be unique");
     const precision = truePositive + falsePositive === 0 ? 1 : truePositive / (truePositive + falsePositive);
     const recall = truePositive + falseNegative === 0 ? 1 : truePositive / (truePositive + falseNegative);
-    const suiteDigest = (0, import_node_crypto20.createHash)("sha256").update(JSON.stringify(cases)).digest("hex");
+    const suiteDigest = (0, import_node_crypto21.createHash)("sha256").update(JSON.stringify(cases)).digest("hex");
     const suiteVersion = Number(args.suite_version);
     if (!Number.isInteger(suiteVersion) || suiteVersion < 1) throw new Error("suite_version must be a positive integer");
     const evaluation = this.security.store.create(
@@ -12464,21 +12734,21 @@ var DataOnlyParserAdapter = class {
 };
 
 // src/parser-process.ts
-var import_node_crypto21 = require("node:crypto");
-var import_node_fs12 = require("node:fs");
-var import_node_path13 = require("node:path");
+var import_node_crypto22 = require("node:crypto");
+var import_node_fs13 = require("node:fs");
+var import_node_path14 = require("node:path");
 var import_node_child_process4 = require("node:child_process");
 var MAX_OUTPUT_BYTES = 2 * 1024 * 1024;
 function text18(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value;
 }
-function resolveParserWorkerPath(entry2 = process.argv[1] ?? "", cwd = process.cwd(), fileExists = import_node_fs12.existsSync) {
-  const entryDir = (0, import_node_path13.dirname)(entry2);
-  const candidates = entry2.endsWith(".ts") ? [(0, import_node_path13.join)(cwd, "bin", "craft-parser-worker.ts")] : [
-    (0, import_node_path13.join)(entryDir, "craft-parser-worker.js"),
-    (0, import_node_path13.join)(entryDir, "..", "bin", "craft-parser-worker.js"),
-    (0, import_node_path13.join)(cwd, "dist", "bin", "craft-parser-worker.js")
+function resolveParserWorkerPath(entry2 = process.argv[1] ?? "", cwd = process.cwd(), fileExists = import_node_fs13.existsSync) {
+  const entryDir = (0, import_node_path14.dirname)(entry2);
+  const candidates = entry2.endsWith(".ts") ? [(0, import_node_path14.join)(cwd, "bin", "craft-parser-worker.ts")] : [
+    (0, import_node_path14.join)(entryDir, "craft-parser-worker.js"),
+    (0, import_node_path14.join)(entryDir, "..", "bin", "craft-parser-worker.js"),
+    (0, import_node_path14.join)(cwd, "dist", "bin", "craft-parser-worker.js")
   ];
   const found = candidates.find(fileExists);
   if (!found) throw new Error("Parser worker entrypoint is unavailable; rebuild the Craft distribution");
@@ -12495,7 +12765,7 @@ function runParserWorker(request2, options = {}) {
   const path2 = options.workerPath ?? resolveParserWorkerPath();
   const timeoutMs = options.timeoutMs ?? 5e3;
   if (!Number.isInteger(timeoutMs) || timeoutMs < 10 || timeoutMs > 3e4) throw new Error("timeout_ms must be an integer between 10 and 30000");
-  return new Promise((resolve23, reject) => {
+  return new Promise((resolve24, reject) => {
     const args = [...path2.endsWith(".ts") ? ["--experimental-strip-types"] : [], "--max-old-space-size=64", path2];
     const child = (options.spawnProcess ?? import_node_child_process4.spawn)(process.execPath, args, { stdio: ["pipe", "pipe", "pipe"], env: scrubParserEnvironment(), windowsHide: true });
     let stdout = "";
@@ -12504,7 +12774,7 @@ function runParserWorker(request2, options = {}) {
     const finish = (error, result) => {
       settled = true;
       clearTimeout(timer);
-      error ? reject(error) : resolve23(result);
+      error ? reject(error) : resolve24(result);
     };
     const timer = setTimeout(() => {
       child.kill();
@@ -12548,9 +12818,9 @@ var ParserProcessAdapter = class {
     const contentId = text18(args.content_id, "content_id").trim();
     const raw = text18(args.raw_content, "raw_content");
     const content = this.security.store.get("untrusted_content", contentId);
-    const digest107 = `sha256:${(0, import_node_crypto21.createHash)("sha256").update(raw).digest("hex")}`;
+    const digest107 = `sha256:${(0, import_node_crypto22.createHash)("sha256").update(raw).digest("hex")}`;
     if (content.content_digest !== digest107) throw new Error("raw_content digest does not match the registered content envelope");
-    const receiptId = typeof args.receipt_id === "string" && args.receipt_id.trim() ? args.receipt_id.trim() : `parser_process_${(0, import_node_crypto21.randomUUID)().replaceAll("-", "")}`;
+    const receiptId = typeof args.receipt_id === "string" && args.receipt_id.trim() ? args.receipt_id.trim() : `parser_process_${(0, import_node_crypto22.randomUUID)().replaceAll("-", "")}`;
     const started = Date.now();
     try {
       const analysis = await runParserWorker(
@@ -12596,7 +12866,7 @@ var ParserProcessAdapter = class {
 };
 
 // src/sandbox.ts
-var import_node_crypto22 = require("node:crypto");
+var import_node_crypto23 = require("node:crypto");
 var BACKENDS = /* @__PURE__ */ new Set(["local_process", "container", "remote"]);
 var FILESYSTEM = /* @__PURE__ */ new Set(["none", "read_only", "workspace_overlay"]);
 var NETWORK = /* @__PURE__ */ new Set(["denied", "allowlist", "unrestricted"]);
@@ -12625,7 +12895,7 @@ function positiveLimits(value, name) {
   return limits2;
 }
 function digest5(value) {
-  return (0, import_node_crypto22.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
+  return (0, import_node_crypto23.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
 }
 function payload5(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -12654,7 +12924,7 @@ var SandboxKernel = class {
     this.store = store;
   }
   profileSave(args) {
-    const profileId = args.profile_id === void 0 ? `sandbox_${(0, import_node_crypto22.randomUUID)().replaceAll("-", "")}` : text19(args.profile_id, "profile_id");
+    const profileId = args.profile_id === void 0 ? `sandbox_${(0, import_node_crypto23.randomUUID)().replaceAll("-", "")}` : text19(args.profile_id, "profile_id");
     const backend = text19(args.backend, "backend");
     if (!BACKENDS.has(backend)) throw new Error("Sandbox backend is unsupported");
     const capabilities = normalizeCapabilities(args.capabilities);
@@ -12678,7 +12948,7 @@ var SandboxKernel = class {
     if (!evidenceIds2.length) throw new Error("Sandbox verification requires evidence_ids");
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
     const matches = digest5(observed) === profile.capability_digest;
-    const assessment = this.store.create("sandbox_assessment", String(args.assessment_id ?? `sandbox_assessment_${(0, import_node_crypto22.randomUUID)().replaceAll("-", "")}`), {
+    const assessment = this.store.create("sandbox_assessment", String(args.assessment_id ?? `sandbox_assessment_${(0, import_node_crypto23.randomUUID)().replaceAll("-", "")}`), {
       profile_id: profile.id,
       profile_version: profile.version,
       verifier: text19(args.verifier, "verifier"),
@@ -12723,7 +12993,7 @@ var SandboxKernel = class {
     if (missing.length) return { compatible: false, profile, missing, ticket: null };
     if (args.dry_run === true) return { compatible: true, profile, missing: [], ticket: null, dry_run: true };
     const requestDigest = text19(args.request_digest, "request_digest");
-    const ticket = this.store.create("sandbox_ticket", String(args.ticket_id ?? `sandbox_ticket_${(0, import_node_crypto22.randomUUID)().replaceAll("-", "")}`), {
+    const ticket = this.store.create("sandbox_ticket", String(args.ticket_id ?? `sandbox_ticket_${(0, import_node_crypto23.randomUUID)().replaceAll("-", "")}`), {
       task_id: text19(args.task_id, "task_id"),
       profile_id: profile.id,
       profile_version: profile.version,
@@ -12782,7 +13052,7 @@ var SandboxKernel = class {
 };
 
 // src/effects.ts
-var import_node_crypto23 = require("node:crypto");
+var import_node_crypto24 = require("node:crypto");
 var RESULTS = /* @__PURE__ */ new Set(["succeeded", "failed", "indeterminate"]);
 function text20(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
@@ -12810,10 +13080,10 @@ function payload6(record) {
   return rest;
 }
 function digest6(value) {
-  return (0, import_node_crypto23.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
+  return (0, import_node_crypto24.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
 }
 function generated(prefix) {
-  return `${prefix}_${(0, import_node_crypto23.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto24.randomUUID)().replaceAll("-", "")}`;
 }
 var ExternalEffectKernel = class {
   store;
@@ -13144,13 +13414,13 @@ var ExternalEffectKernel = class {
 };
 
 // src/recovery.ts
-var import_node_crypto24 = require("node:crypto");
+var import_node_crypto25 = require("node:crypto");
 function text21(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function positiveInteger(value, name, fallback, maximum) {
-  const result = value === void 0 ? fallback : Number(value);
+function positiveInteger(value, name, fallback4, maximum) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < 1 || result > maximum) throw new Error(`${name} must be an integer between 1 and ${maximum}`);
   return result;
 }
@@ -13204,7 +13474,7 @@ var RecoveryQueueKernel = class {
     const leaseSeconds = positiveInteger(args.lease_seconds, "lease_seconds", 300, 3600);
     const item = this.store.list("recovery_item", 1e4, (entry2) => entry2.status === "open" && actions.includes(String(entry2.action))).sort((left, right) => Number(right.priority) - Number(left.priority) || String(left.id).localeCompare(String(right.id)))[0];
     if (!item) return { item: null };
-    const token = (0, import_node_crypto24.randomUUID)();
+    const token = (0, import_node_crypto25.randomUUID)();
     const leased = this.store.updateIfVersion("recovery_item", String(item.id), Number(item.version), {
       ...payload7(item),
       status: "leased",
@@ -13310,7 +13580,7 @@ var RecoveryQueueKernel = class {
 };
 
 // src/trigger.ts
-var import_node_crypto25 = require("node:crypto");
+var import_node_crypto26 = require("node:crypto");
 function text22(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -13324,8 +13594,8 @@ function object7(value, name) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${name} must be an object`);
   return value;
 }
-function integer3(value, name, fallback, min, max) {
-  const result = value === void 0 ? fallback : Number(value);
+function integer3(value, name, fallback4, min, max) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < min || result > max) throw new Error(`${name} must be an integer between ${min} and ${max}`);
   return result;
 }
@@ -13406,14 +13676,14 @@ var TriggerKernel = class {
     const variable = secretRef.startsWith("env:") ? secretRef.slice(4) : "";
     const secret = variable ? this.env[variable] : void 0;
     if (!secret) throw new Error("Webhook signing secret is unavailable");
-    const expected = (0, import_node_crypto25.createHmac)("sha256", secret).update(`${timestamp2}.${rawBody}`).digest("hex");
+    const expected = (0, import_node_crypto26.createHmac)("sha256", secret).update(`${timestamp2}.${rawBody}`).digest("hex");
     const supplied = text22(args.signature, "signature").replace(/^sha256=/u, "");
-    if (!/^[a-f0-9]{64}$/u.test(supplied) || !(0, import_node_crypto25.timingSafeEqual)(Buffer.from(expected), Buffer.from(supplied))) throw new Error("Webhook signature is invalid");
-    const bodyDigest = `sha256:${(0, import_node_crypto25.createHash)("sha256").update(rawBody).digest("hex")}`;
+    if (!/^[a-f0-9]{64}$/u.test(supplied) || !(0, import_node_crypto26.timingSafeEqual)(Buffer.from(expected), Buffer.from(supplied))) throw new Error("Webhook signature is invalid");
+    const bodyDigest2 = `sha256:${(0, import_node_crypto26.createHash)("sha256").update(rawBody).digest("hex")}`;
     const recordId = `${subscription.id}_${eventId}`;
     const existing = this.store.find("trigger_event", recordId);
     if (existing) {
-      if (existing.body_digest !== bodyDigest || existing.timestamp !== timestamp2) throw new Error("Webhook event idempotency conflict");
+      if (existing.body_digest !== bodyDigest2 || existing.timestamp !== timestamp2) throw new Error("Webhook event idempotency conflict");
       return { trigger_event: existing, dispatch: existing.dispatch, idempotent: true };
     }
     let parsed;
@@ -13427,7 +13697,7 @@ var TriggerKernel = class {
         subscription_id: subscription.id,
         event_id: eventId,
         timestamp: timestamp2,
-        body_digest: bodyDigest,
+        body_digest: bodyDigest2,
         status: "ignored",
         reason: "filter_mismatch",
         dispatch: null
@@ -13440,7 +13710,7 @@ var TriggerKernel = class {
         subscription_id: subscription.id,
         event_id: eventId,
         timestamp: timestamp2,
-        body_digest: bodyDigest,
+        body_digest: bodyDigest2,
         status: "throttled",
         reason: "minimum_interval",
         dispatch: null
@@ -13460,7 +13730,7 @@ var TriggerKernel = class {
       subscription_id: subscription.id,
       event_id: eventId,
       timestamp: timestamp2,
-      body_digest: bodyDigest,
+      body_digest: bodyDigest2,
       status: "accepted",
       accepted_at: new Date(now3).toISOString(),
       dispatch,
@@ -13473,14 +13743,14 @@ var TriggerKernel = class {
 };
 
 // src/speculative.ts
-var import_node_crypto26 = require("node:crypto");
+var import_node_crypto27 = require("node:crypto");
 var OPERATIONS = /* @__PURE__ */ new Set(["index", "summarize", "draft", "prefetch_metadata"]);
 function text23(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function integer4(value, name, fallback, min, max) {
-  const result = value === void 0 ? fallback : Number(value);
+function integer4(value, name, fallback4, min, max) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < min || result > max) throw new Error(`${name} must be an integer between ${min} and ${max}`);
   return result;
 }
@@ -13507,7 +13777,7 @@ function instant3(value, name) {
   return result;
 }
 function digest7(value) {
-  return `sha256:${(0, import_node_crypto26.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto27.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var SpeculativeKernel = class {
   store;
@@ -13590,7 +13860,7 @@ var SpeculativeKernel = class {
     const now3 = instant3(args.now, "now");
     const candidate2 = this.store.list("speculative_candidate", 1e4, (item) => item.status === "queued" && Date.parse(String(item.expires_at)) > now3 && allowed.includes(String(item.operation)))[0];
     if (!candidate2) return { candidate: null };
-    const lease = `lease_${(0, import_node_crypto26.randomUUID)().replaceAll("-", "")}`;
+    const lease = `lease_${(0, import_node_crypto27.randomUUID)().replaceAll("-", "")}`;
     const saved = this.store.updateIfVersion("speculative_candidate", String(candidate2.id), Number(candidate2.version), {
       ...payload8(candidate2),
       status: "leased",
@@ -13678,7 +13948,7 @@ var SpeculativeKernel = class {
 };
 
 // src/lineage.ts
-var import_node_crypto27 = require("node:crypto");
+var import_node_crypto28 = require("node:crypto");
 var ENTITY_KINDS = /* @__PURE__ */ new Set([
   "work_object",
   "artifact",
@@ -13696,8 +13966,8 @@ function text24(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function integer5(value, name, fallback, min = 1, max = Number.MAX_SAFE_INTEGER) {
-  const result = value === void 0 ? fallback : Number(value);
+function integer5(value, name, fallback4, min = 1, max = Number.MAX_SAFE_INTEGER) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < min || result > max) throw new Error(`${name} must be an integer between ${min} and ${max}`);
   return result;
 }
@@ -13719,7 +13989,7 @@ function key(ref2) {
   return `${ref2.kind}:${ref2.id}:v${ref2.version}:${ref2.locator ?? ""}`;
 }
 function digest8(value) {
-  return (0, import_node_crypto27.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
+  return (0, import_node_crypto28.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
 }
 var LineageKernel = class {
   store;
@@ -13840,13 +14110,13 @@ var LineageKernel = class {
 };
 
 // src/hydration.ts
-var import_node_crypto28 = require("node:crypto");
+var import_node_crypto29 = require("node:crypto");
 function text25(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function integer6(value, name, fallback, min, max) {
-  const result = value === void 0 ? fallback : Number(value);
+function integer6(value, name, fallback4, min, max) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < min || result > max) throw new Error(`${name} must be an integer between ${min} and ${max}`);
   return result;
 }
@@ -13867,7 +14137,7 @@ function payload9(record) {
   return rest;
 }
 function fingerprint(value) {
-  return `sha256:${(0, import_node_crypto28.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto29.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function reference(record) {
   return { id: record.id, version: record.version };
@@ -13915,7 +14185,7 @@ var HydrationKernel = class {
       budgets: budgets.map((item) => ({ ...reference(item), status: item.status })),
       recovery_items: recovery.map(reference)
     };
-    const snapshotId = String(args.snapshot_id ?? `dehydration_${(0, import_node_crypto28.randomUUID)().replaceAll("-", "")}`);
+    const snapshotId = String(args.snapshot_id ?? `dehydration_${(0, import_node_crypto29.randomUUID)().replaceAll("-", "")}`);
     const stateFingerprint = fingerprint(state2);
     const existing = this.store.find("dehydration_snapshot", snapshotId);
     if (existing) {
@@ -13984,7 +14254,7 @@ var HydrationKernel = class {
     const inspection = this.inspect(args);
     if (inspection.readiness === "still_waiting") return { snapshot, inspection, idempotent: true };
     const claimKey = text25(args.claim_key, "claim_key");
-    const leaseId = `hydration_lease_${(0, import_node_crypto28.randomUUID)().replaceAll("-", "")}`;
+    const leaseId = `hydration_lease_${(0, import_node_crypto29.randomUUID)().replaceAll("-", "")}`;
     const saved = this.store.updateIfVersion("dehydration_snapshot", String(snapshot.id), Number(snapshot.version), {
       ...payload9(snapshot),
       status: "hydrating",
@@ -14049,7 +14319,7 @@ var HydrationKernel = class {
 };
 
 // src/autonomy.ts
-var import_node_crypto29 = require("node:crypto");
+var import_node_crypto30 = require("node:crypto");
 var ACTIONS = /* @__PURE__ */ new Set(["read", "draft", "sandbox_write", "external_write", "communication", "computer_use", "destructive", "financial"]);
 var LEVELS = /* @__PURE__ */ new Set(["automatic", "notify_only", "human_approval", "multi_sig"]);
 var HIGH_RISK = /* @__PURE__ */ new Set(["destructive", "financial"]);
@@ -14061,8 +14331,8 @@ function object9(value, name) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${name} must be an object`);
   return value;
 }
-function integer7(value, name, fallback, min, max) {
-  const result = value === void 0 ? fallback : Number(value);
+function integer7(value, name, fallback4, min, max) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < min || result > max) throw new Error(`${name} must be an integer between ${min} and ${max}`);
   return result;
 }
@@ -14076,7 +14346,7 @@ function payload10(record) {
   return rest;
 }
 function digest9(value) {
-  return `sha256:${(0, import_node_crypto29.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto30.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var AutonomyKernel = class {
   store;
@@ -14126,7 +14396,7 @@ var AutonomyKernel = class {
     const now3 = instant5(args.now, "now");
     const ttl = integer7(args.ttl_seconds, "ttl_seconds", Number(policy.default_ttl_seconds), 60, 86400);
     const identity = { policy_id: policy.id, policy_version: policy.version, task_id: taskId3, action, target, request_digest: requestDigest };
-    const requestId = String(args.request_id ?? `authorization_${(0, import_node_crypto29.randomUUID)().replaceAll("-", "")}`);
+    const requestId = String(args.request_id ?? `authorization_${(0, import_node_crypto30.randomUUID)().replaceAll("-", "")}`);
     const requestFingerprint = digest9(identity);
     const existing = this.store.find("autonomy_request", requestId);
     if (existing) {
@@ -14202,7 +14472,7 @@ var AutonomyKernel = class {
 };
 
 // src/contracts.ts
-var import_node_crypto30 = require("node:crypto");
+var import_node_crypto31 = require("node:crypto");
 var ADAPTERS = /* @__PURE__ */ new Set(["api", "mcp", "computer_use"]);
 var EFFECTS3 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_write", "destructive", "unknown"]);
 function text27(value, name) {
@@ -14225,7 +14495,7 @@ function canonical(value) {
   return JSON.stringify(value);
 }
 function digest10(value) {
-  return `sha256:${(0, import_node_crypto30.createHash)("sha256").update(canonical(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto31.createHash)("sha256").update(canonical(value)).digest("hex")}`;
 }
 function payload11(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -14260,7 +14530,7 @@ var ContractInferenceKernel = class {
       compensation_observed: args.compensation_observed === true,
       credential_handles_required: strings9(args.credential_handles_required ?? [], "credential_handles_required", 0)
     };
-    const observationId = String(args.observation_id ?? `contract_observation_${(0, import_node_crypto30.randomUUID)().replaceAll("-", "")}`);
+    const observationId = String(args.observation_id ?? `contract_observation_${(0, import_node_crypto31.randomUUID)().replaceAll("-", "")}`);
     const fingerprint4 = digest10({ ...identity, outcome: outcome2, evidence_ids: evidenceIds2 });
     const existing = this.store.find("contract_observation", observationId);
     if (existing) {
@@ -14284,7 +14554,7 @@ var ContractInferenceKernel = class {
     const same3 = ["task_id", "adapter_kind", "endpoint", "operation", "input_schema_digest", "output_schema_digest", "observed_effect"];
     if (observations.some((item) => same3.some((key2) => item[key2] !== first[key2]))) throw new Error("Contract observations are not structurally consistent");
     if (observations.some((item) => item.outcome !== "succeeded")) throw new Error("Contract inference requires successful observations");
-    const candidateId2 = String(args.candidate_id ?? `contract_candidate_${(0, import_node_crypto30.randomUUID)().replaceAll("-", "")}`);
+    const candidateId2 = String(args.candidate_id ?? `contract_candidate_${(0, import_node_crypto31.randomUUID)().replaceAll("-", "")}`);
     const candidateFingerprint = digest10({ observation_ids: [...ids4].sort() });
     const existing = this.store.find("contract_candidate", candidateId2);
     if (existing) {
@@ -14386,7 +14656,7 @@ var ContractInferenceKernel = class {
     const reviewed = object10(contract.reviewed_contract, "reviewed_contract");
     const effect = String(reviewed.effect);
     if (!(/* @__PURE__ */ new Set(["read_only", "local_write", "external_write", "destructive"])).has(effect)) throw new Error("Contract publication effect is not executable");
-    const publicationId = String(args.publication_id ?? `contract_publication_${(0, import_node_crypto30.randomUUID)().replaceAll("-", "")}`);
+    const publicationId = String(args.publication_id ?? `contract_publication_${(0, import_node_crypto31.randomUUID)().replaceAll("-", "")}`);
     const fingerprint4 = digest10({ candidate_id: contract.id, candidate_version: contract.version, asset_id: args.asset_id });
     const existing = this.store.find("contract_publication", publicationId);
     if (existing) {
@@ -14440,7 +14710,7 @@ var ContractInferenceKernel = class {
 };
 
 // src/capability-canary.ts
-var import_node_crypto31 = require("node:crypto");
+var import_node_crypto32 = require("node:crypto");
 function text28(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -14464,7 +14734,7 @@ function payload12(record) {
   return rest;
 }
 function digest11(value) {
-  return Number.parseInt((0, import_node_crypto31.createHash)("sha256").update(value).digest("hex").slice(0, 8), 16) % 1e4;
+  return Number.parseInt((0, import_node_crypto32.createHash)("sha256").update(value).digest("hex").slice(0, 8), 16) % 1e4;
 }
 var CapabilityCanaryKernel = class {
   store;
@@ -14479,7 +14749,7 @@ var CapabilityCanaryKernel = class {
     if (baseline.effect !== candidate2.effect || baseline.asset_type !== candidate2.asset_type) throw new Error("Canary assets are not comparable");
     const thresholds = object11(args.thresholds, "thresholds");
     for (const key2 of ["max_failure_rate_delta", "max_cost_ratio", "max_latency_ratio", "max_correction_rate_delta"]) number2(thresholds[key2], `thresholds.${key2}`, 0);
-    const canary = this.store.create("capability_canary", String(args.canary_id ?? `capability_canary_${(0, import_node_crypto31.randomUUID)().replaceAll("-", "")}`), {
+    const canary = this.store.create("capability_canary", String(args.canary_id ?? `capability_canary_${(0, import_node_crypto32.randomUUID)().replaceAll("-", "")}`), {
       publication_id: publication.id,
       baseline_asset_id: baseline.id,
       baseline_asset_version: baseline.version,
@@ -14515,7 +14785,7 @@ var CapabilityCanaryKernel = class {
     const outcome2 = text28(args.outcome, "outcome");
     if (!(/* @__PURE__ */ new Set(["passed", "failed"])).has(outcome2)) throw new Error("Canary outcome is unsupported");
     const sampleId = text28(args.sample_id, "sample_id");
-    const fingerprint4 = (0, import_node_crypto31.createHash)("sha256").update(JSON.stringify({
+    const fingerprint4 = (0, import_node_crypto32.createHash)("sha256").update(JSON.stringify({
       canary_id: canary.id,
       arm,
       outcome: outcome2,
@@ -14581,7 +14851,7 @@ var CapabilityCanaryKernel = class {
 };
 
 // src/federation.ts
-var import_node_crypto32 = require("node:crypto");
+var import_node_crypto33 = require("node:crypto");
 function text29(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -14602,7 +14872,7 @@ function canonical2(value) {
   return JSON.stringify(value);
 }
 function digest12(value) {
-  return `sha256:${(0, import_node_crypto32.createHash)("sha256").update(canonical2(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto33.createHash)("sha256").update(canonical2(value)).digest("hex")}`;
 }
 function payload13(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -14634,7 +14904,7 @@ var CapabilityFederationKernel = class {
     if (!(/* @__PURE__ */ new Set(["personal", "team", "organization"])).has(audience)) throw new Error("Federation audience is unsupported");
     const manifest = object12(args.manifest, "manifest");
     safe(manifest);
-    const bundleId = String(args.bundle_id ?? `capability_bundle_${(0, import_node_crypto32.randomUUID)().replaceAll("-", "")}`);
+    const bundleId = String(args.bundle_id ?? `capability_bundle_${(0, import_node_crypto33.randomUUID)().replaceAll("-", "")}`);
     const fingerprint4 = digest12({ asset_id: asset.id, asset_version: asset.version, audience, manifest, evidence_ids: [...evidenceIds2].sort() });
     const existing = this.store.find("capability_bundle", bundleId);
     if (existing) {
@@ -14676,7 +14946,7 @@ var CapabilityFederationKernel = class {
     const asset = this.store.get("capability_asset", String(bundle.asset_id), Number(bundle.asset_version));
     const currentAsset = this.store.get("capability_asset", String(bundle.asset_id));
     if (asset.trust !== "verified" || asset.health !== "healthy" || currentAsset.health !== "healthy") throw new Error("Capability bundle asset is no longer publishable");
-    const releaseId = String(args.release_id ?? `capability_release_${(0, import_node_crypto32.randomUUID)().replaceAll("-", "")}`);
+    const releaseId = String(args.release_id ?? `capability_release_${(0, import_node_crypto33.randomUUID)().replaceAll("-", "")}`);
     const releaseDigest = digest12({ bundle_id: bundle.id, bundle_version: bundle.version, asset_id: asset.id, asset_version: asset.version, manifest: bundle.manifest });
     const approvalRef = text29(args.approval_ref, "approval_ref");
     const publicationFingerprint = digest12({ release_digest: releaseDigest, publisher, approval_ref: approvalRef });
@@ -14706,7 +14976,7 @@ var CapabilityFederationKernel = class {
     const currentRelease = this.store.get("capability_release", String(release.id));
     if (release.status !== "active" || currentRelease.status !== "active") throw new Error("Capability release is not active");
     const consumer = text29(args.consumer, "consumer");
-    const subscriptionId = String(args.subscription_id ?? `capability_subscription_${(0, import_node_crypto32.randomUUID)().replaceAll("-", "")}`);
+    const subscriptionId = String(args.subscription_id ?? `capability_subscription_${(0, import_node_crypto33.randomUUID)().replaceAll("-", "")}`);
     const fingerprint4 = digest12({ release_id: release.id, release_version: release.version, release_digest: release.release_digest, consumer });
     const existing = this.store.find("capability_subscription", subscriptionId);
     if (existing) {
@@ -14748,7 +15018,7 @@ var CapabilityFederationKernel = class {
 };
 
 // src/hub-sync.ts
-var import_node_crypto33 = require("node:crypto");
+var import_node_crypto34 = require("node:crypto");
 function text30(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -14770,7 +15040,7 @@ function canonical3(value) {
   return JSON.stringify(value);
 }
 function digest13(value) {
-  return `sha256:${(0, import_node_crypto33.createHash)("sha256").update(canonical3(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto34.createHash)("sha256").update(canonical3(value)).digest("hex")}`;
 }
 function payload14(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -14802,12 +15072,12 @@ var HubSyncKernel = class {
     const publicKey = text30(args.public_key_pem, "public_key_pem");
     let key2;
     try {
-      key2 = (0, import_node_crypto33.createPublicKey)(publicKey);
+      key2 = (0, import_node_crypto34.createPublicKey)(publicKey);
     } catch {
       throw new Error("Hub public key is invalid");
     }
     if (key2.asymmetricKeyType !== "ed25519") throw new Error("Hub source requires an Ed25519 public key");
-    const sourceId = String(args.source_id ?? `hub_source_${(0, import_node_crypto33.randomUUID)().replaceAll("-", "")}`);
+    const sourceId = String(args.source_id ?? `hub_source_${(0, import_node_crypto34.randomUUID)().replaceAll("-", "")}`);
     const fingerprint4 = digest13({ endpoint: endpoint3.toString(), public_key_pem: publicKey, publisher: args.publisher });
     const existing = this.store.find("hub_source", sourceId);
     if (existing) {
@@ -14843,8 +15113,8 @@ var HubSyncKernel = class {
     } catch {
       throw new Error("Hub signature is invalid");
     }
-    if (!signature.length || !(0, import_node_crypto33.verify)(null, Buffer.from(canonical3(envelope)), String(source.public_key_pem), signature)) throw new Error("Hub page signature verification failed");
-    const receiptId = String(args.receipt_id ?? `hub_sync_${(0, import_node_crypto33.randomUUID)().replaceAll("-", "")}`);
+    if (!signature.length || !(0, import_node_crypto34.verify)(null, Buffer.from(canonical3(envelope)), String(source.public_key_pem), signature)) throw new Error("Hub page signature verification failed");
+    const receiptId = String(args.receipt_id ?? `hub_sync_${(0, import_node_crypto34.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("hub_sync_receipt", receiptId);
     if (existing) {
       if (existing.page_digest !== pageDigest) throw new Error("Hub sync receipt idempotency conflict");
@@ -14894,9 +15164,9 @@ var HubSyncKernel = class {
 };
 
 // src/materialization.ts
-var import_node_crypto34 = require("node:crypto");
-var import_promises8 = require("node:fs/promises");
-var import_node_path14 = __toESM(require("node:path"), 1);
+var import_node_crypto35 = require("node:crypto");
+var import_promises9 = require("node:fs/promises");
+var import_node_path15 = __toESM(require("node:path"), 1);
 var TYPES2 = /* @__PURE__ */ new Set(["skill", "workflow", "tool", "mcp", "script", "adapter", "agent", "template"]);
 var EFFECTS4 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_write", "destructive", "unknown"]);
 function text31(value, name) {
@@ -14913,11 +15183,11 @@ function canonical4(value) {
   return JSON.stringify(value);
 }
 function digest14(value) {
-  return `sha256:${(0, import_node_crypto34.createHash)("sha256").update(canonical4(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto35.createHash)("sha256").update(canonical4(value)).digest("hex")}`;
 }
 function safeRelative(value) {
   const result = text31(value, "file.path").replaceAll("\\", "/");
-  if (import_node_path14.default.posix.isAbsolute(result) || result.split("/").some((part) => !part || part === "." || part === "..") || /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/iu.test(import_node_path14.default.posix.basename(result))) throw new Error("Materialized file path is unsafe");
+  if (import_node_path15.default.posix.isAbsolute(result) || result.split("/").some((part) => !part || part === "." || part === "..") || /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/iu.test(import_node_path15.default.posix.basename(result))) throw new Error("Materialized file path is unsafe");
   return result;
 }
 function decode(value) {
@@ -14933,7 +15203,7 @@ function files2(value) {
     const filePath = safeRelative(item.path);
     const content = decode(item.content_base64);
     if (content.length > 1048576) throw new Error("Materialized file exceeds 1 MiB");
-    return { path: filePath, content, size: content.length, digest: `sha256:${(0, import_node_crypto34.createHash)("sha256").update(content).digest("hex")}` };
+    return { path: filePath, content, size: content.length, digest: `sha256:${(0, import_node_crypto35.createHash)("sha256").update(content).digest("hex")}` };
   });
   if (new Set(result.map((item) => item.path.toLowerCase())).size !== result.length) throw new Error("Materialized file paths must be unique across platforms");
   if (result.reduce((sum, item) => sum + item.size, 0) > 5242880) throw new Error("Materialized package exceeds 5 MiB");
@@ -14942,11 +15212,11 @@ function files2(value) {
 function findings(items2) {
   const result = [];
   for (const item of items2) {
-    const extension = import_node_path14.default.posix.extname(item.path).toLowerCase();
+    const extension = import_node_path15.default.posix.extname(item.path).toLowerCase();
     const body2 = item.content.toString("utf8");
     if ((/* @__PURE__ */ new Set([".exe", ".dll", ".so", ".dylib", ".wasm", ".node"])).has(extension)) result.push({ severity: "critical", code: "native_executable", path: item.path });
     if (/(?:bearer\s+[a-z0-9._-]{8,}|sk-[a-z0-9_-]{8,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)/iu.test(body2)) result.push({ severity: "high", code: "secret_like_content", path: item.path });
-    if (import_node_path14.default.posix.basename(item.path).toLowerCase() === "package.json") {
+    if (import_node_path15.default.posix.basename(item.path).toLowerCase() === "package.json") {
       try {
         const parsed = JSON.parse(body2);
         if (parsed.scripts && typeof parsed.scripts === "object" && Object.keys(parsed.scripts).length) result.push({ severity: "high", code: "package_lifecycle_scripts", path: item.path });
@@ -14958,7 +15228,7 @@ function findings(items2) {
   return result;
 }
 async function discardPartialMaterialization(temporary, error) {
-  await (0, import_promises8.rm)(temporary, { recursive: true, force: true });
+  await (0, import_promises9.rm)(temporary, { recursive: true, force: true });
   throw error;
 }
 var MaterializationKernel = class {
@@ -14972,39 +15242,39 @@ var MaterializationKernel = class {
     const entry2 = this.store.get("hub_catalog_entry", `${source.id}:${text31(args.entry_id, "entry_id")}`);
     if (entry2.status !== "active") throw new Error("Hub catalog entry is not active");
     const packageFiles = files2(args.files);
-    if (!packageFiles.some((item) => (/* @__PURE__ */ new Set(["skill.md", "capability.json", "plugin.json"])).has(import_node_path14.default.posix.basename(item.path).toLowerCase()))) throw new Error("Materialized package requires a capability descriptor");
+    if (!packageFiles.some((item) => (/* @__PURE__ */ new Set(["skill.md", "capability.json", "plugin.json"])).has(import_node_path15.default.posix.basename(item.path).toLowerCase()))) throw new Error("Materialized package requires a capability descriptor");
     const manifest = packageFiles.map(({ path: filePath, size, digest: fileDigest2 }) => ({ path: filePath, size, digest: fileDigest2 }));
     const contentDigest = digest14(manifest);
     if (contentDigest !== entry2.content_digest) throw new Error("Materialized package digest does not match the signed catalog");
     const scan = findings(packageFiles);
     if (scan.some((item) => item.severity === "critical")) throw new Error("Materialized package contains a critical finding");
-    const materializationId = String(args.materialization_id ?? `materialization_${(0, import_node_crypto34.randomUUID)().replaceAll("-", "")}`);
+    const materializationId = String(args.materialization_id ?? `materialization_${(0, import_node_crypto35.randomUUID)().replaceAll("-", "")}`);
     const fingerprint4 = digest14({ source_id: source.id, entry_id: entry2.entry_id, content_digest: contentDigest });
     const existing = this.store.find("capability_materialization", materializationId);
     if (existing) {
       if (existing.fingerprint !== fingerprint4) throw new Error("Materialization idempotency conflict");
       return { materialization: existing, idempotent: true };
     }
-    const root = import_node_path14.default.resolve(this.store.paths.cacheDir, "hub-packages", String(source.id), String(entry2.entry_id), contentDigest.slice(7));
-    const base = import_node_path14.default.resolve(this.store.paths.cacheDir, "hub-packages");
-    if (import_node_path14.default.relative(base, root).startsWith("..")) throw new Error("Materialization target escaped the cache root");
-    const temporary = `${root}.tmp-${process.pid}-${(0, import_node_crypto34.randomUUID)()}`;
+    const root = import_node_path15.default.resolve(this.store.paths.cacheDir, "hub-packages", String(source.id), String(entry2.entry_id), contentDigest.slice(7));
+    const base = import_node_path15.default.resolve(this.store.paths.cacheDir, "hub-packages");
+    if (import_node_path15.default.relative(base, root).startsWith("..")) throw new Error("Materialization target escaped the cache root");
+    const temporary = `${root}.tmp-${process.pid}-${(0, import_node_crypto35.randomUUID)()}`;
     try {
-      await (0, import_promises8.mkdir)(temporary, { recursive: true });
+      await (0, import_promises9.mkdir)(temporary, { recursive: true });
       for (const item of packageFiles) {
-        const target = import_node_path14.default.resolve(temporary, ...item.path.split("/"));
-        await (0, import_promises8.mkdir)(import_node_path14.default.dirname(target), { recursive: true });
-        await (0, import_promises8.writeFile)(target, item.content, { flag: "wx" });
+        const target = import_node_path15.default.resolve(temporary, ...item.path.split("/"));
+        await (0, import_promises9.mkdir)(import_node_path15.default.dirname(target), { recursive: true });
+        await (0, import_promises9.writeFile)(target, item.content, { flag: "wx" });
       }
-      await (0, import_promises8.mkdir)(import_node_path14.default.dirname(root), { recursive: true });
+      await (0, import_promises9.mkdir)(import_node_path15.default.dirname(root), { recursive: true });
       let destinationExists = false;
       try {
-        await (0, import_promises8.access)(root);
+        await (0, import_promises9.access)(root);
         destinationExists = true;
       } catch {
       }
       if (destinationExists) throw new Error("Materialization target is already occupied");
-      await (0, import_promises8.rename)(temporary, root);
+      await (0, import_promises9.rename)(temporary, root);
     } catch (error) {
       return discardPartialMaterialization(temporary, error);
     }
@@ -15077,7 +15347,7 @@ var MaterializationKernel = class {
 };
 
 // src/certification.ts
-var import_node_crypto35 = require("node:crypto");
+var import_node_crypto36 = require("node:crypto");
 function text32(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -15097,7 +15367,7 @@ function canonical5(value) {
   return JSON.stringify(value);
 }
 function digest15(value) {
-  return `sha256:${(0, import_node_crypto35.createHash)("sha256").update(canonical5(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto36.createHash)("sha256").update(canonical5(value)).digest("hex")}`;
 }
 var CapabilityCertificationKernel = class {
   store;
@@ -15141,7 +15411,7 @@ var CapabilityCertificationKernel = class {
     }
     const certifier = text32(args.certifier, "certifier");
     if (certifier === materialization.reviewer) throw new Error("Certification requires an independent certifier");
-    const certificationId = String(args.certification_id ?? `capability_certification_${(0, import_node_crypto35.randomUUID)().replaceAll("-", "")}`);
+    const certificationId = String(args.certification_id ?? `capability_certification_${(0, import_node_crypto36.randomUUID)().replaceAll("-", "")}`);
     const fingerprint4 = digest15({
       materialization_id: materialization.id,
       materialization_version: materialization.version,
@@ -15200,7 +15470,7 @@ var CapabilityCertificationKernel = class {
 };
 
 // src/supply-chain.ts
-var import_node_crypto36 = require("node:crypto");
+var import_node_crypto37 = require("node:crypto");
 function text33(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -15215,7 +15485,7 @@ function canonical6(value) {
   return JSON.stringify(value);
 }
 function digest16(value) {
-  return `sha256:${(0, import_node_crypto36.createHash)("sha256").update(canonical6(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto37.createHash)("sha256").update(canonical6(value)).digest("hex")}`;
 }
 function strings12(value, name) {
   if (!Array.isArray(value) || !value.length) throw new Error(`${name} must be a non-empty array`);
@@ -15240,7 +15510,7 @@ var SupplyChainKernel = class {
     if (!SEVERITIES.has(severity)) throw new Error("Advisory severity is unsupported");
     const evidenceIds2 = strings12(args.evidence_ids, "evidence_ids");
     for (const id17 of evidenceIds2) this.store.get("evidence", id17);
-    const advisoryId = String(args.advisory_id ?? `supply_chain_advisory_${(0, import_node_crypto36.randomUUID)().replaceAll("-", "")}`);
+    const advisoryId = String(args.advisory_id ?? `supply_chain_advisory_${(0, import_node_crypto37.randomUUID)().replaceAll("-", "")}`);
     const fingerprint4 = digest16({ source_id: source.id, entry_id: entryId, asset_id: assetId, severity, evidence_ids: [...evidenceIds2].sort(), summary: args.summary });
     const existing = this.store.find("supply_chain_advisory", advisoryId);
     if (existing) {
@@ -15570,16 +15840,16 @@ var HomeKernel = class {
 };
 
 // src/codex-driver.ts
-var import_node_crypto38 = require("node:crypto");
-var import_promises9 = require("node:fs/promises");
-var import_node_path15 = require("node:path");
+var import_node_crypto39 = require("node:crypto");
+var import_promises10 = require("node:fs/promises");
+var import_node_path16 = require("node:path");
 var import_node_url = require("node:url");
 
 // src/host-driver.ts
-var import_node_crypto37 = require("node:crypto");
+var import_node_crypto38 = require("node:crypto");
 var import_node_child_process5 = require("node:child_process");
 function digest17(value) {
-  return `sha256:${(0, import_node_crypto37.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto38.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var executeHostProcess = async (request2) => new Promise((accept, reject) => {
   const child = (0, import_node_child_process5.spawn)(request2.executable, request2.argv, { cwd: request2.cwd, shell: false, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
@@ -15630,13 +15900,13 @@ function text35(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function integer11(value, name, fallback, minimum, maximum) {
-  const result = value === void 0 ? fallback : Number(value);
+function integer11(value, name, fallback4, minimum, maximum) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < minimum || result > maximum) throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
   return result;
 }
 function digest18(value) {
-  return `sha256:${(0, import_node_crypto38.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto39.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function redact3(value) {
   return value.replace(/(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]+/giu, "[redacted]");
@@ -15681,11 +15951,11 @@ var CodexHostKernel = class {
   prepare(args) {
     const task = this.store.get("task", text35(args.task_id, "task_id"));
     const prompt = text35(args.prompt, "prompt");
-    const workspace = (0, import_node_path15.resolve)(text35(args.workspace, "workspace"));
+    const workspace = (0, import_node_path16.resolve)(text35(args.workspace, "workspace"));
     const sandbox = String(args.sandbox ?? "read-only");
     if (!(/* @__PURE__ */ new Set(["read-only", "workspace-write"])).has(sandbox)) throw new Error("Codex sandbox is unsupported");
     const model = args.model === void 0 ? null : text35(args.model, "model");
-    const dispatchId = String(args.dispatch_id ?? `codex_dispatch_${(0, import_node_crypto38.randomUUID)().replaceAll("-", "")}`);
+    const dispatchId = String(args.dispatch_id ?? `codex_dispatch_${(0, import_node_crypto39.randomUUID)().replaceAll("-", "")}`);
     const identity = { task_id: task.id, task_version: task.version, workspace, sandbox, model, prompt_digest: digest18(prompt) };
     const requestDigest = digest18(identity);
     const existing = this.store.find("codex_dispatch", dispatchId);
@@ -15720,10 +15990,10 @@ var CodexHostKernel = class {
     const parsed = parseEvents(result.stdout);
     const status = result.exitCode === 0 && !result.timedOut && parsed.invalidLines === 0 ? "completed" : "failed";
     const receiptPayload = { dispatch_id: dispatch.id, task_id: dispatch.task_id, host: "codex-cli", sandbox: dispatch.sandbox, status, exit_code: result.exitCode, signal: result.signal, timed_out: result.timedOut, cancelled: result.cancelled ?? false, output_limited: result.outputLimited, invalid_jsonl_lines: parsed.invalidLines, event_count: parsed.events.length, event_types: [...new Set(parsed.events.map((event) => String(event.type)))], thread_id: parsed.threadId, final_message: parsed.finalMessage, usage: parsed.usage, stderr_digest: digest18(result.stderr), completed_at: (/* @__PURE__ */ new Date()).toISOString() };
-    const directory = (0, import_node_path15.join)(this.store.paths.artifactsDir, "codex");
-    await (0, import_promises9.mkdir)(directory, { recursive: true });
-    const receiptPath = (0, import_node_path15.join)(directory, `${dispatch.id}.json`);
-    await (0, import_promises9.writeFile)(receiptPath, `${JSON.stringify(receiptPayload, null, 2)}
+    const directory = (0, import_node_path16.join)(this.store.paths.artifactsDir, "codex");
+    await (0, import_promises10.mkdir)(directory, { recursive: true });
+    const receiptPath = (0, import_node_path16.join)(directory, `${dispatch.id}.json`);
+    await (0, import_promises10.writeFile)(receiptPath, `${JSON.stringify(receiptPayload, null, 2)}
 `, { encoding: "utf8", mode: 384 });
     const receipt = this.store.create("codex_receipt", `receipt_${dispatch.id}`, { ...receiptPayload, uri: (0, import_node_url.pathToFileURL)(receiptPath).toString(), digest: digest18(receiptPayload) });
     const saved = this.store.save("codex_dispatch", String(dispatch.id), { ...payload19(dispatch), status, receipt_id: receipt.id, finished_at: receiptPayload.completed_at });
@@ -15733,16 +16003,16 @@ var CodexHostKernel = class {
 };
 
 // src/claude-driver.ts
-var import_node_crypto39 = require("node:crypto");
-var import_promises10 = require("node:fs/promises");
-var import_node_path16 = require("node:path");
+var import_node_crypto40 = require("node:crypto");
+var import_promises11 = require("node:fs/promises");
+var import_node_path17 = require("node:path");
 var import_node_url2 = require("node:url");
 function text36(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function integer12(value, name, fallback, minimum, maximum) {
-  const result = value === void 0 ? fallback : Number(value);
+function integer12(value, name, fallback4, minimum, maximum) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < minimum || result > maximum) throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
   return result;
 }
@@ -15753,7 +16023,7 @@ function optionalMoney(value) {
   return result;
 }
 function digest19(value) {
-  return `sha256:${(0, import_node_crypto39.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto40.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function redact4(value) {
   return value.replace(/(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]+/giu, "[redacted]");
@@ -15803,13 +16073,13 @@ var ClaudeHostKernel = class {
   prepare(args) {
     const task = this.store.get("task", text36(args.task_id, "task_id"));
     const prompt = text36(args.prompt, "prompt");
-    const workspace = (0, import_node_path16.resolve)(text36(args.workspace, "workspace"));
+    const workspace = (0, import_node_path17.resolve)(text36(args.workspace, "workspace"));
     const sandbox = String(args.sandbox ?? "read-only");
     if (!(/* @__PURE__ */ new Set(["read-only", "workspace-write"])).has(sandbox)) throw new Error("Claude sandbox is unsupported");
     const model = args.model === void 0 ? null : text36(args.model, "model");
     const maxTurns = integer12(args.max_turns, "max_turns", 12, 1, 100);
     const maxBudgetUsd = optionalMoney(args.max_budget_usd);
-    const dispatchId = String(args.dispatch_id ?? `claude_dispatch_${(0, import_node_crypto39.randomUUID)().replaceAll("-", "")}`);
+    const dispatchId = String(args.dispatch_id ?? `claude_dispatch_${(0, import_node_crypto40.randomUUID)().replaceAll("-", "")}`);
     const identity = { task_id: task.id, task_version: task.version, workspace, sandbox, model, max_turns: maxTurns, max_budget_usd: maxBudgetUsd, prompt_digest: digest19(prompt) };
     const requestDigest = digest19(identity);
     const existing = this.store.find("claude_dispatch", dispatchId);
@@ -15846,10 +16116,10 @@ var ClaudeHostKernel = class {
     const parsed = parse2(execution.stdout);
     const status = execution.exitCode === 0 && !execution.timedOut && parsed.invalidLines === 0 && parsed.resultSubtype !== "error" ? "completed" : "failed";
     const receiptPayload = { dispatch_id: dispatch.id, task_id: dispatch.task_id, host: this.host, sandbox: dispatch.sandbox, status, exit_code: execution.exitCode, signal: execution.signal, timed_out: execution.timedOut, cancelled: execution.cancelled ?? false, output_limited: execution.outputLimited, invalid_jsonl_lines: parsed.invalidLines, event_count: parsed.events.length, event_types: [...new Set(parsed.events.map((event) => String(event.type)))], session_id: parsed.sessionId, final_message: parsed.finalMessage, usage: parsed.usage, cost_usd: parsed.costUsd, result_subtype: parsed.resultSubtype, stderr_digest: digest19(execution.stderr), completed_at: (/* @__PURE__ */ new Date()).toISOString() };
-    const directory = (0, import_node_path16.join)(this.store.paths.artifactsDir, "claude");
-    await (0, import_promises10.mkdir)(directory, { recursive: true });
-    const receiptPath = (0, import_node_path16.join)(directory, `${dispatch.id}.json`);
-    await (0, import_promises10.writeFile)(receiptPath, `${JSON.stringify(receiptPayload, null, 2)}
+    const directory = (0, import_node_path17.join)(this.store.paths.artifactsDir, "claude");
+    await (0, import_promises11.mkdir)(directory, { recursive: true });
+    const receiptPath = (0, import_node_path17.join)(directory, `${dispatch.id}.json`);
+    await (0, import_promises11.writeFile)(receiptPath, `${JSON.stringify(receiptPayload, null, 2)}
 `, { encoding: "utf8", mode: 384 });
     const receipt = this.store.create("claude_receipt", `receipt_${dispatch.id}`, { ...receiptPayload, uri: (0, import_node_url2.pathToFileURL)(receiptPath).toString(), digest: digest19(receiptPayload) });
     const saved = this.store.save("claude_dispatch", String(dispatch.id), { ...payload20(dispatch), status, receipt_id: receipt.id, finished_at: receiptPayload.completed_at });
@@ -15859,21 +16129,21 @@ var ClaudeHostKernel = class {
 };
 
 // src/generic-driver.ts
-var import_node_crypto40 = require("node:crypto");
-var import_promises11 = require("node:fs/promises");
-var import_node_path17 = require("node:path");
+var import_node_crypto41 = require("node:crypto");
+var import_promises12 = require("node:fs/promises");
+var import_node_path18 = require("node:path");
 var import_node_url3 = require("node:url");
 function text37(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function integer13(value, name, fallback, minimum, maximum) {
-  const result = value === void 0 ? fallback : Number(value);
+function integer13(value, name, fallback4, minimum, maximum) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < minimum || result > maximum) throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
   return result;
 }
 function digest20(value) {
-  return `sha256:${(0, import_node_crypto40.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto41.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function redact5(value) {
   return value.replace(/(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]+/giu, "[redacted]");
@@ -15905,11 +16175,11 @@ var GenericCliHostKernel = class {
   prepare(args) {
     const task = this.store.get("task", text37(args.task_id, "task_id"));
     const prompt = text37(args.prompt, "prompt");
-    const workspace = (0, import_node_path17.resolve)(text37(args.workspace, "workspace"));
+    const workspace = (0, import_node_path18.resolve)(text37(args.workspace, "workspace"));
     const sandbox = String(args.sandbox ?? "read-only");
     if (!SANDBOXES.has(sandbox)) throw new Error("Host sandbox is unsupported");
     const model = hostModelFor(this.profile, args.model);
-    const dispatchId = String(args.dispatch_id ?? `${this.dispatchKind}_${(0, import_node_crypto40.randomUUID)().replaceAll("-", "")}`);
+    const dispatchId = String(args.dispatch_id ?? `${this.dispatchKind}_${(0, import_node_crypto41.randomUUID)().replaceAll("-", "")}`);
     const identity = { host: this.host, task_id: task.id, task_version: task.version, workspace, sandbox, model, prompt_digest: digest20(prompt) };
     const requestDigest = digest20(identity);
     const existing = this.store.find(this.dispatchKind, dispatchId);
@@ -16002,10 +16272,10 @@ var GenericCliHostKernel = class {
       stderr_digest: digest20(execution.stderr),
       completed_at: (/* @__PURE__ */ new Date()).toISOString()
     };
-    const directory = (0, import_node_path17.join)(this.store.paths.artifactsDir, this.host);
-    await (0, import_promises11.mkdir)(directory, { recursive: true });
-    const receiptPath = (0, import_node_path17.join)(directory, `${dispatch.id}.json`);
-    await (0, import_promises11.writeFile)(receiptPath, `${JSON.stringify(receiptPayload, null, 2)}
+    const directory = (0, import_node_path18.join)(this.store.paths.artifactsDir, this.host);
+    await (0, import_promises12.mkdir)(directory, { recursive: true });
+    const receiptPath = (0, import_node_path18.join)(directory, `${dispatch.id}.json`);
+    await (0, import_promises12.writeFile)(receiptPath, `${JSON.stringify(receiptPayload, null, 2)}
 `, { encoding: "utf8", mode: 384 });
     const receipt = this.store.create(this.receiptKind(), `receipt_${dispatch.id}`, {
       ...receiptPayload,
@@ -16029,13 +16299,13 @@ var GenericCliHostKernel = class {
 };
 
 // src/host-run.ts
-var import_node_crypto44 = require("node:crypto");
+var import_node_crypto45 = require("node:crypto");
 
 // src/trace-kernel.ts
-var import_node_crypto43 = require("node:crypto");
+var import_node_crypto44 = require("node:crypto");
 
 // src/runtime-truth.ts
-var import_node_crypto41 = require("node:crypto");
+var import_node_crypto42 = require("node:crypto");
 var TRACE_SCHEMA = "craft.trace";
 var TRACE_SCHEMA_REVISION = 1;
 function text38(value, name) {
@@ -16047,7 +16317,7 @@ function object13(value, name) {
   return value;
 }
 function digest21(value) {
-  return `sha256:${(0, import_node_crypto41.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto42.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function clean(value) {
   return Object.fromEntries(Object.entries(object13(value, "value")).filter(([key2]) => !/(?:api[_-]?key|authorization|cookie|password|secret|token)/iu.test(key2)));
@@ -16079,11 +16349,11 @@ function standardizeTrace(input) {
 function toOtlpTrace(input, events = []) {
   const trace = standardizeTrace(input);
   const normalized = events.length ? events.map(standardizeTrace) : [trace];
-  const traceHex = (0, import_node_crypto41.createHash)("sha256").update(String(trace.trace_id)).digest("hex").slice(0, 32);
+  const traceHex = (0, import_node_crypto42.createHash)("sha256").update(String(trace.trace_id)).digest("hex").slice(0, 32);
   const spans = normalized.map((event) => ({
     traceId: traceHex,
-    spanId: (0, import_node_crypto41.createHash)("sha256").update(`${trace.trace_id}:${event.sequence}`).digest("hex").slice(0, 16),
-    parentSpanId: event.parent_span_id ? (0, import_node_crypto41.createHash)("sha256").update(String(event.parent_span_id)).digest("hex").slice(0, 16) : void 0,
+    spanId: (0, import_node_crypto42.createHash)("sha256").update(`${trace.trace_id}:${event.sequence}`).digest("hex").slice(0, 16),
+    parentSpanId: event.parent_span_id ? (0, import_node_crypto42.createHash)("sha256").update(String(event.parent_span_id)).digest("hex").slice(0, 16) : void 0,
     name: String(event.event_kind),
     kind: _internalSpanKind(event.event_kind),
     attributes: [
@@ -16147,14 +16417,14 @@ function createWorkNote(args) {
 }
 
 // src/trace-archive-store.ts
-var import_node_crypto42 = require("node:crypto");
-var import_node_fs13 = require("node:fs");
-var import_node_path18 = require("node:path");
+var import_node_crypto43 = require("node:crypto");
+var import_node_fs14 = require("node:fs");
+var import_node_path19 = require("node:path");
 var import_node_zlib = require("node:zlib");
 var FORMAT = "craft.trace.archive.v1";
 var LOCAL_STORAGE = "local_jsonl_gzip";
 function digest22(value) {
-  return `sha256:${(0, import_node_crypto42.createHash)("sha256").update(value).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto43.createHash)("sha256").update(value).digest("hex")}`;
 }
 function object14(value, name) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${name} must be an object`);
@@ -16252,23 +16522,23 @@ var LocalTraceArchiveStore = class {
     const encoded = encode(bundle);
     const [year, month, day] = dateParts(bundle.archived_at);
     const locator2 = `trace-archive/${year}/${month}/${day}/${traceFilename(bundle, encoded.contentDigest)}`;
-    const path2 = (0, import_node_path18.join)(this.logsDir, ...locator2.split("/"));
+    const path2 = (0, import_node_path19.join)(this.logsDir, ...locator2.split("/"));
     const result = pointer2(LOCAL_STORAGE, locator2, encoded.contentDigest, encoded.compressed.byteLength);
-    (0, import_node_fs13.mkdirSync)((0, import_node_path18.join)(this.logsDir, "trace-archive", year, month, day), { recursive: true });
-    if ((0, import_node_fs13.existsSync)(path2)) {
+    (0, import_node_fs14.mkdirSync)((0, import_node_path19.join)(this.logsDir, "trace-archive", year, month, day), { recursive: true });
+    if ((0, import_node_fs14.existsSync)(path2)) {
       this.read(result);
       return result;
     }
-    const temporary = `${path2}.${process.pid}.${(0, import_node_crypto42.randomUUID)()}.tmp`;
-    (0, import_node_fs13.writeFileSync)(temporary, encoded.compressed, { mode: 384 });
-    (0, import_node_fs13.renameSync)(temporary, path2);
-    if (process.platform !== "win32") (0, import_node_fs13.chmodSync)(path2, 384);
+    const temporary = `${path2}.${process.pid}.${(0, import_node_crypto43.randomUUID)()}.tmp`;
+    (0, import_node_fs14.writeFileSync)(temporary, encoded.compressed, { mode: 384 });
+    (0, import_node_fs14.renameSync)(temporary, path2);
+    if (process.platform !== "win32") (0, import_node_fs14.chmodSync)(path2, 384);
     return result;
   }
   read(value) {
     if (value.storage !== LOCAL_STORAGE || value.format !== FORMAT) throw new Error("Trace archive storage is unsupported");
     const locator2 = safeLocator(value.locator, "trace-archive");
-    return decode2((0, import_node_fs13.readFileSync)((0, import_node_path18.join)(this.logsDir, ...locator2.split("/"))), value);
+    return decode2((0, import_node_fs14.readFileSync)((0, import_node_path19.join)(this.logsDir, ...locator2.split("/"))), value);
   }
 };
 
@@ -16284,8 +16554,8 @@ function text40(value, name) {
 function optional(value) {
   return value === void 0 || value === null ? null : text40(value, "reference");
 }
-function object15(value, name, fallback = {}) {
-  if (value === void 0) return fallback;
+function object15(value, name, fallback4 = {}) {
+  if (value === void 0) return fallback4;
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${name} must be an object`);
   return value;
 }
@@ -16308,7 +16578,7 @@ function canonical7(value) {
   return JSON.stringify(value);
 }
 function digest23(value) {
-  return `sha256:${(0, import_node_crypto43.createHash)("sha256").update(canonical7(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto44.createHash)("sha256").update(canonical7(value)).digest("hex")}`;
 }
 function safeData(value, name) {
   const result = object15(value, name);
@@ -16328,7 +16598,7 @@ var TraceKernel = class {
   }
   start(args) {
     const taskId3 = text40(args.task_id, "task_id");
-    const traceId = String(args.trace_id ?? `trace_${(0, import_node_crypto43.randomUUID)().replaceAll("-", "")}`);
+    const traceId = String(args.trace_id ?? `trace_${(0, import_node_crypto44.randomUUID)().replaceAll("-", "")}`);
     const identity = { task_id: taskId3, launch_id: optional(args.launch_id), run_id: optional(args.run_id), trial_id: optional(args.trial_id), attempt_id: optional(args.attempt_id), operation_id: optional(args.operation_id), model_fingerprint: optional(args.model_fingerprint), environment_fingerprint: optional(args.environment_fingerprint), capability_fingerprint: optional(args.capability_fingerprint), policy_fingerprint: optional(args.policy_fingerprint) };
     const identityDigest = digest23(identity);
     const existing = this.store.find("trace", traceId);
@@ -16520,7 +16790,7 @@ var HostRunKernel = class {
   controllers = /* @__PURE__ */ new Map();
   completions = /* @__PURE__ */ new Map();
   trace;
-  constructor(store, drivers, ownerId = `runner_${(0, import_node_crypto44.randomUUID)().replaceAll("-", "")}`, terminalObserver, trace) {
+  constructor(store, drivers, ownerId = `runner_${(0, import_node_crypto45.randomUUID)().replaceAll("-", "")}`, terminalObserver, trace) {
     this.store = store;
     this.drivers = new Map(drivers.map((driver) => [driver.host, driver]));
     this.ownerId = ownerId;
@@ -16541,7 +16811,7 @@ var HostRunKernel = class {
     if (!driver) throw new Error("Host Driver is unavailable");
     const dispatchId = text41(args.dispatch_id, "dispatch_id");
     const prompt = text41(args.prompt, "prompt");
-    const runId = String(args.run_id ?? `host_run_${(0, import_node_crypto44.randomUUID)().replaceAll("-", "")}`);
+    const runId = String(args.run_id ?? `host_run_${(0, import_node_crypto45.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("host_run", runId);
     if (existing) {
       if (existing.host !== host || existing.dispatch_id !== dispatchId) throw new Error("Host run idempotency conflict");
@@ -16620,9 +16890,9 @@ var HostRunKernel = class {
 };
 
 // src/internal-host-driver.ts
-var import_node_crypto45 = require("node:crypto");
-var import_promises12 = require("node:fs/promises");
-var import_node_path19 = require("node:path");
+var import_node_crypto46 = require("node:crypto");
+var import_promises13 = require("node:fs/promises");
+var import_node_path20 = require("node:path");
 var import_node_url4 = require("node:url");
 var DEFAULT_INTERNAL_TOOLS = [
   { type: "function", function: { name: "capability_search", description: "Find a small set of verified capabilities without activating or executing them.", parameters: { type: "object", properties: { query: { type: "string" }, limit: { type: "integer", minimum: 1, maximum: 20 } }, required: ["query"] } } },
@@ -16638,7 +16908,7 @@ function text42(value, name) {
   return value.trim();
 }
 function digest24(value) {
-  return `sha256:${(0, import_node_crypto45.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto46.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function redact6(value) {
   return value.replace(/(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]+/giu, "[redacted]");
@@ -16651,7 +16921,7 @@ var MAX_FINAL_MESSAGE_CHARS2 = 4e3;
 var MAX_SESSION_MESSAGE_CHARS = 2e3;
 function persistedConversation(messages) {
   return messages.map((message) => {
-    const raw = typeof message.content === "string" ? message.content : message.content === null ? "" : JSON.stringify(message.content);
+    const raw = message.content === null ? "" : message.content;
     return { role: message.role, content: redact6(raw).slice(0, MAX_SESSION_MESSAGE_CHARS), content_digest: digest24(raw), tool_calls_digest: message.tool_calls ? digest24(message.tool_calls) : null };
   });
 }
@@ -16706,7 +16976,7 @@ var InternalHostDriver = class {
     const tier = String(args.tier ?? "standard");
     const selected = selectModel(provider, tier);
     const limits2 = defineLoopLimits(args.limits ?? {});
-    const dispatchId = String(args.dispatch_id ?? `internal_dispatch_${(0, import_node_crypto45.randomUUID)().replaceAll("-", "")}`);
+    const dispatchId = String(args.dispatch_id ?? `internal_dispatch_${(0, import_node_crypto46.randomUUID)().replaceAll("-", "")}`);
     const identity = {
       host: this.host,
       task_id: task.id,
@@ -16824,10 +17094,10 @@ var InternalHostDriver = class {
       failure: failure === null ? null : redact6(failure),
       completed_at: (/* @__PURE__ */ new Date()).toISOString()
     };
-    const directory = (0, import_node_path19.join)(this.store.paths.artifactsDir, this.host);
-    await (0, import_promises12.mkdir)(directory, { recursive: true });
-    const receiptPath = (0, import_node_path19.join)(directory, `${dispatch.id}.json`);
-    await (0, import_promises12.writeFile)(receiptPath, `${JSON.stringify(receiptPayload, null, 2)}
+    const directory = (0, import_node_path20.join)(this.store.paths.artifactsDir, this.host);
+    await (0, import_promises13.mkdir)(directory, { recursive: true });
+    const receiptPath = (0, import_node_path20.join)(directory, `${dispatch.id}.json`);
+    await (0, import_promises13.writeFile)(receiptPath, `${JSON.stringify(receiptPayload, null, 2)}
 `, { encoding: "utf8", mode: 384 });
     const receipt = this.store.create(
       this.receiptKind(),
@@ -16934,7 +17204,7 @@ var MetricsKernel = class {
 };
 
 // src/knowledge-bound-launch.ts
-var import_node_crypto46 = require("node:crypto");
+var import_node_crypto47 = require("node:crypto");
 function text43(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -16953,7 +17223,7 @@ function positiveInteger2(value, name) {
   return number6;
 }
 function digest25(value) {
-  return `sha256:${(0, import_node_crypto46.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto47.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function sameJson(left, right) {
   return JSON.stringify(left) === JSON.stringify(right);
@@ -17095,12 +17365,12 @@ var KnowledgeWorkbenchKernel = class {
 };
 
 // src/wiki-candidate-governance.ts
-var import_node_crypto47 = require("node:crypto");
+var import_node_crypto48 = require("node:crypto");
 function id9(prefix) {
-  return `${prefix}_${(0, import_node_crypto47.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto48.randomUUID)().replaceAll("-", "")}`;
 }
 function digest26(value) {
-  return `sha256:${(0, import_node_crypto47.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto48.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function text44(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
@@ -17231,12 +17501,12 @@ var WikiCandidateGovernanceKernel = class {
 };
 
 // src/guided-work.ts
-var import_node_crypto48 = require("node:crypto");
+var import_node_crypto49 = require("node:crypto");
 function id10(prefix) {
-  return `${prefix}_${(0, import_node_crypto48.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto49.randomUUID)().replaceAll("-", "")}`;
 }
 function digest27(value) {
-  return `sha256:${(0, import_node_crypto48.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto49.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function text45(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
@@ -17309,8 +17579,8 @@ var GuidedWorkKernel = class {
 };
 
 // src/execution-safety.ts
-var import_node_crypto49 = require("node:crypto");
-var import_node_path20 = require("node:path");
+var import_node_crypto50 = require("node:crypto");
+var import_node_path21 = require("node:path");
 function text46(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -17325,7 +17595,7 @@ function money(value) {
   return value;
 }
 function digest28(value) {
-  return `sha256:${(0, import_node_crypto49.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto50.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload26(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -17345,7 +17615,7 @@ var ExecutionSafetyKernel = class {
     if (!(/* @__PURE__ */ new Set(["read-only", "workspace-write"])).has(sandbox)) throw new Error("Safety preflight sandbox is unsupported");
     const profileId = text46(args.profile_id, "profile_id");
     const profileVersion = integer15(args.profile_version, "profile_version", 1, Number.MAX_SAFE_INTEGER);
-    const workspace = (0, import_node_path20.resolve)(text46(args.workspace, "workspace"));
+    const workspace = (0, import_node_path21.resolve)(text46(args.workspace, "workspace"));
     const resources2 = { timeout_ms: integer15(args.timeout_ms, "timeout_ms", 1e3, 36e5), output_limit: integer15(args.output_limit, "output_limit", 4096, 16777216) };
     resources2.max_turns = args.max_turns !== void 0 ? integer15(args.max_turns, "max_turns", 1, 100) : null;
     resources2.max_budget_usd = args.max_budget_usd !== void 0 ? money(Number(args.max_budget_usd)) : null;
@@ -17354,7 +17624,7 @@ var ExecutionSafetyKernel = class {
     if (planned.compatible !== true) throw new Error(`Safety preflight requirements are not satisfied: ${planned.missing.join(", ")}`);
     const profile = planned.profile;
     const identity = { task_id: task.id, host, workspace, sandbox, profile_id: profile.id, profile_version: profile.version, profile_digest: profile.capability_digest, requirements, resources: resources2 };
-    const preflightId = String(args.preflight_id ?? `execution_safety_preflight_${(0, import_node_crypto49.randomUUID)().replaceAll("-", "")}`);
+    const preflightId = String(args.preflight_id ?? `execution_safety_preflight_${(0, import_node_crypto50.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("execution_safety_preflight", preflightId);
     if (existing) {
       if (existing.identity_digest !== digest28(identity)) throw new Error("Safety preflight idempotency conflict");
@@ -17389,15 +17659,15 @@ var ExecutionSafetyKernel = class {
 };
 
 // src/local-candidate-import.ts
-var import_node_crypto50 = require("node:crypto");
-var import_promises13 = require("node:fs/promises");
-var import_node_path21 = require("node:path");
+var import_node_crypto51 = require("node:crypto");
+var import_promises14 = require("node:fs/promises");
+var import_node_path22 = require("node:path");
 function text47(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest29(value) {
-  return `sha256:${(0, import_node_crypto50.createHash)("sha256").update(value).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto51.createHash)("sha256").update(value).digest("hex")}`;
 }
 var LocalCandidateImportKernel = class {
   store;
@@ -17408,13 +17678,13 @@ var LocalCandidateImportKernel = class {
     const packageRecord = this.store.get("wiki_candidate_publication_package", text47(args.package_id, "package_id"));
     if (packageRecord.status !== "prepared" || packageRecord.manual_import_required !== true || packageRecord.execution_authority !== false) throw new Error("Only a prepared non-executable manual package can be imported");
     if (args.confirmed !== true) throw new Error("Local package import requires explicit confirmed: true");
-    const root = (0, import_node_path21.resolve)(text47(args.target_root, "target_root"));
+    const root = (0, import_node_path22.resolve)(text47(args.target_root, "target_root"));
     const requested = text47(args.relative_path, "relative_path");
-    const target = (0, import_node_path21.resolve)(root, requested);
-    const pathRelative = (0, import_node_path21.relative)(root, target);
+    const target = (0, import_node_path22.resolve)(root, requested);
+    const pathRelative = (0, import_node_path22.relative)(root, target);
     if (!pathRelative || pathRelative.startsWith("..") || pathRelative.includes(":") || !pathRelative.endsWith(".md")) throw new Error("Local package import path must be a descendant Markdown file");
     const content = String(packageRecord.content);
-    const importId = String(args.import_id ?? `wiki_candidate_local_import_${(0, import_node_crypto50.randomUUID)().replaceAll("-", "")}`);
+    const importId = String(args.import_id ?? `wiki_candidate_local_import_${(0, import_node_crypto51.randomUUID)().replaceAll("-", "")}`);
     const identity = { package_id: packageRecord.id, package_version: packageRecord.version, target_root: root, relative_path: pathRelative, content_digest: digest29(content), reviewer: text47(args.reviewer, "reviewer") };
     const existing = this.store.find("wiki_candidate_local_import", importId);
     if (existing) {
@@ -17422,13 +17692,13 @@ var LocalCandidateImportKernel = class {
       return { import: existing, idempotent: true };
     }
     try {
-      await (0, import_promises13.readFile)(target, "utf8");
+      await (0, import_promises14.readFile)(target, "utf8");
       throw new Error("Local package import refuses to overwrite an existing file");
     } catch (error) {
       if (!(error instanceof Error) || error.code !== "ENOENT") throw error;
     }
-    await (0, import_promises13.mkdir)((0, import_node_path21.resolve)(root, pathRelative, ".."), { recursive: true });
-    await (0, import_promises13.writeFile)(target, content, { encoding: "utf8", flag: "wx", mode: 384 });
+    await (0, import_promises14.mkdir)((0, import_node_path22.resolve)(root, pathRelative, ".."), { recursive: true });
+    await (0, import_promises14.writeFile)(target, content, { encoding: "utf8", flag: "wx", mode: 384 });
     const imported = this.store.create("wiki_candidate_local_import", importId, { ...identity, identity_digest: digest29(JSON.stringify(identity)), target_uri: target, enabled: false, execution_authority: false, status: "imported" });
     return { import: imported, idempotent: false };
   }
@@ -17438,20 +17708,20 @@ var LocalCandidateImportKernel = class {
 };
 
 // src/legacy-knowledge-migration.ts
-var import_node_crypto51 = require("node:crypto");
-var import_promises14 = require("node:fs/promises");
-var import_node_path22 = require("node:path");
+var import_node_crypto52 = require("node:crypto");
+var import_promises15 = require("node:fs/promises");
+var import_node_path23 = require("node:path");
 var CATEGORIES = /* @__PURE__ */ new Set(["projects", "domains", "troubleshooting", "decisions", "workflows"]);
 var TYPES3 = /* @__PURE__ */ new Map([["domain_rule", "fact"], ["technical_decision", "decision"], ["workflow", "rule"], ["troubleshooting", "failure_mode"], ["stable_project_fact", "fact"]]);
-var SECRET3 = /(?:password|passwd|token|secret|api[_-]?key|cookie|authorization)\s*[:=]\s*\S{8,}/i;
+var SECRET4 = /(?:password|passwd|token|secret|api[_-]?key|cookie|authorization)\s*[:=]\s*\S{8,}/i;
 var FORBIDDEN = /个人述职|述职|\bddo\b|\bokr\b|绩效|个人能力|能力成长|个人总结|周报|月报|季度总结|上半年总结|下半年计划|阶段进展|项目进展|会议纪要|会议记录|文案润色|翻译润色/i;
 var MAX_FILES3 = 1e4;
 var MAX_BYTES = 256 * 1024;
 function digest30(value) {
-  return `sha256:${(0, import_node_crypto51.createHash)("sha256").update(typeof value === "string" ? value : JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto52.createHash)("sha256").update(typeof value === "string" ? value : JSON.stringify(value)).digest("hex")}`;
 }
 function id11(prefix) {
-  return `${prefix}_${(0, import_node_crypto51.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto52.randomUUID)().replaceAll("-", "")}`;
 }
 function text48(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
@@ -17462,7 +17732,7 @@ function payload27(record) {
   return rest;
 }
 function safe2(value) {
-  return !SECRET3.test(value) && !FORBIDDEN.test(value);
+  return !SECRET4.test(value) && !FORBIDDEN.test(value);
 }
 function frontmatter(content) {
   const lines = content.split(/\r?\n/);
@@ -17476,14 +17746,14 @@ function frontmatter(content) {
   }
   return { metadata, body: lines.slice(end + 2).join("\n") };
 }
-function heading(body2, fallback) {
-  return body2.split(/\r?\n/).find((line2) => line2.startsWith("# "))?.slice(2).trim() || fallback;
+function heading(body2, fallback4) {
+  return body2.split(/\r?\n/).find((line2) => line2.startsWith("# "))?.slice(2).trim() || fallback4;
 }
 function tags(value) {
   return value ? value.split(",").map((item) => item.trim()).filter(Boolean) : [];
 }
 function candidateId(migrationId, entry2) {
-  return `legacy_knowledge_candidate_${(0, import_node_crypto51.createHash)("sha256").update(`${migrationId}:${entry2.rel_path}:${entry2.page_digest}`).digest("hex").slice(0, 24)}`;
+  return `legacy_knowledge_candidate_${(0, import_node_crypto52.createHash)("sha256").update(`${migrationId}:${entry2.rel_path}:${entry2.page_digest}`).digest("hex").slice(0, 24)}`;
 }
 var LegacyKnowledgeMigrationKernel = class {
   store;
@@ -17509,12 +17779,12 @@ var LegacyKnowledgeMigrationKernel = class {
     return { migration_id: migration.id, previous_digest: migration.source_digest, current_digest: next.source_digest, changed: drifted, entries: changed, tombstones, migration: saved, content_free: true };
   }
   async discover(args) {
-    const sourceRoot = await (0, import_promises14.realpath)((0, import_node_path22.resolve)(text48(args.source_root, "source_root")));
-    const pagesRoot = (0, import_node_path22.resolve)(sourceRoot, "data", "pages");
-    const root = await (0, import_promises14.realpath)(pagesRoot).catch(() => {
+    const sourceRoot = await (0, import_promises15.realpath)((0, import_node_path23.resolve)(text48(args.source_root, "source_root")));
+    const pagesRoot = (0, import_node_path23.resolve)(sourceRoot, "data", "pages");
+    const root = await (0, import_promises15.realpath)(pagesRoot).catch(() => {
       throw new Error("source_root must contain data/pages");
     });
-    if ((0, import_node_path22.relative)(sourceRoot, root).startsWith("..")) throw new Error("data/pages escapes source_root");
+    if ((0, import_node_path23.relative)(sourceRoot, root).startsWith("..")) throw new Error("data/pages escapes source_root");
     const files4 = await this.markdownFiles(root);
     const entries2 = [];
     for (const file of files4) entries2.push(await this.entry(sourceRoot, root, file));
@@ -17603,8 +17873,8 @@ var LegacyKnowledgeMigrationKernel = class {
   async markdownFiles(root) {
     const result = [];
     const walk3 = async (directory) => {
-      for (const item of await (0, import_promises14.readdir)(directory, { withFileTypes: true })) {
-        const target = (0, import_node_path22.resolve)(directory, item.name);
+      for (const item of await (0, import_promises15.readdir)(directory, { withFileTypes: true })) {
+        const target = (0, import_node_path23.resolve)(directory, item.name);
         if (item.isSymbolicLink()) continue;
         if (item.isDirectory()) await walk3(target);
         else if (item.isFile() && item.name.endsWith(".md")) {
@@ -17617,15 +17887,14 @@ var LegacyKnowledgeMigrationKernel = class {
     return result.sort();
   }
   async entry(sourceRoot, pagesRoot, file) {
-    const info = await (0, import_promises14.stat)(file);
-    const rel_path = (0, import_node_path22.relative)(sourceRoot, file).split("\\").join("/");
+    const info = await (0, import_promises15.stat)(file);
+    const rel_path = (0, import_node_path23.relative)(sourceRoot, file).split("\\").join("/");
     if (info.size > MAX_BYTES) return this.excluded(rel_path, digest30(`${file}:${info.size}`), "file_too_large");
-    const content = await (0, import_promises14.readFile)(file, "utf8");
+    const content = await (0, import_promises15.readFile)(file, "utf8");
     const page_digest = digest30(content);
-    if (!safe2(content)) return this.excluded(rel_path, page_digest, "sensitive_or_disallowed");
     const { metadata, body: body2 } = frontmatter(content);
-    const title = metadata.title || heading(body2, (0, import_node_path22.relative)(pagesRoot, file));
-    const category = metadata.category ?? (0, import_node_path22.relative)(pagesRoot, file).split("/")[0] ?? "";
+    const title = metadata.title || heading(body2, (0, import_node_path23.relative)(pagesRoot, file));
+    const category = metadata.category ?? (0, import_node_path23.relative)(pagesRoot, file).split("/")[0];
     const knowledge_type = metadata.knowledge_type ?? "";
     if (metadata.status !== "confirmed") return this.excluded(rel_path, page_digest, "not_confirmed", title, category, knowledge_type);
     if (!CATEGORIES.has(category) || !TYPES3.has(knowledge_type)) return this.excluded(rel_path, page_digest, "unsupported_metadata", title, category, knowledge_type);
@@ -17635,18 +17904,19 @@ var LegacyKnowledgeMigrationKernel = class {
     const summary2 = `\u6765\u6E90\u6458\u8981\uFF1A${reuse}`;
     if (!safe2(`${title}
 ${summary2}`)) return this.excluded(rel_path, page_digest, "sensitive_or_disallowed", title, category, knowledge_type);
+    if (!safe2(content)) return this.excluded(rel_path, page_digest, "sensitive_or_disallowed", title, category, knowledge_type);
     return { rel_path, page_digest, title, summary: summary2, eligibility: "eligible", reason: null, category, knowledge_type, scope: metadata.scope ?? "project", project: metadata.project ?? null, tags: tags(metadata.tags), evidence_type };
   }
   async sourceState(sourceRoot, entry2) {
-    const target = (0, import_node_path22.resolve)(sourceRoot, entry2.rel_path);
-    const relativePath3 = (0, import_node_path22.relative)(sourceRoot, target);
+    const target = (0, import_node_path23.resolve)(sourceRoot, entry2.rel_path);
+    const relativePath3 = (0, import_node_path23.relative)(sourceRoot, target);
     if (!relativePath3 || relativePath3.startsWith("..")) return "invalid_source_locator";
     try {
-      const resolved = await (0, import_promises14.realpath)(target);
-      if ((0, import_node_path22.relative)(sourceRoot, resolved).startsWith("..")) return "source_path_escape";
-      const info = await (0, import_promises14.stat)(resolved);
+      const resolved = await (0, import_promises15.realpath)(target);
+      if ((0, import_node_path23.relative)(sourceRoot, resolved).startsWith("..")) return "source_path_escape";
+      const info = await (0, import_promises15.stat)(resolved);
       if (!info.isFile() || info.size > MAX_BYTES) return "source_unavailable";
-      const content = await (0, import_promises14.readFile)(resolved, "utf8");
+      const content = await (0, import_promises15.readFile)(resolved, "utf8");
       if (!safe2(content)) return "source_sensitive_or_disallowed";
       return digest30(content) === entry2.page_digest ? "current" : "source_digest_drift";
     } catch {
@@ -17670,13 +17940,13 @@ ${summary2}`)) return this.excluded(rel_path, page_digest, "sensitive_or_disallo
 };
 
 // src/a2a-discovery.ts
-var import_node_crypto52 = require("node:crypto");
+var import_node_crypto53 = require("node:crypto");
 function text49(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest31(value) {
-  return `sha256:${(0, import_node_crypto52.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto53.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function object17(value, name) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${name} must be an object`);
@@ -17703,7 +17973,7 @@ var A2ADiscoveryKernel = class {
     const raw = JSON.stringify(card);
     if (/(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]/iu.test(raw)) throw new Error("A2A Agent Card contains sensitive assignments");
     const identity = { discovery_url: url2.toString(), name, endpoint: endpoint3.toString(), protocol_version: typeof card.protocolVersion === "string" ? card.protocolVersion : null, skills: strings14(card.skills).length ? strings14(card.skills) : Array.isArray(card.skills) ? card.skills.map((skill) => object17(skill, "A2A Agent Card.skill")).map((skill) => text49(skill.id, "A2A Agent Card.skill.id")) : [], card_digest: digest31(card) };
-    const cardId = String(args.card_id ?? `a2a_agent_card_${(0, import_node_crypto52.randomUUID)().replaceAll("-", "")}`);
+    const cardId = String(args.card_id ?? `a2a_agent_card_${(0, import_node_crypto53.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("a2a_agent_card", cardId);
     if (existing) {
       if (existing.identity_digest !== digest31(identity)) throw new Error("A2A Agent Card idempotency conflict or drift");
@@ -17721,13 +17991,13 @@ var A2ADiscoveryKernel = class {
 };
 
 // src/work-delivery.ts
-var import_node_crypto53 = require("node:crypto");
+var import_node_crypto54 = require("node:crypto");
 function text50(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest32(value) {
-  return `sha256:${(0, import_node_crypto53.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto54.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var WorkDeliveryKernel = class {
   store;
@@ -17757,7 +18027,7 @@ var WorkDeliveryKernel = class {
 };
 
 // src/delivery-evaluation.ts
-var import_node_crypto54 = require("node:crypto");
+var import_node_crypto55 = require("node:crypto");
 function text51(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -17766,13 +18036,13 @@ function items(value) {
   if (!Array.isArray(value) || !value.length || value.some((item) => item === null || typeof item !== "object" || Array.isArray(item))) throw new Error("items must be a non-empty object array");
   return value;
 }
-function positiveInteger3(value, name, fallback) {
-  const parsed = value === void 0 ? fallback : Number(value);
+function positiveInteger3(value, name, fallback4) {
+  const parsed = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(parsed) || parsed < 1 || parsed > 100) throw new Error(`${name} must be an integer between 1 and 100`);
   return parsed;
 }
 function digest33(value) {
-  return `sha256:${(0, import_node_crypto54.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto55.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function outcome(store, delivery) {
   const launch = store.get("work_launch", String(delivery.launch_id));
@@ -17845,14 +18115,14 @@ var DeliveryEvaluationKernel = class {
 };
 
 // src/platform-execution.ts
-var import_node_crypto55 = require("node:crypto");
-var import_node_fs14 = require("node:fs");
+var import_node_crypto56 = require("node:crypto");
+var import_node_fs15 = require("node:fs");
 function text52(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest34(value) {
-  return `sha256:${(0, import_node_crypto55.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto56.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var PlatformExecutionKernel = class {
   store;
@@ -17923,7 +18193,7 @@ var PlatformExecutionKernel = class {
   probe(args) {
     const platform2 = args.platform === void 0 ? process.platform : text52(args.platform, "platform");
     if (platform2 !== process.platform) throw new Error("Platform probe must target the current local platform");
-    const observed = { platform: platform2, node_version: process.version, sandbox_exec_available: (0, import_node_fs14.existsSync)("/usr/bin/sandbox-exec"), verified: false, note: "Probe is health telemetry only and never verifies an execution boundary." };
+    const observed = { platform: platform2, node_version: process.version, sandbox_exec_available: (0, import_node_fs15.existsSync)("/usr/bin/sandbox-exec"), verified: false, note: "Probe is health telemetry only and never verifies an execution boundary." };
     const probeId = String(args.probe_id ?? `platform_execution_probe_${platform2}`);
     const existing = this.store.find("platform_execution_probe", probeId);
     const probeDigest = digest34(observed);
@@ -17943,13 +18213,13 @@ var PlatformExecutionKernel = class {
 };
 
 // src/delivery-loop.ts
-var import_node_crypto56 = require("node:crypto");
+var import_node_crypto57 = require("node:crypto");
 function text53(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest35(value) {
-  return `sha256:${(0, import_node_crypto56.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto57.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function terminal(status) {
   return ["completed", "failed", "cancelled", "interrupted"].includes(String(status));
@@ -17989,8 +18259,8 @@ var DeliveryLoopKernel = class {
 };
 
 // src/task-control.ts
-var import_node_crypto57 = require("node:crypto");
-var import_node_path23 = require("node:path");
+var import_node_crypto58 = require("node:crypto");
+var import_node_path24 = require("node:path");
 var EFFECTS5 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_write"]);
 var HANDOFF_REASONS = /* @__PURE__ */ new Set(["operator_handoff", "approval_wait", "environment_block", "user_pause", "recovery"]);
 function text54(value, name) {
@@ -17998,7 +18268,7 @@ function text54(value, name) {
   return value.trim();
 }
 function digest36(value) {
-  return `sha256:${(0, import_node_crypto57.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto58.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function values(value) {
   const result = value === void 0 ? ["read_only"] : Array.isArray(value) ? value.map((item) => text54(item, "allowed_effects")) : (() => {
@@ -18043,7 +18313,7 @@ var TaskControlKernel = class {
   save(args) {
     const task = this.store.get("task", text54(args.task_id, "task_id"));
     const allowedEffects = values(args.allowed_effects);
-    const workspace = (0, import_node_path23.resolve)(text54(args.workspace, "workspace"));
+    const workspace = (0, import_node_path24.resolve)(text54(args.workspace, "workspace"));
     const profile = ref(this.store, "activation_profile", args.activation_profile_id, args.activation_profile_version);
     const budget = ref(this.store, "budget_account", args.budget_account_id, args.budget_account_version);
     if (profile && profile.task_id !== task.id) throw new Error("Activation profile does not match task");
@@ -18070,7 +18340,7 @@ var TaskControlKernel = class {
     const contract = this.store.get("task_control_contract", text54(args.contract_id, "contract_id"));
     const launch = this.store.get("work_launch", text54(args.launch_id, "launch_id"));
     if (contract.status !== "active" || launch.task_id !== contract.task_id) throw new Error("Work Launch does not match active task control contract");
-    if ((0, import_node_path23.resolve)(String(launch.workspace)) !== contract.workspace) throw new Error("Work Launch workspace does not match task control contract");
+    if ((0, import_node_path24.resolve)(String(launch.workspace)) !== contract.workspace) throw new Error("Work Launch workspace does not match task control contract");
     if (!contract.allowed_effects.includes(launchEffect(launch))) throw new Error("Work Launch effect is not allowed by task control contract");
     if (contract.acceptance_required === true && !launch.acceptance_plan_id) throw new Error("Task control contract requires an acceptance plan");
     if (contract.launch_id !== null) {
@@ -18139,13 +18409,13 @@ var TaskControlKernel = class {
 };
 
 // src/task-run.ts
-var import_node_crypto58 = require("node:crypto");
+var import_node_crypto59 = require("node:crypto");
 function text55(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest37(value) {
-  return `sha256:${(0, import_node_crypto58.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto59.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload29(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -18251,18 +18521,18 @@ var TaskRunKernel = class {
 };
 
 // src/task-benchmark.ts
-var import_node_crypto59 = require("node:crypto");
+var import_node_crypto60 = require("node:crypto");
 function text56(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function positive(value, name, fallback) {
-  const parsed = value === void 0 ? fallback : Number(value);
+function positive(value, name, fallback4) {
+  const parsed = value === void 0 ? fallback4 : Number(value);
   if (![Number.isInteger(parsed), parsed >= 1, parsed <= 100].every(Boolean)) throw new Error(`${name} must be an integer between 1 and 100`);
   return parsed;
 }
 function digest38(value) {
-  return `sha256:${(0, import_node_crypto59.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto60.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload30(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -18418,28 +18688,26 @@ function terms(value) {
 }
 
 // src/state-workspace.ts
-var import_node_crypto60 = require("node:crypto");
-var import_node_fs15 = require("node:fs");
-var import_node_path24 = require("node:path");
+var import_node_crypto61 = require("node:crypto");
+var import_node_fs16 = require("node:fs");
+var import_node_path25 = require("node:path");
 function text57(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest39(value) {
-  return `sha256:${(0, import_node_crypto60.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto61.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function fileDigest(path2) {
-  return `sha256:${(0, import_node_crypto60.createHash)("sha256").update((0, import_node_fs15.readFileSync)(path2)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto61.createHash)("sha256").update((0, import_node_fs16.readFileSync)(path2)).digest("hex")}`;
 }
 function relativePath2(value, name) {
   const item = text57(value, name).replaceAll("\\", "/");
-  if ((0, import_node_path24.isAbsolute)(item) || item.split("/").includes("..")) throw new Error(`${name} must be relative to the workspace`);
+  if ((0, import_node_path25.isAbsolute)(item) || item.split("/").includes("..")) throw new Error(`${name} must be relative to the workspace`);
   return item.replace(/^\.\//, "") || ".";
 }
 function nested2(root, path2) {
-  const target = (0, import_node_path24.resolve)(root, path2);
-  if ((0, import_node_path24.relative)(root, target).startsWith("..")) throw new Error("workspace state path escapes root");
-  return target;
+  return (0, import_node_path25.resolve)(root, relativePath2(path2, "path"));
 }
 function kind(stat4, path2) {
   if (stat4.isFile()) return "file";
@@ -18448,11 +18716,11 @@ function kind(stat4, path2) {
 }
 function files3(root, path2) {
   const target = nested2(root, path2);
-  if (!(0, import_node_fs15.existsSync)(target)) return [];
-  const stat4 = (0, import_node_fs15.lstatSync)(target);
+  if (!(0, import_node_fs16.existsSync)(target)) return [];
+  const stat4 = (0, import_node_fs16.lstatSync)(target);
   if (stat4.isSymbolicLink()) throw new Error(`state adapters do not follow symbolic links: ${path2}`);
   if (kind(stat4, path2) === "file") return [{ path: path2, digest: fileDigest(target), size_bytes: stat4.size }];
-  return (0, import_node_fs15.readdirSync)(target, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name)).flatMap((entry2) => files3(root, (0, import_node_path24.join)(path2, entry2.name).replaceAll("\\", "/")));
+  return (0, import_node_fs16.readdirSync)(target, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name)).flatMap((entry2) => files3(root, (0, import_node_path25.join)(path2, entry2.name).replaceAll("\\", "/")));
 }
 var StateWorkspaceKernel = class {
   store;
@@ -18501,13 +18769,13 @@ var StateWorkspaceKernel = class {
 };
 
 // src/verified-work-loop.ts
-var import_node_crypto61 = require("node:crypto");
+var import_node_crypto62 = require("node:crypto");
 function text58(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest40(value) {
-  return `sha256:${(0, import_node_crypto61.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto62.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload31(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -18590,13 +18858,13 @@ var VerifiedWorkLoopKernel = class {
 };
 
 // src/eval-campaign.ts
-var import_node_crypto62 = require("node:crypto");
+var import_node_crypto63 = require("node:crypto");
 function text59(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest41(value) {
-  return `sha256:${(0, import_node_crypto62.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto63.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function positive2(value, name) {
   const parsed = Number(value);
@@ -18676,22 +18944,22 @@ var EvalCampaignKernel = class {
 };
 
 // src/project-knowledge.ts
-var import_node_crypto63 = require("node:crypto");
-var import_node_fs16 = require("node:fs");
-var import_node_path25 = require("node:path");
+var import_node_crypto64 = require("node:crypto");
+var import_node_fs17 = require("node:fs");
+var import_node_path26 = require("node:path");
 function text60(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest42(value) {
-  return `sha256:${(0, import_node_crypto63.createHash)("sha256").update(String(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto64.createHash)("sha256").update(String(value)).digest("hex")}`;
 }
 function recordDigest2(value) {
-  return `sha256:${(0, import_node_crypto63.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto64.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function safeChild(root, path2) {
-  const target = (0, import_node_path25.resolve)(root, path2);
-  if ((0, import_node_path25.relative)(root, target).startsWith("..")) throw new Error("Project Knowledge path escapes the trusted project root");
+  const target = (0, import_node_path26.resolve)(root, path2);
+  if ((0, import_node_path26.relative)(root, target).startsWith("..")) throw new Error("Project Knowledge path escapes the trusted project root");
   return target;
 }
 function noSecret2(value) {
@@ -18699,20 +18967,22 @@ function noSecret2(value) {
 }
 var ProjectKnowledgeKernel = class {
   store;
-  constructor(store) {
+  lstat;
+  constructor(store, lstat = import_node_fs17.lstatSync) {
     this.store = store;
+    this.lstat = lstat;
   }
   discover(args) {
     if (args.trusted !== true) throw new Error("Project Knowledge discovery requires trusted=true");
-    const projectRoot = (0, import_node_path25.resolve)(text60(args.project_root, "project_root"));
+    const projectRoot = (0, import_node_path26.resolve)(text60(args.project_root, "project_root"));
     const memoriesRoot = safeChild(projectRoot, ".serena/memories");
-    const children = (0, import_node_fs16.existsSync)(memoriesRoot) ? (0, import_node_fs16.readdirSync)(memoriesRoot, { withFileTypes: true }) : [];
+    const children = (0, import_node_fs17.existsSync)(memoriesRoot) ? (0, import_node_fs17.readdirSync)(memoriesRoot, { withFileTypes: true }) : [];
     if (children.some((entry2) => entry2.isSymbolicLink())) throw new Error("Project Knowledge does not follow symbolic links");
     const entries2 = children.filter((entry2) => entry2.isFile() && entry2.name.endsWith(".md")).sort((a, b) => a.name.localeCompare(b.name)).map((entry2) => {
       const path2 = safeChild(memoriesRoot, entry2.name);
-      const stat4 = (0, import_node_fs16.lstatSync)(path2);
+      const stat4 = this.lstat(path2);
       if (stat4.isSymbolicLink()) throw new Error("Project Knowledge does not follow symbolic links");
-      const content = (0, import_node_fs16.readFileSync)(path2, "utf8");
+      const content = (0, import_node_fs17.readFileSync)(path2, "utf8");
       return { memory_id: `serena:${entry2.name.slice(0, -3)}`, path: `.serena/memories/${entry2.name}`, name: entry2.name.slice(0, -3), digest: digest42(content), size_bytes: stat4.size };
     });
     const identity = { project_root: projectRoot, provider: "serena_project_memory", descriptors: entries2 };
@@ -18738,9 +19008,9 @@ var ProjectKnowledgeKernel = class {
       const entry2 = descriptors.get(memoryId);
       if (!entry2) throw new Error("Project Knowledge memory is not in this discovery");
       const path2 = safeChild(root, entry2.path);
-      const stat4 = (0, import_node_fs16.lstatSync)(path2);
+      const stat4 = (0, import_node_fs17.lstatSync)(path2);
       if (stat4.isSymbolicLink()) throw new Error("Project Knowledge does not follow symbolic links");
-      const content = (0, import_node_fs16.readFileSync)(path2, "utf8");
+      const content = (0, import_node_fs17.readFileSync)(path2, "utf8");
       if (digest42(content) !== entry2.digest) throw new Error("Project Knowledge memory changed since discovery");
       noSecret2(content);
       used += content.length;
@@ -18776,14 +19046,14 @@ var ProjectKnowledgeKernel = class {
 };
 
 // src/capability-connector.ts
-var import_node_crypto64 = require("node:crypto");
+var import_node_crypto65 = require("node:crypto");
 var CONNECTOR_KINDS = /* @__PURE__ */ new Set(["builtin", "github_skill", "volcengine_skill", "mcp_stdio", "mcp_http", "serena_mcp"]);
 var ASSET_TYPES = /* @__PURE__ */ new Set(["skill", "mcp_server", "tool", "workflow", "adapter", "validator", "grader", "eval_suite"]);
 var EFFECTS6 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_write", "destructive"]);
 var EXTERNAL_CONNECTORS = /* @__PURE__ */ new Set(["github_skill", "volcengine_skill", "mcp_stdio", "mcp_http", "serena_mcp"]);
 var SECRET_PATTERN = /(?:authorization|bearer|cookie|password|secret|token|api[_-]?key)\s*[=:]|https?:\/\/[^/\s@]+:[^/\s@]+@/iu;
 function id12(prefix) {
-  return `${prefix}_${(0, import_node_crypto64.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto65.randomUUID)().replaceAll("-", "")}`;
 }
 function text61(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
@@ -18812,7 +19082,7 @@ function recordPayload6(record) {
   return payload75;
 }
 function digest43(value) {
-  return `sha256:${(0, import_node_crypto64.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto65.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function assertSafe(value, name) {
   if (SECRET_PATTERN.test(value)) throw new Error(`${name} must not contain credentials or secrets`);
@@ -19114,14 +19384,14 @@ var CapabilityConnectorKernel = class {
 };
 
 // src/capability-access.ts
-var import_node_crypto65 = require("node:crypto");
-var import_promises15 = require("node:fs/promises");
+var import_node_crypto66 = require("node:crypto");
+var import_promises16 = require("node:fs/promises");
 var ASSET_TYPES2 = /* @__PURE__ */ new Set(["skill", "mcp_server", "tool", "workflow", "adapter", "validator", "grader", "eval_suite"]);
 var TRUST_LEVELS = /* @__PURE__ */ new Set(["trusted", "untrusted", "verified"]);
 var HEALTH_STATUSES = /* @__PURE__ */ new Set(["healthy", "stale", "failed", "unknown"]);
 var SECRET_ASSIGNMENT = /(?:api[_-]?key|authorization|cookie|password|secret|token)["']?\s*[:=]\s*[^\s]+/iu;
 function id13(prefix) {
-  return `${prefix}_${(0, import_node_crypto65.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto66.randomUUID)().replaceAll("-", "")}`;
 }
 function text62(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
@@ -19140,15 +19410,15 @@ function optionalBoolean(value, name) {
   if (typeof value !== "boolean") throw new Error(`${name} must be a boolean`);
   return value;
 }
-function finiteInteger(value, name, fallback, minimum = 1, maximum = Number.MAX_SAFE_INTEGER) {
-  const number6 = value === void 0 ? fallback : Number(value);
+function finiteInteger(value, name, fallback4, minimum = 1, maximum = Number.MAX_SAFE_INTEGER) {
+  const number6 = value === void 0 ? fallback4 : Number(value);
   if (!Number.isFinite(number6) || !Number.isInteger(number6) || number6 < minimum || number6 > maximum) {
     throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
   }
   return number6;
 }
-function optionalTextArray(value, name, fallback = []) {
-  if (value === void 0) return fallback;
+function optionalTextArray(value, name, fallback4 = []) {
+  if (value === void 0) return fallback4;
   const values3 = array4(value, name).map((item) => text62(item, name));
   if (new Set(values3).size !== values3.length) throw new Error(`${name} must contain unique values`);
   return values3;
@@ -19160,7 +19430,7 @@ function uniqueTextArray2(value, name) {
 }
 function fingerprint2(value) {
   const canonical18 = Object.entries(value).sort(([left], [right]) => left.localeCompare(right)).map(([key2, item]) => `${JSON.stringify(key2)}:${JSON.stringify(item)}`).join(",");
-  return (0, import_node_crypto65.createHash)("sha256").update(`{${canonical18}}`).digest("hex");
+  return (0, import_node_crypto66.createHash)("sha256").update(`{${canonical18}}`).digest("hex");
 }
 function recordPayload7(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...payload75 } = record;
@@ -19253,8 +19523,8 @@ var CapabilityAccessKernel = class {
     const capabilities = await Promise.all(plan.selected.map(async (selected) => {
       const logical = this.store.get("logical_capability", String(selected.logical_capability_id));
       const capability = this.store.get("capability", String(logical.selected_capability_id));
-      const content = await (0, import_promises15.readFile)(text62(capability.path, "capability.path"), "utf8");
-      const digest107 = (0, import_node_crypto65.createHash)("sha256").update(content).digest("hex");
+      const content = await (0, import_promises16.readFile)(text62(capability.path, "capability.path"), "utf8");
+      const digest107 = (0, import_node_crypto66.createHash)("sha256").update(content).digest("hex");
       if (digest107 !== selected.content_digest) throw new Error("Capability file digest drifted; rescan the source before loading it");
       assertNoSecret2(content, "capability content");
       if (content.length > maxChars) throw new Error("Capability content exceeds the requested context limit");
@@ -19362,7 +19632,7 @@ var CapabilityAccessKernel = class {
 };
 
 // src/host-activation-manifest.ts
-var import_node_crypto66 = require("node:crypto");
+var import_node_crypto67 = require("node:crypto");
 var EFFECTS7 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_write"]);
 function text63(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
@@ -19375,7 +19645,7 @@ function values2(value, name) {
   return result;
 }
 function digest44(value) {
-  return `sha256:${(0, import_node_crypto66.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto67.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function isExpired(value) {
   return Number.isNaN(Date.parse(String(value))) || Date.parse(String(value)) < Date.now();
@@ -19471,13 +19741,13 @@ var HostActivationManifestKernel = class {
 };
 
 // src/execution-fabric.ts
-var import_node_crypto67 = require("node:crypto");
+var import_node_crypto68 = require("node:crypto");
 function text64(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest45(value) {
-  return `sha256:${(0, import_node_crypto67.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto68.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload33(record) {
   const { id: _id, version: _version, created_at: _createdAt, updated_at: _updatedAt, ...rest } = record;
@@ -19548,7 +19818,7 @@ var ExecutionFabricKernel = class {
 };
 
 // src/host-bridge.ts
-var import_node_crypto68 = require("node:crypto");
+var import_node_crypto69 = require("node:crypto");
 
 // src/host-protocol.ts
 var EXECUTION_HOST_MODES = ["embedded", "managed", "remote"];
@@ -19579,7 +19849,7 @@ function text65(value, name) {
   return value.trim();
 }
 function digest46(value) {
-  return `sha256:${(0, import_node_crypto68.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto69.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload34(record) {
   const { id: _id, version: _version, created_at: _createdAt, updated_at: _updatedAt, ...rest } = record;
@@ -19656,13 +19926,13 @@ var HostBridgeKernel = class {
 };
 
 // src/managed-write.ts
-var import_node_crypto69 = require("node:crypto");
+var import_node_crypto70 = require("node:crypto");
 function text66(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest47(value) {
-  return `sha256:${(0, import_node_crypto69.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto70.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload35(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -19747,13 +20017,13 @@ var ManagedWriteKernel = class {
 };
 
 // src/eval-campaign-report.ts
-var import_node_crypto70 = require("node:crypto");
+var import_node_crypto71 = require("node:crypto");
 function text67(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest48(value) {
-  return `sha256:${(0, import_node_crypto70.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto71.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function deliveryRate(value) {
   return value && ["accepted", "ready_for_delivery"].includes(String(value.status)) ? 1 : 0;
@@ -19806,13 +20076,13 @@ function ratio(values3, predicate) {
 }
 
 // src/adaptive-harness.ts
-var import_node_crypto71 = require("node:crypto");
+var import_node_crypto72 = require("node:crypto");
 function text68(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest49(value) {
-  return `sha256:${(0, import_node_crypto71.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto72.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var AdaptiveHarnessKernel = class {
   store;
@@ -19840,7 +20110,7 @@ var AdaptiveHarnessKernel = class {
 };
 
 // src/managed-run.ts
-var import_node_crypto72 = require("node:crypto");
+var import_node_crypto73 = require("node:crypto");
 function text69(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -19853,7 +20123,7 @@ function ids(value, name) {
   return result.sort();
 }
 function digest50(value) {
-  return `sha256:${(0, import_node_crypto72.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto73.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload36(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -19959,13 +20229,13 @@ var ManagedRunKernel = class {
 };
 
 // src/campaign-runner.ts
-var import_node_crypto73 = require("node:crypto");
+var import_node_crypto74 = require("node:crypto");
 function text70(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest51(value) {
-  return `sha256:${(0, import_node_crypto73.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto74.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload37(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -20046,13 +20316,13 @@ var CampaignRunnerKernel = class {
 };
 
 // src/autonomy-ladder.ts
-var import_node_crypto74 = require("node:crypto");
+var import_node_crypto75 = require("node:crypto");
 function text71(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest52(value) {
-  return `sha256:${(0, import_node_crypto74.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto75.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var AutonomyLadderKernel = class {
   store;
@@ -20100,13 +20370,13 @@ var AutonomyLadderKernel = class {
 };
 
 // src/workspace-observer.ts
-var import_node_crypto75 = require("node:crypto");
+var import_node_crypto76 = require("node:crypto");
 function text72(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest53(value) {
-  return `sha256:${(0, import_node_crypto75.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto76.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var WorkspaceObserverKernel = class {
   store;
@@ -20146,13 +20416,13 @@ var WorkspaceObserverKernel = class {
 };
 
 // src/work-coordinator.ts
-var import_node_crypto76 = require("node:crypto");
+var import_node_crypto77 = require("node:crypto");
 function text73(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest54(value) {
-  return `sha256:${(0, import_node_crypto76.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto77.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload38(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -20229,13 +20499,13 @@ var WorkCoordinatorKernel = class {
 };
 
 // src/agent-eval-lab.ts
-var import_node_crypto77 = require("node:crypto");
+var import_node_crypto78 = require("node:crypto");
 function text74(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest55(value) {
-  return `sha256:${(0, import_node_crypto77.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto78.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function taskId(run) {
   const fromLaunch = run.launch_identity && typeof run.launch_identity === "object" && !Array.isArray(run.launch_identity) ? run.launch_identity.task_id : void 0;
@@ -20309,7 +20579,7 @@ var AgentEvalLabKernel = class {
 };
 
 // src/evaluation-operations.ts
-var import_node_crypto78 = require("node:crypto");
+var import_node_crypto79 = require("node:crypto");
 function text75(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -20320,8 +20590,8 @@ function strings15(value, name, minimum = 0) {
   if (new Set(values3).size !== values3.length) throw new Error(`${name} must contain unique values`);
   return values3.sort();
 }
-function integer16(value, name, fallback, minimum, maximum) {
-  const result = value === void 0 ? fallback : Number(value);
+function integer16(value, name, fallback4, minimum, maximum) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < minimum || result > maximum) throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
   return result;
 }
@@ -20335,7 +20605,7 @@ function object20(value, name) {
   return value;
 }
 function digest56(value) {
-  return `sha256:${(0, import_node_crypto78.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto79.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload39(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -20457,7 +20727,7 @@ var EvaluationOperationsKernel = class {
 };
 
 // src/enterprise-access.ts
-var import_node_crypto79 = require("node:crypto");
+var import_node_crypto80 = require("node:crypto");
 var PROVIDER_KINDS = /* @__PURE__ */ new Set(["oidc_workload_identity", "short_lived_broker"]);
 var EFFECTS8 = /* @__PURE__ */ new Set(["read_only", "external_write", "destructive"]);
 function text76(value, name) {
@@ -20475,13 +20745,13 @@ function instant9(value, name) {
   if (Number.isNaN(result)) throw new Error(`${name} must be an ISO timestamp`);
   return result;
 }
-function integer17(value, name, fallback, minimum, maximum) {
-  const result = value === void 0 ? fallback : Number(value);
+function integer17(value, name, fallback4, minimum, maximum) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < minimum || result > maximum) throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
   return result;
 }
 function digest57(value) {
-  return `sha256:${(0, import_node_crypto79.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto80.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload40(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -20627,7 +20897,7 @@ var EnterpriseAccessKernel = class {
 };
 
 // src/a2a-delegation.ts
-var import_node_crypto80 = require("node:crypto");
+var import_node_crypto81 = require("node:crypto");
 function text77(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -20638,8 +20908,8 @@ function strings17(value, name, minimum = 0) {
   if (new Set(values3).size !== values3.length) throw new Error(`${name} must contain unique values`);
   return values3.sort();
 }
-function integer18(value, name, fallback, minimum, maximum) {
-  const result = value === void 0 ? fallback : Number(value);
+function integer18(value, name, fallback4, minimum, maximum) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < minimum || result > maximum) throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
   return result;
 }
@@ -20653,7 +20923,7 @@ function object21(value, name) {
   return value;
 }
 function digest58(value) {
-  return `sha256:${(0, import_node_crypto80.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto81.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload41(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -20785,7 +21055,7 @@ var A2ADelegationKernel = class {
 };
 
 // src/autonomous-runtime.ts
-var import_node_crypto81 = require("node:crypto");
+var import_node_crypto82 = require("node:crypto");
 function text78(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -20799,7 +21069,7 @@ function limits(value) {
   return { max_steps: maxSteps, max_tokens: maxTokens };
 }
 function digest59(value) {
-  return `sha256:${(0, import_node_crypto81.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto82.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload42(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -20821,7 +21091,7 @@ var AutonomousRuntimeKernel = class {
     const taskId3 = text78(args.task_id, "task_id");
     const goal = text78(args.goal, "goal");
     const model = text78(args.model, "model");
-    const runId = String(args.run_id ?? `autonomous_run_${(0, import_node_crypto81.randomUUID)().replaceAll("-", "")}`);
+    const runId = String(args.run_id ?? `autonomous_run_${(0, import_node_crypto82.randomUUID)().replaceAll("-", "")}`);
     const runLimits = limits(args.limits);
     const requestDigest = digest59({ task_id: taskId3, goal, model, limits: runLimits });
     const existing = this.store.find("autonomous_run", runId);
@@ -20923,7 +21193,7 @@ var AutonomousRuntimeKernel = class {
 };
 
 // src/capability-lifecycle.ts
-var import_node_crypto82 = require("node:crypto");
+var import_node_crypto83 = require("node:crypto");
 function text79(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -20933,7 +21203,7 @@ function payload43(record) {
   return rest;
 }
 function digest60(value) {
-  return `sha256:${(0, import_node_crypto82.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto83.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function state(value) {
   const normalized = String(value ?? "draft");
@@ -21005,37 +21275,57 @@ var CapabilityLifecycleKernel = class {
 };
 
 // src/memory-consolidation.ts
-var import_node_crypto83 = require("node:crypto");
+var import_node_crypto84 = require("node:crypto");
 function text80(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function payload44(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
+  if (rest.content_ref !== void 0) delete rest.content;
   return rest;
 }
 function digest61(value) {
-  return `sha256:${(0, import_node_crypto83.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto84.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
-var SECRET4 = /(?:api[_-]?key|authorization|cookie|password|passwd|secret|token)\s*[:=]\s*[^\s]{6,}/iu;
+var SECRET5 = /(?:api[_-]?key|authorization|cookie|password|passwd|secret|token)\s*[:=]\s*[^\s]{6,}/iu;
 var MemoryConsolidationKernel = class {
   store;
   constructor(store) {
     this.store = store;
   }
   remember(args) {
-    const memoryId = String(args.memory_id ?? `memory_${(0, import_node_crypto83.randomUUID)().replaceAll("-", "")}`);
+    const memoryId = String(args.memory_id ?? `memory_${(0, import_node_crypto84.randomUUID)().replaceAll("-", "")}`);
     const scope3 = text80(args.scope ?? "task", "scope");
     const content = text80(args.content, "content");
     const source = text80(args.source ?? "work", "source");
-    if (SECRET4.test(content) || SECRET4.test(source)) throw new Error("Memory content and source must not contain credentials or secrets");
+    if (SECRET5.test(content) || SECRET5.test(source)) throw new Error("Memory content and source must not contain credentials or secrets");
     const existing = this.store.find("episodic_memory", memoryId);
     const identityDigest = digest61({ scope: scope3, content, source, task_id: args.task_id ?? null });
     if (existing) {
       if (existing.identity_digest !== identityDigest) throw new Error("Memory idempotency conflict");
       return { memory: existing, idempotent: true };
     }
-    return { memory: this.store.create("episodic_memory", memoryId, { scope: scope3, content, source, task_id: args.task_id ?? null, identity_digest: identityDigest, consolidated: false, confidence: Number(args.confidence ?? 0.5) }), idempotent: false };
+    const contentRef = this.store.contentStore.writeSync({
+      kind: "memory",
+      record_id: memoryId,
+      version: 1,
+      scope: scope3,
+      status: "active",
+      sensitivity: "internal",
+      source_id: source,
+      body: content
+    });
+    return { memory: this.store.create("episodic_memory", memoryId, {
+      scope: scope3,
+      source,
+      task_id: args.task_id ?? null,
+      content_ref: contentRef,
+      content_digest: contentRef.digest,
+      identity_digest: identityDigest,
+      consolidated: false,
+      confidence: Number(args.confidence ?? 0.5)
+    }), idempotent: false };
   }
   consolidate(args) {
     const memoryIds = Array.isArray(args.memory_ids) ? args.memory_ids.map((item) => text80(item, "memory_ids")) : [];
@@ -21043,8 +21333,8 @@ var MemoryConsolidationKernel = class {
     const memories = memoryIds.map((memoryId) => this.store.get("episodic_memory", memoryId));
     const scope3 = text80(args.scope ?? memories[0].scope, "scope");
     const content = text80(args.content ?? memories.map((memory) => String(memory.content)).join("\n"), "content");
-    if (SECRET4.test(content)) throw new Error("Semantic memory content must not contain credentials or secrets");
-    const semanticId = String(args.semantic_id ?? `semantic_memory_${(0, import_node_crypto83.randomUUID)().replaceAll("-", "")}`);
+    if (SECRET5.test(content)) throw new Error("Semantic memory content must not contain credentials or secrets");
+    const semanticId = String(args.semantic_id ?? `semantic_memory_${(0, import_node_crypto84.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = digest61({ scope: scope3, content, memory_ids: memoryIds });
     const existing = this.store.find("semantic_memory", semanticId);
     if (existing) {
@@ -21052,7 +21342,25 @@ var MemoryConsolidationKernel = class {
       return { memory: existing, idempotent: true };
     }
     for (const memory of memories) this.store.save("episodic_memory", String(memory.id), { ...payload44(memory), consolidated: true, consolidated_into: semanticId });
-    return { memory: this.store.create("semantic_memory", semanticId, { scope: scope3, content, memory_ids: memoryIds, identity_digest: identityDigest, confidence: Number(args.confidence ?? 0.8), status: "active" }), idempotent: false };
+    const contentRef = this.store.contentStore.writeSync({
+      kind: "memory",
+      record_id: semanticId,
+      version: 1,
+      scope: scope3,
+      status: "active",
+      sensitivity: "internal",
+      source_id: "consolidation",
+      body: content
+    });
+    return { memory: this.store.create("semantic_memory", semanticId, {
+      scope: scope3,
+      memory_ids: memoryIds,
+      content_ref: contentRef,
+      content_digest: contentRef.digest,
+      identity_digest: identityDigest,
+      confidence: Number(args.confidence ?? 0.8),
+      status: "active"
+    }), idempotent: false };
   }
   resolve(args) {
     const semantic = this.store.get("semantic_memory", text80(args.semantic_id, "semantic_id"));
@@ -21070,7 +21378,7 @@ var MemoryConsolidationKernel = class {
 };
 
 // src/remote-interop.ts
-var import_node_crypto84 = require("node:crypto");
+var import_node_crypto85 = require("node:crypto");
 function text81(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -21080,7 +21388,7 @@ function payload45(record) {
   return rest;
 }
 function digest62(value) {
-  return `sha256:${(0, import_node_crypto84.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto85.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function httpsUrl(value) {
   const url2 = text81(value, "endpoint");
@@ -21097,7 +21405,7 @@ var RemoteInteropKernel = class {
     const agent = text81(args.agent, "agent");
     const operation = text81(args.operation, "operation");
     const taskId3 = text81(args.task_id, "task_id");
-    const requestId = String(args.request_id ?? `remote_request_${(0, import_node_crypto84.randomUUID)().replaceAll("-", "")}`);
+    const requestId = String(args.request_id ?? `remote_request_${(0, import_node_crypto85.randomUUID)().replaceAll("-", "")}`);
     const requestDigest = digest62({ endpoint: endpoint3, agent, operation, task_id: taskId3, input_digest: text81(args.input_digest, "input_digest") });
     const existing = this.store.find("remote_request", requestId);
     if (existing) {
@@ -21132,13 +21440,13 @@ var RemoteInteropKernel = class {
 };
 
 // src/platform-operations.ts
-var import_node_crypto85 = require("node:crypto");
+var import_node_crypto86 = require("node:crypto");
 function text82(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest63(value) {
-  return `sha256:${(0, import_node_crypto85.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto86.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var PlatformOperationsKernel = class {
   store;
@@ -21146,7 +21454,7 @@ var PlatformOperationsKernel = class {
     this.store = store;
   }
   memberSave(args) {
-    const memberId = String(args.member_id ?? `member_${(0, import_node_crypto85.randomUUID)().replaceAll("-", "")}`);
+    const memberId = String(args.member_id ?? `member_${(0, import_node_crypto86.randomUUID)().replaceAll("-", "")}`);
     const name = text82(args.name, "name");
     const roles = Array.isArray(args.roles) ? args.roles.map((item) => text82(item, "roles")) : ["member"];
     const identityDigest = digest63({ name, roles });
@@ -21162,13 +21470,13 @@ var PlatformOperationsKernel = class {
     const action = text82(args.action, "action");
     const required3 = text82(args.required_role ?? "member", "required_role");
     const allowed = member.active === true && (member.roles.includes(required3) || member.roles.includes("admin"));
-    const decision = this.store.create("platform_authorization", String(args.authorization_id ?? `authorization_${(0, import_node_crypto85.randomUUID)().replaceAll("-", "")}`), { member_id: member.id, action, required_role: required3, allowed, reason: allowed ? "role_granted" : "role_missing" });
+    const decision = this.store.create("platform_authorization", String(args.authorization_id ?? `authorization_${(0, import_node_crypto86.randomUUID)().replaceAll("-", "")}`), { member_id: member.id, action, required_role: required3, allowed, reason: allowed ? "role_granted" : "role_missing" });
     return { authorization: decision, allowed };
   }
   observe(args) {
     const event = text82(args.event, "event");
     const status = text82(args.status ?? "ok", "status");
-    const observation = this.store.create("platform_observation", String(args.observation_id ?? `observation_${(0, import_node_crypto85.randomUUID)().replaceAll("-", "")}`), { event, status, run_id: args.run_id ?? null, metric: args.metric ?? null, value: args.value ?? null, value_digest: digest63(args.value ?? null) });
+    const observation = this.store.create("platform_observation", String(args.observation_id ?? `observation_${(0, import_node_crypto86.randomUUID)().replaceAll("-", "")}`), { event, status, run_id: args.run_id ?? null, metric: args.metric ?? null, value: args.value ?? null, value_digest: digest63(args.value ?? null) });
     return { observation };
   }
   exportObservations(args) {
@@ -21262,7 +21570,7 @@ var UsageKernel = class {
 };
 
 // src/intent-compiler.ts
-var import_node_crypto86 = require("node:crypto");
+var import_node_crypto87 = require("node:crypto");
 function text83(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -21281,7 +21589,7 @@ function canonical8(value) {
   return JSON.stringify(value);
 }
 function digest64(value) {
-  return `sha256:${(0, import_node_crypto86.createHash)("sha256").update(canonical8(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto87.createHash)("sha256").update(canonical8(value)).digest("hex")}`;
 }
 function inferMetric(goal, requested) {
   if (requested !== void 0) {
@@ -21360,7 +21668,7 @@ var IntentCompilerKernel = class {
       acceptance_required: route !== "simple",
       compiler_version: "0.12.8"
     };
-    const intentId = String(args.intent_id ?? `intent_${(0, import_node_crypto86.randomUUID)().replaceAll("-", "")}`);
+    const intentId = String(args.intent_id ?? `intent_${(0, import_node_crypto87.randomUUID)().replaceAll("-", "")}`);
     const requestDigest = digest64(contract);
     const existing = this.store.find("task_intent", intentId);
     if (existing) {
@@ -21378,7 +21686,7 @@ var IntentCompilerKernel = class {
     const metric = intent.metric === null ? null : text83(intent.metric, "intent metric");
     const criterion = isCoverage ? {
       id: "coverage",
-      name: `${String(intent.scope) === "changed" ? "Incremental" : "Workspace"} ${String(metric)} coverage`,
+      name: `${["Workspace", "Incremental"][Number(String(intent.scope) === "changed")]} ${String(metric)} coverage`,
       method: "program",
       evaluator: "coverage_report",
       scope: intent.scope,
@@ -21416,7 +21724,7 @@ var IntentCompilerKernel = class {
 };
 
 // src/trace-archive-storage.ts
-var import_node_crypto87 = require("node:crypto");
+var import_node_crypto88 = require("node:crypto");
 var BUILTIN_BACKEND_ID = "builtin.local";
 var BUILTIN_STORAGE_ID = "local";
 var SECRET_ASSIGNMENT2 = /(?:api[_-]?key|authorization|cookie|password|secret|token)["']?\s*[:=]\s*[^\s]+/iu;
@@ -21440,7 +21748,7 @@ function payload46(record) {
   return rest;
 }
 function digest65(value) {
-  return `sha256:${(0, import_node_crypto87.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto88.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var TraceArchiveStorageKernel = class {
   store;
@@ -21520,7 +21828,7 @@ var TraceArchiveStorageKernel = class {
 };
 
 // src/host-session-events.ts
-var import_node_crypto88 = require("node:crypto");
+var import_node_crypto89 = require("node:crypto");
 var KINDS = /* @__PURE__ */ new Set(["session.started", "host.dispatched", "host.receipt", "state.observed", "session.paused", "session.resumed", "session.completed", "session.failed", "session.cancelled"]);
 var TERMINAL4 = /* @__PURE__ */ new Set(["session.completed", "session.failed", "session.cancelled"]);
 var SENSITIVE2 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]/iu;
@@ -21529,7 +21837,7 @@ function text85(value, name) {
   return value.trim();
 }
 function digest66(value) {
-  return `sha256:${(0, import_node_crypto88.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto89.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function refs(value, name) {
   if (value === void 0) return [];
@@ -21557,7 +21865,7 @@ var HostSessionEventKernel = class {
     this.trace = trace;
   }
   open(args) {
-    const sessionId = String(args.session_id ?? `host_session_${(0, import_node_crypto88.randomUUID)().replaceAll("-", "")}`);
+    const sessionId = String(args.session_id ?? `host_session_${(0, import_node_crypto89.randomUUID)().replaceAll("-", "")}`);
     const traceId = String(args.trace_id ?? `host_session_trace_${sessionId}`);
     const taskId3 = text85(args.task_id, "task_id");
     const identity = { trace_id: traceId, task_id: taskId3, host_id: text85(args.host_id, "host_id"), environment_fingerprint: text85(args.environment_fingerprint, "environment_fingerprint"), policy_fingerprint: text85(args.policy_fingerprint, "policy_fingerprint"), capability_fingerprint: text85(args.capability_fingerprint, "capability_fingerprint") };
@@ -21609,7 +21917,7 @@ var HostSessionEventKernel = class {
 };
 
 // src/outcome-observer.ts
-var import_node_crypto89 = require("node:crypto");
+var import_node_crypto90 = require("node:crypto");
 var KINDS2 = /* @__PURE__ */ new Set(["program", "workspace", "human", "external"]);
 var VERDICTS = /* @__PURE__ */ new Set(["passed", "failed", "blocked", "inconclusive"]);
 function text86(value, name) {
@@ -21617,7 +21925,7 @@ function text86(value, name) {
   return value.trim();
 }
 function digest67(value) {
-  return `sha256:${(0, import_node_crypto89.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto90.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function ids2(value) {
   if (value === void 0) return [];
@@ -21648,7 +21956,7 @@ var OutcomeObserverKernel = class {
     if (verdict === "passed" && !evidenceIds2.length) throw new Error("Passed Outcome Observation requires Evidence");
     for (const evidenceId of evidenceIds2) if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(this.store.get("evidence", evidenceId).confidence))) throw new Error("Outcome Observation Evidence must be confirmed or bounded");
     const identity = { trace_id: trace.id, host_id: hostId, observer_id: observerId, observer_kind: kind2, environment_fingerprint: environment, verdict, state_snapshot_ref: text86(args.state_snapshot_ref, "state_snapshot_ref"), evidence_ids: evidenceIds2 };
-    const observationId = String(args.observation_id ?? `outcome_observation_${(0, import_node_crypto89.randomUUID)().replaceAll("-", "")}`);
+    const observationId = String(args.observation_id ?? `outcome_observation_${(0, import_node_crypto90.randomUUID)().replaceAll("-", "")}`);
     const observationDigest = digest67(identity);
     const existing = this.store.find("outcome_observation", observationId);
     if (existing) {
@@ -21666,7 +21974,7 @@ var OutcomeObserverKernel = class {
 };
 
 // src/runtime-truth-kernel.ts
-var import_node_crypto90 = require("node:crypto");
+var import_node_crypto91 = require("node:crypto");
 function text87(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -21682,7 +21990,7 @@ var RuntimeTruthKernel = class {
   }
   standardize(args) {
     const trace = standardizeTrace(object23(args.trace ?? args, "trace"));
-    const id17 = text87(args.export_id ?? `trace_export_${(0, import_node_crypto90.randomUUID)().replaceAll("-", "")}`, "export_id");
+    const id17 = text87(args.export_id ?? `trace_export_${(0, import_node_crypto91.randomUUID)().replaceAll("-", "")}`, "export_id");
     const existing = this.store.find("trace_export", id17);
     if (existing) return { export: existing, idempotent: true };
     return { export: this.store.create("trace_export", id17, { format: "craft.trace", schema: "craft.trace", schema_revision: trace.schema_revision, trace_id: trace.trace_id, trace }), idempotent: false };
@@ -21703,23 +22011,23 @@ var RuntimeTruthKernel = class {
       return { status: response.status, body: await response.text() };
     };
     const result = await exportOtlp(endpoint3, mapped.payload, transport);
-    const id17 = text87(args.export_id ?? `trace_otlp_${(0, import_node_crypto90.randomUUID)().replaceAll("-", "")}`, "export_id");
+    const id17 = text87(args.export_id ?? `trace_otlp_${(0, import_node_crypto91.randomUUID)().replaceAll("-", "")}`, "export_id");
     const existing = this.store.find("trace_otlp_export", id17);
     if (existing) return { export: existing, idempotent: true };
-    const payloadDigest = `sha256:${(0, import_node_crypto90.createHash)("sha256").update(JSON.stringify(mapped.payload)).digest("hex")}`;
+    const payloadDigest = `sha256:${(0, import_node_crypto91.createHash)("sha256").update(JSON.stringify(mapped.payload)).digest("hex")}`;
     return { export: this.store.create("trace_otlp_export", id17, { endpoint: endpoint3, status: result.status, accepted: result.accepted, payload_digest: payloadDigest, raw_content: false }), idempotent: false };
   }
   compact(args) {
     const messages = args.messages;
     if (!Array.isArray(messages)) throw new Error("messages must be an array");
-    const result = compactConversation(messages, args.max_chars === void 0 ? void 0 : Number(args.max_chars));
-    const id17 = text87(args.session_id ?? `context_${(0, import_node_crypto90.randomUUID)().replaceAll("-", "")}`, "session_id");
+    const result = compactConversation(messages, [void 0, Number(args.max_chars)][Number(args.max_chars !== void 0)]);
+    const id17 = text87(args.session_id ?? `context_${(0, import_node_crypto91.randomUUID)().replaceAll("-", "")}`, "session_id");
     const saved = this.store.save("context_compaction", id17, { session_id: id17, compacted: result.compacted, omitted: result.omitted, summary_digest: result.summary_digest, messages: result.messages });
     return { ...result, compaction: saved };
   }
   workNote(args) {
     const note = createWorkNote({ goal: text87(args.goal, "goal"), decisions: args.decisions, constraints: args.constraints, open_questions: args.open_questions, artifacts: args.artifacts });
-    const id17 = text87(args.note_id ?? `work_note_${(0, import_node_crypto90.randomUUID)().replaceAll("-", "")}`, "note_id");
+    const id17 = text87(args.note_id ?? `work_note_${(0, import_node_crypto91.randomUUID)().replaceAll("-", "")}`, "note_id");
     const existing = this.store.find("work_note", id17);
     if (existing) return { note: existing, idempotent: true };
     return { note: this.store.create("work_note", id17, note), idempotent: false };
@@ -21727,13 +22035,13 @@ var RuntimeTruthKernel = class {
 };
 
 // src/os-security.ts
-var import_node_crypto91 = require("node:crypto");
+var import_node_crypto92 = require("node:crypto");
 function text88(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest68(value) {
-  return `sha256:${(0, import_node_crypto91.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto92.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function list(value, name) {
   if (value === void 0) return [];
@@ -21759,7 +22067,7 @@ var OsSecurityKernel = class {
     const allowlist = list(args.egress_allowlist, "egress_allowlist");
     const boundary = { platform: platform2, workspace, network, filesystem, egress_allowlist: allowlist, process_isolation: platform2 === "win32" ? "job_object" : platform2 === "darwin" ? "sandbox_profile" : "landlock_or_namespace", secret_broker: args.secret_broker === true, fail_closed: true };
     const boundaryDigest = digest68(boundary);
-    const planId = String(args.plan_id ?? `os_security_${(0, import_node_crypto91.randomUUID)().replaceAll("-", "")}`);
+    const planId = String(args.plan_id ?? `os_security_${(0, import_node_crypto92.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("os_security_plan", planId);
     if (existing) {
       if (existing.boundary_digest !== boundaryDigest) throw new Error("OS security plan idempotency conflict");
@@ -21783,7 +22091,7 @@ var OsSecurityKernel = class {
 };
 
 // src/mcp-registry.ts
-var import_node_crypto92 = require("node:crypto");
+var import_node_crypto93 = require("node:crypto");
 function text89(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -21794,7 +22102,7 @@ function https(value, name) {
   return result;
 }
 function digest69(value) {
-  return `sha256:${(0, import_node_crypto92.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto93.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var TRUST2 = /* @__PURE__ */ new Set(["official", "private", "community"]);
 var HEALTH = /* @__PURE__ */ new Set(["healthy", "degraded", "unhealthy", "revoked"]);
@@ -21804,7 +22112,7 @@ var McpRegistryKernel = class {
     this.store = store;
   }
   sourceRegister(args) {
-    const sourceId = String(args.source_id ?? `mcp_registry_source_${(0, import_node_crypto92.randomUUID)().replaceAll("-", "")}`);
+    const sourceId = String(args.source_id ?? `mcp_registry_source_${(0, import_node_crypto93.randomUUID)().replaceAll("-", "")}`);
     const endpoint3 = https(args.endpoint, "endpoint");
     const trust = text89(args.trust ?? "community", "trust");
     if (!TRUST2.has(trust)) throw new Error("Unsupported registry trust");
@@ -21868,13 +22176,13 @@ var McpRegistryKernel = class {
 };
 
 // src/a2a-transport.ts
-var import_node_crypto93 = require("node:crypto");
+var import_node_crypto94 = require("node:crypto");
 function text90(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest70(value) {
-  return `sha256:${(0, import_node_crypto93.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto94.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var A2ATransportKernel = class {
   async dispatch(args, fetchImpl = fetch) {
@@ -21920,10 +22228,16 @@ var A2ATransportKernel = class {
 };
 
 // src/remote-runtime.ts
-var import_node_crypto94 = require("node:crypto");
+var import_node_crypto95 = require("node:crypto");
 function text91(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
+}
+function fallback(value, defaultValue) {
+  return value === void 0 ? defaultValue : value;
+}
+function epoch(value, name) {
+  return value === void 0 ? Date.now() : instant11(value, name);
 }
 function instant11(value, name) {
   const result = Date.parse(text91(value, name));
@@ -21931,7 +22245,7 @@ function instant11(value, name) {
   return result;
 }
 function digest71(value) {
-  return `sha256:${(0, import_node_crypto94.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto95.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function sha256(value) {
   return digest71(value);
@@ -21947,7 +22261,7 @@ function uniqueStrings(value, name, minimum = 0) {
   return values3.sort();
 }
 function opaqueHandle() {
-  return (0, import_node_crypto94.randomBytes)(32).toString("base64url");
+  return (0, import_node_crypto95.randomBytes)(32).toString("base64url");
 }
 var RemoteRuntimeKernel = class {
   store;
@@ -21977,8 +22291,8 @@ var RemoteRuntimeKernel = class {
     const scopes = uniqueStrings(args.scopes, "scopes", 1);
     const expiresAt = text91(args.expires_at, "expires_at");
     const expires = instant11(expiresAt, "expires_at");
-    const now3 = args.now === void 0 ? Date.now() : instant11(args.now, "now");
-    if (expires <= now3) throw new Error("Remote task binding must not already be expired");
+    const currentNow = epoch(args.now, "now");
+    if (expires <= currentNow) throw new Error("Remote task binding must not already be expired");
     const identity = {
       task_id: task.id,
       task_version: task.version,
@@ -21990,7 +22304,7 @@ var RemoteRuntimeKernel = class {
       scopes,
       expires_at: new Date(expires).toISOString()
     };
-    const bindingId = String(args.binding_id ?? `remote_task_${(0, import_node_crypto94.randomBytes)(12).toString("hex")}`);
+    const bindingId = String(fallback(args.binding_id, `remote_task_${(0, import_node_crypto95.randomBytes)(12).toString("hex")}`));
     const existing = this.store.find("remote_task_binding", bindingId);
     const bindingDigest = digest71(identity);
     if (existing) {
@@ -22003,7 +22317,7 @@ var RemoteRuntimeKernel = class {
       binding_digest: bindingDigest,
       handle_digest: sha256(handle),
       status: "active",
-      issued_at: new Date(now3).toISOString(),
+      issued_at: new Date(currentNow).toISOString(),
       raw_handle_stored: false,
       authorized_operations: ["get", "result", "cancel", "stream"]
     });
@@ -22013,7 +22327,7 @@ var RemoteRuntimeKernel = class {
     const binding = this.store.get("remote_task_binding", text91(args.binding_id, "binding_id"));
     const operation = text91(args.operation, "operation");
     if (!binding.authorized_operations.includes(operation)) throw new Error("Remote task operation is unsupported");
-    const now3 = args.now === void 0 ? Date.now() : instant11(args.now, "now");
+    const now3 = epoch(args.now, "now");
     if (binding.status !== "active" || now3 >= Date.parse(String(binding.expires_at))) throw new Error("Remote task binding is inactive or expired");
     this.activeTenant(String(binding.tenant_id), Number(binding.tenant_version));
     if (sha256(text91(args.handle, "handle")) !== binding.handle_digest) throw new Error("Remote task handle does not match");
@@ -22023,7 +22337,7 @@ var RemoteRuntimeKernel = class {
     if (text91(args.audience, "audience") !== binding.audience) throw new Error("Remote task audience does not match");
     const scopes = uniqueStrings(args.scopes, "scopes", 1);
     if (binding.scopes.some((scope3) => !scopes.includes(scope3))) throw new Error("Remote task scope is insufficient");
-    const receiptId = String(args.receipt_id ?? `remote_task_access_${binding.id}_${operation}_${(0, import_node_crypto94.randomBytes)(8).toString("hex")}`);
+    const receiptId = String(fallback(args.receipt_id, `remote_task_access_${binding.id}_${operation}_${(0, import_node_crypto95.randomBytes)(8).toString("hex")}`));
     const identity = { binding_id: binding.id, binding_version: binding.version, operation, at: new Date(now3).toISOString(), principal_digest: binding.principal_digest, tenant_id: binding.tenant_id };
     const existing = this.store.find("remote_task_access_receipt", receiptId);
     if (existing) {
@@ -22037,7 +22351,8 @@ var RemoteRuntimeKernel = class {
     const binding = this.store.get("remote_task_binding", text91(args.binding_id, "binding_id"));
     if (binding.status === "revoked") return { binding, idempotent: true };
     if (binding.status !== "active") throw new Error("Only an active remote task binding can be revoked");
-    const saved = this.store.save("remote_task_binding", String(binding.id), { ...payload48(binding), status: "revoked", revoked_at: args.now === void 0 ? (/* @__PURE__ */ new Date()).toISOString() : new Date(instant11(args.now, "now")).toISOString(), revocation_reason: text91(args.reason, "reason") });
+    const revokedAt = new Date(epoch(args.now, "now")).toISOString();
+    const saved = this.store.save("remote_task_binding", String(binding.id), { ...payload48(binding), status: "revoked", revoked_at: revokedAt, revocation_reason: text91(args.reason, "reason") });
     return { binding: saved, idempotent: false };
   }
   get(args) {
@@ -22057,14 +22372,14 @@ var RemoteRuntimeKernel = class {
 };
 
 // src/supply-chain-attestation.ts
-var import_node_crypto95 = require("node:crypto");
+var import_node_crypto96 = require("node:crypto");
 var SUBJECT_KINDS = /* @__PURE__ */ new Set(["capability_asset", "mcp_registry_server", "hub_catalog_entry"]);
 function text92(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest72(value) {
-  return `sha256:${(0, import_node_crypto95.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto96.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload49(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -22085,7 +22400,7 @@ var SupplyChainAttestationKernel = class {
     const publicKeyPem = text92(args.public_key_pem, "public_key_pem");
     let keyFingerprint;
     try {
-      keyFingerprint = digest72((0, import_node_crypto95.createPublicKey)(publicKeyPem).export({ format: "der", type: "spki" }).toString("base64"));
+      keyFingerprint = digest72((0, import_node_crypto96.createPublicKey)(publicKeyPem).export({ format: "der", type: "spki" }).toString("base64"));
     } catch {
       throw new Error("publisher public_key_pem is invalid");
     }
@@ -22108,7 +22423,7 @@ var SupplyChainAttestationKernel = class {
     const signature = Buffer.from(text92(args.signature, "signature"), "base64url");
     let verified = false;
     try {
-      verified = (0, import_node_crypto95.verify)(null, Buffer.from(subjectDigest, "utf8"), (0, import_node_crypto95.createPublicKey)(String(publisher.public_key_pem)), signature);
+      verified = (0, import_node_crypto96.verify)(null, Buffer.from(subjectDigest, "utf8"), (0, import_node_crypto96.createPublicKey)(String(publisher.public_key_pem)), signature);
     } catch {
       throw new Error("Supply-chain signature is invalid");
     }
@@ -22139,13 +22454,13 @@ var SupplyChainAttestationKernel = class {
 };
 
 // src/runtime-acceptance.ts
-var import_node_crypto96 = require("node:crypto");
+var import_node_crypto97 = require("node:crypto");
 function text93(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest73(value) {
-  return `sha256:${(0, import_node_crypto96.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto97.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload50(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -22154,7 +22469,8 @@ function payload50(record) {
 function unique(value, name, exact) {
   if (!Array.isArray(value) || !value.length) throw new Error(`${name} must be a non-empty array`);
   const values3 = value.map((item) => text93(item, name));
-  if (new Set(values3).size !== values3.length || exact !== void 0 && values3.length !== exact) throw new Error(`${name} must contain exactly ${exact ?? "unique"} values`);
+  if (new Set(values3).size !== values3.length) throw new Error(`${name} must contain unique values`);
+  if (exact !== void 0 && values3.length !== exact) throw new Error(`${name} must contain exactly ${exact} values`);
   return values3.sort();
 }
 function integer19(value, name, minimum, maximum) {
@@ -22173,7 +22489,7 @@ var RuntimeAcceptanceKernel = class {
     const trials = integer19(args.trials_per_pair, "trials_per_pair", 3, 5);
     const identity = { case_ids: caseIds, host_ids: hostIds, baseline_harness: text93(args.baseline_harness, "baseline_harness"), candidate_harness: text93(args.candidate_harness, "candidate_harness"), environment_fingerprint: text93(args.environment_fingerprint, "environment_fingerprint"), budget_fingerprint: text93(args.budget_fingerprint, "budget_fingerprint"), trials_per_pair: trials, observer_kind: text93(args.observer_kind, "observer_kind") };
     if (identity.baseline_harness === identity.candidate_harness) throw new Error("Runtime acceptance candidate must differ from baseline");
-    const planId = String(args.plan_id ?? `runtime_acceptance_${(0, import_node_crypto96.randomUUID)().replaceAll("-", "")}`);
+    const planId = String(args.plan_id ?? `runtime_acceptance_${(0, import_node_crypto97.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("runtime_acceptance_plan", planId);
     const planDigest = digest73(identity);
     if (existing) {
@@ -22238,7 +22554,7 @@ var RuntimeAcceptanceKernel = class {
     const strictProof = Number(plan.trials_per_pair) === 5 && candidateWins === total && baselineWins === 0;
     const status = !complete ? "inconclusive" : strictProof ? "eligible" : baselineWins >= candidateWins ? "rejected" : "inconclusive";
     const evaluationId = String(args.evaluation_id ?? `runtime_acceptance_evaluation_${plan.id}`);
-    const identity = { plan_id: plan.id, plan_version: plan.version, total_pairs: total, candidate_wins: candidateWins, baseline_wins: baselineWins, ties, incomplete, status };
+    const identity = { plan_id: plan.id, total_pairs: total, candidate_wins: candidateWins, baseline_wins: baselineWins, ties, incomplete, status };
     const existing = this.store.find("runtime_acceptance_evaluation", evaluationId);
     const evaluationDigest = digest73(identity);
     if (existing) {
@@ -22256,13 +22572,13 @@ var RuntimeAcceptanceKernel = class {
 };
 
 // src/a2a-v1-adapter.ts
-var import_node_crypto97 = require("node:crypto");
+var import_node_crypto98 = require("node:crypto");
 function text94(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest74(value) {
-  return `sha256:${(0, import_node_crypto97.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto98.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload51(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -22312,7 +22628,7 @@ var A2AV1AdapterKernel = class {
     const card = this.store.get("a2a_v1_card_observation", text94(args.card_observation_id, "card_observation_id"));
     const requestId = text94(args.request_id, "request_id");
     const identity = { grant_id: grant.id, grant_digest: grant.grant_digest, card_observation_id: card.id, card_observation_version: card.version, request_id: requestId, input_digest: text94(args.input_digest, "input_digest") };
-    const taskId3 = String(args.task_id ?? `a2a_v1_task_${(0, import_node_crypto97.randomUUID)().replaceAll("-", "")}`);
+    const taskId3 = String(args.task_id ?? `a2a_v1_task_${(0, import_node_crypto98.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("a2a_v1_task", taskId3);
     const taskDigest = digest74(identity);
     if (existing) {
@@ -22362,13 +22678,13 @@ var A2AV1AdapterKernel = class {
 };
 
 // src/org-sync.ts
-var import_node_crypto98 = require("node:crypto");
+var import_node_crypto99 = require("node:crypto");
 function text95(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest75(value) {
-  return `sha256:${(0, import_node_crypto98.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto99.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function array5(value, name) {
   if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
@@ -22385,7 +22701,7 @@ var OrgSyncKernel = class {
     const recordRefs = array5(args.record_refs ?? [], "record_refs");
     const manifest = { workspace_id: workspaceId, member_ids: memberIds, record_refs: recordRefs, encryption: "adapter_managed", deletion_tombstones: true };
     const manifestDigest = digest75(manifest);
-    const syncId = String(args.sync_id ?? `org_sync_${(0, import_node_crypto98.randomUUID)().replaceAll("-", "")}`);
+    const syncId = String(args.sync_id ?? `org_sync_${(0, import_node_crypto99.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("org_sync_manifest", syncId);
     if (existing) {
       if (existing.manifest_digest !== manifestDigest) throw new Error("Organization sync manifest conflict");
@@ -22404,7 +22720,7 @@ var OrgSyncKernel = class {
 };
 
 // src/project-brain.ts
-var import_node_crypto99 = require("node:crypto");
+var import_node_crypto100 = require("node:crypto");
 function text96(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -22417,7 +22733,7 @@ function list2(value, name) {
   return result;
 }
 function digest76(value) {
-  return `sha256:${(0, import_node_crypto99.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto100.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload52(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -22488,7 +22804,7 @@ var ProjectBrainKernel = class {
   goalSave(args) {
     const project = projectId(args.project_id);
     this.require(project);
-    const id17 = String(args.goal_id ?? `goal_${(0, import_node_crypto99.randomUUID)().replaceAll("-", "")}`);
+    const id17 = String(args.goal_id ?? `goal_${(0, import_node_crypto100.randomUUID)().replaceAll("-", "")}`);
     const previous = this.store.find("project_goal", id17);
     const record = { project_id: project, title: text96(args.title ?? previous?.title, "title"), status: String(args.status ?? previous?.status ?? "active"), constraint_digests: list2(args.constraint_digests ?? previous?.constraint_digests, "constraint_digests"), metric: args.metric === void 0 ? previous?.metric ?? null : text96(args.metric, "metric"), content_digest: digest76({ title: args.title ?? previous?.title, constraints: args.constraint_digests ?? previous?.constraint_digests ?? [], metric: args.metric ?? previous?.metric ?? null }) };
     if (previous) return { goal: this.store.save("project_goal", id17, { ...payload52(previous), ...record }), idempotent: false };
@@ -22497,7 +22813,7 @@ var ProjectBrainKernel = class {
   decisionSave(args) {
     const project = projectId(args.project_id);
     this.require(project);
-    const id17 = String(args.decision_id ?? `decision_${(0, import_node_crypto99.randomUUID)().replaceAll("-", "")}`);
+    const id17 = String(args.decision_id ?? `decision_${(0, import_node_crypto100.randomUUID)().replaceAll("-", "")}`);
     const previous = this.store.find("project_decision", id17);
     const record = { project_id: project, title: text96(args.title, "title"), rationale_digest: digest76(text96(args.rationale, "rationale")), chosen_ref: text96(args.chosen_ref, "chosen_ref"), excluded_refs: list2(args.excluded_refs, "excluded_refs"), status: String(args.status ?? "active") };
     return { decision: previous ? this.store.save("project_decision", id17, { ...payload52(previous), ...record }) : this.store.create("project_decision", id17, record), idempotent: false };
@@ -22505,7 +22821,7 @@ var ProjectBrainKernel = class {
   materialBind(args) {
     const project = projectId(args.project_id);
     this.require(project);
-    const id17 = String(args.material_id ?? `material_${(0, import_node_crypto99.randomUUID)().replaceAll("-", "")}`);
+    const id17 = String(args.material_id ?? `material_${(0, import_node_crypto100.randomUUID)().replaceAll("-", "")}`);
     const material = { project_id: project, name: text96(args.name, "name"), uri: text96(args.uri, "uri"), content_digest: text96(args.content_digest, "content_digest"), source_type: String(args.source_type ?? "user"), scope: String(args.scope ?? "project"), status: "bound" };
     const previous = this.store.find("project_material", id17);
     return { material: previous ? this.store.save("project_material", id17, { ...payload52(previous), ...material }) : this.store.create("project_material", id17, material), idempotent: false };
@@ -22513,7 +22829,7 @@ var ProjectBrainKernel = class {
   outcomeRecord(args) {
     const project = projectId(args.project_id);
     this.require(project);
-    const id17 = String(args.outcome_id ?? `project_outcome_${(0, import_node_crypto99.randomUUID)().replaceAll("-", "")}`);
+    const id17 = String(args.outcome_id ?? `project_outcome_${(0, import_node_crypto100.randomUUID)().replaceAll("-", "")}`);
     const outcome2 = { project_id: project, task_id: args.task_id === void 0 ? null : text96(args.task_id, "task_id"), session_id: args.session_id === void 0 ? null : text96(args.session_id, "session_id"), verdict: text96(args.verdict, "verdict"), summary_digest: digest76(text96(args.summary, "summary")), evidence_ids: list2(args.evidence_ids, "evidence_ids"), artifact_ids: list2(args.artifact_ids, "artifact_ids"), status: "recorded" };
     const saved = this.store.create("project_outcome", id17, outcome2);
     const brain = this.store.list("project_brain", 1e4, (item) => item.project_id === project)[0];
@@ -22523,7 +22839,7 @@ var ProjectBrainKernel = class {
   experienceRecord(args) {
     const project = projectId(args.project_id);
     this.require(project);
-    const id17 = String(args.experience_id ?? `experience_${(0, import_node_crypto99.randomUUID)().replaceAll("-", "")}`);
+    const id17 = String(args.experience_id ?? `experience_${(0, import_node_crypto100.randomUUID)().replaceAll("-", "")}`);
     const experience = { project_id: project, name: text96(args.name, "name"), pattern_digest: digest76(text96(args.pattern, "pattern")), source_outcome_id: args.source_outcome_id === void 0 ? null : text96(args.source_outcome_id, "source_outcome_id"), status: "candidate" };
     return { experience: this.store.create("project_experience", id17, experience) };
   }
@@ -22538,7 +22854,7 @@ var ProjectBrainKernel = class {
 };
 
 // src/work-session.ts
-var import_node_crypto100 = require("node:crypto");
+var import_node_crypto101 = require("node:crypto");
 function text97(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -22551,7 +22867,7 @@ function strings19(value, name) {
   return result;
 }
 function digest77(value) {
-  return `sha256:${(0, import_node_crypto100.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto101.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload53(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -22578,7 +22894,7 @@ var WorkSessionKernel = class {
     this.brain.get({ project_id: projectId2 });
     const task = this.store.get("task", text97(args.task_id, "task_id"));
     if (task.project_id !== null && task.project_id !== projectId2) throw new Error("Task does not belong to the Project Brain");
-    const sessionId = String(args.session_id ?? `work_session_${(0, import_node_crypto100.randomUUID)().replaceAll("-", "")}`);
+    const sessionId = String(args.session_id ?? `work_session_${(0, import_node_crypto101.randomUUID)().replaceAll("-", "")}`);
     const knowledge = refs2(args.knowledge_refs, "knowledge_refs");
     const capabilities = refs2(args.capability_refs, "capability_refs");
     const workflows = refs2(args.workflow_refs, "workflow_refs");
@@ -22639,13 +22955,13 @@ var WorkSessionKernel = class {
 };
 
 // src/workbench-experience.ts
-var import_node_crypto101 = require("node:crypto");
+var import_node_crypto102 = require("node:crypto");
 function text98(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest78(value) {
-  return `sha256:${(0, import_node_crypto101.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto102.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function limit2(value) {
   const n = value === void 0 ? 100 : Number(value);
@@ -22698,13 +23014,13 @@ var WorkbenchExperienceKernel = class {
 };
 
 // src/long-task-worker.ts
-var import_node_crypto102 = require("node:crypto");
+var import_node_crypto103 = require("node:crypto");
 function text99(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest79(value) {
-  return `sha256:${(0, import_node_crypto102.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto103.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload54(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -22724,7 +23040,7 @@ var LongTaskWorkerKernel = class {
     const session = this.store.get("work_session", text99(args.session_id, "session_id"));
     const taskRun = args.task_run_id === void 0 ? null : this.store.get("task_run", text99(args.task_run_id, "task_run_id"));
     if (taskRun && taskRun.contract_id && taskRun.launch_id && this.store.get("work_launch", String(taskRun.launch_id)).task_id !== session.task_id) throw new Error("Task Run does not belong to the session");
-    const checkpointId = String(args.checkpoint_id ?? `long_task_${(0, import_node_crypto102.randomUUID)().replaceAll("-", "")}`);
+    const checkpointId = String(args.checkpoint_id ?? `long_task_${(0, import_node_crypto103.randomUUID)().replaceAll("-", "")}`);
     const waitCondition = text99(args.wait_condition, "wait_condition");
     const resumeAction = text99(args.resume_action ?? "revalidate_and_resume", "resume_action");
     const state2 = { session_id: session.id, session_version: session.version, task_run_id: taskRun?.id ?? null, task_run_version: taskRun?.version ?? null, host_run_id: args.host_run_id ?? null, wait_condition: waitCondition, resume_action: resumeAction, context_digest: session.context_digest, state_digest: digest79({ session: session.id, session_version: session.version, task_run: taskRun?.id ?? null, task_run_version: taskRun?.version ?? null, wait_condition: waitCondition, resume_action: resumeAction }) };
@@ -22778,10 +23094,19 @@ var LongTaskWorkerKernel = class {
 };
 
 // src/v01211-runtime.ts
-var import_node_crypto103 = require("node:crypto");
+var import_node_crypto104 = require("node:crypto");
 function text100(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
+}
+function optionalText4(value, name) {
+  return value === void 0 ? null : text100(value, name);
+}
+function fallback2(value, defaultValue) {
+  return value === void 0 ? defaultValue : value;
+}
+function numberOrZero(value) {
+  return value === void 0 || value === null ? 0 : Number(value);
 }
 function list3(value, name) {
   if (value === void 0) return [];
@@ -22795,14 +23120,14 @@ function object25(value, name) {
   return value;
 }
 function digest80(value) {
-  return `sha256:${(0, import_node_crypto103.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto104.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload55(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
   return rest;
 }
-function positive3(value, name, fallback, max) {
-  const result = value === void 0 ? fallback : Number(value);
+function positive3(value, name, fallback4, max) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < 1 || result > max) throw new Error(`${name} must be an integer between 1 and ${max}`);
   return result;
 }
@@ -22815,7 +23140,7 @@ var ContextPlaneKernel = class {
   save(args) {
     const projectId2 = text100(args.project_id, "project_id");
     const taskId3 = text100(args.task_id, "task_id");
-    const manifestId = String(args.manifest_id ?? `context_manifest_${(0, import_node_crypto103.randomUUID)().replaceAll("-", "")}`);
+    const manifestId = String(fallback2(args.manifest_id, `context_manifest_${(0, import_node_crypto104.randomUUID)().replaceAll("-", "")}`));
     const refs3 = Object.fromEntries(MANIFEST_FIELDS.map((field) => [field, list3(args[field], field)]));
     const identity = {
       project_id: projectId2,
@@ -22824,10 +23149,10 @@ var ContextPlaneKernel = class {
       capability_refs: refs3.capability_refs,
       workflow_refs: refs3.workflow_refs,
       excluded_refs: refs3.excluded_refs,
-      model: args.model === void 0 ? null : text100(args.model, "model"),
-      host: args.host === void 0 ? null : text100(args.host, "host"),
-      acceptance_ref: args.acceptance_ref === void 0 ? null : text100(args.acceptance_ref, "acceptance_ref"),
-      selection_rationale: args.selection_rationale === void 0 ? null : text100(args.selection_rationale, "selection_rationale")
+      model: optionalText4(args.model, "model"),
+      host: optionalText4(args.host, "host"),
+      acceptance_ref: optionalText4(args.acceptance_ref, "acceptance_ref"),
+      selection_rationale: optionalText4(args.selection_rationale, "selection_rationale")
     };
     const identityDigest = digest80(identity);
     const existing = this.store.find("context_manifest", manifestId);
@@ -22860,7 +23185,7 @@ var ReplayRunnerKernel = class {
     if (!["completed", "failed", "cancelled", "blocked"].includes(String(trace.status))) throw new Error("Replay requires a terminal Trace");
     const events = this.store.list("trace_event", 1e4, (item) => item.trace_id === traceId && item.action_contract !== null).sort((left, right) => Number(left.sequence) - Number(right.sequence));
     if (!events.length) throw new Error("Trace has no replayable action contracts");
-    const replayId = String(args.replay_id ?? `replay_${(0, import_node_crypto103.randomUUID)().replaceAll("-", "")}`);
+    const replayId = String(fallback2(args.replay_id, `replay_${(0, import_node_crypto104.randomUUID)().replaceAll("-", "")}`));
     const identity = { trace_id: traceId, trace_version: trace.version, event_ids: events.map((event) => event.id), approval_ref: text100(args.approval_ref, "approval_ref"), workspace_digest: text100(args.workspace_digest, "workspace_digest") };
     const replayDigest = digest80(identity);
     const existing = this.store.find("replay_run", replayId);
@@ -22896,26 +23221,26 @@ var LocalRuntimeServiceKernel = class {
     this.store = store;
   }
   configure(args) {
-    const serviceId = String(args.service_id ?? "craft-local");
+    const serviceId = String(fallback2(args.service_id, "craft-local"));
     const existing = this.store.find("local_runtime_service", serviceId);
     const record = { service_id: serviceId, schedule: String(args.schedule ?? "on_demand"), startup: String(args.startup ?? "manual"), notification: String(args.notification ?? "disabled"), crash_recovery: args.crash_recovery !== false };
     if (existing) return { service: this.store.save("local_runtime_service", serviceId, { ...payload55(existing), ...record }), idempotent: false };
     return { service: this.store.create("local_runtime_service", serviceId, { ...record, status: "stopped", last_tick_at: null }), idempotent: false };
   }
   start(args = {}) {
-    const serviceId = String(args.service_id ?? "craft-local");
+    const serviceId = String(fallback2(args.service_id, "craft-local"));
     const service = this.store.find("local_runtime_service", serviceId) ?? this.configure({ service_id: serviceId }).service;
     if (service.status === "running") return { service, idempotent: true };
     return { service: this.store.save("local_runtime_service", serviceId, { ...payload55(service), status: "running", started_at: (/* @__PURE__ */ new Date()).toISOString() }), idempotent: false };
   }
   stop(args = {}) {
-    const serviceId = String(args.service_id ?? "craft-local");
+    const serviceId = String(fallback2(args.service_id, "craft-local"));
     const service = this.store.get("local_runtime_service", serviceId);
     if (service.status === "stopped") return { service, idempotent: true };
     return { service: this.store.save("local_runtime_service", serviceId, { ...payload55(service), status: "stopped", stopped_at: (/* @__PURE__ */ new Date()).toISOString() }), idempotent: false };
   }
   tick(args = {}) {
-    const serviceId = String(args.service_id ?? "craft-local");
+    const serviceId = String(fallback2(args.service_id, "craft-local"));
     const service = this.store.get("local_runtime_service", serviceId);
     if (service.status !== "running") return { service, processed: [], count: 0, skipped: true };
     const now3 = args.now === void 0 ? (/* @__PURE__ */ new Date()).toISOString() : text100(args.now, "now");
@@ -22925,7 +23250,7 @@ var LocalRuntimeServiceKernel = class {
     return { service: saved, processed, count: processed.length, skipped: false };
   }
   get(args = {}) {
-    return { service: this.store.get("local_runtime_service", String(args.service_id ?? "craft-local")) };
+    return { service: this.store.get("local_runtime_service", String(fallback2(args.service_id, "craft-local"))) };
   }
 };
 var ProjectBundleKernel = class {
@@ -22940,7 +23265,7 @@ var ProjectBundleKernel = class {
     const records2 = kinds.flatMap((kind2) => this.store.list(kind2, max, (item) => item.project_id === projectId2 || item.task_id === projectId2 || item.workspace_id === projectId2));
     const identity = { format: "craft.project-bundle", schema: 1, project_id: projectId2, records: records2.map((record) => ({ kind: "project_record", ref: `${record.id}@${record.version}`, digest: digest80(record) })) };
     const bundle = { ...identity, exported_at: args.exported_at === void 0 ? (/* @__PURE__ */ new Date()).toISOString() : text100(args.exported_at, "exported_at") };
-    const id17 = String(args.bundle_id ?? `project_bundle_${(0, import_node_crypto103.randomUUID)().replaceAll("-", "")}`);
+    const id17 = String(fallback2(args.bundle_id, `project_bundle_${(0, import_node_crypto104.randomUUID)().replaceAll("-", "")}`));
     const existing = this.store.find("project_bundle", id17);
     if (existing) {
       if (existing.bundle_digest !== digest80(identity)) throw new Error("Project Bundle idempotency conflict");
@@ -22960,10 +23285,10 @@ var FeedbackLearningKernel = class {
     this.store = store;
   }
   record(args) {
-    const signalId = String(args.signal_id ?? `feedback_signal_${(0, import_node_crypto103.randomUUID)().replaceAll("-", "")}`);
+    const signalId = String(args.signal_id ?? `feedback_signal_${(0, import_node_crypto104.randomUUID)().replaceAll("-", "")}`);
     const scope3 = String(args.scope ?? "project");
     if (!["task", "project", "global"].includes(scope3)) throw new Error("Unsupported feedback scope");
-    const identity = { scope: scope3, project_id: args.project_id === void 0 ? null : text100(args.project_id, "project_id"), task_id: args.task_id === void 0 ? null : text100(args.task_id, "task_id"), outcome_id: args.outcome_id === void 0 ? null : text100(args.outcome_id, "outcome_id"), action: text100(args.action, "action"), diff_digest: text100(args.diff_digest, "diff_digest"), reason_digest: digest80(text100(args.reason, "reason")), accepted: args.accepted === true };
+    const identity = { scope: scope3, project_id: optionalText4(args.project_id, "project_id"), task_id: optionalText4(args.task_id, "task_id"), outcome_id: optionalText4(args.outcome_id, "outcome_id"), action: text100(args.action, "action"), diff_digest: text100(args.diff_digest, "diff_digest"), reason_digest: digest80(text100(args.reason, "reason")), accepted: args.accepted === true };
     const existing = this.store.find("feedback_signal", signalId);
     if (existing) {
       if (existing.identity_digest !== digest80(identity)) throw new Error("Feedback signal idempotency conflict");
@@ -22985,7 +23310,7 @@ var DomainEvaluatorKernel = class {
     this.store = store;
   }
   save(args) {
-    const evaluatorId = String(args.evaluator_id ?? `domain_evaluator_${(0, import_node_crypto103.randomUUID)().replaceAll("-", "")}`);
+    const evaluatorId = String(fallback2(args.evaluator_id, `domain_evaluator_${(0, import_node_crypto104.randomUUID)().replaceAll("-", "")}`));
     const domain = text100(args.domain, "domain");
     const name = text100(args.name, "name");
     const criteria = object25(args.rules ?? args.criteria, "rules");
@@ -23013,8 +23338,8 @@ var HandoffManifestKernel = class {
     this.store = store;
   }
   create(args) {
-    const handoffId = String(args.handoff_id ?? `handoff_manifest_${(0, import_node_crypto103.randomUUID)().replaceAll("-", "")}`);
-    const identity = { task_id: text100(args.task_id, "task_id"), session_id: args.session_id === void 0 ? null : text100(args.session_id, "session_id"), context_manifest_id: text100(args.context_manifest_id, "context_manifest_id"), host: text100(args.host, "host"), model: args.model === void 0 ? null : text100(args.model, "model"), allowed_effects: list3(args.allowed_effects, "allowed_effects"), artifact_ids: list3(args.artifact_ids, "artifact_ids"), evidence_ids: list3(args.evidence_ids, "evidence_ids"), outcome_id: args.outcome_id === void 0 ? null : text100(args.outcome_id, "outcome_id") };
+    const handoffId = String(fallback2(args.handoff_id, `handoff_manifest_${(0, import_node_crypto104.randomUUID)().replaceAll("-", "")}`));
+    const identity = { task_id: text100(args.task_id, "task_id"), session_id: optionalText4(args.session_id, "session_id"), context_manifest_id: text100(args.context_manifest_id, "context_manifest_id"), host: text100(args.host, "host"), model: optionalText4(args.model, "model"), allowed_effects: list3(args.allowed_effects, "allowed_effects"), artifact_ids: list3(args.artifact_ids, "artifact_ids"), evidence_ids: list3(args.evidence_ids, "evidence_ids"), outcome_id: optionalText4(args.outcome_id, "outcome_id") };
     const handoffDigest = digest80(identity);
     const existing = this.store.find("handoff_manifest", handoffId);
     if (existing) {
@@ -23038,7 +23363,7 @@ var CostLedgerKernel = class {
     const input = Number(args.input_per_million);
     const output = Number(args.output_per_million);
     if (![input, output].every((value) => Number.isFinite(value) && value >= 0)) throw new Error("prices must be non-negative finite numbers");
-    const id17 = String(args.price_id ?? `price_${provider}_${model}`);
+    const id17 = String(fallback2(args.price_id, `price_${provider}_${model}`));
     const record = { provider, model, input_per_million: input, output_per_million: output, effective_at: args.effective_at === void 0 ? (/* @__PURE__ */ new Date()).toISOString() : text100(args.effective_at, "effective_at") };
     const existing = this.store.find("provider_price", id17);
     return { price: existing ? this.store.save("provider_price", id17, { ...payload55(existing), ...record }) : this.store.create("provider_price", id17, record), idempotent: false };
@@ -23052,18 +23377,18 @@ var CostLedgerKernel = class {
     const price = this.store.list("provider_price", 1e3, (item) => item.provider === provider && item.model === model)[0];
     if (!price) throw new Error("No provider price snapshot");
     const costUsd = input * Number(price.input_per_million) / 1e6 + output * Number(price.output_per_million) / 1e6;
-    const id17 = String(args.usage_id ?? `usage_${(0, import_node_crypto103.randomUUID)().replaceAll("-", "")}`);
+    const id17 = String(fallback2(args.usage_id, `usage_${(0, import_node_crypto104.randomUUID)().replaceAll("-", "")}`));
     return { usage: this.store.create("usage_ledger", id17, { provider, model, project_id: args.project_id ?? null, task_id: args.task_id ?? null, input_tokens: input, output_tokens: output, cost_usd: costUsd, price_id: price.id }), idempotent: false };
   }
   report(args = {}) {
-    const projectId2 = args.project_id === void 0 ? null : text100(args.project_id, "project_id");
+    const projectId2 = optionalText4(args.project_id, "project_id");
     const entries2 = this.store.list("usage_ledger", 1e4, (item) => projectId2 === null || item.project_id === projectId2);
-    return { entries: entries2, total_cost_usd: entries2.reduce((sum, item) => sum + Number(item.cost_usd ?? 0), 0), total_input_tokens: entries2.reduce((sum, item) => sum + Number(item.input_tokens ?? 0), 0), total_output_tokens: entries2.reduce((sum, item) => sum + Number(item.output_tokens ?? 0), 0) };
+    return { entries: entries2, total_cost_usd: entries2.reduce((sum, item) => sum + numberOrZero(item.cost_usd), 0), total_input_tokens: entries2.reduce((sum, item) => sum + numberOrZero(item.input_tokens), 0), total_output_tokens: entries2.reduce((sum, item) => sum + numberOrZero(item.output_tokens), 0) };
   }
 };
 
 // src/v01212-verified-work.ts
-var import_node_crypto104 = require("node:crypto");
+var import_node_crypto105 = require("node:crypto");
 function text101(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -23080,7 +23405,7 @@ function object26(value, name) {
   return value;
 }
 function digest81(value) {
-  return `sha256:${(0, import_node_crypto104.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto105.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload56(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -23093,7 +23418,7 @@ var VerifiedAutonomousWorkKernel = class {
     this.store = store;
   }
   prepare(args) {
-    const workId = String(args.work_id ?? `verified_work_${(0, import_node_crypto104.randomUUID)().replaceAll("-", "")}`);
+    const workId = String(args.work_id ?? `verified_work_${(0, import_node_crypto105.randomUUID)().replaceAll("-", "")}`);
     const identity = { task_id: text101(args.task_id, "task_id"), context_manifest_id: text101(args.context_manifest_id, "context_manifest_id"), host: text101(args.host, "host"), model: args.model === void 0 ? null : text101(args.model, "model"), effect: text101(args.effect ?? "read_only", "effect"), workspace_digest: text101(args.workspace_digest, "workspace_digest"), action_digest: text101(args.action_digest, "action_digest"), acceptance_ref: text101(args.acceptance_ref, "acceptance_ref"), budget: args.budget === void 0 ? {} : object26(args.budget, "budget") };
     if (!EFFECTS9.has(identity.effect)) throw new Error("Unsupported verified work effect");
     const workDigest = digest81(identity);
@@ -23163,7 +23488,7 @@ var VerifiedAutonomousWorkKernel = class {
     const work = this.store.get("verified_work", text101(args.work_id, "work_id"));
     if (!["authorized", "running", "paused", "needs_replan"].includes(String(work.status))) throw new Error("Work is not handoffable");
     const targetHost = text101(args.target_host, "target_host");
-    const handoffId = String(args.handoff_id ?? `verified_handoff_${(0, import_node_crypto104.randomUUID)().replaceAll("-", "")}`);
+    const handoffId = String(args.handoff_id ?? `verified_handoff_${(0, import_node_crypto105.randomUUID)().replaceAll("-", "")}`);
     const identity = { work_id: work.id, target_host: targetHost, context_manifest_id: work.context_manifest_id, action_count: work.action_count, allowed_effect: work.effect, resume_digest: digest81({ work_id: work.id, targetHost, action_count: work.action_count }) };
     const existing = this.store.find("verified_handoff", handoffId);
     if (existing) return { handoff: existing, idempotent: true };
@@ -23216,13 +23541,19 @@ var TraceExplorerKernel = class {
 };
 
 // src/v01213-runtime.ts
-var import_node_crypto105 = require("node:crypto");
-var import_promises16 = require("node:fs/promises");
-var import_node_path26 = require("node:path");
+var import_node_crypto106 = require("node:crypto");
+var import_promises17 = require("node:fs/promises");
+var import_node_path27 = require("node:path");
 var import_node_os2 = require("node:os");
 function text102(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
+}
+function optionalText5(value, name) {
+  return value === void 0 ? null : text102(value, name);
+}
+function fallback3(value, defaultValue) {
+  return value === void 0 ? defaultValue : value;
 }
 function object27(value, name) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${name} must be an object`);
@@ -23236,7 +23567,7 @@ function list5(value, name) {
   return values3;
 }
 function digest82(value) {
-  return `sha256:${(0, import_node_crypto105.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto106.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload57(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -23248,13 +23579,13 @@ var ActionGatewayKernel = class {
   dataRoot;
   constructor(store, dataRoot2) {
     this.store = store;
-    this.dataRoot = dataRoot2 ?? (0, import_node_path26.join)((0, import_node_os2.homedir)(), ".craft_data");
+    this.dataRoot = dataRoot2 ?? (0, import_node_path27.join)((0, import_node_os2.homedir)(), ".craft_data");
   }
   prepare(args) {
-    const actionId = String(args.action_id ?? `action_${(0, import_node_crypto105.randomUUID)().replaceAll("-", "")}`);
+    const actionId = String(fallback3(args.action_id, `action_${(0, import_node_crypto106.randomUUID)().replaceAll("-", "")}`));
     const effect = text102(args.effect ?? "read_only", "effect");
     if (!EFFECTS10.has(effect)) throw new Error("Unsupported action effect");
-    const contract = { task_id: text102(args.task_id, "task_id"), workspace: text102(args.workspace, "workspace"), operation: text102(args.operation, "operation"), effect, input_digest: text102(args.input_digest, "input_digest"), approval_ref: args.approval_ref === void 0 ? null : text102(args.approval_ref, "approval_ref") };
+    const contract = { task_id: text102(args.task_id, "task_id"), workspace: text102(args.workspace, "workspace"), operation: text102(args.operation, "operation"), effect, input_digest: text102(args.input_digest, "input_digest"), approval_ref: optionalText5(args.approval_ref, "approval_ref") };
     const actionDigest2 = digest82(contract);
     const existing = this.store.find("action_gateway", actionId);
     if (existing) {
@@ -23272,24 +23603,24 @@ var ActionGatewayKernel = class {
     if (action.status !== "prepared") throw new Error("Action is not executable");
     const effect = String(action.effect);
     if (effect !== "read_only" && args.approved !== true) throw new Error("Write actions require explicit approval");
-    const workspace = (0, import_node_path26.resolve)(text102(action.workspace, "workspace"));
-    const dataRoot2 = (0, import_node_path26.resolve)(this.dataRoot);
+    const workspace = (0, import_node_path27.resolve)(text102(action.workspace, "workspace"));
+    const dataRoot2 = (0, import_node_path27.resolve)(this.dataRoot);
     const operation = String(action.operation);
-    const relativePath3 = text102(args.relative_path ?? "", "relative_path");
-    const inWorkspace = (0, import_node_path26.isAbsolute)(relativePath3) ? false : !(0, import_node_path26.relative)(workspace, (0, import_node_path26.resolve)(workspace, relativePath3)).startsWith("..");
-    const inDataRoot = (0, import_node_path26.isAbsolute)(relativePath3) && !(0, import_node_path26.relative)(dataRoot2, (0, import_node_path26.resolve)(relativePath3)).startsWith("..");
+    const relativePath3 = text102(fallback3(args.relative_path, ""), "relative_path");
+    const inWorkspace = (0, import_node_path27.isAbsolute)(relativePath3) ? false : !(0, import_node_path27.relative)(workspace, (0, import_node_path27.resolve)(workspace, relativePath3)).startsWith("..");
+    const inDataRoot = (0, import_node_path27.isAbsolute)(relativePath3) && !(0, import_node_path27.relative)(dataRoot2, (0, import_node_path27.resolve)(relativePath3)).startsWith("..");
     if (!inWorkspace && !inDataRoot) throw new Error("Action path escapes workspace and Craft data root");
-    const target = inWorkspace ? (0, import_node_path26.resolve)(workspace, relativePath3) : (0, import_node_path26.resolve)(relativePath3);
+    const target = inWorkspace ? (0, import_node_path27.resolve)(workspace, relativePath3) : (0, import_node_path27.resolve)(relativePath3);
     if (operation === "workspace_read") {
-      const content = await (0, import_promises16.readFile)(target, "utf8");
+      const content = await (0, import_promises17.readFile)(target, "utf8");
       const result = { operation, path: relativePath3, content, result_digest: digest82(content) };
       return this.finish(action, result);
     }
     if (operation === "workspace_write") {
       if (effect !== "local_write") throw new Error("workspace_write requires local_write effect");
       const content = text102(args.content, "content");
-      await (0, import_promises16.mkdir)((0, import_node_path26.resolve)(target, ".."), { recursive: true });
-      await (0, import_promises16.writeFile)(target, content, "utf8");
+      await (0, import_promises17.mkdir)((0, import_node_path27.resolve)(target, ".."), { recursive: true });
+      await (0, import_promises17.writeFile)(target, content, "utf8");
       return this.finish(action, { operation, path: relativePath3, bytes: Buffer.byteLength(content), result_digest: digest82(content) });
     }
     if (operation === "shell" || operation === "mcp_call" || operation === "browser") throw new Error(`${operation} requires an explicit platform adapter`);
@@ -23310,7 +23641,7 @@ var AcceptanceGateKernel = class {
     this.store = store;
   }
   prepare(args) {
-    const gateId = String(args.gate_id ?? `acceptance_gate_${(0, import_node_crypto105.randomUUID)().replaceAll("-", "")}`);
+    const gateId = String(fallback3(args.gate_id, `acceptance_gate_${(0, import_node_crypto106.randomUUID)().replaceAll("-", "")}`));
     const identity = { task_id: text102(args.task_id, "task_id"), work_id: text102(args.work_id, "work_id"), acceptance_ref: text102(args.acceptance_ref, "acceptance_ref"), required_artifact_ids: list5(args.required_artifact_ids, "required_artifact_ids"), required_evidence_ids: list5(args.required_evidence_ids, "required_evidence_ids") };
     const gateDigest = digest82(identity);
     const existing = this.store.find("acceptance_gate", gateId);
@@ -23349,44 +23680,44 @@ var DurableWorkerKernel = class {
     this.store = store;
   }
   configure(args = {}) {
-    const workerId = String(args.worker_id ?? "craft-worker");
+    const workerId = String(fallback3(args.worker_id, "craft-worker"));
     const existing = this.store.find("durable_worker", workerId);
     const worker = { worker_id: workerId, startup: String(args.startup ?? "manual"), notification: String(args.notification ?? "disabled"), lease_ttl_ms: Number(args.lease_ttl_ms ?? 3e4), status: existing?.status ?? "stopped" };
     return { worker: existing ? this.store.save("durable_worker", workerId, { ...payload57(existing), ...worker }) : this.store.create("durable_worker", workerId, worker), idempotent: false };
   }
   start(args = {}) {
-    const worker = this.store.find("durable_worker", String(args.worker_id ?? "craft-worker")) ?? this.configure(args).worker;
+    const worker = this.store.find("durable_worker", String(fallback3(args.worker_id, "craft-worker"))) ?? this.configure(args).worker;
     if (worker.status === "running") return { worker, idempotent: true };
     return { worker: this.store.save("durable_worker", String(worker.id), { ...payload57(worker), status: "running", started_at: (/* @__PURE__ */ new Date()).toISOString() }), idempotent: false };
   }
   stop(args = {}) {
-    const worker = this.store.get("durable_worker", String(args.worker_id ?? "craft-worker"));
+    const worker = this.store.get("durable_worker", String(fallback3(args.worker_id, "craft-worker")));
     if (worker.status === "stopped") return { worker, idempotent: true };
     return { worker: this.store.save("durable_worker", String(worker.id), { ...payload57(worker), status: "stopped", stopped_at: (/* @__PURE__ */ new Date()).toISOString() }), idempotent: false };
   }
   enqueue(args) {
-    const workerId = String(args.worker_id ?? "craft-worker");
-    const jobId = String(args.job_id ?? `job_${(0, import_node_crypto105.randomUUID)().replaceAll("-", "")}`);
+    const workerId = String(fallback3(args.worker_id, "craft-worker"));
+    const jobId = String(fallback3(args.job_id, `job_${(0, import_node_crypto106.randomUUID)().replaceAll("-", "")}`));
     const existing = this.store.find("worker_job", jobId);
     if (existing) return { job: existing, idempotent: true };
-    return { job: this.store.create("worker_job", jobId, { worker_id: workerId, task_id: text102(args.task_id, "task_id"), action: text102(args.action, "action"), status: "pending", payload_digest: digest82(args.payload ?? {}) }), idempotent: false };
+    return { job: this.store.create("worker_job", jobId, { worker_id: workerId, task_id: text102(args.task_id, "task_id"), action: text102(args.action, "action"), status: "pending", payload_digest: digest82(fallback3(args.payload, {})) }), idempotent: false };
   }
   tick(args = {}) {
-    const worker = this.store.get("durable_worker", String(args.worker_id ?? "craft-worker"));
+    const worker = this.store.get("durable_worker", String(fallback3(args.worker_id, "craft-worker")));
     if (worker.status !== "running") return { worker, jobs: [], skipped: true };
-    const now3 = String(args.now ?? (/* @__PURE__ */ new Date()).toISOString());
+    const now3 = String(fallback3(args.now, (/* @__PURE__ */ new Date()).toISOString()));
     const jobs = this.store.list("worker_job", 100, (item) => item.worker_id === worker.id && item.status === "pending").map((job) => this.store.save("worker_job", String(job.id), { ...payload57(job), status: "leased", lease_id: `lease_${job.id}`, leased_at: now3 }));
     const saved = this.store.save("durable_worker", String(worker.id), { ...payload57(worker), last_tick_at: now3, processed_count: Number(worker.processed_count ?? 0) + jobs.length });
     return { worker: saved, jobs, skipped: false };
   }
   recover(args = {}) {
-    const worker = this.store.get("durable_worker", String(args.worker_id ?? "craft-worker"));
-    const now3 = Date.parse(String(args.now ?? (/* @__PURE__ */ new Date()).toISOString()));
+    const worker = this.store.get("durable_worker", String(fallback3(args.worker_id, "craft-worker")));
+    const now3 = Date.parse(String(fallback3(args.now, (/* @__PURE__ */ new Date()).toISOString())));
     const recovered = this.store.list("worker_job", 100, (item) => item.worker_id === worker.id && item.status === "leased" && Date.parse(String(item.leased_at)) + Number(worker.lease_ttl_ms) < now3).map((job) => this.store.save("worker_job", String(job.id), { ...payload57(job), status: "pending", lease_id: null, recovered_at: new Date(now3).toISOString() }));
     return { recovered, count: recovered.length };
   }
   get(args = {}) {
-    return { worker: this.store.get("durable_worker", String(args.worker_id ?? "craft-worker")), jobs: this.store.list("worker_job", 100, (item) => item.worker_id === String(args.worker_id ?? "craft-worker")) };
+    return { worker: this.store.get("durable_worker", String(fallback3(args.worker_id, "craft-worker"))), jobs: this.store.list("worker_job", 100, (item) => item.worker_id === String(fallback3(args.worker_id, "craft-worker"))) };
   }
 };
 var ProviderRouterKernel = class {
@@ -23399,8 +23730,8 @@ var ProviderRouterKernel = class {
     if (!providers.length) throw new Error("providers must not be empty");
     const preferred = args.preferred === void 0 ? providers[0] : text102(args.preferred, "preferred");
     if (!providers.includes(preferred)) throw new Error("preferred provider must be declared");
-    const routeId = String(args.route_id ?? `provider_route_${(0, import_node_crypto105.randomUUID)().replaceAll("-", "")}`);
-    const identity = { providers, preferred, fallback: providers.filter((item) => item !== preferred), task_id: args.task_id ?? null, budget_digest: digest82(args.budget ?? {}) };
+    const routeId = String(fallback3(args.route_id, `provider_route_${(0, import_node_crypto106.randomUUID)().replaceAll("-", "")}`));
+    const identity = { providers, preferred, fallback: providers.filter((item) => item !== preferred), task_id: args.task_id ?? null, budget_digest: digest82(fallback3(args.budget, {})) };
     const existing = this.store.find("provider_route", routeId);
     if (existing) {
       if (existing.route_digest !== digest82(identity)) throw new Error("Provider route idempotency conflict");
@@ -23433,7 +23764,7 @@ var A2AProtocolKernel = class {
   async request(args, operation, body2, fetchImpl) {
     const endpoint3 = text102(args.endpoint, "endpoint");
     if (!endpoint3.startsWith("https://")) throw new Error("A2A endpoint must use HTTPS");
-    const response = await fetchImpl(endpoint3, { method: "POST", headers: { "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", method: operation, params: body2, id: text102(args.request_id ?? (0, import_node_crypto105.randomUUID)(), "request_id") }) });
+    const response = await fetchImpl(endpoint3, { method: "POST", headers: { "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", method: operation, params: body2, id: text102(args.request_id ?? (0, import_node_crypto106.randomUUID)(), "request_id") }) });
     if (!response.ok) throw new Error(`A2A ${operation} failed: HTTP ${response.status}`);
     const value = await response.json();
     return { operation, response_digest: digest82(value), task_id: value.task_id ?? null, status: value.status ?? "accepted", raw_content: false };
@@ -23441,7 +23772,7 @@ var A2AProtocolKernel = class {
 };
 
 // src/runtime-assurance.ts
-var import_node_crypto106 = require("node:crypto");
+var import_node_crypto107 = require("node:crypto");
 var TERMINAL_HOST = /* @__PURE__ */ new Set(["completed", "failed", "cancelled", "interrupted"]);
 var INTERVENTIONS = /* @__PURE__ */ new Set(["approval", "pause", "resume", "timeout", "cancel", "retry", "revoke", "handoff"]);
 function text103(value, name) {
@@ -23449,7 +23780,7 @@ function text103(value, name) {
   return value.trim();
 }
 function digest83(value) {
-  return `sha256:${(0, import_node_crypto106.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto107.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function ids3(value, name) {
   if (value === void 0) return [];
@@ -23608,7 +23939,7 @@ var RuntimeAssuranceKernel = class {
 };
 
 // src/federated-delegation.ts
-var import_node_crypto107 = require("node:crypto");
+var import_node_crypto108 = require("node:crypto");
 var TERMINAL5 = /* @__PURE__ */ new Set(["completed", "failed", "cancelled", "indeterminate", "revoked"]);
 var REMOTE_STATES = /* @__PURE__ */ new Set(["accepted", "working", "completed", "failed", "cancelled", "indeterminate"]);
 function text104(value, name) {
@@ -23627,7 +23958,7 @@ function instant12(value, name) {
   return result;
 }
 function digest84(value) {
-  return `sha256:${(0, import_node_crypto107.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto108.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload58(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -23764,7 +24095,7 @@ var FederatedDelegationKernel = class {
 };
 
 // src/harness-topology.ts
-var import_node_crypto108 = require("node:crypto");
+var import_node_crypto109 = require("node:crypto");
 var ROLES = /* @__PURE__ */ new Set(["primary", "diagnostic_research", "independent_evaluator", "remote_readonly"]);
 function text105(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
@@ -23777,7 +24108,7 @@ function strings21(value, name) {
   return result.sort();
 }
 function digest85(value) {
-  return `sha256:${(0, import_node_crypto108.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto109.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload59(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -23852,7 +24183,7 @@ var HarnessTopologyKernel = class {
 };
 
 // src/runtime-readiness.ts
-var import_node_crypto109 = require("node:crypto");
+var import_node_crypto110 = require("node:crypto");
 var EFFECTS11 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_write", "destructive"]);
 function text106(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
@@ -23865,7 +24196,7 @@ function strings22(value, name) {
   return result.sort();
 }
 function digest86(value) {
-  return `sha256:${(0, import_node_crypto109.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto110.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function confirmed2(store, ids4) {
   for (const id17 of ids4) if (store.get("evidence", id17).confidence !== "confirmed") throw new Error("Runtime readiness requires confirmed Evidence");
@@ -23924,7 +24255,7 @@ var RuntimeReadinessKernel = class {
 };
 
 // src/assured-pilot.ts
-var import_node_crypto110 = require("node:crypto");
+var import_node_crypto111 = require("node:crypto");
 var TRUSTED = /* @__PURE__ */ new Set(["trusted", "verified"]);
 var REQUIRED_RECOVERY_CHECKS = ["rehydration_verified", "receipt_revalidated", "state_reobserved"];
 function text107(value, name) {
@@ -23932,7 +24263,7 @@ function text107(value, name) {
   return value.trim();
 }
 function digest87(value) {
-  return `sha256:${(0, import_node_crypto110.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto111.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload60(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...value } = record;
@@ -24145,13 +24476,13 @@ var AssuredPilotKernel = class {
 };
 
 // src/capability-kit-runtime.ts
-var import_node_crypto111 = require("node:crypto");
+var import_node_crypto112 = require("node:crypto");
 var KIT_ID = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u;
 var SEMVER = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u;
 var EFFECTS12 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_write", "destructive"]);
 var SURFACES = /* @__PURE__ */ new Set(["skill", "mcp", "cli", "plugin"]);
 var PHASES = /* @__PURE__ */ new Set(["intent.enrich", "clarify.propose", "plan.propose", "activation.resolve", "preflight.check", "execute.adapter", "observe.snapshot", "accept.evaluate", "instrument.emit", "learn.propose"]);
-var SECRET5 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]/iu;
+var SECRET6 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]/iu;
 function text108(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -24185,10 +24516,10 @@ function canonical9(value) {
   return JSON.stringify(value);
 }
 function digest88(value) {
-  return `sha256:${(0, import_node_crypto111.createHash)("sha256").update(canonical9(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto112.createHash)("sha256").update(canonical9(value)).digest("hex")}`;
 }
 function assertNoSecret3(value, name) {
-  if (typeof value === "string" && SECRET5.test(value)) throw new Error(`${name} must not contain credentials or secrets`);
+  if (typeof value === "string" && SECRET6.test(value)) throw new Error(`${name} must not contain credentials or secrets`);
   if (Array.isArray(value)) value.forEach((item) => assertNoSecret3(item, name));
   if (value && typeof value === "object") Object.values(value).forEach((item) => assertNoSecret3(item, name));
 }
@@ -24259,7 +24590,7 @@ var CapabilityKitRuntime = class {
     assertNoSecret3(proposal, "proposal");
     const evidenceIds2 = optionalStrings2(args.evidence_ids, "evidence_ids");
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
-    const contributionId = String(args.contribution_id ?? `kit_contribution_${(0, import_node_crypto111.randomUUID)().replaceAll("-", "")}`);
+    const contributionId = String(args.contribution_id ?? `kit_contribution_${(0, import_node_crypto112.randomUUID)().replaceAll("-", "")}`);
     const contribution = this.store.create("capability_kit_contribution", contributionId, {
       kit_id: kit.id,
       kit_version: kit.version,
@@ -24409,7 +24740,7 @@ function builtin(id17, name, provides, effects, entrypoints, hooks) {
 }
 
 // src/knowledge-memory-runtime.ts
-var import_node_crypto112 = require("node:crypto");
+var import_node_crypto113 = require("node:crypto");
 var SOURCE_KINDS = /* @__PURE__ */ new Set(["evidence_wiki", "serena", "kefu_wiki", "project_note", "readme", "custom"]);
 var TRUSTS2 = /* @__PURE__ */ new Set(["untrusted", "bounded", "verified"]);
 var ACCESS = /* @__PURE__ */ new Set(["read_only", "proposal_only"]);
@@ -24417,7 +24748,7 @@ var MEMORY_KINDS2 = /* @__PURE__ */ new Set(["working", "episodic", "preference"
 var MEMORY_STATUS2 = /* @__PURE__ */ new Set(["active", "superseded", "revoked", "expired"]);
 var SENSITIVITIES = /* @__PURE__ */ new Set(["public", "internal", "restricted"]);
 var SCOPE_KINDS = /* @__PURE__ */ new Set(["user", "project", "workspace", "task", "session"]);
-var SECRET6 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
+var SECRET7 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
 function text109(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -24439,14 +24770,15 @@ function canonical10(value) {
   return JSON.stringify(value);
 }
 function digest89(value) {
-  return `sha256:${(0, import_node_crypto112.createHash)("sha256").update(canonical10(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto113.createHash)("sha256").update(canonical10(value)).digest("hex")}`;
 }
 function payload62(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
+  if (rest.content_ref !== void 0) delete rest.content;
   return rest;
 }
 function noSecret3(value, name) {
-  if (SECRET6.test(value)) throw new Error(`${name} must not contain credentials or secrets`);
+  if (SECRET7.test(value)) throw new Error(`${name} must not contain credentials or secrets`);
   return value;
 }
 function noSecretValue(value, name) {
@@ -24481,7 +24813,7 @@ var KnowledgeMemoryRuntime = class {
   }
   installBuiltins() {
     const sources = [
-      this.sourceRegister({ source_id: "builtin.evidence-wiki", kind: "evidence_wiki", label: "Craft Evidence Wiki", scope_kind: "user", scope_id: "local", locator: "~/.craft_data/wiki", content_digest: "builtin:evidence-wiki:v1", trust: "verified", access: "proposal_only" }).source,
+      this.sourceRegister({ source_id: "builtin.evidence-wiki", kind: "evidence_wiki", label: "Craft Evidence Wiki", scope_kind: "user", scope_id: "local", locator: "~/.craft_data/knowledge/md", content_digest: "builtin:evidence-wiki:v1", trust: "verified", access: "proposal_only" }).source,
       this.sourceRegister({ source_id: "builtin.serena-project-knowledge", kind: "serena", label: "Serena project knowledge", scope_kind: "project", scope_id: "selected-project", locator: ".serena/memories", content_digest: "builtin:serena-project-knowledge:v1", trust: "bounded", access: "read_only" }).source
     ];
     return { sources };
@@ -24503,7 +24835,7 @@ var KnowledgeMemoryRuntime = class {
       trust,
       access: access3
     };
-    const sourceId = String(args.source_id ?? `knowledge_source_${(0, import_node_crypto112.randomUUID)().replaceAll("-", "")}`);
+    const sourceId = String(args.source_id ?? `knowledge_source_${(0, import_node_crypto113.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("knowledge_source", sourceId);
     const identityDigest = digest89(identity);
     if (existing) {
@@ -24540,15 +24872,17 @@ var KnowledgeMemoryRuntime = class {
     if ((kind2 === "procedural" || confidence === "confirmed") && !evidenceIds2.length) throw new Error("Procedural or confirmed Memory requires Evidence");
     const explicitValidUntil = date(args.valid_until, "valid_until");
     const validUntil = explicitValidUntil ?? (kind2 === "working" ? new Date(Date.now() + 24 * 60 * 60 * 1e3).toISOString() : kind2 === "episodic" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1e3).toISOString() : null);
-    const identity = { source_id: source.id, source_version: source.version, kind: kind2, scope: memoryScope, content, content_digest: digest89(content), sensitivity, confidence, evidence_ids: evidenceIds2, valid_until: validUntil };
-    const memoryId = String(args.memory_id ?? `memory_ledger_${(0, import_node_crypto112.randomUUID)().replaceAll("-", "")}`);
+    const contentDigest = digest89(content);
+    const identity = { source_id: source.id, source_version: source.version, kind: kind2, scope: memoryScope, content_digest: contentDigest, sensitivity, confidence, evidence_ids: evidenceIds2, valid_until: validUntil };
+    const memoryId = String(args.memory_id ?? `memory_ledger_${(0, import_node_crypto113.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("memory_ledger", memoryId);
     const identityDigest = digest89(identity);
     if (existing) {
       if (existing.identity_digest !== identityDigest) throw new Error("Memory Ledger idempotency conflict");
       return { memory: existing, idempotent: true };
     }
-    return { memory: this.store.create("memory_ledger", memoryId, { ...identity, identity_digest: identityDigest, status: "active", supersedes_id: null }), idempotent: false };
+    const contentRef = this.store.contentStore.writeSync({ kind: "memory", record_id: memoryId, version: 1, scope: `${memoryScope.kind}:${memoryScope.id}`, status: "active", sensitivity, source_id: String(source.id), body: content });
+    return { memory: this.store.create("memory_ledger", memoryId, { ...identity, content_ref: contentRef, identity_digest: identityDigest, status: "active", supersedes_id: null }), idempotent: false };
   }
   transition(args) {
     const memory = this.store.get("memory_ledger", text109(args.memory_id, "memory_id"));
@@ -24582,7 +24916,7 @@ var KnowledgeMemoryRuntime = class {
     if (!(/* @__PURE__ */ new Set(["keyword", "vector"])).has(strategy)) throw new Error("Retrieval strategy is unsupported");
     const config = object29(args.configuration ?? {}, "configuration");
     noSecretValue(config, "configuration");
-    const adapterId = String(args.adapter_id ?? `retrieval_adapter_${(0, import_node_crypto112.randomUUID)().replaceAll("-", "")}`);
+    const adapterId = String(args.adapter_id ?? `retrieval_adapter_${(0, import_node_crypto113.randomUUID)().replaceAll("-", "")}`);
     const identity = { strategy, provider_fingerprint: args.provider_fingerprint === void 0 ? null : text109(args.provider_fingerprint, "provider_fingerprint"), configuration_digest: digest89(config) };
     if (strategy === "vector" && identity.provider_fingerprint === null) throw new Error("Vector Retrieval Adapter requires provider_fingerprint");
     const existing = this.store.find("retrieval_adapter", adapterId);
@@ -24606,7 +24940,7 @@ var KnowledgeMemoryRuntime = class {
     const maxCost = Number(args.max_cost_usd ?? Number.MAX_SAFE_INTEGER);
     if (![minimumRecall, maxLatency, maxCost].every(Number.isFinite) || minimumRecall < 0 || minimumRecall > 1 || maxLatency < 0 || maxCost < 0) throw new Error("Retrieval evaluation thresholds are invalid");
     const eligible = adapter.strategy === "keyword" || recall >= minimumRecall && leakage === 0 && latency <= maxLatency && cost <= maxCost;
-    const evaluationId = String(args.evaluation_id ?? `retrieval_evaluation_${(0, import_node_crypto112.randomUUID)().replaceAll("-", "")}`);
+    const evaluationId = String(args.evaluation_id ?? `retrieval_evaluation_${(0, import_node_crypto113.randomUUID)().replaceAll("-", "")}`);
     const identity = { adapter_id: adapter.id, adapter_version: adapter.version, metrics, minimum_recall: minimumRecall, max_latency_ms: maxLatency, max_cost_usd: maxCost };
     const existing = this.store.find("retrieval_evaluation", evaluationId);
     const identityDigest = digest89(identity);
@@ -24642,21 +24976,24 @@ var KnowledgeMemoryRuntime = class {
     const candidates = this.store.list("memory_ledger", 1e4, (item) => {
       const source = sources.get(String(item.source_id));
       return item.status === "active" && source?.status === "active" && source.trust !== "untrusted" && canonical10(item.scope) === canonical10(requestedScope) && (item.valid_until === null || Date.parse(String(item.valid_until)) >= now3.valueOf()) && (allowRestricted || item.sensitivity !== "restricted") && (selectedSourceIds === null || selectedSourceIds.has(String(item.source_id)));
-    }).map((item) => ({ memory: item, required: requestedIds.includes(String(item.id)), score: queryTerms.reduce((sum, term) => sum + Number(String(item.content).toLowerCase().includes(term)), 0) })).filter((item) => item.required || item.score > 0).sort((left, right) => Number(right.required) - Number(left.required) || right.score - left.score || String(left.memory.id).localeCompare(String(right.memory.id)));
+    }).map((item) => {
+      const body2 = this.content(item);
+      return { memory: item, body: body2, required: requestedIds.includes(String(item.id)), score: queryTerms.reduce((sum, term) => sum + Number(body2.toLowerCase().includes(term)), 0) };
+    }).filter((item) => item.required || item.score > 0).sort((left, right) => Number(right.required) - Number(left.required) || right.score - left.score || String(left.memory.id).localeCompare(String(right.memory.id)));
     for (const memoryId of requestedIds) if (!candidates.some((item) => item.memory.id === memoryId)) throw new Error("Required Memory is unavailable in this Context");
     const items2 = [];
     let usedChars = 0;
     for (const candidate2 of candidates) {
-      const size = String(candidate2.memory.content).length;
+      const size = candidate2.body.length;
       if (items2.length >= maxItems) break;
       if (usedChars + size > maxChars) {
         if (candidate2.required) throw new Error("Required Memory exceeds Context budget");
         continue;
       }
       usedChars += size;
-      items2.push({ memory_id: candidate2.memory.id, memory_version: candidate2.memory.version, source_id: candidate2.memory.source_id, content: candidate2.memory.content, content_digest: candidate2.memory.content_digest, sensitivity: candidate2.memory.sensitivity, reason: candidate2.required ? "required" : retrievalMode === "vector" ? "evaluated_vector_adapter" : "keyword_overlap" });
+      items2.push({ memory_id: candidate2.memory.id, memory_version: candidate2.memory.version, source_id: candidate2.memory.source_id, content: candidate2.body, content_digest: candidate2.memory.content_digest, sensitivity: candidate2.memory.sensitivity, reason: candidate2.required ? "required" : retrievalMode === "vector" ? "evaluated_vector_adapter" : "keyword_overlap" });
     }
-    const receiptId = String(args.receipt_id ?? `context_resolution_${(0, import_node_crypto112.randomUUID)().replaceAll("-", "")}`);
+    const receiptId = String(args.receipt_id ?? `context_resolution_${(0, import_node_crypto113.randomUUID)().replaceAll("-", "")}`);
     const identity = { query_digest: digest89(query), scope: requestedScope, retrieval_adapter_id: adapter?.id ?? null, retrieval_adapter_version: adapter?.version ?? null, retrieval_mode: retrievalMode, allow_restricted: allowRestricted, memory_refs: items2.map((item) => ({ memory_id: item.memory_id, memory_version: item.memory_version, content_digest: item.content_digest, reason: item.reason })), max_items: maxItems, max_chars: maxChars, used_chars: usedChars };
     const existing = this.store.find("context_resolution_receipt", receiptId);
     const identityDigest = digest89(identity);
@@ -24667,31 +25004,38 @@ var KnowledgeMemoryRuntime = class {
     return { receipt: this.store.create("context_resolution_receipt", receiptId, { ...identity, identity_digest: identityDigest, omitted_count: candidates.length - items2.length, content_free: true }), items: items2, idempotent: false };
   }
   get(args) {
-    return { memory: this.store.get("memory_ledger", text109(args.memory_id, "memory_id"), args.version === void 0 ? void 0 : Number(args.version)) };
+    const memory = this.store.get("memory_ledger", text109(args.memory_id, "memory_id"), args.version === void 0 ? void 0 : Number(args.version));
+    return { memory: { ...memory, content: this.content(memory) } };
   }
   receiptGet(args) {
     return { receipt: this.store.get("context_resolution_receipt", text109(args.receipt_id, "receipt_id"), args.version === void 0 ? void 0 : Number(args.version)) };
   }
+  content(memory) {
+    if (typeof memory.content === "string") return memory.content;
+    const ref2 = memory.content_ref;
+    if (!contentReference(ref2)) throw new Error("Memory content reference is missing");
+    return this.store.contentStore.readCompatSync(ref2).body;
+  }
 };
 
 // src/memory-governance.ts
-var import_node_crypto113 = require("node:crypto");
-var SECRET7 = /(?:api[_-]?key|authorization|cookie|password|passwd|secret|token)\s*[:=]\s*[^\s]{6,}/iu;
+var import_node_crypto114 = require("node:crypto");
+var SECRET8 = /(?:api[_-]?key|authorization|cookie|password|passwd|secret|token)\s*[:=]\s*[^\s]{6,}/iu;
 var KINDS3 = /* @__PURE__ */ new Set(["working", "episodic", "preference", "procedural"]);
 var CONFIDENCE = /* @__PURE__ */ new Set(["confirmed", "bounded", "unverified"]);
 var SCOPE = /* @__PURE__ */ new Set(["user", "project", "workspace", "task", "session"]);
 function id14(prefix) {
-  return `${prefix}_${(0, import_node_crypto113.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto114.randomUUID)().replaceAll("-", "")}`;
 }
 function text110(v, name) {
   if (typeof v !== "string" || !v.trim()) throw new Error(`${name} must not be empty`);
   return v.trim();
 }
 function digest90(v) {
-  return `sha256:${(0, import_node_crypto113.createHash)("sha256").update(JSON.stringify(v)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto114.createHash)("sha256").update(JSON.stringify(v)).digest("hex")}`;
 }
 function noSecret4(v, name) {
-  if (SECRET7.test(v)) throw new Error(`${name} must not contain credentials or secrets`);
+  if (SECRET8.test(v)) throw new Error(`${name} must not contain credentials or secrets`);
   return v;
 }
 function payload63(r) {
@@ -24712,7 +25056,6 @@ var MemoryGovernanceKernel = class {
     this.store = store;
     this.ledger = ledger;
   }
-  /* node:coverage ignore next */
   propose(args) {
     const kind2 = text110(args.kind, "kind");
     if (!KINDS3.has(kind2)) throw new Error("memory kind is unsupported");
@@ -24817,22 +25160,22 @@ var MemoryGovernanceKernel = class {
 };
 
 // src/workflow-dag.ts
-var import_node_crypto114 = require("node:crypto");
-var import_node_fs17 = require("node:fs");
-var import_node_path27 = require("node:path");
+var import_node_crypto115 = require("node:crypto");
+var import_node_fs18 = require("node:fs");
+var import_node_path28 = require("node:path");
 var NODE_TYPES = /* @__PURE__ */ new Set(["action", "condition", "parallel", "human_gate", "retry", "compensation", "subworkflow"]);
 var EFFECTS13 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_write", "destructive"]);
 var LIFECYCLE = /* @__PURE__ */ new Set(["draft", "candidate", "verified", "canary", "routable", "deprecated", "rolled_back"]);
-var SECRET8 = /(?:api[_-]?key|authorization|cookie|password|passwd|secret|token)\s*[:=]\s*[^\s]{6,}/iu;
+var SECRET9 = /(?:api[_-]?key|authorization|cookie|password|passwd|secret|token)\s*[:=]\s*[^\s]{6,}/iu;
 function id15(prefix) {
-  return `${prefix}_${(0, import_node_crypto114.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto115.randomUUID)().replaceAll("-", "")}`;
 }
 function text111(v, name) {
   if (typeof v !== "string" || !v.trim()) throw new Error(`${name} must not be empty`);
   return v.trim();
 }
 function digest91(v) {
-  return `sha256:${(0, import_node_crypto114.createHash)("sha256").update(JSON.stringify(v)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto115.createHash)("sha256").update(JSON.stringify(v)).digest("hex")}`;
 }
 function payload64(r) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...p } = r;
@@ -24886,17 +25229,17 @@ var WorkflowDagKernel = class {
     const graph = this.validate(args);
     const lifecycle = String(args.lifecycle ?? "draft");
     if (!LIFECYCLE.has(lifecycle)) throw new Error("workflow lifecycle is unsupported");
-    if (SECRET8.test(JSON.stringify(graph)) || SECRET8.test(String(args.name)) || SECRET8.test(String(args.description ?? ""))) throw new Error("Workflow definition must not contain credentials or secrets");
+    if (SECRET9.test(JSON.stringify(graph)) || SECRET9.test(String(args.name)) || SECRET9.test(String(args.description ?? ""))) throw new Error("Workflow definition must not contain credentials or secrets");
     const identity = { workflow_id: workflowId, name: text111(args.name, "name"), description: String(args.description ?? ""), graph, graph_digest: digest91(graph) };
     const existing = this.store.find("workflow_dag", workflowId);
     if (existing) {
       if (existing.identity_digest !== digest91(identity)) throw new Error("Workflow DAG idempotency conflict");
       return { workflow: existing, idempotent: true };
     }
-    (0, import_node_fs17.mkdirSync)((0, import_node_path27.join)(this.store.paths.root, "workflows"), { recursive: true });
-    const filePath = (0, import_node_path27.join)(this.store.paths.root, "workflows", `${workflowId}.workflow.json`);
+    (0, import_node_fs18.mkdirSync)((0, import_node_path28.join)(this.store.paths.root, "workflows"), { recursive: true });
+    const filePath = (0, import_node_path28.join)(this.store.paths.root, "workflows", `${workflowId}.workflow.json`);
     const document2 = { workflow_id: workflowId, name: identity.name, description: identity.description, ...graph, graph_digest: identity.graph_digest };
-    (0, import_node_fs17.writeFileSync)(filePath, `${JSON.stringify(document2, null, 2)}
+    (0, import_node_fs18.writeFileSync)(filePath, `${JSON.stringify(document2, null, 2)}
 `, { encoding: "utf8", mode: 384 });
     const workflow = this.store.create("workflow_dag", workflowId, { ...identity, file_path: filePath, file_digest: digest91(document2), identity_digest: digest91(identity), lifecycle, automation_authority: false });
     return { workflow, idempotent: false };
@@ -24940,7 +25283,7 @@ var WorkflowDagKernel = class {
   export(args) {
     const workflow = this.store.get("workflow_dag", text111(args.workflow_id, "workflow_id"), args.version === void 0 ? void 0 : Number(args.version));
     const document2 = { workflow_id: workflow.id, name: workflow.name, description: workflow.description, ...workflow.graph, graph_digest: workflow.graph_digest };
-    const fileDrift = workflow.file_path ? digest91(JSON.parse((0, import_node_fs17.readFileSync)(String(workflow.file_path), "utf8"))) !== workflow.file_digest : false;
+    const fileDrift = workflow.file_path ? digest91(JSON.parse((0, import_node_fs18.readFileSync)(String(workflow.file_path), "utf8"))) !== workflow.file_digest : false;
     return { workflow_id: workflow.id, version: workflow.version, graph_digest: workflow.graph_digest, file_drift: fileDrift, document: document2 };
   }
   import(args) {
@@ -24951,14 +25294,14 @@ var WorkflowDagKernel = class {
 };
 
 // src/task-state.ts
-var import_node_crypto115 = require("node:crypto");
+var import_node_crypto116 = require("node:crypto");
 var STATES = /* @__PURE__ */ new Set(["prepared", "awaiting_approval", "running", "paused", "awaiting_acceptance", "ready_for_delivery", "completed", "failed", "cancelled", "needs_replan", "blocked"]);
 function text112(v, name) {
   if (typeof v !== "string" || !v.trim()) throw new Error(`${name} must not be empty`);
   return v.trim();
 }
 function digest92(v) {
-  return `sha256:${(0, import_node_crypto115.createHash)("sha256").update(JSON.stringify(v)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto116.createHash)("sha256").update(JSON.stringify(v)).digest("hex")}`;
 }
 var TaskStateKernel = class {
   store;
@@ -25000,7 +25343,7 @@ var TaskStateKernel = class {
 };
 
 // src/work-runtime-mode.ts
-var import_node_crypto116 = require("node:crypto");
+var import_node_crypto117 = require("node:crypto");
 var MODES2 = /* @__PURE__ */ new Set(["console", "agent"]);
 function text113(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
@@ -25013,7 +25356,7 @@ function strings25(value, name) {
   return result.sort();
 }
 function digest93(value) {
-  return `sha256:${(0, import_node_crypto116.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto117.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var WorkRuntimeModeKernel = class {
   store;
@@ -25049,7 +25392,7 @@ var WorkRuntimeModeKernel = class {
     const activation = args.activation_profile_id === void 0 ? null : this.store.get("activation_profile", text113(args.activation_profile_id, "activation_profile_id"));
     if (activation && activation.task_id !== task.id) throw new Error("Activation Profile belongs to another Task");
     const context = args.context_receipt_id === void 0 ? null : this.store.get("context_resolution_receipt", text113(args.context_receipt_id, "context_receipt_id"));
-    const planId = String(args.plan_id ?? `work_runtime_plan_${(0, import_node_crypto116.randomUUID)().replaceAll("-", "")}`);
+    const planId = String(args.plan_id ?? `work_runtime_plan_${(0, import_node_crypto117.randomUUID)().replaceAll("-", "")}`);
     const identity = { task_id: task.id, task_version: task.version, mode_profile_id: profile.id, mode_profile_version: profile.version, host, model, activation_profile_id: activation?.id ?? null, activation_profile_version: activation?.version ?? null, context_receipt_id: context?.id ?? null, context_receipt_version: context?.version ?? null };
     const existing = this.store.find("work_runtime_plan", planId);
     const identityDigest = digest93(identity);
@@ -25065,18 +25408,18 @@ var WorkRuntimeModeKernel = class {
 };
 
 // src/turn-cognitive-runtime.ts
-var import_node_crypto117 = require("node:crypto");
+var import_node_crypto118 = require("node:crypto");
 var SCOPE_KINDS2 = /* @__PURE__ */ new Set(["user", "project", "workspace", "task"]);
 var INTENTS = /* @__PURE__ */ new Set(["conversation", "knowledge", "capability", "task", "execution", "learning"]);
 var SIGNALS2 = /* @__PURE__ */ new Set(["needs_context", "needs_capability", "needs_workflow", "needs_execution", "durable_value", "sensitive"]);
 var MEMORY_KINDS3 = /* @__PURE__ */ new Set(["working", "episodic", "preference", "procedural"]);
 var CONFIDENCE2 = /* @__PURE__ */ new Set(["confirmed", "bounded", "unverified"]);
 var CANDIDATE_STATUS = /* @__PURE__ */ new Set(["accepted", "rejected", "revoked"]);
-var SECRET9 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
+var SECRET10 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
 function text114(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   const result = value.trim();
-  if (SECRET9.test(result)) throw new Error(`${name} must not contain credentials or secrets`);
+  if (SECRET10.test(result)) throw new Error(`${name} must not contain credentials or secrets`);
   return result;
 }
 function object30(value, name) {
@@ -25099,7 +25442,7 @@ function canonical11(value) {
   return JSON.stringify(value);
 }
 function digest94(value) {
-  return `sha256:${(0, import_node_crypto117.createHash)("sha256").update(canonical11(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto118.createHash)("sha256").update(canonical11(value)).digest("hex")}`;
 }
 function payload65(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -25151,7 +25494,7 @@ var TurnCognitiveRuntime = class {
     };
     if (!(/* @__PURE__ */ new Set(["none", "candidate"])).has(identity.memory_capture)) throw new Error("memory_capture is unsupported");
     if (!(/* @__PURE__ */ new Set(["none", "observe"])).has(identity.evaluation_capture)) throw new Error("evaluation_capture is unsupported");
-    const policyId = String(args.policy_id ?? `turn_policy_${(0, import_node_crypto117.randomUUID)().replaceAll("-", "")}`);
+    const policyId = String(args.policy_id ?? `turn_policy_${(0, import_node_crypto118.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("turn_policy", policyId);
     const identityDigest = digest94(identity);
     if (existing) {
@@ -25182,7 +25525,7 @@ var TurnCognitiveRuntime = class {
       signals: optionalStrings3(args.signals, "signals", SIGNALS2),
       memory_candidate: candidate(args)
     };
-    const proposalId = String(args.proposal_id ?? `turn_proposal_${(0, import_node_crypto117.randomUUID)().replaceAll("-", "")}`);
+    const proposalId = String(args.proposal_id ?? `turn_proposal_${(0, import_node_crypto118.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("turn_proposal", proposalId);
     const identityDigest = digest94(identity);
     if (existing) {
@@ -25198,7 +25541,7 @@ var TurnCognitiveRuntime = class {
     if (!(/* @__PURE__ */ new Set(["manual", "event_hook"])).has(delivery)) throw new Error("Turn Host Adapter delivery is unsupported");
     const identity = { host, delivery, supports_turn_hook: args.supports_turn_hook === true, proposal_contract: text114(args.proposal_contract ?? "turn-proposal/v1", "proposal_contract") };
     if (delivery === "event_hook" && identity.supports_turn_hook !== true) throw new Error("event_hook requires supports_turn_hook");
-    const adapterId = String(args.adapter_id ?? `turn_host_adapter_${(0, import_node_crypto117.randomUUID)().replaceAll("-", "")}`);
+    const adapterId = String(args.adapter_id ?? `turn_host_adapter_${(0, import_node_crypto118.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("turn_host_adapter", adapterId);
     const identityDigest = digest94(identity);
     if (existing) {
@@ -25234,7 +25577,7 @@ var TurnCognitiveRuntime = class {
       semantic_owner: proposal.semantic_owner,
       selected_refs: { host_adapter_id: proposal.host_adapter_id, work_runtime_mode_id: proposal.work_runtime_mode_id }
     };
-    const receiptId = String(args.receipt_id ?? `turn_receipt_${(0, import_node_crypto117.randomUUID)().replaceAll("-", "")}`);
+    const receiptId = String(args.receipt_id ?? `turn_receipt_${(0, import_node_crypto118.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("turn_receipt", receiptId);
     const receiptDigest = digest94(receiptIdentity2);
     if (existing) {
@@ -25286,7 +25629,7 @@ var TurnCognitiveRuntime = class {
     if (proposal.memory_candidate !== void 0) throw new Error("Turn Evaluation Case proposal must be content-free");
     const expected = object30(args.expected_actions, "expected_actions");
     const identity = { policy_id: policy.id, policy_version: policy.version, proposal, expected_actions: expected };
-    const caseId = String(args.case_id ?? `turn_evaluation_case_${(0, import_node_crypto117.randomUUID)().replaceAll("-", "")}`);
+    const caseId = String(args.case_id ?? `turn_evaluation_case_${(0, import_node_crypto118.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("turn_evaluation_case", caseId);
     const identityDigest = digest94(identity);
     if (existing) {
@@ -25303,7 +25646,7 @@ var TurnCognitiveRuntime = class {
     const passed = results.filter((item) => item.passed).length;
     const metrics = { cases: results.length, passed, decision_accuracy: passed / results.length, false_positive_count: results.reduce((sum, item) => sum + item.false_positive_count, 0), scope_rejection_count: results.filter((item) => item.scope_rejected).length };
     const identity = { case_refs: cases.map((item) => ({ id: item.id, version: item.version })), metrics, verdict: passed === results.length ? "eligible" : "rejected" };
-    const evaluationId = String(args.evaluation_id ?? `turn_evaluation_${(0, import_node_crypto117.randomUUID)().replaceAll("-", "")}`);
+    const evaluationId = String(args.evaluation_id ?? `turn_evaluation_${(0, import_node_crypto118.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("turn_evaluation", evaluationId);
     const identityDigest = digest94(identity);
     if (existing) {
@@ -25365,16 +25708,16 @@ var TurnCognitiveRuntime = class {
 };
 
 // src/continual-harness.ts
-var import_node_crypto118 = require("node:crypto");
+var import_node_crypto119 = require("node:crypto");
 var BINDING_KINDS = /* @__PURE__ */ new Set(["prompt_note", "memory_ledger", "capability", "workflow", "expert_profile", "harness_topology", "work_runtime_plan", "context_resolution_receipt", "activation_profile"]);
 var SOURCE_KINDS2 = /* @__PURE__ */ new Set(["trial", "outcome", "acceptance_gate", "verified_work_loop", "trace", "work_session"]);
 var CHANGE_KINDS = /* @__PURE__ */ new Set(["prompt_note", "memory", "skill", "workflow", "subagent_spec"]);
 var CHANGE_ACTIONS = /* @__PURE__ */ new Set(["create", "update", "delete"]);
-var SECRET10 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
+var SECRET11 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
 function text115(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   const result = value.trim();
-  if (SECRET10.test(result)) throw new Error(`${name} must not contain credentials or secrets`);
+  if (SECRET11.test(result)) throw new Error(`${name} must not contain credentials or secrets`);
   return result;
 }
 function strings27(value, name) {
@@ -25398,7 +25741,7 @@ function canonical12(value) {
   return JSON.stringify(value);
 }
 function digest95(value) {
-  return `sha256:${(0, import_node_crypto118.createHash)("sha256").update(canonical12(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto119.createHash)("sha256").update(canonical12(value)).digest("hex")}`;
 }
 function reference2(store, raw, name, allowed) {
   const input = object31(raw, name);
@@ -25452,7 +25795,7 @@ var ContinualHarnessKernel = class {
     for (const source of sourceRefs) this.assertTaskSource(task.id, source);
     const sessionId = local ? text115(args.session_id, "session_id") : null;
     const identity = { task_id: task.id, task_version: task.version, view_id: view.id, view_version: view.version, session_id: sessionId, source_refs: sourceRefs, evidence_ids: evidenceIds2, hypothesis: text115(args.hypothesis, "hypothesis"), changes, design_axes: axes2.sort(), risk: local ? "low" : "governed" };
-    const refinementId = String(args.refinement_id ?? `harness_refinement_${(0, import_node_crypto118.randomUUID)().replaceAll("-", "")}`);
+    const refinementId = String(args.refinement_id ?? `harness_refinement_${(0, import_node_crypto119.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = digest95(identity);
     const existing = this.store.find("harness_refinement", refinementId);
     if (existing) {
@@ -25489,7 +25832,7 @@ var ContinualHarnessKernel = class {
     if (refinement.lifecycle !== "signoff_ready") throw new Error("Refinement is not ready for Signoff");
     const signoff = this.store.get("signoff", text115(args.signoff_id, "signoff_id"));
     if (signoff.decision !== "passed" || signoff.subject_type !== "harness_refinement" || signoff.subject_id !== refinement.id || Number(signoff.subject_version) !== Number(refinement.version)) throw new Error("Refinement requires Signoff for its exact version");
-    const canaryId = String(args.canary_id ?? `harness_refinement_canary_${(0, import_node_crypto118.randomUUID)().replaceAll("-", "")}`);
+    const canaryId = String(args.canary_id ?? `harness_refinement_canary_${(0, import_node_crypto119.randomUUID)().replaceAll("-", "")}`);
     const canary = this.store.create("harness_refinement_canary", canaryId, { refinement_id: refinement.id, refinement_version: refinement.version, baseline_snapshot: refinement.before_snapshot, candidate_snapshot: refinement.after_snapshot, status: "running" });
     const saved = this.store.save("harness_refinement", String(refinement.id), { ...payload66(refinement), lifecycle: "canary_running", signoff_id: signoff.id, canary_id: canary.id });
     return { refinement: saved, canary };
@@ -25568,14 +25911,14 @@ var ContinualHarnessKernel = class {
 };
 
 // src/stateful-compute.ts
-var import_node_crypto119 = require("node:crypto");
+var import_node_crypto120 = require("node:crypto");
 var HOST_KINDS2 = /* @__PURE__ */ new Set(["repl", "notebook", "agent_host", "custom"]);
 var CONFIDENCE3 = /* @__PURE__ */ new Set(["confirmed", "bounded", "unverified"]);
-var SECRET11 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
+var SECRET12 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
 function text116(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   const result = value.trim();
-  if (SECRET11.test(result)) throw new Error(`${name} must not contain credentials or secrets`);
+  if (SECRET12.test(result)) throw new Error(`${name} must not contain credentials or secrets`);
   return result;
 }
 function strings28(value, name, required3 = false) {
@@ -25595,7 +25938,7 @@ function payload67(record) {
   return rest;
 }
 function digest96(value) {
-  return `sha256:${(0, import_node_crypto119.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto120.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var StatefulComputeKernel = class {
   store;
@@ -25615,7 +25958,7 @@ var StatefulComputeKernel = class {
       if (profile.status !== "verified" || profile.isolation !== "verified" || profile.network !== "deny") throw new Error("Generated-code Host conformance is not verified and network-denied");
     }
     const identity = { kind: kind2, label: text116(args.label, "label"), trust, generated_code: generatedCode, conformance_id: conformanceId, capabilities: strings28(args.capabilities, "capabilities"), execution_authority: false };
-    const hostId = String(args.host_id ?? `stateful_compute_host_${(0, import_node_crypto119.randomUUID)().replaceAll("-", "")}`);
+    const hostId = String(args.host_id ?? `stateful_compute_host_${(0, import_node_crypto120.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = digest96(identity);
     const existing = this.store.find("stateful_compute_host", hostId);
     if (existing) {
@@ -25633,7 +25976,7 @@ var StatefulComputeKernel = class {
     const environmentFingerprint = text116(args.environment_fingerprint, "environment_fingerprint");
     const identity = { task_id: task.id, task_version: task.version, host_id: host.id, host_version: host.version, context_receipt_id: context.id, context_receipt_version: context.version, environment_fingerprint: environmentFingerprint, workspace_snapshot_ref: text116(args.workspace_snapshot_ref, "workspace_snapshot_ref"), budget_ref: text116(args.budget_ref, "budget_ref"), allowed_effect: text116(args.allowed_effect ?? "read_only", "allowed_effect") };
     if (identity.allowed_effect !== "read_only" && !host.conformance_id) throw new Error("Stateful compute writes require a verified conformance profile");
-    const sessionId = String(args.session_id ?? `stateful_compute_session_${(0, import_node_crypto119.randomUUID)().replaceAll("-", "")}`);
+    const sessionId = String(args.session_id ?? `stateful_compute_session_${(0, import_node_crypto120.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = digest96(identity);
     const existing = this.store.find("stateful_compute_session", sessionId);
     if (existing) {
@@ -25646,7 +25989,7 @@ var StatefulComputeKernel = class {
     const session = this.store.get("stateful_compute_session", text116(args.session_id, "session_id"));
     if (Number(args.expected_revision) !== Number(session.state_revision)) throw new Error("Stateful compute Session revision changed; re-observation is required");
     const action = { operation: text116(args.operation, "operation"), input_refs: strings28(args.input_refs, "input_refs"), expected_revision: session.state_revision, environment_fingerprint: session.environment_fingerprint };
-    const dispatchId = String(args.dispatch_id ?? `stateful_compute_dispatch_${(0, import_node_crypto119.randomUUID)().replaceAll("-", "")}`);
+    const dispatchId = String(args.dispatch_id ?? `stateful_compute_dispatch_${(0, import_node_crypto120.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("stateful_compute_dispatch", dispatchId);
     const actionDigest2 = digest96(action);
     if (existing) {
@@ -25677,7 +26020,7 @@ var StatefulComputeKernel = class {
     const session = this.store.get("stateful_compute_session", text116(args.session_id, "session_id"));
     if (!(/* @__PURE__ */ new Set(["prepared", "running", "paused"])).has(String(session.status))) throw new Error("Stateful compute Session cannot delegate work");
     const identity = { parent_session_id: session.id, task_id: session.task_id, objective: text116(args.objective, "objective"), role: text116(args.role ?? "diagnostic_research", "role"), context_refs: strings28(args.context_refs, "context_refs"), budget_ref: session.budget_ref, allocation: object32(args.allocation ?? {}, "allocation"), effect: "read_only", result_schema: object32(args.result_schema, "result_schema"), async: true };
-    const callId = String(args.call_id ?? `subagent_call_${(0, import_node_crypto119.randomUUID)().replaceAll("-", "")}`);
+    const callId = String(args.call_id ?? `subagent_call_${(0, import_node_crypto120.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = digest96(identity);
     const existing = this.store.find("subagent_function_call", callId);
     if (existing) {
@@ -25713,7 +26056,7 @@ var StatefulComputeKernel = class {
 };
 
 // src/uncertainty-policy.ts
-var import_node_crypto120 = require("node:crypto");
+var import_node_crypto121 = require("node:crypto");
 var SCOPES = ["core", "global", "project", "task", "case"];
 var MODES3 = /* @__PURE__ */ new Set(["observe_only", "supervised", "bounded_autonomous", "autonomous", "locked"]);
 var ACTIONS2 = /* @__PURE__ */ new Set(["collecting", "human_required", "abstained", "unchanged", "rejected", "blocked"]);
@@ -25722,13 +26065,13 @@ function text117(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function finite2(value, name, fallback) {
-  const result = value === void 0 ? fallback : Number(value);
+function finite2(value, name, fallback4) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isFinite(result) || result < 0 || result > 1) throw new Error(`${name} must be between 0 and 1`);
   return result;
 }
-function integer20(value, name, fallback) {
-  const result = value === void 0 ? fallback : Number(value);
+function integer20(value, name, fallback4) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < 0 || result > 100) throw new Error(`${name} must be an integer between 0 and 100`);
   return result;
 }
@@ -25743,7 +26086,7 @@ function payload68(record) {
   return rest;
 }
 function digest97(value) {
-  return `sha256:${(0, import_node_crypto120.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto121.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var UncertaintyPolicyKernel = class {
   store;
@@ -25758,11 +26101,11 @@ var UncertaintyPolicyKernel = class {
     if (!MODES3.has(mode)) throw new Error("Uncertainty Policy mode is unsupported");
     const onUncertain = text117(args.on_uncertain ?? (mode === "supervised" ? "human_required" : "collecting"), "on_uncertain");
     if (!ACTIONS2.has(onUncertain)) throw new Error("Uncertainty Policy action is unsupported");
-    const fallback = text117(args.fallback ?? "unchanged", "fallback");
-    if (!ACTIONS2.has(fallback) || fallback === "collecting") throw new Error("Uncertainty Policy fallback is unsupported");
+    const fallback4 = text117(args.fallback ?? "unchanged", "fallback");
+    if (!ACTIONS2.has(fallback4) || fallback4 === "collecting") throw new Error("Uncertainty Policy fallback is unsupported");
     const escalations = strings29(args.escalations ?? [], "escalations");
     if (escalations.some((item) => !ESCALATIONS.has(item))) throw new Error("Uncertainty Policy escalation is unsupported");
-    const identity = { scope: scope3, scope_id: text117(args.scope_id ?? scope3, "scope_id"), mode, on_uncertain: onUncertain, fallback, confidence_threshold: finite2(args.confidence_threshold, "confidence_threshold", 0.8), consistency_threshold: finite2(args.consistency_threshold, "consistency_threshold", 0.8), max_attempts: integer20(args.max_attempts, "max_attempts", 2), escalations, human_fallback: args.human_fallback === true, core_safety_floor: scope3 === "core" };
+    const identity = { scope: scope3, scope_id: text117(args.scope_id ?? scope3, "scope_id"), mode, on_uncertain: onUncertain, fallback: fallback4, confidence_threshold: finite2(args.confidence_threshold, "confidence_threshold", 0.8), consistency_threshold: finite2(args.consistency_threshold, "consistency_threshold", 0.8), max_attempts: integer20(args.max_attempts, "max_attempts", 2), escalations, human_fallback: args.human_fallback === true, core_safety_floor: scope3 === "core" };
     if (mode === "autonomous" && onUncertain === "human_required" && !identity.human_fallback) throw new Error("Autonomous Policy cannot require a disabled human fallback");
     const policyId = String(args.policy_id ?? `uncertainty_policy_${scope3}_${identity.scope_id}`);
     const identityDigest = digest97(identity);
@@ -25813,7 +26156,7 @@ var UncertaintyPolicyKernel = class {
     if (!evidenceIds2.length) throw new Error("Adjudication requires Evidence");
     for (const id17 of evidenceIds2) if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(this.store.get("evidence", id17).confidence))) throw new Error("Adjudication Evidence must be confirmed or bounded");
     const identity = { resolution_id: resolution.id, resolution_version: resolution.version, decision, actor: text117(args.actor, "actor"), reason: text117(args.reason, "reason"), scope: text117(args.scope, "scope"), valid_until: text117(args.valid_until, "valid_until"), evidence_ids: evidenceIds2 };
-    const adjudicationId = String(args.adjudication_id ?? `adjudication_${(0, import_node_crypto120.randomUUID)().replaceAll("-", "")}`);
+    const adjudicationId = String(args.adjudication_id ?? `adjudication_${(0, import_node_crypto121.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = digest97(identity);
     const existing = this.store.find("adjudication", adjudicationId);
     if (existing) {
@@ -25825,13 +26168,13 @@ var UncertaintyPolicyKernel = class {
 };
 
 // src/release-qualification.ts
-var import_node_crypto121 = require("node:crypto");
+var import_node_crypto122 = require("node:crypto");
 function text118(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function finite3(value, name, fallback = 0) {
-  const result = value === void 0 ? fallback : Number(value);
+function finite3(value, name, fallback4 = 0) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isFinite(result) || result < 0) throw new Error(`${name} must be a non-negative finite number`);
   return result;
 }
@@ -25840,7 +26183,7 @@ function payload69(record) {
   return rest;
 }
 function digest98(value) {
-  return `sha256:${(0, import_node_crypto121.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto122.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function mean2(values3) {
   return values3.reduce((sum, item) => sum + item, 0) / values3.length;
@@ -25924,7 +26267,7 @@ var ReleaseQualificationKernel = class {
 };
 
 // src/verification-plane.ts
-var import_node_crypto122 = require("node:crypto");
+var import_node_crypto123 = require("node:crypto");
 var RANK = { low: 1, moderate: 2, high: 3, critical: 4 };
 var RISK = new Set(Object.keys(RANK));
 var KINDS4 = /* @__PURE__ */ new Set(["code", "policy", "capability", "host", "plugin", "data", "docs", "version", "harness"]);
@@ -25949,7 +26292,7 @@ function boolean2(value, name) {
   return value;
 }
 function digest99(value) {
-  return `sha256:${(0, import_node_crypto122.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto123.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload70(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -26061,27 +26404,27 @@ var VerificationPlane = class {
 };
 
 // src/evaluation-model-profile.ts
-var import_node_crypto123 = require("node:crypto");
+var import_node_crypto124 = require("node:crypto");
 var PURPOSES = /* @__PURE__ */ new Set(["evaluation", "workflow_evolution"]);
-var SECRET12 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
+var SECRET13 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
 function text120(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   const result = value.trim();
-  if (SECRET12.test(result)) throw new Error(`${name} must not contain credentials or secrets`);
+  if (SECRET13.test(result)) throw new Error(`${name} must not contain credentials or secrets`);
   return result;
 }
-function integer21(value, name, fallback, minimum, maximum) {
-  const number6 = value === void 0 ? fallback : Number(value);
+function integer21(value, name, fallback4, minimum, maximum) {
+  const number6 = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(number6) || number6 < minimum || number6 > maximum) throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
   return number6;
 }
-function bool(value, name, fallback) {
-  if (value === void 0) return fallback;
+function bool(value, name, fallback4) {
+  if (value === void 0) return fallback4;
   if (typeof value !== "boolean") throw new Error(`${name} must be a boolean`);
   return value;
 }
-function strings30(value, name, fallback) {
-  const input = value === void 0 ? fallback : value;
+function strings30(value, name, fallback4) {
+  const input = value === void 0 ? fallback4 : value;
   if (!Array.isArray(input) || !input.length) throw new Error(`${name} must be a non-empty array`);
   const result = input.map((item) => text120(item, name));
   if (new Set(result).size !== result.length || result.some((item) => !PURPOSES.has(item))) throw new Error(`${name} contains an unsupported purpose`);
@@ -26093,7 +26436,7 @@ function canonical13(value) {
   return JSON.stringify(value);
 }
 function digest100(value) {
-  return `sha256:${(0, import_node_crypto123.createHash)("sha256").update(canonical13(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto124.createHash)("sha256").update(canonical13(value)).digest("hex")}`;
 }
 var EvaluationModelProfileKernel = class {
   store;
@@ -26124,7 +26467,7 @@ var EvaluationModelProfileKernel = class {
       purposes: strings30(args.purposes, "purposes", ["evaluation", "workflow_evolution"]),
       network_execution_enabled: bool(args.network_execution_enabled, "network_execution_enabled", false)
     };
-    const profileId = String(args.profile_id ?? `evaluation_model_profile_${(0, import_node_crypto123.randomUUID)().replaceAll("-", "")}`);
+    const profileId = String(args.profile_id ?? `evaluation_model_profile_${(0, import_node_crypto124.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("evaluation_model_profile", profileId);
     const identityDigest = digest100(identity);
     if (existing) {
@@ -26189,14 +26532,14 @@ var EvaluationModelProfileKernel = class {
 };
 
 // src/workflow-evolution.ts
-var import_node_crypto124 = require("node:crypto");
+var import_node_crypto125 = require("node:crypto");
 var OUTCOMES = /* @__PURE__ */ new Set(["passed", "failed", "inconclusive"]);
 var AXES = /* @__PURE__ */ new Set(["context", "tools", "generation", "orchestration", "memory", "output"]);
-var SECRET13 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
+var SECRET14 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
 function text121(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   const result = value.trim();
-  if (SECRET13.test(result)) throw new Error(`${name} must not contain credentials or secrets`);
+  if (SECRET14.test(result)) throw new Error(`${name} must not contain credentials or secrets`);
   return result;
 }
 function strings31(value, name, minimum = 0) {
@@ -26211,7 +26554,7 @@ function canonical14(value) {
   return JSON.stringify(value);
 }
 function digest101(value) {
-  return `sha256:${(0, import_node_crypto124.createHash)("sha256").update(canonical14(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto125.createHash)("sha256").update(canonical14(value)).digest("hex")}`;
 }
 function payload71(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -26302,18 +26645,18 @@ var WorkflowEvolutionKernel = class {
 };
 
 // src/trust-profile.ts
-var import_node_crypto125 = require("node:crypto");
+var import_node_crypto126 = require("node:crypto");
 function text122(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function integer22(value, name, fallback, minimum = 0) {
-  const number6 = value === void 0 ? fallback : Number(value);
+function integer22(value, name, fallback4, minimum = 0) {
+  const number6 = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(number6) || number6 < minimum) throw new Error(`${name} must be an integer >= ${minimum}`);
   return number6;
 }
 function digest102(value) {
-  return `sha256:${(0, import_node_crypto125.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto126.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload72(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -26332,7 +26675,7 @@ var TrustProfileKernel = class {
     this.store = store;
   }
   record(args) {
-    const profileId = String(args.profile_id ?? `trust_${(0, import_node_crypto125.randomUUID)().replaceAll("-", "")}`);
+    const profileId = String(args.profile_id ?? `trust_${(0, import_node_crypto126.randomUUID)().replaceAll("-", "")}`);
     const scope3 = this.scope(args.scope);
     const passed = integer22(args.passed, "passed", 0);
     const failed = integer22(args.failed, "failed", 0);
@@ -26423,18 +26766,18 @@ var TrustProfileKernel = class {
 };
 
 // src/web-operation.ts
-var import_node_crypto126 = require("node:crypto");
+var import_node_crypto127 = require("node:crypto");
 function text123(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function integer23(value, name, fallback, minimum, maximum) {
-  const number6 = value === void 0 ? fallback : Number(value);
+function integer23(value, name, fallback4, minimum, maximum) {
+  const number6 = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(number6) || number6 < minimum || number6 > maximum) throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
   return number6;
 }
 function digest103(value) {
-  return `sha256:${(0, import_node_crypto126.createHash)("sha256").update(typeof value === "string" ? value : JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto127.createHash)("sha256").update(typeof value === "string" ? value : JSON.stringify(value)).digest("hex")}`;
 }
 function list8(value, name) {
   if (value === void 0) return [];
@@ -26487,7 +26830,7 @@ var WebOperationKernel = class {
       observed_at: (/* @__PURE__ */ new Date()).toISOString(),
       raw_content_stored: false
     };
-    const id17 = String(args.operation_id ?? `web_${(0, import_node_crypto126.randomUUID)().replaceAll("-", "")}`);
+    const id17 = String(args.operation_id ?? `web_${(0, import_node_crypto127.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("web_operation", id17);
     if (existing) return { operation: existing, observation: { ...observation, body: "" }, idempotent: true };
     const operation = this.store.create("web_operation", id17, {
@@ -26511,7 +26854,7 @@ var WebOperationKernel = class {
     const operation = text123(args.operation ?? "navigate", "operation");
     if (!["navigate", "click", "fill", "submit"].includes(operation)) throw new Error("unsupported browser operation");
     const effect = operation === "navigate" ? "read_only" : "external_write";
-    const id17 = String(args.operation_id ?? `browser_${(0, import_node_crypto126.randomUUID)().replaceAll("-", "")}`);
+    const id17 = String(args.operation_id ?? `browser_${(0, import_node_crypto127.randomUUID)().replaceAll("-", "")}`);
     const contract = {
       kind: "browser",
       operation,
@@ -26645,16 +26988,16 @@ var WorkspaceCoordinator = class {
 };
 
 // src/durable-action-loop.ts
-var import_node_crypto127 = require("node:crypto");
+var import_node_crypto128 = require("node:crypto");
 var ACTION_KINDS = /* @__PURE__ */ new Set(["observe", "execute", "verify", "wait", "clarify"]);
 var EFFECTS15 = /* @__PURE__ */ new Set(["read_only", "local_write"]);
 var OUTCOMES2 = /* @__PURE__ */ new Set(["succeeded", "failed", "waiting", "blocked"]);
 var RECEIPT_KINDS2 = /* @__PURE__ */ new Set(["verified_work_loop_receipt", "host_session_event", "action_gateway_receipt", "managed_write"]);
-var SECRET14 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
+var SECRET15 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
 function text124(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   const result = value.trim();
-  if (SECRET14.test(result)) throw new Error(`${name} must not contain credentials or secrets`);
+  if (SECRET15.test(result)) throw new Error(`${name} must not contain credentials or secrets`);
   return result;
 }
 function object33(value, name) {
@@ -26671,7 +27014,7 @@ function canonical15(value) {
   return JSON.stringify(value);
 }
 function digest104(value) {
-  return `sha256:${(0, import_node_crypto127.createHash)("sha256").update(canonical15(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto128.createHash)("sha256").update(canonical15(value)).digest("hex")}`;
 }
 var DurableActionLoopKernel = class {
   store;
@@ -26742,7 +27085,7 @@ var DurableActionLoopKernel = class {
       expected_snapshot_version: loop.latest_snapshot_version,
       expected_snapshot_digest: loop.latest_snapshot_digest
     };
-    const actionId = String(args.action_id ?? `durable_action_${(0, import_node_crypto127.randomUUID)().replaceAll("-", "")}`);
+    const actionId = String(args.action_id ?? `durable_action_${(0, import_node_crypto128.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("durable_action", actionId);
     const identityDigest = digest104(identity);
     if (existing) {
@@ -26867,17 +27210,17 @@ var DurableActionLoopKernel = class {
 };
 
 // src/experience-ledger.ts
-var import_node_crypto128 = require("node:crypto");
+var import_node_crypto129 = require("node:crypto");
 var OBSERVATION_KINDS = /* @__PURE__ */ new Set(["success", "failure", "correction"]);
 var PATTERN_KINDS = /* @__PURE__ */ new Set(["success_strategy", "failure_pattern"]);
 var AXES2 = /* @__PURE__ */ new Set(["context", "tools", "generation", "orchestration", "memory", "output"]);
 var SUBJECT_KINDS2 = /* @__PURE__ */ new Set(["workflow", "harness_refinement", "capability_asset", "activation_profile"]);
 var SOURCES = /* @__PURE__ */ new Set(["verified_work_loop_receipt", "outcome", "acceptance_gate", "trace"]);
-var SECRET15 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
+var SECRET16 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
 function text125(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   const result = value.trim();
-  if (SECRET15.test(result)) throw new Error(`${name} must not contain credentials or secrets`);
+  if (SECRET16.test(result)) throw new Error(`${name} must not contain credentials or secrets`);
   return result;
 }
 function object34(value, name) {
@@ -26894,7 +27237,7 @@ function canonical16(value) {
   return JSON.stringify(value);
 }
 function digest105(value) {
-  return `sha256:${(0, import_node_crypto128.createHash)("sha256").update(canonical16(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto129.createHash)("sha256").update(canonical16(value)).digest("hex")}`;
 }
 var ExperienceLedgerKernel = class {
   store;
@@ -26940,7 +27283,7 @@ var ExperienceLedgerKernel = class {
     const axes2 = this.ids(args.design_axes, "design_axes", 1);
     if (axes2.length > 2 || axes2.some((axis) => !AXES2.has(axis))) throw new Error("Experience intervention may change at most two design axes");
     const identity = { pattern_refs: patterns.map((item) => ({ id: item.id, version: item.version })), subject, design_axes: axes2, diff_digest: digest105(text125(args.diff_summary, "diff_summary")), hypothesis_digest: digest105(text125(args.hypothesis, "hypothesis")), lifecycle: "draft", execution_visible: false };
-    const interventionId = String(args.intervention_id ?? `experience_intervention_${(0, import_node_crypto128.randomUUID)().replaceAll("-", "")}`);
+    const interventionId = String(args.intervention_id ?? `experience_intervention_${(0, import_node_crypto129.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("experience_intervention", interventionId);
     const identityDigest = digest105(identity);
     if (existing) {
@@ -26996,6 +27339,114 @@ var ExperienceLedgerKernel = class {
     const ids4 = this.ids(value, "evidence_ids", 1);
     for (const id17 of ids4) if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(this.store.get("evidence", id17).confidence))) throw new Error("Experience Evidence must be confirmed or bounded");
     return ids4;
+  }
+};
+
+// src/content-migration.ts
+var import_node_fs19 = require("node:fs");
+var INLINE_KINDS = /* @__PURE__ */ new Set(["knowledge_claim", "memory_ledger", "episodic_memory", "semantic_memory"]);
+var WIKI_KINDS = /* @__PURE__ */ new Set(["wiki_page"]);
+var ContentMigrationKernel = class {
+  store;
+  constructor(store) {
+    this.store = store;
+  }
+  status() {
+    const rows = this.store.rawRecords();
+    const managed = rows.filter((row) => INLINE_KINDS.has(row.kind) || WIKI_KINDS.has(row.kind));
+    const inline = managed.filter((row) => typeof row.payload.content === "string" && !row.payload.content_ref).length;
+    const referenced = managed.filter((row) => contentReference(row.payload.content_ref)).length;
+    return { scanned: managed.length, inline, referenced, pending: inline };
+  }
+  verify(args = {}) {
+    const kind2 = args.kind === void 0 ? void 0 : String(args.kind);
+    const rows = this.store.rawRecords(kind2).filter((row) => INLINE_KINDS.has(row.kind) || WIKI_KINDS.has(row.kind));
+    const results = rows.map((row) => {
+      const ref2 = row.payload.content_ref;
+      if (!contentReference(ref2)) return { kind: row.kind, id: row.id, version: row.version, status: "legacy" };
+      const verification = this.store.contentStore.verifySync(ref2);
+      return { kind: row.kind, id: row.id, version: row.version, ...verification };
+    });
+    return {
+      results,
+      verified: results.filter((item) => item.status === "verified").length,
+      failed: results.filter((item) => item.status !== "verified").length
+    };
+  }
+  migrate(args = {}) {
+    const dryRun = args.dry_run === true;
+    const rows = this.store.rawRecords().filter((row) => INLINE_KINDS.has(row.kind) || WIKI_KINDS.has(row.kind));
+    const pending = [];
+    const records2 = [];
+    for (const row of rows) {
+      const existing = row.payload.content_ref;
+      if (contentReference(existing)) {
+        const current2 = this.store.contentStore.readCompatSync(existing);
+        if (this.store.contentStore.isCanonicalRef(existing)) {
+          records2.push({ kind: row.kind, id: row.id, version: row.version, action: "skip" });
+          continue;
+        }
+        const kind3 = existing.kind;
+        validateContentBody(current2.body);
+        pending.push({ row, body: current2.body, kind: kind3 });
+        records2.push({ kind: row.kind, id: row.id, version: row.version, action: "migrate" });
+        continue;
+      }
+      const body2 = this.bodyFor(row);
+      const kind2 = WIKI_KINDS.has(row.kind) ? "knowledge" : row.kind === "knowledge_claim" ? "knowledge" : "memory";
+      validateContentBody(body2);
+      pending.push({ row, body: body2, kind: kind2 });
+      records2.push({ kind: row.kind, id: row.id, version: row.version, action: "migrate" });
+    }
+    if (dryRun) return { dry_run: true, scanned: rows.length, migrated: pending.length, skipped: rows.length - pending.length, backup_path: null, records: records2 };
+    if (!pending.length) return { dry_run: false, scanned: rows.length, migrated: 0, skipped: rows.length, backup_path: null, records: records2 };
+    const backupPath = this.store.backup();
+    try {
+      const entries2 = pending.map((plan) => {
+        const ref2 = this.store.contentStore.writeSync({
+          kind: plan.kind,
+          record_id: plan.row.id,
+          version: plan.row.version,
+          scope: this.scopeFor(plan.row),
+          status: this.statusFor(plan.row),
+          sensitivity: "internal",
+          source_id: this.sourceFor(plan.row),
+          body: plan.body
+        });
+        const payload75 = { ...plan.row.payload, content_ref: ref2, content_digest: ref2.digest, content_storage: "markdown" };
+        delete payload75.content;
+        if (plan.row.kind === "wiki_page") payload75.file_path = ref2.path;
+        return { kind: plan.row.kind, id: plan.row.id, version: plan.row.version, payload: payload75 };
+      });
+      this.store.replacePayloadBatch(entries2);
+    } catch (error) {
+      throw new Error(`Content migration rolled back; database backup: ${backupPath}; ${error instanceof Error ? error.message : String(error)}`);
+    }
+    return { dry_run: false, scanned: rows.length, migrated: pending.length, skipped: rows.length - pending.length, backup_path: backupPath, records: records2 };
+  }
+  bodyFor(row) {
+    if (typeof row.payload.content === "string" && row.payload.content.trim()) return row.payload.content;
+    if (WIKI_KINDS.has(row.kind) && typeof row.payload.file_path === "string" && row.payload.file_path.trim()) {
+      const path2 = row.payload.file_path;
+      try {
+        return this.store.contentStore.readUncheckedSync(path2).body;
+      } catch (error) {
+        if (error instanceof Error && /frontmatter/iu.test(error.message)) return (0, import_node_fs19.readFileSync)(path2, "utf8");
+        throw error;
+      }
+    }
+    throw new Error(`Legacy ${row.kind}/${row.id}/${row.version} has no readable content body`);
+  }
+  scopeFor(row) {
+    if (typeof row.payload.scope === "string") return row.payload.scope;
+    const kind2 = row.payload.scope_kind === void 0 ? "global" : String(row.payload.scope_kind);
+    return row.payload.scope_id === void 0 ? kind2 : `${kind2}:${String(row.payload.scope_id)}`;
+  }
+  statusFor(row) {
+    return typeof row.payload.status === "string" ? row.payload.status : WIKI_KINDS.has(row.kind) ? "active" : "candidate";
+  }
+  sourceFor(row) {
+    return typeof row.payload.source_id === "string" ? row.payload.source_id : typeof row.payload.source === "string" ? row.payload.source : "legacy-import";
   }
 };
 
@@ -27101,6 +27552,7 @@ var ServiceFoundation = class {
   autonomousRuntime;
   capabilityLifecycle;
   memoryConsolidation;
+  contentMigration;
   remoteInterop;
   platformOperations;
   modelProviders;
@@ -27258,6 +27710,7 @@ var ServiceFoundation = class {
     this.autonomousRuntime = new AutonomousRuntimeKernel(store);
     this.capabilityLifecycle = new CapabilityLifecycleKernel(store);
     this.memoryConsolidation = new MemoryConsolidationKernel(store);
+    this.contentMigration = new ContentMigrationKernel(store);
     this.remoteInterop = new RemoteInteropKernel(store);
     this.platformOperations = new PlatformOperationsKernel(store);
     this.metrics = new MetricsKernel(store);
@@ -27354,16 +27807,16 @@ var ServiceFoundation = class {
 };
 
 // src/data-space.ts
-var import_node_crypto129 = require("node:crypto");
-var import_node_path28 = require("node:path");
+var import_node_crypto130 = require("node:crypto");
+var import_node_path29 = require("node:path");
 function dataSpaceId(dataRoot2) {
-  const normalized = (0, import_node_path28.resolve)(dataRoot2);
-  return `sha256:${(0, import_node_crypto129.createHash)("sha256").update(JSON.stringify({ data_root: normalized })).digest("hex")}`;
+  const normalized = (0, import_node_path29.resolve)(dataRoot2);
+  return `sha256:${(0, import_node_crypto130.createHash)("sha256").update(JSON.stringify({ data_root: normalized })).digest("hex")}`;
 }
 
 // src/v01226-runtime.ts
-var import_node_crypto130 = require("node:crypto");
-var import_promises17 = require("node:fs/promises");
+var import_node_crypto131 = require("node:crypto");
+var import_promises18 = require("node:fs/promises");
 var import_node_child_process6 = require("node:child_process");
 var import_node_process = require("node:process");
 var import_yaml2 = __toESM(require_dist(), 1);
@@ -27371,7 +27824,7 @@ var ADAPTER_KINDS = /* @__PURE__ */ new Set(["command", "mcp", "openapi", "brows
 var EFFECTS16 = /* @__PURE__ */ new Set(["read", "read_only", "local_write", "external_write", "destructive"]);
 var ACTIVE_PLATFORMS = /* @__PURE__ */ new Set(["win32", "darwin", "linux", "freebsd", "any"]);
 var now2 = () => (/* @__PURE__ */ new Date()).toISOString();
-var digest106 = (value) => `sha256:${(0, import_node_crypto130.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+var digest106 = (value) => `sha256:${(0, import_node_crypto131.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 function required2(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -27382,8 +27835,8 @@ function list9(value, name, minimum = 0) {
   if (result.length < minimum || new Set(result).size !== result.length) throw new Error(`${name} must contain unique values`);
   return result;
 }
-function integer24(value, name, fallback, min, max) {
-  const result = value === void 0 ? fallback : Number(value);
+function integer24(value, name, fallback4, min, max) {
+  const result = value === void 0 ? fallback4 : Number(value);
   if (!Number.isInteger(result) || result < min || result > max) throw new Error(`${name} must be an integer between ${min} and ${max}`);
   return result;
 }
@@ -27429,7 +27882,7 @@ var V01226Runtime = class {
     const manifest = defineAdapterManifest(input);
     const existing = this.store.find("adapter_manifest", manifest.adapter_id);
     if (existing && existing.manifest_digest !== digest106(manifest)) {
-      const version = Number(existing.version ?? 0) + 1;
+      const version = Number(existing.version) + 1;
       const saved = this.store.save("adapter_manifest", manifest.adapter_id, { ...manifest, version: manifest.version, previous_version: version, manifest_digest: digest106(manifest) });
       return { manifest: saved, idempotent: false };
     }
@@ -27466,7 +27919,7 @@ var V01226Runtime = class {
     return { manifest: this.store.save("adapter_manifest", adapterId, { ...current2, status: "active", rollback_at: now2() }) };
   }
   async adapterInstall(manifestPath, expectedIntegrity) {
-    const raw = await (0, import_promises17.readFile)(required2(manifestPath, "manifest_path"), "utf8");
+    const raw = await (0, import_promises18.readFile)(required2(manifestPath, "manifest_path"), "utf8");
     const parsed = JSON.parse(raw);
     const manifest = defineAdapterManifest(parsed);
     const actual = digest106(manifest);
@@ -27478,19 +27931,19 @@ var V01226Runtime = class {
   }
   commandPlan(input) {
     const request2 = this.validateCommand(input);
-    const id17 = `command_${(0, import_node_crypto130.randomUUID)().replaceAll("-", "")}`;
+    const id17 = `command_${(0, import_node_crypto131.randomUUID)().replaceAll("-", "")}`;
     const plan = this.store.create("command_plan", id17, { request: request2, request_digest: digest106(request2), status: "planned", created_at: now2() });
     return { plan, receipt_contract: "craft.command.receipt" };
   }
   async commandRun(input) {
     const request2 = this.validateCommand(input);
-    const runId = input.run_id ?? `command_run_${(0, import_node_crypto130.randomUUID)().replaceAll("-", "")}`;
+    const runId = input.run_id ?? `command_run_${(0, import_node_crypto131.randomUUID)().replaceAll("-", "")}`;
     const run = this.store.create("command_run", runId, { request: request2, request_digest: digest106(request2), status: "running", started_at: now2() });
     const command2 = request2.argv[0];
     const args = request2.argv.slice(1);
     const child = this.spawnProcess(command2, args, { cwd: request2.cwd, env: { ...process.env, ...request2.env }, shell: request2.shell === false ? false : request2.shell ?? false, windowsHide: true });
     this.activeProcesses.set(runId, child);
-    const limit3 = request2.output_limit ?? 64 * 1024;
+    const limit3 = request2.output_limit;
     let stdout = "";
     let stderr = "";
     child.stdout?.on("data", (chunk) => {
@@ -27499,7 +27952,7 @@ var V01226Runtime = class {
     child.stderr?.on("data", (chunk) => {
       stderr = `${stderr}${chunk.toString()}`.slice(0, limit3);
     });
-    const outcome2 = await new Promise((resolve23) => {
+    const outcome2 = await new Promise((resolve24) => {
       let settled = false;
       const finish = (status, code, signal) => {
         if (settled) return;
@@ -27508,11 +27961,11 @@ var V01226Runtime = class {
         this.activeProcesses.delete(runId);
         this.store.save("command_run", runId, { ...run, ...receipt });
         this.store.appendEvent(`command:${runId}`, "command.completed", receipt);
-        resolve23({ run: this.store.get("command_run", runId), receipt });
+        resolve24({ run: this.store.get("command_run", runId), receipt });
       };
       child.on("error", (error) => finish("failed", null, String(error.message).slice(0, 200)));
       child.on("close", (code, signal) => finish(signal === "SIGTERM" ? "cancelled" : code === 0 ? "completed" : "failed", code, signal ?? void 0));
-      const timeout = request2.timeout_ms ?? 12e4;
+      const timeout = request2.timeout_ms;
       const timer = setTimeout(() => {
         child.kill();
       }, timeout);
@@ -27537,7 +27990,7 @@ var V01226Runtime = class {
   }
   async commandRetry(runId) {
     const run = this.commandObserve(runId);
-    return this.commandRun({ ...run.request, run_id: `retry_${(0, import_node_crypto130.randomUUID)().replaceAll("-", "")}` });
+    return this.commandRun({ ...run.request, run_id: `retry_${(0, import_node_crypto131.randomUUID)().replaceAll("-", "")}` });
   }
   validateCommand(input) {
     const argv = list9(input.argv, "argv", 1);
@@ -27548,7 +28001,7 @@ var V01226Runtime = class {
     return { ...input, argv, effect, timeout_ms: integer24(input.timeout_ms, "timeout_ms", 12e4, 100, 36e5), output_limit: integer24(input.output_limit, "output_limit", 65536, 256, 1e7), ...input.cwd === void 0 ? {} : { cwd: required2(input.cwd, "cwd") } };
   }
   contextManifestSave(input) {
-    const id17 = required2(input.manifest_id ?? `context_${(0, import_node_crypto130.randomUUID)().replaceAll("-", "")}`, "manifest_id");
+    const id17 = required2(input.manifest_id ?? `context_${(0, import_node_crypto131.randomUUID)().replaceAll("-", "")}`, "manifest_id");
     const manifest = { ...input, manifest_id: id17, knowledge_refs: list9(input.knowledge_refs ?? [], "knowledge_refs"), capability_refs: list9(input.capability_refs ?? [], "capability_refs"), workflow_refs: list9(input.workflow_refs ?? [], "workflow_refs"), excluded_refs: list9(input.excluded_refs ?? [], "excluded_refs"), manifest_digest: digest106(input), created_at: now2() };
     const existing = this.store.find("context_manifest", id17);
     if (existing) return { manifest: existing, idempotent: true };
@@ -27577,7 +28030,7 @@ var V01226Runtime = class {
     return { selected, excluded, spent_tokens: spent, rationale: "required capabilities first, then token budget" };
   }
   durableStart(input) {
-    const id17 = required2(input.run_id ?? `durable_${(0, import_node_crypto130.randomUUID)().replaceAll("-", "")}`, "run_id");
+    const id17 = required2(input.run_id ?? `durable_${(0, import_node_crypto131.randomUUID)().replaceAll("-", "")}`, "run_id");
     const existing = this.store.find("durable_run", id17);
     if (existing) return { run: existing, idempotent: true };
     return { run: this.store.create("durable_run", id17, { ...input, run_id: id17, status: "queued", attempts: 0, lease_until: null, created_at: now2() }), idempotent: false };
@@ -27626,11 +28079,11 @@ var V01226Runtime = class {
     return { status: passed ? "passed" : "blocked", passed, missing_artifacts: missingArtifacts, missing_evidence: missingEvidence, gate: "delivery" };
   }
   projectBundle(input) {
-    const bundle = { schema_version: 1, bundle_id: `bundle_${(0, import_node_crypto130.randomUUID)().replaceAll("-", "")}`, exported_at: now2(), project: input.project, tasks: input.tasks ?? [], sessions: input.sessions ?? [], trace: input.trace ?? [], artifacts: input.artifacts ?? [] };
+    const bundle = { schema_version: 1, bundle_id: `bundle_${(0, import_node_crypto131.randomUUID)().replaceAll("-", "")}`, exported_at: now2(), project: input.project, tasks: input.tasks ?? [], sessions: input.sessions ?? [], trace: input.trace ?? [], artifacts: input.artifacts ?? [] };
     return { bundle, digest: digest106(bundle) };
   }
   handoff(input) {
-    return { manifest_type: "craft.task.handoff", schema_version: 1, handoff_id: `handoff_${(0, import_node_crypto130.randomUUID)().replaceAll("-", "")}`, context_manifest: input.context_manifest, host: input.host, task: input.task, budget: input.budget ?? {}, digest: digest106(input) };
+    return { manifest_type: "craft.task.handoff", schema_version: 1, handoff_id: `handoff_${(0, import_node_crypto131.randomUUID)().replaceAll("-", "")}`, context_manifest: input.context_manifest, host: input.host, task: input.task, budget: input.budget ?? {}, digest: digest106(input) };
   }
   evaluatorDefine(input) {
     const id17 = required2(input.evaluator_id, "evaluator_id");
@@ -27661,6 +28114,15 @@ async function importOpenApiDocument(runtime, source) {
 }
 
 // src/application/use-cases/adapter-runtime.ts
+function arrayOrEmpty(value) {
+  return Array.isArray(value) ? value : [];
+}
+function numberOrUndefined(value) {
+  return value === void 0 ? void 0 : Number(value);
+}
+function stringOrUndefined(value) {
+  return value === void 0 ? void 0 : String(value);
+}
 function installAdapterRuntimeMethods(serviceClass) {
   serviceClass.prototype.adapterManifestSave = function(args) {
     return new V01226Runtime(this.store).adapterRegister(args);
@@ -27684,7 +28146,7 @@ function installAdapterRuntimeMethods(serviceClass) {
     return new V01226Runtime(this.store).adapterRollback(String(args.adapter_id));
   };
   serviceClass.prototype.adapterInstall = async function(args) {
-    return new V01226Runtime(this.store).adapterInstall(String(args.manifest_path), args.integrity === void 0 ? void 0 : String(args.integrity));
+    return new V01226Runtime(this.store).adapterInstall(String(args.manifest_path), stringOrUndefined(args.integrity));
   };
   serviceClass.prototype.commandPlan = function(args) {
     return new V01226Runtime(this.store).commandPlan(args);
@@ -27706,9 +28168,9 @@ function installAdapterRuntimeMethods(serviceClass) {
   };
   serviceClass.prototype.capabilityProjection = function(args) {
     return new V01226Runtime(this.store).capabilityProject({
-      candidates: Array.isArray(args.candidates) ? args.candidates : [],
-      required: Array.isArray(args.required) ? args.required : [],
-      token_budget: args.token_budget === void 0 ? void 0 : Number(args.token_budget)
+      candidates: arrayOrEmpty(args.candidates),
+      required: arrayOrEmpty(args.required),
+      token_budget: numberOrUndefined(args.token_budget)
     });
   };
   serviceClass.prototype.durableRunStart = function(args) {
@@ -27724,13 +28186,13 @@ function installAdapterRuntimeMethods(serviceClass) {
     return new V01226Runtime(this.store).durableRecover(args.owner === void 0 ? void 0 : String(args.owner));
   };
   serviceClass.prototype.trustCurveRecord = function(args) {
-    return new V01226Runtime(this.store).trustRecord({ scope: String(args.scope), passed: Number(args.passed), failed: Number(args.failed), evidence_refs: Array.isArray(args.evidence_refs) ? args.evidence_refs : [] });
+    return new V01226Runtime(this.store).trustRecord({ scope: String(args.scope), passed: Number(args.passed), failed: Number(args.failed), evidence_refs: arrayOrEmpty(args.evidence_refs) });
   };
   serviceClass.prototype.modelRouteV01226 = function(args) {
-    return new V01226Runtime(this.store).modelRoute({ candidates: Array.isArray(args.candidates) ? args.candidates : [], objective: args.objective, budget: args.budget === void 0 ? void 0 : Number(args.budget) });
+    return new V01226Runtime(this.store).modelRoute({ candidates: arrayOrEmpty(args.candidates), objective: args.objective, budget: numberOrUndefined(args.budget) });
   };
   serviceClass.prototype.deliveryGateV01226 = function(args) {
-    return new V01226Runtime(this.store).deliveryGate({ artifacts: Array.isArray(args.artifacts) ? args.artifacts : [], evidence: Array.isArray(args.evidence) ? args.evidence : [], required_artifacts: Array.isArray(args.required_artifacts) ? args.required_artifacts : [], required_evidence: Array.isArray(args.required_evidence) ? args.required_evidence : [] });
+    return new V01226Runtime(this.store).deliveryGate({ artifacts: arrayOrEmpty(args.artifacts), evidence: arrayOrEmpty(args.evidence), required_artifacts: arrayOrEmpty(args.required_artifacts), required_evidence: arrayOrEmpty(args.required_evidence) });
   };
   serviceClass.prototype.taskHandoffManifest = function(args) {
     return new V01226Runtime(this.store).handoff(args);
@@ -28191,10 +28653,10 @@ var KNOWLEDGE_KINDS = /* @__PURE__ */ new Set(["fact", "rule", "decision", "term
 var KNOWLEDGE_STATUSES = /* @__PURE__ */ new Set(["candidate", "reviewed", "disputed", "superseded", "expired"]);
 var KNOWLEDGE_RELATIONS = /* @__PURE__ */ new Set(["supports", "contradicts", "supersedes", "applies_to", "depends_on"]);
 function id16(prefix) {
-  return `${prefix}_${(0, import_node_crypto131.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto132.randomUUID)().replaceAll("-", "")}`;
 }
 function valueDigest(value) {
-  return `sha256:${(0, import_node_crypto131.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto132.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function text126(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
@@ -28204,8 +28666,8 @@ function document(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value;
 }
-function finiteInteger2(value, name, fallback, minimum = 1, maximum = Number.MAX_SAFE_INTEGER) {
-  const number6 = value === void 0 ? fallback : Number(value);
+function finiteInteger2(value, name, fallback4, minimum = 1, maximum = Number.MAX_SAFE_INTEGER) {
+  const number6 = value === void 0 ? fallback4 : Number(value);
   if (!Number.isFinite(number6) || !Number.isInteger(number6) || number6 < minimum || number6 > maximum) {
     throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
   }
@@ -28215,6 +28677,12 @@ function optionalBoolean2(value, name) {
   if (value === void 0) return void 0;
   if (typeof value !== "boolean") throw new Error(`${name} must be a boolean`);
   return value;
+}
+function optionalText6(value, name) {
+  return value === void 0 ? void 0 : text126(value, name);
+}
+function firstDefined(...values3) {
+  return values3.find((value) => value !== void 0);
 }
 function optionalScore(value, name) {
   if (value === void 0 || value === null) return null;
@@ -28232,6 +28700,7 @@ function object35(value, name) {
 }
 function recordPayload8(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...payload75 } = record;
+  if (payload75.content_ref !== void 0) delete payload75.content;
   return payload75;
 }
 function uniqueTextArray3(value, name, minimum = 1) {
@@ -28241,8 +28710,8 @@ function uniqueTextArray3(value, name, minimum = 1) {
   }
   return values3;
 }
-function optionalTextArray2(value, name, fallback = []) {
-  if (value === void 0) return fallback;
+function optionalTextArray2(value, name, fallback4 = []) {
+  if (value === void 0) return fallback4;
   const values3 = array6(value, name).map((item) => text126(item, name));
   if (new Set(values3).size !== values3.length) throw new Error(`${name} must contain unique values`);
   return values3;
@@ -28319,7 +28788,7 @@ function canonical17(value) {
   return JSON.stringify(value);
 }
 function fingerprint3(value) {
-  return (0, import_node_crypto131.createHash)("sha256").update(canonical17(value)).digest("hex");
+  return (0, import_node_crypto132.createHash)("sha256").update(canonical17(value)).digest("hex");
 }
 function runtimeAuthorization(runId, operation) {
   const kind2 = String(operation.kind);
@@ -29151,7 +29620,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const projectId2 = text126(args.project_id, "project_id");
     const enforcement = String(args.enforcement ?? "required");
     if (!(/* @__PURE__ */ new Set(["required", "advisory"])).has(enforcement)) throw new Error(`Unsupported policy enforcement: ${enforcement}`);
-    const policyId = String(args.policy_id ?? `project_policy_${(0, import_node_crypto131.createHash)("sha256").update(projectId2).digest("hex").slice(0, 24)}`);
+    const policyId = String(args.policy_id ?? `project_policy_${(0, import_node_crypto132.createHash)("sha256").update(projectId2).digest("hex").slice(0, 24)}`);
     return this.saveVersioned("project_policy", "policy", {
       ...args,
       policy_id: policyId,
@@ -30067,7 +30536,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const capabilities = selectedCapabilities ?? this.catalog.search(goal, 6);
     const developmentPlan = workflow === null ? { stages: SAFE_INCREMENTAL_STAGES.map((stage) => ({ ...stage })) } : null;
     const strategyCapabilities = developmentPlan === null ? [] : capabilities.slice(0, 3).map((capability) => String(capability.id));
-    const strategyId = strategyCapabilities.length ? `route_strategy_${(0, import_node_crypto131.createHash)("sha256").update(JSON.stringify({ mode: "safe_incremental_development", capability_ids: strategyCapabilities })).digest("hex").slice(0, 24)}` : null;
+    const strategyId = strategyCapabilities.length ? `route_strategy_${(0, import_node_crypto132.createHash)("sha256").update(JSON.stringify({ mode: "safe_incremental_development", capability_ids: strategyCapabilities })).digest("hex").slice(0, 24)}` : null;
     const strategy = strategyId === null ? null : this.store.find("route_strategy", strategyId) ?? this.store.create(
       "route_strategy",
       strategyId,
@@ -30873,11 +31342,11 @@ ${task.goal}`.toLowerCase();
       });
       if (!executed.response) throw new Error("Egress response is unavailable for sandbox delivery");
       const response = executed.response;
-      const ticketHash = (0, import_node_crypto131.createHash)("sha256").update(String(ticket.id)).digest("hex").slice(0, 24);
-      const bindingHash = (0, import_node_crypto131.createHash)("sha256").update(bindingId).digest("hex").slice(0, 24);
-      const inbox = (0, import_node_path29.join)(this.store.paths.runtimeDir, "sandbox-inbox", ticketHash);
-      await (0, import_promises18.mkdir)(inbox, { recursive: true });
-      const outputPath = (0, import_node_path29.join)(inbox, `${bindingHash}-${outputName}`);
+      const ticketHash = (0, import_node_crypto132.createHash)("sha256").update(String(ticket.id)).digest("hex").slice(0, 24);
+      const bindingHash = (0, import_node_crypto132.createHash)("sha256").update(bindingId).digest("hex").slice(0, 24);
+      const inbox = (0, import_node_path30.join)(this.store.paths.runtimeDir, "sandbox-inbox", ticketHash);
+      await (0, import_promises19.mkdir)(inbox, { recursive: true });
+      const outputPath = (0, import_node_path30.join)(inbox, `${bindingHash}-${outputName}`);
       const envelope = {
         trust: "untrusted_external_response",
         execution_authority: false,
@@ -30889,7 +31358,7 @@ ${task.goal}`.toLowerCase();
         body: response.body,
         output_limited: response.output_limited
       };
-      await (0, import_promises18.writeFile)(outputPath, `${JSON.stringify(envelope, null, 2)}
+      await (0, import_promises19.writeFile)(outputPath, `${JSON.stringify(envelope, null, 2)}
 `, { encoding: "utf8", flag: "wx", mode: 384 });
       const artifact = this.artifactRegister({
         kind: "sandbox_egress_inbox",
@@ -31490,16 +31959,16 @@ ${task.goal}`.toLowerCase();
     return { skill: previous ? this.store.save("studio_skill", skillId, { ...payload75, previous_version: previous.version }) : this.store.create("studio_skill", skillId, payload75) };
   }
   studioMemoryCompatSave(args) {
-    const memoryId = args.memory_id === void 0 ? void 0 : text126(args.memory_id, "memory_id");
+    const memoryId = optionalText6(args.memory_id, "memory_id");
     const previous = memoryId === void 0 ? null : this.store.get("memory_item", memoryId);
     return this.memoryRemember({
-      kind: args.kind ?? previous?.kind ?? "fact",
-      scope: args.scope ?? previous?.scope ?? "user",
+      kind: firstDefined(args.kind, previous?.kind, "fact"),
+      scope: firstDefined(args.scope, previous?.scope, "user"),
       content: args.content,
       source: "studio_user",
-      task_id: args.task_id ?? previous?.task_id ?? void 0,
-      workspace_id: args.workspace_id ?? previous?.workspace_id ?? void 0,
-      applies_to: args.applies_to ?? previous?.applies_to ?? [],
+      task_id: firstDefined(args.task_id, previous?.task_id),
+      workspace_id: firstDefined(args.workspace_id, previous?.workspace_id),
+      applies_to: firstDefined(args.applies_to, previous?.applies_to, []),
       evidence_ids: [],
       ...previous ? { supersedes_id: previous.id } : {}
     });
@@ -31974,7 +32443,7 @@ ${material}
       else {
         const stringValue = text126(value, key2);
         if (field.type === "choice" && !field.options.includes(stringValue)) throw new Error(`${key2} must be one of the declared choices`);
-        if (field.type === "path" && ((0, import_node_path29.isAbsolute)(stringValue) || import_node_path29.win32.isAbsolute(stringValue) || stringValue.split(/[\\/]/).includes(".."))) throw new Error(`${key2} must be a workspace-relative contained path`);
+        if (field.type === "path" && ((0, import_node_path30.isAbsolute)(stringValue) || import_node_path30.win32.isAbsolute(stringValue) || stringValue.split(/[\\/]/).includes(".."))) throw new Error(`${key2} must be a workspace-relative contained path`);
         normalized[key2] = stringValue;
       }
     }
@@ -32255,12 +32724,14 @@ ${material}
     const validUntil = args.valid_until === void 0 ? null : new Date(validIsoTime2(args.valid_until, "valid_until")).toISOString();
     const claimId = String(args.claim_id ?? id16("knowledge_claim"));
     const existing = this.store.find("knowledge_claim", claimId);
-    const identity = { kind: kind2, content, scope: scope3, evidence_ids: evidenceIds2, tags: tags2, valid_until: validUntil };
+    const contentDigest = valueDigest(content);
+    const identity = { kind: kind2, content_digest: contentDigest, scope: scope3, evidence_ids: evidenceIds2, tags: tags2, valid_until: validUntil };
     if (existing) {
       if (existing.identity_digest !== valueDigest(identity)) throw new Error("Knowledge claim idempotency conflict");
       return { claim: existing, idempotent: true };
     }
-    const claim = this.store.create("knowledge_claim", claimId, { ...identity, identity_digest: valueDigest(identity), status: "candidate", review: null });
+    const contentRef = this.store.contentStore.writeSync({ kind: "knowledge", record_id: claimId, version: 1, scope: scope3, status: "candidate", sensitivity: "internal", source_id: String(args.source_id ?? "builtin.evidence-wiki"), body: content });
+    const claim = this.store.create("knowledge_claim", claimId, { ...identity, content_ref: contentRef, identity_digest: valueDigest(identity), status: "candidate", review: null });
     return { claim, idempotent: false };
   }
   knowledgeClaimGet(args) {
@@ -32291,30 +32762,50 @@ ${material}
     claimIds.forEach((item) => this.store.get("knowledge_claim", item));
     const pageId = String(args.page_id ?? id16("wiki_page"));
     const existing = this.store.find("wiki_page", pageId);
-    const identity = { title, body: body2, scope: scope3, claim_ids: claimIds };
+    const identity = { title, body_digest: valueDigest(body2), scope: scope3, claim_ids: claimIds };
     if (existing && existing.identity_digest === valueDigest(identity)) return { page: existing, idempotent: true };
-    const filePath = (0, import_node_path29.join)(this.store.paths.root, "wiki", `${pageId}.v${existing ? Number(existing.version) + 1 : 1}.md`);
+    const nextVersion = existing ? Number(existing.version) + 1 : 1;
     if (existing) {
-      const current2 = await (0, import_promises18.readFile)(String(existing.file_path), "utf8");
+      let current2;
+      try {
+        current2 = existing.content_ref ? this.store.contentStore.readCompatSync(existing.content_ref).body : await (0, import_promises19.readFile)(String(existing.file_path), "utf8");
+      } catch {
+        throw new Error("Wiki page file has unrecorded changes; refresh it before saving");
+      }
       if (valueDigest(current2) !== existing.body_digest) throw new Error("Wiki page file has unrecorded changes; refresh it before saving");
     }
-    await (0, import_promises18.mkdir)((0, import_node_path29.join)(this.store.paths.root, "wiki"), { recursive: true });
-    await (0, import_promises18.writeFile)(filePath, body2, "utf8");
-    const page = this.store.save("wiki_page", pageId, { title, scope: scope3, claim_ids: claimIds, identity_digest: valueDigest(identity), body_digest: valueDigest(body2), file_path: filePath, revision_source: String(args.author ?? "human") });
+    const contentRef = await this.store.contentStore.write({ kind: "knowledge", record_id: pageId, version: nextVersion, scope: scope3, status: "active", sensitivity: "internal", source_id: "builtin.evidence-wiki", body: body2 });
+    const page = this.store.save("wiki_page", pageId, { title, scope: scope3, claim_ids: claimIds, identity_digest: valueDigest(identity), body_digest: valueDigest(body2), content_ref: contentRef, file_path: contentRef.path, revision_source: String(args.author ?? "human") });
     return { page, idempotent: false };
   }
   wikiPageGet(args) {
     const page = this.store.get("wiki_page", text126(args.page_id, "page_id"), args.version === void 0 ? void 0 : finiteInteger2(args.version, "version", 1));
-    return { page, body: (0, import_node_fs18.readFileSync)(String(page.file_path), "utf8") };
+    const body2 = page.content_ref ? (() => {
+      try {
+        return this.store.contentStore.readUncheckedSync(String(page.content_ref.path)).body;
+      } catch {
+        return (0, import_node_fs20.readFileSync)(String(page.file_path), "utf8");
+      }
+    })() : (0, import_node_fs20.readFileSync)(String(page.file_path), "utf8");
+    return { page, body: body2 };
   }
   wikiPageList(args) {
     return this.list("wiki_page", "pages", args);
   }
   wikiPageRefresh(args) {
     const page = this.store.get("wiki_page", text126(args.page_id, "page_id"));
-    const body2 = assertNoSecret4(document((0, import_node_fs18.readFileSync)(String(page.file_path), "utf8"), "body"), "body");
+    const rawPath = String(page.file_path ?? page.content_ref.path);
+    const body2 = assertNoSecret4(document(page.content_ref ? (() => {
+      try {
+        return this.store.contentStore.readUncheckedSync(rawPath).body;
+      } catch {
+        return (0, import_node_fs20.readFileSync)(rawPath, "utf8");
+      }
+    })() : (0, import_node_fs20.readFileSync)(rawPath, "utf8"), "body"), "body");
     if (valueDigest(body2) === page.body_digest) return { page, changed: false };
-    const saved = this.store.save("wiki_page", String(page.id), { ...recordPayload8(page), body_digest: valueDigest(body2), identity_digest: null, revision_source: "filesystem" });
+    const nextVersion = Number(page.version) + 1;
+    const contentRef = this.store.contentStore.writeSync({ kind: "knowledge", record_id: String(page.id), version: nextVersion, scope: String(page.scope ?? "global"), status: "active", sensitivity: "internal", source_id: "builtin.evidence-wiki", body: body2 });
+    const saved = this.store.save("wiki_page", String(page.id), { ...recordPayload8(page), body_digest: valueDigest(body2), content_ref: contentRef, file_path: contentRef.path, identity_digest: null, revision_source: "filesystem" });
     return { page: saved, changed: true };
   }
   knowledgeWorkbenchView(args = {}) {
@@ -32416,10 +32907,10 @@ Evidence: ${item.evidence_ids.join(", ")}
     if (claims.some((item) => item.status !== "reviewed")) throw new Error("Wiki capability candidate requires reviewed claims");
     const instructions = assertNoSecret4(document(args.instructions, "instructions"), "instructions");
     const applicability = assertNoSecret4(document(args.applicability, "applicability"), "applicability");
-    const fallback = assertNoSecret4(document(args.fallback_condition, "fallback_condition"), "fallback_condition");
+    const fallback4 = assertNoSecret4(document(args.fallback_condition, "fallback_condition"), "fallback_condition");
     const candidateId2 = String(args.candidate_id ?? id16("wiki_skill_candidate"));
     const existing = this.store.find("wiki_skill_candidate", candidateId2);
-    const identity = { title, kind: kind2, claim_ids: claimIds, instructions, applicability, fallback_condition: fallback };
+    const identity = { title, kind: kind2, claim_ids: claimIds, instructions, applicability, fallback_condition: fallback4 };
     if (existing) {
       if (existing.identity_digest !== valueDigest(identity)) throw new Error("Wiki capability candidate idempotency conflict");
       return { candidate: existing, idempotent: true };
@@ -32697,7 +33188,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     const sandbox = String(args.sandbox ?? "read-only");
     if (!(/* @__PURE__ */ new Set(["read-only", "workspace-write"])).has(sandbox)) throw new Error("Work launch sandbox is unsupported");
     const prompt = text126(args.prompt, "prompt");
-    const workspace = (0, import_node_path29.resolve)(text126(args.workspace, "workspace"));
+    const workspace = (0, import_node_path30.resolve)(text126(args.workspace, "workspace"));
     const deferredStart = args.defer_host_start === true;
     const launchId = args.launch_id === void 0 ? id16("work_launch") : text126(args.launch_id, "launch_id");
     const existing = this.store.find("work_launch", launchId);
@@ -32871,7 +33362,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     return this.verifiedWorkLoops.get(args);
   }
   verifiedWorkLoopWorkbenchPrepare(args) {
-    const root = (0, import_node_path29.resolve)(text126(args.workspace, "workspace"));
+    const root = (0, import_node_path30.resolve)(text126(args.workspace, "workspace"));
     const includePaths2 = uniqueTextArray3(args.include_paths ?? ["."], "include_paths").sort();
     const workspaceId = args.workspace_id === void 0 ? `workspace_loop_${valueDigest({ root, include_paths: includePaths2 }).slice(-16)}` : text126(args.workspace_id, "workspace_id");
     const existing = this.store.find("workspace", workspaceId);
@@ -32968,7 +33459,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     return this.hostBridge.get(args);
   }
   executionFabricWorkbenchPrepare(args) {
-    const root = (0, import_node_path29.resolve)(text126(args.workspace, "workspace"));
+    const root = (0, import_node_path30.resolve)(text126(args.workspace, "workspace"));
     const includePaths2 = uniqueTextArray3(args.include_paths ?? ["."], "include_paths").sort();
     const workspaceId = args.workspace_id === void 0 ? `workspace_fabric_${valueDigest(root).slice(-16)}` : text126(args.workspace_id, "workspace_id");
     const existing = this.store.find("workspace", workspaceId);
@@ -33329,7 +33820,7 @@ Evidence: ${item.evidence_ids.join(", ")}
   modelAdd(args) {
     const settings = loadSettingsSync(this.store.paths);
     const id17 = text126(args.id, "id").trim().toLowerCase().replace(/[^a-z0-9-]/g, "-");
-    if (!id17) throw new Error("model id is required");
+    if (/^-+$/.test(id17)) throw new Error("model id is required");
     if (settings.models.some((m) => m.id === id17)) throw new Error(`model already exists: ${id17}`);
     const model = validateModelInput(args, id17);
     const next = saveSettingsSync({ models: [...settings.models, model] }, this.store.paths);
@@ -33745,7 +34236,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     if (!GRADE_VERDICTS.has(verdict)) throw new Error(`Unsupported grade verdict: ${verdict}`);
     const evidenceIds2 = array6(args.evidence_ids ?? [], "evidence_ids").map((value) => text126(value, "evidence_id"));
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
-    const gradeId = `grade_${(0, import_node_crypto131.createHash)("sha256").update(JSON.stringify(
+    const gradeId = `grade_${(0, import_node_crypto132.createHash)("sha256").update(JSON.stringify(
       [trialId, grader.id, grader.version]
     )).digest("hex")}`;
     return this.store.create("grade", gradeId, {
@@ -34411,7 +34902,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     const duration = aggregate.costs.duration_ms;
     const passed = Number(aggregate.pass_rate) >= minimumPassRate && (duration?.mean === void 0 || Number(duration.mean) <= maximumDuration);
     const grades = evaluation.trial_ids.map((trialId) => {
-      const gradeId = `grade_${(0, import_node_crypto131.createHash)("sha256").update(JSON.stringify([trialId, grader.id, grader.version])).digest("hex")}`;
+      const gradeId = `grade_${(0, import_node_crypto132.createHash)("sha256").update(JSON.stringify([trialId, grader.id, grader.version])).digest("hex")}`;
       const existing = this.store.find("grade", gradeId);
       if (existing) return existing;
       const outcome2 = this.store.get("outcome", `outcome_${trialId}`);
@@ -34659,7 +35150,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     const candidates = [...groups.values()].filter((group) => group.trial_ids.length >= 2).map((group) => {
       const trialIds = [...group.trial_ids].sort();
       const evidenceIds2 = [...new Set(group.evidence_ids)].sort();
-      const candidateId2 = `experience_mining_${(0, import_node_crypto131.createHash)("sha256").update(`${subjectType}:${subjectId}:${subjectVersion}:${group.pattern_kind}:${group.failure_type}:${trialIds.join(",")}`).digest("hex")}`;
+      const candidateId2 = `experience_mining_${(0, import_node_crypto132.createHash)("sha256").update(`${subjectType}:${subjectId}:${subjectVersion}:${group.pattern_kind}:${group.failure_type}:${trialIds.join(",")}`).digest("hex")}`;
       const payload75 = {
         subject_type: subjectType,
         subject_id: subjectId,
@@ -35177,7 +35668,7 @@ Evidence: ${item.evidence_ids.join(", ")}
       return { plan, ...this.trialGet({ trial_id: trialId }) };
     }
     const result = orchestrationOutcome(plan.nodes, Boolean(plan.budget_exceeded));
-    const stableKey = (0, import_node_crypto131.createHash)("sha256").update(`${plan.id}:${trialId}`).digest("hex");
+    const stableKey = (0, import_node_crypto132.createHash)("sha256").update(`${plan.id}:${trialId}`).digest("hex");
     const artifactId = `artifact_${stableKey}`;
     const artifact = this.store.find("artifact", artifactId) ?? this.artifactRegister({
       artifact_id: artifactId,
@@ -35226,6 +35717,15 @@ Evidence: ${item.evidence_ids.join(", ")}
     });
     return { plan, ...this.trialGet({ trial_id: trialId }) };
   }
+  contentStatus() {
+    return this.contentMigration.status();
+  }
+  contentVerify(args = {}) {
+    return this.contentMigration.verify(args);
+  }
+  contentMigrate(args = {}) {
+    return this.contentMigration.migrate(args);
+  }
   autonomousRuntimePrepare(args) {
     return this.autonomousRuntime.prepare(args);
   }
@@ -35260,7 +35760,7 @@ Evidence: ${item.evidence_ids.join(", ")}
   async remoteInteropDispatch(args) {
     const status = String(args.status ?? "accepted");
     if (!(/* @__PURE__ */ new Set(["accepted", "completed", "failed"])).has(status)) throw new Error("Unsupported remote status");
-    return this.remoteInterop.dispatch(args, { dispatch: async () => ({ remote_id: text126(args.remote_id ?? `remote_${(0, import_node_crypto131.randomUUID)().replaceAll("-", "")}`, "remote_id"), status, ...args.result_digest === void 0 ? {} : { result_digest: text126(args.result_digest, "result_digest") } }) });
+    return this.remoteInterop.dispatch(args, { dispatch: async () => ({ remote_id: text126(args.remote_id ?? `remote_${(0, import_node_crypto132.randomUUID)().replaceAll("-", "")}`, "remote_id"), status, ...args.result_digest === void 0 ? {} : { result_digest: text126(args.result_digest, "result_digest") } }) });
   }
 };
 installAdapterRuntimeMethods(CraftService);
@@ -35572,9 +36072,9 @@ function buildRegistry(tools) {
 function findEntry(entries2, resource, operation) {
   return entries2.find((entry2) => entry2.resource === resource && entry2.operation === operation) ?? null;
 }
-function resolveEntry(entries2, resource, operation, fallback) {
+function resolveEntry(entries2, resource, operation, fallback4) {
   if (operation) return findEntry(entries2, resource, operation);
-  const direct = findEntry(entries2, resource, fallback);
+  const direct = findEntry(entries2, resource, fallback4);
   if (direct) return direct;
   const candidates = entries2.filter((entry2) => entry2.resource === resource);
   return candidates.length === 1 ? candidates[0] : null;
@@ -36444,6 +36944,9 @@ var TOOL_DEFINITIONS = [
   tool("craft_knowledge_claim_get", "Read one exact evidence-backed knowledge claim.", ["claim_id"], true, ["version"]),
   tool("craft_knowledge_claim_list", "List locally stored evidence-backed knowledge claims.", [], true, ["limit", "query"]),
   tool("craft_knowledge_claim_review", "Explicitly review, dispute, supersede, or expire a candidate knowledge claim without deleting history.", ["claim_id", "status", "reviewer", "reason"], false),
+  tool("craft_content_status", "Read Markdown content storage status for knowledge and memory bodies; SQLite remains the lifecycle index.", [], true),
+  tool("craft_content_verify", "Verify Markdown body references and detect missing or drifted content without changing records.", [], true, ["kind"]),
+  tool("craft_content_migrate", "Explicitly migrate legacy inline knowledge, memory, and Wiki bodies into versioned Markdown with a database backup.", [], false, ["dry_run"]),
   tool("craft_wiki_page_save", "Save or revise an editable Wiki page whose referenced claims retain their evidence identity.", ["title", "body"], false, ["page_id", "scope", "claim_ids", "author"]),
   tool("craft_wiki_page_get", "Read one exact Wiki page revision.", ["page_id"], true, ["version"]),
   tool("craft_wiki_page_list", "List locally stored Wiki pages.", [], true, ["limit", "query"]),
@@ -37916,6 +38419,7 @@ var CORE_TOOL_NAMES = /* @__PURE__ */ new Set([
   "craft_web_fetch",
   "craft_web_operation_get"
 ]);
+CORE_TOOL_NAMES.add("craft_content_status").add("craft_content_verify");
 var CORE_TOOLS = ACTIVE_TOOLS.filter((tool2) => CORE_TOOL_NAMES.has(tool2.name));
 function surfaceToolNames2(surface) {
   return surfaceToolNames(surface, ACTIVE_TOOLS, CORE_TOOL_NAMES);
@@ -38200,6 +38704,9 @@ var McpServer = class {
       craft_knowledge_claim_get: (a) => service.knowledgeClaimGet(a),
       craft_knowledge_claim_list: (a) => service.knowledgeClaimList(a),
       craft_knowledge_claim_review: (a) => service.knowledgeClaimReview(a),
+      craft_content_status: () => service.contentStatus(),
+      craft_content_verify: (a) => service.contentVerify(a),
+      craft_content_migrate: (a) => service.contentMigrate(a),
       craft_wiki_page_save: (a) => service.wikiPageSave(a),
       craft_wiki_page_get: (a) => service.wikiPageGet(a),
       craft_wiki_page_list: (a) => service.wikiPageList(a),
@@ -38816,8 +39323,8 @@ async function serveMcpStdio(options) {
   const runtime = await (options.start ?? start)(options.mode);
   try {
     while (pending.length || !closed) {
-      if (!pending.length) await new Promise((resolve23) => {
-        wake = resolve23;
+      if (!pending.length) await new Promise((resolve24) => {
+        wake = resolve24;
       });
       wake = void 0;
       const line2 = pending.shift();
