@@ -1,6 +1,6 @@
 {
   "name": "craft-knowledge",
-  "version": "0.12.32",
+  "version": "0.12.33",
   "description": "Standalone governed knowledge for Claude Code.",
   "author": {
     "name": "wdx9413"

@@ -1,8 +1,8 @@
-{
+﻿{
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "craft-marketplace",
-  "version": "0.12.32",
-  "description": "Craft 的知识、记忆与 Workflow 演进组件，适用于 Claude Code。",
+  "version": "0.12.33",
+  "description": "Craft 的知识、记忆与经验沉淀组件，适用于 Claude Code。",
   "owner": {
     "name": "wdx9413"
   },
@@ -20,9 +20,9 @@
       "category": "productivity"
     },
     {
-      "name": "craft-workflow-evolution",
+      "name": "craft-experience",
       "description": "从脱敏执行观察生成受限 Workflow 草案。",
-      "source": "./plugins/craft-workflow-evolution",
+      "source": "./plugins/craft-experience",
       "category": "development"
     }
   ]

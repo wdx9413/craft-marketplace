@@ -1,4 +1,4 @@
-# Craft Marketplace
+﻿# Craft Marketplace
 
 Craft 是一个拥有知识、记忆和能力资产，并能通过验证持续进化的通用Agent 。
 
@@ -39,7 +39,7 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 /plugin marketplace add https://github.com/wdx9413/craft-marketplace.git
 /plugin install craft-knowledge@craft-marketplace
 /plugin install craft-memory@craft-marketplace
-/plugin install craft-workflow-evolution@craft-marketplace
+/plugin install craft-experience@craft-marketplace
 ```
 
 三个组件各自包含对应 Skill 和 MCP Server，安装后会以插件名命名空间暴露；它们与 Codex 发布包共用同一版本和本地 Craft 数据协议。只需要完整 Craft 时，仍应使用源码仓库中的主插件；不要同时安装主插件与同域子插件，避免重复工具面。
@@ -51,7 +51,7 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 - `craft`：完整 Craft 运行时；默认精简的 syscall MCP 面，以及 full/HTTP bundle。
 - `craft-knowledge`、`craft-memory`：仅知识或记忆与受控上下文；两者都可安全登记共享的内置知识来源。
 - `craft-capability`：可独立安装的 Skill、MCP、Workflow 自动发现、推荐与健康管理组件。
-- `craft-workflow-evolution`：从脱敏执行记录生成并验证 Workflow 草案的组件。
+- `craft-experience`：从脱敏执行记录生成并验证 Workflow 草案的组件。
 
 每个插件都是自包含的：其 MCP 入口只引用本插件目录内的 `dist/plugin` bundle。
 
@@ -59,6 +59,6 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 
 - Craft 源码仓库：[wdx9413/craft](https://github.com/wdx9413/craft)
 - Source revision：`d939165`
-- Craft version：`0.12.31`
+- Craft version：`0.12.33`
 
 发布前应从源码仓库运行打包与 MCP smoke 检查；不要在本仓库手工修改 bundle。
