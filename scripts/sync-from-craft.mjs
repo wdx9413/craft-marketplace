@@ -1,5 +1,6 @@
+import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 /**
  * Syncs this marketplace's plugin payloads from the craft source repository.
@@ -133,6 +134,33 @@ const releasePath = join(marketplaceRoot, "release.json");
 const release = JSON.parse(readFileSync(releasePath, "utf8"));
 release.components = expected;
 release.claude_components = expected.filter((name) => existsSync(join(marketplaceRoot, "plugins", name, ".claude-plugin")));
+
+/**
+ * The revision these payloads were built from.
+ *
+ * This field was maintained by hand, and it went stale the moment the release became a merge:
+ * `plugins/` here held a fresh build of the merge commit while `source_commit` still named the
+ * branch tip the payloads had been built from before it. A note in this file calls a stale field
+ * "exactly the kind of silent disagreement this file exists to prevent", so the revision is read
+ * from git at sync time, and `source_state` says whether that tree was clean.
+ */
+const sourceRepo = resolve(sourceRoot, "..");
+try {
+  const git = (args) => execFileSync("git", ["-C", sourceRepo, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+  const head = git(["rev-parse", "HEAD"]);
+  const parents = git(["rev-list", "--parents", "-n", "1", "HEAD"]).split(/\s+/u).slice(1);
+  const dirty = git(["status", "--porcelain"]).length > 0;
+  release.source_commit = head;
+  release.source_state = dirty ? "dirty" : "committed";
+  release.source_note = `v${release.version} payloads were built from ${head}`
+    + (parents.length > 1 ? `, a merge of ${parents.join(" and ")}` : "")
+    + "; source_commit names that revision. The plugin payloads under plugins/ are copies of that revision's build output.";
+  report.push(`updated  release.json source_commit -> ${head.slice(0, 12)} (${release.source_state})`);
+} catch (error) {
+  const message = error instanceof Error ? error.message.split("\n")[0] : String(error);
+  report.push(`kept     release.json source_commit (git unavailable: ${message})`);
+}
+
 writeFileSync(releasePath, `${JSON.stringify(release, null, 2)}\n`, "utf8");
 report.push(`updated  release.json components -> ${expected.join(", ")}`);
 
