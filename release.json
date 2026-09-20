@@ -1,10 +1,10 @@
 {
   "marketplace": "craft-marketplace",
-  "version": "0.12.34",
+  "version": "0.12.35",
   "source_repository": "https://github.com/wdx9413/craft.git",
-  "source_commit": "ddd17e8ce4bd07612edb44aef1669674905684a1",
+  "source_commit": "26db618451e30d04ffc76113c02ad6d9fdbaf7cf",
   "source_state": "committed",
-  "source_note": "v0.12.34 payloads were built from ddd17e8ce4bd07612edb44aef1669674905684a1; source_commit names that revision. The plugin payloads under plugins/ are copies of that revision's build output.",
+  "source_note": "v0.12.35 payloads were built from 26db618451e30d04ffc76113c02ad6d9fdbaf7cf; source_commit names that revision. The plugin payloads under plugins/ are copies of that revision's build output.",
   "components": [
     "craft",
     "craft-capability",
