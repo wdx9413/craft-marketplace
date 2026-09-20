@@ -58,7 +58,7 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 ## 发布来源
 
 - Craft 源码仓库：[wdx9413/craft](https://github.com/wdx9413/craft)
-- Source revision：`d939165`
-- Craft version：`0.12.33`
+- Source revision：`ddd17e8`
+- Craft version：`0.12.34`
 
 发布前应从源码仓库运行打包与 MCP smoke 检查；不要在本仓库手工修改 bundle。
