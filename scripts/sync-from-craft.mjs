@@ -61,7 +61,7 @@ if (!sourceComponents.length) throw new Error(`no components found in ${sourceRo
  * never refreshed, so no amount of syncing would have corrected it. Only the full `craft` component
  * has one, and the loop skips what is absent.
  */
-const OWNED = ["dist", "skills", "assets", ".mcp.json", ".codex-plugin", "README.md"];
+const OWNED = ["dist", "skills", "hooks", "assets", ".mcp.json", ".codex-plugin", "README.md"];
 
 const report = [];
 for (const [oldName, newName] of Object.entries(RENAMED)) {

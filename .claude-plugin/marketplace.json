@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "craft-marketplace",
-  "version": "0.12.35",
+  "version": "0.12.36",
   "description": "Craft 的知识、记忆与经验沉淀组件，适用于 Claude Code。",
   "owner": {
     "name": "wdx9413"
