@@ -3,8 +3,8 @@
   "version": "0.12.36",
   "source_repository": "https://github.com/wdx9413/craft.git",
   "source_commit": "c074e85c06a26a2bd54b9be079b37b951c23107e",
-  "source_state": "dirty",
-  "source_note": "v0.12.36 payloads were built from c074e85c06a26a2bd54b9be079b37b951c23107e; source_commit names that revision. The plugin payloads under plugins/ are copies of that revision's build output.",
+  "source_state": "committed",
+  "source_note": "v0.12.36 payloads were built from committed Craft source c074e85c06a26a2bd54b9be079b37b951c23107e; source_commit names that revision. The plugin payloads under plugins/ are copies of that revision's build output.",
   "components": [
     "craft",
     "craft-capability",
