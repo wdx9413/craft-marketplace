@@ -2,15 +2,17 @@
   "marketplace": "craft-marketplace",
   "version": "0.12.37",
   "source_repository": "https://github.com/wdx9413/craft.git",
-  "source_commit": "e2b2920ebb12d9b8c44356e2c2e871fa1a9c6feb",
+  "source_commit": "803a5f761fa2d51fde777659cc037adaa361d198",
   "source_state": "committed",
-  "source_note": "v0.12.37 payloads were built from e2b2920ebb12d9b8c44356e2c2e871fa1a9c6feb; source_commit names that revision. The plugin payloads under plugins/ are copies of that revision's build output.",
+  "source_note": "v0.12.37 payloads were built from 803a5f761fa2d51fde777659cc037adaa361d198; source_commit names that revision. The plugin payloads under plugins/ are copies of that revision's build output.",
   "components": [
+    "craft-codebase",
     "craft-experience",
     "craft-knowledge",
     "craft-memory"
   ],
   "claude_components": [
+    "craft-codebase",
     "craft-experience",
     "craft-knowledge",
     "craft-memory"

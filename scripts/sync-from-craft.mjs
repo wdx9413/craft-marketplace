@@ -18,10 +18,9 @@ import { join, resolve } from "node:path";
  *
  * ### The marketplace owns one thing the source does not
  *
- * Each component here carries a `.claude-plugin/plugin.json`, which `craft/plugins/` has no
- * counterpart for. So this is **not** a mirror: it copies the files the source owns and leaves the
- * Claude manifest in place, updating only its `name`. A blind mirror would delete it, and the
- * Claude marketplace entry would then point at a plugin with no Claude manifest.
+ * Component manifests are source-owned. The marketplace copies both Codex and
+ * Claude manifests with the payload so the two Hosts cannot silently publish
+ * different versions or product arguments.
  *
  * ### What it refuses to do
  *
@@ -45,12 +44,11 @@ const contract = JSON.parse(readFileSync(contractPath, "utf8"));
 if (!/^\d+\.\d+\.\d+$/u.test(String(contract.version)) || !Array.isArray(contract.products)) throw new Error("Craft distribution contract is invalid");
 
 /**
- * Craft source keeps its complete internal/plugin catalog.  This marketplace is deliberately
- * narrower: only the three standalone cognitive products are externally installable here.
- * Adding a source component therefore never expands the public marketplace by accident.
+ * Craft source keeps its complete internal/plugin catalog. This marketplace
+ * publishes only the explicit external distribution contract.
  */
 const EXPORTED_COMPONENTS = contract.products.map((product) => String(product?.name)).sort();
-if (EXPORTED_COMPONENTS.join(",") !== "craft-experience,craft-knowledge,craft-memory") throw new Error("External marketplace contract must contain exactly Knowledge, Memory, and Experience");
+if (new Set(EXPORTED_COMPONENTS).size !== EXPORTED_COMPONENTS.length || EXPORTED_COMPONENTS.length === 0) throw new Error("External marketplace contract must contain unique products");
 /**
  * Marketplace directories that no longer correspond to a component in the source, and where their
  * marketplace-owned files belong now.
@@ -59,7 +57,7 @@ if (EXPORTED_COMPONENTS.join(",") !== "craft-experience,craft-knowledge,craft-me
  * used the old name — it does not, so nothing fired and the stale directory survived. A later version
  * simply removed the obsolete directory, which **deleted that component's Claude manifest** and
  * dropped it out of `claude_components` — the exact failure this file's own comment warned about.
- * So the mapping's job is to carry `.claude-plugin/` across the rename before removing anything.
+ * So the mapping's job is to carry marketplace-owned files across the rename before removing anything.
  */
 const RENAMED = { "craft-workflow-evolution": "craft-experience" };
 
@@ -71,6 +69,22 @@ const missingExports = EXPORTED_COMPONENTS.filter((name) => !availableSourceComp
 if (missingExports.length) throw new Error(`Craft source is missing required exported component(s): ${missingExports.join(", ")}`);
 const sourceComponents = [...EXPORTED_COMPONENTS].sort();
 
+function marketplaceEntries() {
+  return contract.products.map((product) => ({
+    name: String(product.name),
+    source: { source: "local", path: `./plugins/${String(product.name)}` },
+    policy: { installation: "AVAILABLE", authentication: "ON_INSTALL" },
+    category: String(product.category),
+  }));
+}
+
+function claudeEntries() {
+  return contract.products.map((product) => {
+    const manifest = JSON.parse(readFileSync(join(sourceRoot, String(product.name), ".claude-plugin", "plugin.json"), "utf8"));
+    return { name: String(product.name), description: String(manifest.description), source: `./plugins/${String(product.name)}`, category: String(product.category) === "Developer Tools" ? "development" : "productivity" };
+  });
+}
+
 /**
  * Files the source owns, relative to a component directory. Everything else is left alone.
  *
@@ -79,7 +93,7 @@ const sourceComponents = [...EXPORTED_COMPONENTS].sort();
  * never refreshed, so no amount of syncing would have corrected it. Only the full `craft` component
  * has one, and the loop skips what is absent.
  */
-const OWNED = ["dist", "skills", "hooks", "assets", ".mcp.json", ".codex-plugin", "README.md"];
+const OWNED = ["dist", "skills", "hooks", "assets", ".mcp.json", ".codex-plugin", ".claude-plugin", "README.md"];
 
 const sourceRevision = () => {
   const git = (args) => execFileSync("git", ["-C", sourceRepo, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
@@ -131,6 +145,12 @@ const verifyMarketplace = () => {
     || release.source_commit !== revision.source_commit
     || release.source_state !== revision.source_state
     || release.source_note !== revision.source_note) throw new Error("release.json differs from the source distribution contract");
+  for (const manifestPath of [".agents/plugins/marketplace.json"]) {
+    const manifest = JSON.parse(readFileSync(join(marketplaceRoot, manifestPath), "utf8"));
+    if (manifest.version !== contract.version || JSON.stringify(manifest.plugins) !== JSON.stringify(marketplaceEntries())) throw new Error(`${manifestPath} differs from the source distribution contract`);
+  }
+  const claude = JSON.parse(readFileSync(join(marketplaceRoot, ".claude-plugin", "marketplace.json"), "utf8"));
+  if (claude.version !== contract.version || JSON.stringify(claude.plugins) !== JSON.stringify(claudeEntries())) throw new Error("Claude marketplace differs from the source distribution contract");
 };
 
 if (!apply) {
@@ -165,20 +185,24 @@ const sync = (component) => {
     cpSync(source, target, { recursive: true, force: true });
     report.push(`synced   plugins/${component}/${owned}`);
   }
-  // The Claude manifest is this repository's own; identity and release version are contract-bound.
-  const claude = join(to, ".claude-plugin", "plugin.json");
-  if (existsSync(claude)) {
-    const manifest = JSON.parse(readFileSync(claude, "utf8"));
-    if (manifest.name !== component || manifest.version !== contract.version) {
-      manifest.name = component;
-      manifest.version = contract.version;
-      writeFileSync(claude, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
-      report.push(`renamed  plugins/${component}/.claude-plugin/plugin.json name -> ${component}`);
-    }
-  }
 };
 
 for (const component of sourceComponents) sync(component);
+
+for (const manifestPath of [".agents/plugins/marketplace.json"]) {
+  const manifestPathResolved = join(marketplaceRoot, manifestPath);
+  const manifest = JSON.parse(readFileSync(manifestPathResolved, "utf8"));
+  manifest.version = contract.version;
+  manifest.plugins = marketplaceEntries();
+  writeFileSync(manifestPathResolved, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+  report.push(`updated  ${manifestPath} products -> ${sourceComponents.join(", ")}`);
+}
+const claudeMarketplacePath = join(marketplaceRoot, ".claude-plugin", "marketplace.json");
+const claudeMarketplace = JSON.parse(readFileSync(claudeMarketplacePath, "utf8"));
+claudeMarketplace.version = contract.version;
+claudeMarketplace.plugins = claudeEntries();
+writeFileSync(claudeMarketplacePath, `${JSON.stringify(claudeMarketplace, null, 2)}\n`, "utf8");
+report.push(`updated  .claude-plugin/marketplace.json products -> ${sourceComponents.join(", ")}`);
 
 // This distribution must contain exactly the explicitly exported components.  The source can
 // retain additional private/internal products without leaking them into either marketplace.

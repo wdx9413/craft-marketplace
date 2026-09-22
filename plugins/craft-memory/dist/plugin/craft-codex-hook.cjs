@@ -21512,7 +21512,11 @@ var COMPONENT_SURFACES = {
   // projection in `ownership.ts`; the projection adds the experience families a separate
   // kernel implements but the same product serves. The shared context verbs are not part of
   // it: experience is not resolved through the context plane.
-  "component-experience": EXPERIENCE_COMPONENT
+  "component-experience": EXPERIENCE_COMPONENT,
+  // Codebase is a read-only structural capability, not a cognitive Context
+  // member.  Its standalone product exposes only explicit activation, index,
+  // and snapshot-pinned query tools.
+  "component-codebase": CODEBASE_OWNS
 };
 var COMPONENT_SURFACE_NAMES = Object.keys(COMPONENT_SURFACES);
 var DOMAIN_SURFACE_NAMES = SURFACE_RULES.map((rule) => rule.name);

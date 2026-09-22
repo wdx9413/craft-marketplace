@@ -28,7 +28,7 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 
 ## 安装
 
-将本仓库作为 Git Marketplace 添加到 Host。无论 Codex 还是 Claude Code，市场清单均只提供 `craft-knowledge`、`craft-memory`、`craft-experience` 三个插件。
+将本仓库作为 Git Marketplace 添加到 Host。无论 Codex 还是 Claude Code，市场清单均提供 `craft-knowledge`、`craft-memory`、`craft-experience`、`craft-codebase` 四个插件。
 
 ### Claude Code
 
@@ -39,6 +39,7 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 /plugin install craft-knowledge@craft-marketplace
 /plugin install craft-memory@craft-marketplace
 /plugin install craft-experience@craft-marketplace
+/plugin install craft-codebase@craft-marketplace
 ```
 
 三个组件各自包含对应 Skill 和 MCP Server，安装后会以插件名命名空间暴露；它们与 Codex 发布包共用同一版本和本地 Craft 数据协议。
@@ -46,6 +47,7 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 - `craft-knowledge`：受证据约束的知识源、Wiki 与受控上下文解析。
 - `craft-memory`：按范围、来源、有效期和证据解析长期记忆。
 - `craft-experience`：从脱敏执行记录生成并验证 Workflow 草案。
+- `craft-codebase`：显式激活、checkpoint 固定的只读符号、调用方与候选影响分析。
 
 完整 Craft 及其他内部插件仍保留在源码仓库，但不由本发布仓分发。
 
