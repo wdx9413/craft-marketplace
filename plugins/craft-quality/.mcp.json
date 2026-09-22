@@ -1,1 +1,0 @@
-{"mcpServers":{"craft-quality":{"command":"node","args":["dist/plugin/craft-mcp.cjs","--product","quality"],"cwd":"."}}}

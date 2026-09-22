@@ -1,1 +1,0 @@
-{"mcpServers":{"craft-capability":{"command":"node","args":["dist/plugin/craft-mcp.cjs","--product","capability"],"cwd":"."}}}
