@@ -223103,7 +223103,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.38";
+var CRAFT_RELEASE_VERSION = "0.12.39";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
@@ -264989,6 +264989,7 @@ installKernelDelegateMethods(CraftService);
 // core/interfaces/codex-hook-bridge.ts
 var import_node_crypto133 = require("node:crypto");
 var import_node_path43 = require("node:path");
+var CONTEXT_MEMBERS2 = ["knowledge", "memory", "experience"];
 var SECRET21 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
 var VERIFY = /^(?:(?:pnpm|npm|yarn|bun)\s+(?:run\s+)?test(?::[\w-]+)?|pytest|(?:python3?\s+-m\s+pytest)|(?:mvn|gradle|gradlew|\.\/gradlew)\s+(?:test|verify)|go\s+test|cargo\s+test|node\s+--test)(?:\s|$)/u;
 var EDIT = /(?:^|[;&|\s])(?:apply_patch|git\s+apply|sed\s+-i|perl\s+-pi)\b/iu;
@@ -265154,6 +265155,18 @@ var CodexHookBridge = class {
   async handle(member2, input) {
     try {
       const event = text30(input.hook_event_name);
+      if (member2 === "context") {
+        if (event === "SessionStart" || event === "SessionEnd") {
+          for (const component2 of CONTEXT_MEMBERS2) this.lifecycle(component2, event, input, component2 === "memory");
+          return {};
+        }
+        if (event === "UserPromptSubmit") return await this.prompt(member2, input);
+        if (event === "PostToolUse") return this.tool(input);
+        if (event === "Stop") {
+          for (const component2 of CONTEXT_MEMBERS2) this.stop(component2, input);
+        }
+        return {};
+      }
       if (event === "SessionStart" || event === "SessionEnd") return this.lifecycle(member2, event, input);
       if (event === "UserPromptSubmit") return await this.prompt(member2, input);
       if (event === "PostToolUse" && member2 === "experience") return this.tool(input);
@@ -265168,28 +265181,33 @@ var CodexHookBridge = class {
     const scope3 = codexProjectScope(input.cwd);
     const prompt = text30(input.prompt) ?? text30(input.user_prompt);
     if (!scope3 || !prompt) return {};
+    const members2 = member2 === "context" ? CONTEXT_MEMBERS2 : [member2];
     if (typeof input.cwd === "string") this.service.scopeIdentityResolveProject({ project_root: input.cwd });
     let memoryWritten = false;
-    if (member2 === "memory") {
+    if (members2.includes("memory")) {
       const statement = explicitMemoryStatement(prompt);
       if (statement) {
-        this.service.memoryCaptureUserStatement({
-          content: statement,
-          kind: "episodic",
-          scope_kind: scope3.kind,
-          scope_id: scope3.id,
-          explicit_consent: true,
-          auto_accept: true,
-          sensitivity: "internal"
-        });
-        memoryWritten = true;
+        try {
+          this.service.memoryCaptureUserStatement({
+            content: statement,
+            kind: "episodic",
+            scope_kind: scope3.kind,
+            scope_id: scope3.id,
+            explicit_consent: true,
+            auto_accept: true,
+            sensitivity: "internal"
+          });
+          memoryWritten = true;
+        } catch (error) {
+          this.service.store.appendEvent("codex-hook", "codex_hook.failed", { member: "memory", event: "UserPromptSubmit", error_type: error instanceof Error ? error.name : "unknown" });
+        }
       }
     }
     const resolved = await this.service.contextResolutionResolve({
       query: prompt,
       scope_kind: scope3.kind,
       scope_id: scope3.id,
-      members: [member2],
+      members: [...members2],
       max_items: 6,
       max_chars: 3e3
     });
@@ -265200,14 +265218,14 @@ var CodexHookBridge = class {
       ...contributions.flatMap((contribution) => Array.isArray(contribution.items) ? contribution.items : [])
     ];
     const receipt = resolved.receipt;
-    this.service.activationProofRecord({
+    for (const component2 of members2) this.service.activationProofRecord({
       host: hookHost(input),
-      component: member2,
+      component: component2,
       event: "UserPromptSubmit",
       session_id: text30(input.session_id) ?? "unknown",
       turn_id: text30(input.turn_id),
       context_receipt_id: receipt?.id ?? void 0,
-      memory_written: memoryWritten,
+      memory_written: component2 === "memory" && memoryWritten,
       observation_written: false,
       plugin_release: CRAFT_RELEASE_VERSION,
       hook_trusted: true,
@@ -265244,7 +265262,7 @@ var CodexHookBridge = class {
    * particular, readiness here is intentionally marked as readiness-only so a
    * lifecycle hook can never masquerade as a Knowledge/Memory retrieval.
    */
-  lifecycle(member2, event, input) {
+  lifecycle(member2, event, input, scheduleMaintenance = true) {
     const readiness = this.service.componentReadinessGet({ component: member2 });
     const scope3 = codexProjectScope(input.cwd);
     this.service.store.appendEvent("codex-hook", "codex_hook.lifecycle", {
@@ -265271,7 +265289,7 @@ var CodexHookBridge = class {
       hook_trusted: true,
       mcp_reachable: true
     });
-    if (event === "SessionEnd") this.service.memoryMaintenanceSchedule({ stage: "light", lease_id: `codex-${member2}-${text30(input.session_id) ?? "unknown"}` });
+    if (event === "SessionEnd" && scheduleMaintenance) this.service.memoryMaintenanceSchedule({ stage: "light", lease_id: `codex-${member2}-${text30(input.session_id) ?? "unknown"}` });
     return {};
   }
 };
@@ -265280,8 +265298,8 @@ var CodexHookBridge = class {
 function member(argv) {
   const index = argv.indexOf("--member");
   const value = index < 0 ? null : argv[index + 1];
-  if (value === "knowledge" || value === "memory" || value === "experience") return value;
-  throw new Error("--member must be knowledge, memory, or experience");
+  if (value === "context" || value === "knowledge" || value === "memory" || value === "experience") return value;
+  throw new Error("--member must be context, knowledge, memory, or experience");
 }
 async function main() {
   let raw = "";

@@ -32,18 +32,14 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 
 ### Claude Code
 
-本仓库同时提供 Claude Code Marketplace，清单位于 `.claude-plugin/marketplace.json`。在 Claude Code 中添加市场后，可按需安装默认聚合入口或四个独立组件：
+本仓库同时提供 Claude Code Marketplace，清单位于 `.claude-plugin/marketplace.json`。在 Claude Code 中添加市场后，通常只需安装默认聚合入口：
 
 ```text
 /plugin marketplace add https://github.com/wdx9413/craft-marketplace.git
 /plugin install craft-context@craft-marketplace
-/plugin install craft-knowledge@craft-marketplace
-/plugin install craft-memory@craft-marketplace
-/plugin install craft-experience@craft-marketplace
-/plugin install craft-codebase@craft-marketplace
 ```
 
-四个子组件各自包含对应 Skill 和 MCP Server，安装后会以插件名命名空间暴露；它们与 Codex 发布包共用同一版本和本地 Craft 数据协议。
+`craft-context` 包含四个子能力的 MCP 工具及参考 Skill；Codex/Claude 插件还提供单入口 Hook，在提示阶段形成一个共享的 Knowledge、Memory、Experience 回执。仓库索引由 Skill/MCP 按需准备。四个独立组件仍可分别安装；与聚合入口同时启用会增加重复的 MCP 和 Hook 入口。纯 Skill + MCP 接入无需 Hook。
 
 - `craft-context`：默认聚合四子能力，统一上下文预算、来源回执和自动仓库索引。
 - `craft-knowledge`：受证据约束的知识源、Wiki 与受控上下文解析。
@@ -58,8 +54,8 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 ## 发布来源
 
 - Craft 源码仓库：[wdx9413/craft](https://github.com/wdx9413/craft)
-- Source revision：`0de577d`
-- Craft version：`0.12.38`
+- Source revision：`b9ded88`
+- Craft version：`0.12.39`
 
 发布前应从源码仓库运行打包与 MCP smoke 检查；不要在本仓库手工修改 bundle。
 
