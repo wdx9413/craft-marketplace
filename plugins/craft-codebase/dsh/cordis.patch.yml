@@ -1,0 +1,5 @@
+- insert:
+    - id: craft-codebase
+      name: dsh-craft-codebase
+      config:
+        product: codebase

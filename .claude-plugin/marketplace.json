@@ -1,33 +1,39 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "craft-marketplace",
-  "version": "0.12.37",
+  "version": "0.12.38",
   "description": "Craft 的知识、记忆与经验沉淀组件，适用于 Claude Code。",
   "owner": {
     "name": "wdx9413"
   },
   "plugins": [
     {
+      "name": "craft-context",
+      "description": "craft-context governed context and repository tools",
+      "source": "./plugins/craft-context",
+      "category": "development"
+    },
+    {
       "name": "craft-knowledge",
-      "description": "Standalone governed knowledge for Claude Code.",
+      "description": "craft-knowledge governed context and repository tools",
       "source": "./plugins/craft-knowledge",
       "category": "productivity"
     },
     {
       "name": "craft-memory",
-      "description": "Standalone scoped and evidence-linked memory for Claude Code.",
+      "description": "craft-memory governed context and repository tools",
       "source": "./plugins/craft-memory",
       "category": "productivity"
     },
     {
       "name": "craft-experience",
-      "description": "Create bounded Workflow drafts from sanitized observations in Claude Code.",
+      "description": "craft-experience governed context and repository tools",
       "source": "./plugins/craft-experience",
       "category": "development"
     },
     {
       "name": "craft-codebase",
-      "description": "Read-only checkpoint-pinned repository analysis for Claude Code.",
+      "description": "craft-codebase governed context and repository tools",
       "source": "./plugins/craft-codebase",
       "category": "development"
     }

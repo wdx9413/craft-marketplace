@@ -1,0 +1,5 @@
+- insert:
+    - id: craft-memory
+      name: dsh-craft-memory
+      config:
+        product: memory

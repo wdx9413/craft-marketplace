@@ -1,6 +1,6 @@
-import { execFileSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { sourceProvenance } from "./source-provenance.mjs";
 
 /**
  * Syncs this marketplace's plugin payloads from the craft source repository.
@@ -93,21 +93,9 @@ function claudeEntries() {
  * never refreshed, so no amount of syncing would have corrected it. Only the full `craft` component
  * has one, and the loop skips what is absent.
  */
-const OWNED = ["dist", "skills", "hooks", "assets", ".mcp.json", ".codex-plugin", ".claude-plugin", "README.md"];
+const OWNED = ["plugin.json", "mcp.json", "dist", "skills", "hooks", "assets", ".mcp.json", ".codex-plugin", ".claude-plugin", "README.md", "scripts", "dsh"];
 
-const sourceRevision = () => {
-  const git = (args) => execFileSync("git", ["-C", sourceRepo, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
-  const head = git(["rev-parse", "HEAD"]);
-  const parents = git(["rev-list", "--parents", "-n", "1", "HEAD"]).split(/\s+/u).slice(1);
-  const dirty = git(["status", "--porcelain", "--untracked-files=no"]).length > 0;
-  return {
-    source_commit: head,
-    source_state: dirty ? "dirty" : "committed",
-    source_note: `v${contract.version} payloads were built from ${head}`
-      + (parents.length > 1 ? `, a merge of ${parents.join(" and ")}` : "")
-      + "; source_commit names that revision. The plugin payloads under plugins/ are copies of that revision's build output.",
-  };
-};
+const sourceRevision = () => sourceProvenance(sourceRepo, contract.version);
 
 const sameFile = (left, right) => existsSync(right)
   && statSync(left).isFile() && statSync(right).isFile()
@@ -144,6 +132,7 @@ const verifyMarketplace = () => {
     || JSON.stringify(release.claude_components) !== JSON.stringify(sourceComponents)
     || release.source_commit !== revision.source_commit
     || release.source_state !== revision.source_state
+    || release.source_tree_digest !== revision.source_tree_digest
     || release.source_note !== revision.source_note) throw new Error("release.json differs from the source distribution contract");
   for (const manifestPath of [".agents/plugins/marketplace.json"]) {
     const manifest = JSON.parse(readFileSync(join(marketplaceRoot, manifestPath), "utf8"));
@@ -242,18 +231,21 @@ release.claude_components = expected.filter((name) => existsSync(join(marketplac
 release.version = contract.version;
 
 /**
- * The revision these payloads were built from.
+ * The checkout these payloads were synchronized from (not a build attestation).
  *
  * This field was maintained by hand, and it went stale the moment the release became a merge:
  * `plugins/` here held a fresh build of the merge commit while `source_commit` still named the
  * branch tip the payloads had been built from before it. A note in this file calls a stale field
  * "exactly the kind of silent disagreement this file exists to prevent", so the revision is read
- * from git at sync time, and `source_state` says whether that tree was clean.
+ * from Git at sync time. `source_commit` is HEAD; `source_tree_digest` binds the
+ * Git-visible working-tree bytes, including untracked source. Ignored build outputs
+ * are checked byte-for-byte above, but this does not prove when/how they were built.
  */
 try {
   const revision = sourceRevision();
   release.source_commit = revision.source_commit;
   release.source_state = revision.source_state;
+  release.source_tree_digest = revision.source_tree_digest;
   release.source_note = revision.source_note;
   report.push(`updated  release.json source_commit -> ${revision.source_commit.slice(0, 12)} (${release.source_state})`);
 } catch (error) {

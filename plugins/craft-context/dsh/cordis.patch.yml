@@ -1,0 +1,5 @@
+- insert:
+    - id: craft-context
+      name: dsh-craft-context
+      config:
+        product: context

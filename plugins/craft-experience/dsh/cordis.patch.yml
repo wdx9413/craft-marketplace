@@ -1,0 +1,5 @@
+- insert:
+    - id: craft-experience
+      name: dsh-craft-experience
+      config:
+        product: experience

@@ -1,21 +1,24 @@
 {
   "marketplace": "craft-marketplace",
-  "version": "0.12.37",
+  "version": "0.12.38",
   "source_repository": "https://github.com/wdx9413/craft.git",
-  "source_commit": "803a5f761fa2d51fde777659cc037adaa361d198",
+  "source_commit": "0de577d85a7639bbffa5dd85c4432d2b29722315",
   "source_state": "committed",
-  "source_note": "v0.12.37 payloads were built from 803a5f761fa2d51fde777659cc037adaa361d198; source_commit names that revision. The plugin payloads under plugins/ are copies of that revision's build output.",
+  "source_note": "v0.12.38 payloads were synchronized from a clean checkout of 0de577d85a7639bbffa5dd85c4432d2b29722315; Git-visible source snapshot sha256:0775e09a3499d700dd299848b70d0a1e82579e177bec37cd7c7392467203854c. source_commit identifies HEAD, not dirty source contents; this snapshot does not attest the build process.",
   "components": [
     "craft-codebase",
+    "craft-context",
     "craft-experience",
     "craft-knowledge",
     "craft-memory"
   ],
   "claude_components": [
     "craft-codebase",
+    "craft-context",
     "craft-experience",
     "craft-knowledge",
     "craft-memory"
   ],
-  "claude_marketplace": ".claude-plugin/marketplace.json"
+  "claude_marketplace": ".claude-plugin/marketplace.json",
+  "source_tree_digest": "sha256:0775e09a3499d700dd299848b70d0a1e82579e177bec37cd7c7392467203854c"
 }

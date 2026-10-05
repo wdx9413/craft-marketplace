@@ -1,0 +1,15 @@
+{
+  "name": "dsh-craft-context",
+  "version": "0.12.38",
+  "type": "module",
+  "main": "dist/index.js",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-tools": "*"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
