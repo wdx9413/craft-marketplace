@@ -219645,7 +219645,8 @@ var CraftStore = class {
     if (!Array.isArray(scopes) || scopes.some((scope3) => !scope3 || typeof scope3.kind !== "string" || typeof scope3.id !== "string")) throw new Error("Invalid scoped query");
     if (!scopes.length) return [];
     const scopeSql = `EXISTS (SELECT 1 FROM json_each(?) s WHERE
-      json_extract(r.payload_json,'$.scope')=CASE WHEN json_extract(s.value,'$.kind')='global' THEN 'global' ELSE json_extract(s.value,'$.kind')||':'||json_extract(s.value,'$.id') END
+      json_extract(r.payload_json,'$.scope')=json_extract(s.value,'$.kind')||':'||json_extract(s.value,'$.id')
+      OR (json_extract(s.value,'$.kind')='global' AND json_extract(r.payload_json,'$.scope')='global')
       OR (json_extract(r.payload_json,'$.scope.kind')=json_extract(s.value,'$.kind') AND json_extract(r.payload_json,'$.scope.id')=json_extract(s.value,'$.id')))`;
     const values3 = [JSON.stringify(scopes)];
     if (temporal?.known_at !== void 0 && !Number.isFinite(Date.parse(temporal.known_at))) throw new Error("Invalid scoped known_at");
@@ -220226,6 +220227,147 @@ var ContextHostEvaluation = class {
     };
   }
 };
+
+// core/application/procedure-host-control.ts
+function procedureHostControl(service, args) {
+  const action = text(args.action, "action"), input = object(args.input, "input");
+  if (action === "prepare") return { ...service.verifiedWorkLoopWorkbenchPrepare({ ...input, interaction_mode: "plan", defer_host_start: true }), host_execution_authority: false };
+  const state4 = service.procedureInvocationGet(args), run = object(state4.invocation, "invocation");
+  if (action === "snapshot") return service.stateWorkspaceObserve({ workspace_id: run.workspace_id });
+  if (!["session_open", "session_close", "observe"].includes(action)) throw new Error("Unsupported Procedure Host operation");
+  const dispatch = service.store.get("procedure_invocation_dispatch", text(input.dispatch_id, "dispatch_id"));
+  if (dispatch.invocation_id !== run.id) throw new Error("Host dispatch belongs to another Invocation");
+  const sessionId = `procedure_host:${dispatch.id}`;
+  if (action === "session_open") return service.hostSessionOpen({
+    session_id: sessionId,
+    task_id: run.task_id,
+    host_id: run.host_id,
+    environment_fingerprint: text(input.environment_fingerprint, "environment_fingerprint"),
+    policy_fingerprint: text(input.policy_fingerprint, "policy_fingerprint"),
+    capability_fingerprint: dispatch.dispatch_digest,
+    model_fingerprint: run.model_fingerprint,
+    budget_fingerprint: run.budget_fingerprint
+  });
+  const session = service.store.get("host_session", sessionId);
+  const snapshot = service.store.get("state_snapshot", text(input.snapshot_id, "snapshot_id"));
+  if (snapshot.workspace_id !== run.workspace_id) throw new Error("Host snapshot belongs to another workspace");
+  if (action === "session_close") {
+    const kind4 = text(input.kind, "kind");
+    if (!["session.completed", "session.failed", "session.cancelled"].includes(kind4)) throw new Error("A terminal Host event is required");
+    return service.hostSessionAppend({ session_id: sessionId, kind: kind4, state_after_ref: snapshot.id });
+  }
+  const observer = text(input.observer_id, "observer_id");
+  if (observer === run.host_id) throw new Error("The executing Host cannot be its program observer");
+  return { ...service.outcomeObserverObserve({
+    observation_id: input.observation_id,
+    trace_id: session.trace_id,
+    host_id: run.host_id,
+    observer_id: observer,
+    observer_kind: "program",
+    environment_fingerprint: session.environment_fingerprint,
+    verdict: input.verdict,
+    state_snapshot_ref: snapshot.id,
+    evidence_ids: input.evidence_ids
+  }), verification_provenance: "host_attested", promotion_eligible: false };
+}
+
+// core/application/procedure-decision.ts
+function matchesDecisionGuard(raw, values3) {
+  if (!Array.isArray(raw) || !raw.length || raw.length > 100) throw new Error("Decision guard requires 1..100 clauses");
+  const outcomes = raw.map((value) => {
+    const clause = object(value, "guard clause"), field = text(clause.field, "guard field"), op = text(clause.op, "guard op");
+    if (!["eq", "eq_field", "gte"].includes(op)) throw new Error("Unsupported decision guard operator");
+    const actual = Object.hasOwn(values3, field) ? values3[field] : void 0;
+    const expected = op === "eq_field" ? values3[text(clause.value_field, "value_field")] : clause.value;
+    if (actual === void 0 || actual === null || expected === void 0 || expected === null) return null;
+    if (op === "gte") return typeof actual === "number" && Number.isFinite(actual) && typeof expected === "number" && Number.isFinite(expected) ? actual >= expected : null;
+    if (!["string", "number", "boolean"].includes(typeof expected) || typeof actual !== typeof expected) return null;
+    if (typeof actual === "number" && (!Number.isFinite(actual) || !Number.isFinite(expected))) return null;
+    return actual === expected;
+  });
+  return outcomes.includes(false) ? false : outcomes.includes(null) ? null : true;
+}
+function procedureDecisionEvaluate(service, args) {
+  return service.store.transaction(() => {
+    const state4 = service.procedureInvocationGet(args), run = object(state4.invocation, "invocation");
+    const decisionId = `${run.id}:${text(args.decision_id, "decision_id")}`, requestDigest = stableDigest(args);
+    const existing = service.store.find("procedure_host_decision", decisionId);
+    if (existing) {
+      if (existing.request_digest !== requestDigest) throw new Error("Decision idempotency conflict");
+      return { decision: existing, invocation: run, idempotent: true, host_execution_authority: false };
+    }
+    if (run.version !== args.expected_version || run.lifecycle !== "active") throw new Error("Decision requires current active Invocation version");
+    const graph = object(run.graph, "runtime Graph"), progress = object(run.graph_state, "graph state");
+    const node = graph.nodes.find((node2) => node2.id === progress.active_node);
+    if (!node) throw new Error("Graph is at its selected exit, not a decision node");
+    const receipt = service.store.get("procedure_invocation_receipt", text(args.receipt_id, "receipt_id"));
+    const snapshot = service.store.get("state_snapshot", text(args.snapshot_id, "snapshot_id"));
+    const loop = object(state4.loop, "loop");
+    if (receipt.id !== run.last_receipt_id || receipt.invocation_id !== run.id || receipt.status !== "passed" || snapshot.workspace_id !== run.workspace_id || snapshot.snapshot_digest !== loop.latest_snapshot_digest) throw new Error("Decision receipt or snapshot is not current");
+    const source = service.store.get("evidence", text(args.fact_evidence_id, "fact_evidence_id")), meta = object(source.metadata, "fact metadata");
+    const observation = service.store.get("outcome_observation", String(receipt.observation_id));
+    const acceptance = service.store.get("acceptance_gate", String(receipt.acceptance_gate_id));
+    const programBound = source.source_type === "program" && observation.evidence_ids.includes(String(source.id)) && acceptance.required_evidence_ids.includes(String(source.id)) && meta.dispatch_digest === receipt.dispatch_digest && meta.state_after_digest === snapshot.snapshot_digest;
+    const humanBound = source.source_type === "human" && meta.invocation_id === run.id && meta.receipt_id === receipt.id && meta.snapshot_digest === snapshot.snapshot_digest && Number.isFinite(Date.parse(String(meta.expires_at))) && Date.parse(String(meta.expires_at)) > Date.now();
+    if (source.confidence !== "confirmed" || !(programBound || humanBound)) throw new Error("Decision facts are unverified, stale or bound to another node");
+    const values3 = object(meta.fact_values, "verified fact_values"), rules = object(node.decision_rules ?? {}, "decision_rules");
+    const edges = graph.edges.filter((edge2) => edge2.from === node.id && graph.scenario.allowed_edges instanceof Array && graph.scenario.allowed_edges.includes(String(edge2.id)));
+    let unknown = false;
+    const matched = edges.filter((edge2) => {
+      if (edge2.kind === "human_resume" && !humanBound || edge2.kind !== "human_resume" && !programBound) return false;
+      if (!["success", "condition", "human_resume"].includes(String(edge2.kind))) return false;
+      if (!edge2.predicate_ref) return true;
+      const guard = rules[String(edge2.predicate_ref)];
+      if (guard === void 0) {
+        unknown = true;
+        return false;
+      }
+      const result = matchesDecisionGuard(guard, values3);
+      if (result === null) unknown = true;
+      return result === true;
+    });
+    if (unknown || matched.length !== 1) return { status: "blocked", reason: unknown ? "decision_inputs_or_evaluator_unavailable" : "no_unique_matching_edge", host_execution_authority: false };
+    const edge = matched[0];
+    if (programBound && (edge.predicate_ref || edge.rework === true) && (meta.fact_values_ref !== `artifact:${stableDigest(values3)}` || !Object.values(object(receipt.output_refs, "accepted outputs")).includes(meta.fact_values_ref))) throw new Error("Decision facts changed after accepted output or lack a digest-pinned artifact");
+    if (edge.rework === true && values3.safe_to_retry !== true) return { status: "blocked", reason: "safe_target_state_not_verified", host_execution_authority: false };
+    const evidenceId = `procedure_decision:${decisionId}`;
+    service.evidenceRecord({
+      evidence_id: evidenceId,
+      source_type: edge.kind === "human_resume" ? "human" : "program",
+      confidence: "confirmed",
+      claim: "The declared guard matched one current graph edge; source facts remain Host-attested.",
+      metadata: {
+        scope: run.scope,
+        invocation_id: run.id,
+        receipt_id: receipt.id,
+        graph_state_digest: stableDigest(progress),
+        snapshot_digest: snapshot.snapshot_digest,
+        workspace_state_revision: snapshot.workspace_state_revision,
+        expires_at: new Date(Date.now() + 6e4).toISOString(),
+        matched_edge_ids: [edge.id],
+        result: true,
+        predicate_ref: edge.predicate_ref,
+        safe_to_retry: values3.safe_to_retry === true,
+        source_fact_evidence_id: source.id,
+        fact_digest: stableDigest(values3),
+        verification_provenance: "host_attested"
+      }
+    });
+    const transitioned = service.procedureInvocationTransition({ ...args, transition_id: decisionId, edge_id: edge.id, evidence_id: evidenceId });
+    const decision = service.store.create("procedure_host_decision", decisionId, {
+      invocation_id: run.id,
+      scope: run.scope,
+      request_digest: requestDigest,
+      node_id: node.id,
+      edge_id: edge.id,
+      evidence_id: evidenceId,
+      fact_digest: stableDigest(values3),
+      status: "advanced",
+      verification_provenance: "host_attested"
+    });
+    return { ...transitioned, decision, host_execution_authority: false };
+  });
+}
 
 // core/application/craft-service.ts
 var import_node_fs31 = require("node:fs");
@@ -223412,7 +223554,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.39";
+var CRAFT_RELEASE_VERSION = "0.12.40";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
@@ -231287,6 +231429,8 @@ var TYPES_BY_TOOL = {
   craft_procedure_create: { scenario_signature: "object", preconditions: "array", scope_envelope: "object" },
   craft_host_session_open: { environment_fingerprint: "string", policy_fingerprint: "string", capability_fingerprint: "string", model_fingerprint: "string", budget_fingerprint: "string" },
   craft_outcome_observer_observe: { environment_fingerprint: "string" },
+  craft_procedure_host_control: { scope: "string", input: "object", principal_ids: "array" },
+  craft_procedure_decision_evaluate: { scope: "string", expected_version: "integer", principal_ids: "array" },
   craft_procedure_invocation_transition: { scope: "string", expected_version: "integer", principal_ids: "array" },
   craft_procedure_invocation_bind: { model_fingerprint: "string", budget_fingerprint: "string", scope: "string", expected_version: "integer", principal_ids: "array", procedure_version: "integer", input_refs: "object", allowed_effects: "array", max_dispatches: "integer", ttl_ms: "integer" },
   craft_procedure_invocation_dispatch: { scope: "string", expected_version: "integer", principal_ids: "array", precondition_evidence: "object" },
@@ -232787,6 +232931,8 @@ var TOOL_DEFINITIONS = [
   tool("craft_experience_asset_restore", "Restore reviewed historical content through existing governance as a new candidate; Codebase only rebuilds the current checkpoint. Requires current revision and idempotency key.", ["asset_id", "scope_kind", "scope_id", "version", "expected_version", "request_id", "reason"], false, ["kind", "allow_restricted", "principal_id", "principal_ids", "tenant_id", "cognitive_purpose"]),
   tool("craft_codebase_asset_inspect", "Inspect scoped asset history, exact revision, diff or provenance with action=history/read/diff/explain. Record versions and content revisions are distinct.", ["asset_id", "scope_kind", "scope_id"], true, ["kind", "action", "version", "target_version", "target_asset_id", "before_version", "limit", "allow_restricted", "principal_id", "principal_ids", "tenant_id", "cognitive_purpose"]),
   tool("craft_codebase_asset_restore", "Restore reviewed historical content through existing governance as a new candidate; Codebase only rebuilds the current checkpoint. Requires current revision and idempotency key.", ["asset_id", "scope_kind", "scope_id", "version", "expected_version", "request_id", "reason"], false, ["kind", "allow_restricted", "principal_id", "principal_ids", "tenant_id", "cognitive_purpose"]),
+  tool("craft_procedure_host_control", "Prepare an embedded Host Work Loop without starting a child Host, or record scoped snapshots and dispatch-bound Host/program observations. It grants no execution authority.", ["action", "input"], false, ["invocation_id", "scope", "principal_id", "principal_ids", "tenant_id", "cognitive_purpose"]),
+  tool("craft_procedure_decision_evaluate", "Evaluate declared graph guards using current accepted program/human fact Evidence and advance only one matching edge. Unknown, ambiguous, stale or unsafe decisions block; it never executes the Host.", ["invocation_id", "scope", "expected_version", "decision_id", "receipt_id", "snapshot_id", "fact_evidence_id"], false, ["principal_id", "principal_ids", "tenant_id", "cognitive_purpose"]),
   tool("craft_procedure_invocation_bind", "Bind selected Procedure calls to an existing Verified Work Loop and durable items; no Host execution authority.", ["invocation_id", "work_loop_id", "procedure_id", "procedure_version", "scope", "entry_id", "exit_id", "input_refs", "allowed_effects", "host_id", "model_fingerprint", "budget_fingerprint", "max_dispatches", "ttl_ms"], false, ["subscenario_id", "principal_id", "principal_ids", "tenant_id", "cognitive_purpose", "release_channel", "test_workspace_id", "baseline_workspace_id"]),
   tool("craft_procedure_invocation_dispatch", "Prepare one ready item and bind call-specific fresh preconditions; never executes the Host.", ["invocation_id", "scope", "expected_version", "snapshot_id", "item_key"], false, ["precondition_evidence", "principal_id", "principal_ids", "tenant_id", "cognitive_purpose"]),
   tool("craft_procedure_invocation_report", "Accept an independent terminal Host observation for the exact item, outputs and snapshot; retries are idempotent.", ["invocation_id", "scope", "expected_version", "dispatch_id", "host_session_id", "observation_id", "snapshot_id", "output_refs", "acceptance_evidence_ids"], false, ["principal_id", "principal_ids", "tenant_id", "cognitive_purpose"]),
@@ -241812,7 +241958,8 @@ var ContextReadGuard = class {
       return;
     }
     const scopeSql = `EXISTS (SELECT 1 FROM json_each(?) s WHERE
-      json_extract(payload_json,'$.scope')=CASE WHEN json_extract(s.value,'$.kind')='global' THEN 'global' ELSE json_extract(s.value,'$.kind')||':'||json_extract(s.value,'$.id') END
+      json_extract(payload_json,'$.scope')=json_extract(s.value,'$.kind')||':'||json_extract(s.value,'$.id')
+      OR (json_extract(s.value,'$.kind')='global' AND json_extract(payload_json,'$.scope')='global')
       OR (json_extract(payload_json,'$.scope.kind')=json_extract(s.value,'$.kind') AND json_extract(payload_json,'$.scope.id')=json_extract(s.value,'$.id')))`;
     const rows4 = scopes?.length ? store.database.prepare(`WITH relevant AS (
       SELECT kind,id,payload_json FROM records WHERE kind IN ('memory_ledger','knowledge_claim','experience_procedure') AND (${scopeSql})
@@ -251046,7 +251193,7 @@ ${String(value.description)}${contracts}`;
 
 // capability/craft-experience/ownership.ts
 var EXPERIENCE_FAMILIES = "craft_(?:experience_(?:ledger_|observe|patterns_list|procedure_(?:draft|submit|get|projection_(?:draft|get|list)|gate|skill_export))|procedure_(?:create|get|list|gate|export_skill)|automation_job_(?:save|pause|run|tick|get|eligibility)|evaluation_model_|route_workflow_proposal|workflow_(?:save|get|search|transition|rollback))";
-var EXPERIENCE_PRODUCT_EXTRAS = "craft_(?:experience_(?:graph_|pattern_|candidate_list|mine|shadow_experiment_|capture_|asset_)|procedure_(?:invocation_|configuration_|plan$)|component_(?:readiness_get|diagnose)|evidence_record|scope_identity_resolve_project|context_resolution_(?:resolve|feedback)|decision_context_gate_open|workflow_(?:checkpoint|resume|run_cancel|replan|export|import))";
+var EXPERIENCE_PRODUCT_EXTRAS = "craft_(?:experience_(?:graph_|pattern_|candidate_list|mine|shadow_experiment_|capture_|asset_)|procedure_(?:host_control$|decision_evaluate$|invocation_|configuration_|plan$)|component_(?:readiness_get|diagnose)|evidence_record|scope_identity_resolve_project|context_resolution_(?:resolve|feedback)|decision_context_gate_open|workflow_(?:checkpoint|resume|run_cancel|replan|export|import))";
 var EXPERIENCE_OWNS = new RegExp(`^${EXPERIENCE_FAMILIES}`);
 var EXPERIENCE_COMPONENT = new RegExp(`^(?:${EXPERIENCE_FAMILIES}|${EXPERIENCE_PRODUCT_EXTRAS})`);
 
@@ -255357,7 +255504,7 @@ var TASK_TOOLS = {
   recall: ["craft_context_open", "craft_context_resolution_feedback"],
   knowledge: ["craft_knowledge_search", "craft_knowledge_claim_save", "craft_knowledge_host_review", "craft_knowledge_source_ingest"],
   memory: ["craft_memory_governance", "craft_memory_capture_user_statement", "craft_memory_conflict_list", "craft_memory_conflict_resolve", "craft_memory_candidate_review", "craft_memory_ledger_remember_approved"],
-  experience: ["craft_experience_graph_inspect", "craft_experience_graph_edit", "craft_procedure_plan", "craft_procedure_invocation_bind", "craft_procedure_invocation_dispatch", "craft_procedure_invocation_report"],
+  experience: ["craft_experience_graph_inspect", "craft_experience_graph_edit", "craft_procedure_plan", "craft_procedure_host_control", "craft_procedure_decision_evaluate", "craft_procedure_invocation_bind", "craft_procedure_invocation_dispatch", "craft_procedure_invocation_report"],
   code: ["craft_codebase_symbol_find", "craft_codebase_callers_find", "craft_codebase_impact_query", "craft_codebase_context_slice"]
 };
 function discoverContextTools(args) {
@@ -255677,6 +255824,8 @@ function createActionHandlers(service, mountedComponent) {
     craft_experience_asset_restore: (a) => service.componentAssetRestore("experience", a),
     craft_codebase_asset_inspect: (a) => service.componentAssetInspect("codebase", a),
     craft_codebase_asset_restore: (a) => service.componentAssetRestore("codebase", a),
+    craft_procedure_host_control: (a) => service.procedureHostControl(a),
+    craft_procedure_decision_evaluate: (a) => service.procedureDecisionEvaluate(a),
     craft_procedure_invocation_bind: (a) => service.procedureInvocationBind(a),
     craft_procedure_invocation_dispatch: (a) => service.procedureInvocationDispatch(a),
     craft_procedure_invocation_report: (a) => service.procedureInvocationReport(a),
@@ -258731,6 +258880,12 @@ var CraftService = class _CraftService extends ServiceFoundation {
       recordEvidence: (args) => this.evidenceRecord(args),
       saveClaim: (args) => this.knowledgeClaimSave(args)
     });
+  }
+  procedureHostControl(args) {
+    return procedureHostControl(this, args);
+  }
+  procedureDecisionEvaluate(args) {
+    return procedureDecisionEvaluate(this, args);
   }
   procedureConfigurationSave(args) {
     return new ProcedureConfiguration(this.store).save(args);

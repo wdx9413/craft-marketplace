@@ -1,6 +1,6 @@
 {
   "name": "dsh-craft-context",
-  "version": "0.12.39",
+  "version": "0.12.40",
   "type": "module",
   "main": "dist/index.js",
   "peerDependencies": {
