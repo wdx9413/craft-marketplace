@@ -171,6 +171,7 @@ const sync = (component) => {
     if (!existsSync(source)) continue;
     const target = join(to, owned);
     mkdirSync(to, { recursive: true });
+    if (statSync(source).isDirectory()) rmSync(target, { recursive: true, force: true });
     cpSync(source, target, { recursive: true, force: true });
     report.push(`synced   plugins/${component}/${owned}`);
   }

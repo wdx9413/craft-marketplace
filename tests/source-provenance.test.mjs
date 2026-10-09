@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, rmSync, mkdirSync, symlinkSync, unlinkSync, cpSync } from "node:fs";
+import { existsSync, mkdtempSync, writeFileSync, rmSync, mkdirSync, symlinkSync, unlinkSync, cpSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
@@ -59,5 +59,10 @@ test("sync --check rejects an untracked source addition and a forged source-tree
     assert.throws(check, /release.json differs/);
     writeRelease(); assert.match(check(), /no files changed/);
     writeRelease({ source_tree_digest: "sha256:" + "0".repeat(64) }); assert.throws(check, /release.json differs/);
+    const seed = join(plugin, "skills", product.name, "SKILL.md"); mkdirSync(resolve(seed, ".."), { recursive: true }); writeFileSync(seed, "Runtime template calling guide\n");
+    const obsolete = join(market, "plugins", product.name, "skills", product.name, "old-template.json"); put(obsolete, { obsolete: true });
+    const notes = join(market, "plugins", product.name, "notes.txt"); writeFileSync(notes, "market-owned notes\n");
+    execFileSync(process.execPath, [resolve(import.meta.dirname, "../scripts/sync-from-craft.mjs"), join(source, "plugins"), "--apply"], { cwd: market, stdio: "pipe" });
+    assert.equal(existsSync(obsolete), false); assert.equal(readFileSync(notes, "utf8"), "market-owned notes\n"); assert.match(check(), /no files changed/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
