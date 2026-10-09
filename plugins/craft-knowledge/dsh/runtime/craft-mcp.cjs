@@ -3991,10 +3991,10 @@ var require_resolve_block_map = __commonJS({
       let offset = bm.offset;
       let commentEnd = null;
       for (const collItem of bm.items) {
-        const { start: start2, key: key2, sep: sep5, value } = collItem;
+        const { start: start2, key: key2, sep: sep6, value } = collItem;
         const keyProps = resolveProps.resolveProps(start2, {
           indicator: "explicit-key-ind",
-          next: key2 ?? sep5?.[0],
+          next: key2 ?? sep6?.[0],
           offset,
           onError,
           parentIndent: bm.indent,
@@ -4008,7 +4008,7 @@ var require_resolve_block_map = __commonJS({
             else if ("indent" in key2 && key2.indent !== bm.indent)
               onError(offset, "BAD_INDENT", startColMsg);
           }
-          if (!keyProps.anchor && !keyProps.tag && !sep5) {
+          if (!keyProps.anchor && !keyProps.tag && !sep6) {
             commentEnd = keyProps.end;
             if (keyProps.comment) {
               if (map.comment)
@@ -4032,7 +4032,7 @@ var require_resolve_block_map = __commonJS({
         ctx.atKey = false;
         if (utilMapIncludes.mapIncludes(ctx, map.items, keyNode))
           onError(keyStart, "DUPLICATE_KEY", "Map keys must be unique");
-        const valueProps = resolveProps.resolveProps(sep5 ?? [], {
+        const valueProps = resolveProps.resolveProps(sep6 ?? [], {
           indicator: "map-value-ind",
           next: value,
           offset: keyNode.range[2],
@@ -4048,7 +4048,7 @@ var require_resolve_block_map = __commonJS({
             if (ctx.options.strict && keyProps.start < valueProps.found.offset - 1024)
               onError(keyNode.range, "KEY_OVER_1024_CHARS", "The : indicator must be at most 1024 chars after the start of an implicit block mapping key");
           }
-          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : composeEmptyNode(ctx, offset, sep5, null, valueProps, onError);
+          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : composeEmptyNode(ctx, offset, sep6, null, valueProps, onError);
           if (ctx.schema.compat)
             utilFlowIndentCheck.flowIndentCheck(bm.indent, value, onError);
           offset = valueNode.range[2];
@@ -4139,7 +4139,7 @@ var require_resolve_end = __commonJS({
       let comment = "";
       if (end) {
         let hasSpace = false;
-        let sep5 = "";
+        let sep6 = "";
         for (const token of end) {
           const { source, type } = token;
           switch (type) {
@@ -4153,13 +4153,13 @@ var require_resolve_end = __commonJS({
               if (!comment)
                 comment = cb;
               else
-                comment += sep5 + cb;
-              sep5 = "";
+                comment += sep6 + cb;
+              sep6 = "";
               break;
             }
             case "newline":
               if (comment)
-                sep5 += source;
+                sep6 += source;
               hasSpace = true;
               break;
             default:
@@ -4202,18 +4202,18 @@ var require_resolve_flow_collection = __commonJS({
       let offset = fc.offset + fc.start.source.length;
       for (let i = 0; i < fc.items.length; ++i) {
         const collItem = fc.items[i];
-        const { start: start2, key: key2, sep: sep5, value } = collItem;
+        const { start: start2, key: key2, sep: sep6, value } = collItem;
         const props = resolveProps.resolveProps(start2, {
           flow: fcName,
           indicator: "explicit-key-ind",
-          next: key2 ?? sep5?.[0],
+          next: key2 ?? sep6?.[0],
           offset,
           onError,
           parentIndent: fc.indent,
           startOnNewline: false
         });
         if (!props.found) {
-          if (!props.anchor && !props.tag && !sep5 && !value) {
+          if (!props.anchor && !props.tag && !sep6 && !value) {
             if (i === 0 && props.comma)
               onError(props.comma, "UNEXPECTED_TOKEN", `Unexpected , in ${fcName}`);
             else if (i < fc.items.length - 1)
@@ -4267,8 +4267,8 @@ var require_resolve_flow_collection = __commonJS({
             }
           }
         }
-        if (!isMap && !sep5 && !props.found) {
-          const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep5, null, props, onError);
+        if (!isMap && !sep6 && !props.found) {
+          const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep6, null, props, onError);
           coll.items.push(valueNode);
           offset = valueNode.range[2];
           if (isBlock(value))
@@ -4280,7 +4280,7 @@ var require_resolve_flow_collection = __commonJS({
           if (isBlock(key2))
             onError(keyNode.range, "BLOCK_IN_FLOW", blockMsg);
           ctx.atKey = false;
-          const valueProps = resolveProps.resolveProps(sep5 ?? [], {
+          const valueProps = resolveProps.resolveProps(sep6 ?? [], {
             flow: fcName,
             indicator: "map-value-ind",
             next: value,
@@ -4291,8 +4291,8 @@ var require_resolve_flow_collection = __commonJS({
           });
           if (valueProps.found) {
             if (!isMap && !props.found && ctx.options.strict) {
-              if (sep5)
-                for (const st of sep5) {
+              if (sep6)
+                for (const st of sep6) {
                   if (st === valueProps.found)
                     break;
                   if (st.type === "newline") {
@@ -4309,7 +4309,7 @@ var require_resolve_flow_collection = __commonJS({
             else
               onError(valueProps.start, "MISSING_CHAR", `Missing , or : between ${fcName} items`);
           }
-          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep5, null, valueProps, onError) : null;
+          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep6, null, valueProps, onError) : null;
           if (valueNode) {
             if (isBlock(value))
               onError(valueNode.range, "BLOCK_IN_FLOW", blockMsg);
@@ -4489,7 +4489,7 @@ var require_resolve_block_scalar = __commonJS({
           chompStart = i + 1;
       }
       let value = "";
-      let sep5 = "";
+      let sep6 = "";
       let prevMoreIndented = false;
       for (let i = 0; i < contentStart; ++i)
         value += lines[i][0].slice(trimIndent) + "\n";
@@ -4506,24 +4506,24 @@ var require_resolve_block_scalar = __commonJS({
           indent = "";
         }
         if (type === Scalar.Scalar.BLOCK_LITERAL) {
-          value += sep5 + indent.slice(trimIndent) + content;
-          sep5 = "\n";
+          value += sep6 + indent.slice(trimIndent) + content;
+          sep6 = "\n";
         } else if (indent.length > trimIndent || content[0] === "	") {
-          if (sep5 === " ")
-            sep5 = "\n";
-          else if (!prevMoreIndented && sep5 === "\n")
-            sep5 = "\n\n";
-          value += sep5 + indent.slice(trimIndent) + content;
-          sep5 = "\n";
+          if (sep6 === " ")
+            sep6 = "\n";
+          else if (!prevMoreIndented && sep6 === "\n")
+            sep6 = "\n\n";
+          value += sep6 + indent.slice(trimIndent) + content;
+          sep6 = "\n";
           prevMoreIndented = true;
         } else if (content === "") {
-          if (sep5 === "\n")
+          if (sep6 === "\n")
             value += "\n";
           else
-            sep5 = "\n";
+            sep6 = "\n";
         } else {
-          value += sep5 + content;
-          sep5 = " ";
+          value += sep6 + content;
+          sep6 = " ";
           prevMoreIndented = false;
         }
       }
@@ -4705,25 +4705,25 @@ var require_resolve_flow_scalar = __commonJS({
       if (!match)
         return source;
       let res = match[1];
-      let sep5 = " ";
+      let sep6 = " ";
       let pos = first.lastIndex;
       line2.lastIndex = pos;
       while (match = line2.exec(source)) {
         if (match[1] === "") {
-          if (sep5 === "\n")
-            res += sep5;
+          if (sep6 === "\n")
+            res += sep6;
           else
-            sep5 = "\n";
+            sep6 = "\n";
         } else {
-          res += sep5 + match[1];
-          sep5 = " ";
+          res += sep6 + match[1];
+          sep6 = " ";
         }
         pos = line2.lastIndex;
       }
       const last = /[ \t]*(.*)/sy;
       last.lastIndex = pos;
       match = last.exec(source);
-      return res + sep5 + (match?.[1] ?? "");
+      return res + sep6 + (match?.[1] ?? "");
     }
     function doubleQuotedValue(source, onError) {
       let res = "";
@@ -5533,14 +5533,14 @@ var require_cst_stringify = __commonJS({
         }
       }
     }
-    function stringifyItem({ start: start2, key: key2, sep: sep5, value }) {
+    function stringifyItem({ start: start2, key: key2, sep: sep6, value }) {
       let res = "";
       for (const st of start2)
         res += st.source;
       if (key2)
         res += stringifyToken(key2);
-      if (sep5)
-        for (const st of sep5)
+      if (sep6)
+        for (const st of sep6)
           res += st.source;
       if (value)
         res += stringifyToken(value);
@@ -6707,18 +6707,18 @@ var require_parser = __commonJS({
         if (this.type === "map-value-ind") {
           const prev = getPrevProps(this.peek(2));
           const start2 = getFirstKeyStartProps(prev);
-          let sep5;
+          let sep6;
           if (scalar4.end) {
-            sep5 = scalar4.end;
-            sep5.push(this.sourceToken);
+            sep6 = scalar4.end;
+            sep6.push(this.sourceToken);
             delete scalar4.end;
           } else
-            sep5 = [this.sourceToken];
+            sep6 = [this.sourceToken];
           const map = {
             type: "block-map",
             offset: scalar4.offset,
             indent: scalar4.indent,
-            items: [{ start: start2, key: scalar4, sep: sep5 }]
+            items: [{ start: start2, key: scalar4, sep: sep6 }]
           };
           this.onKeyLine = true;
           this.stack[this.stack.length - 1] = map;
@@ -6871,15 +6871,15 @@ var require_parser = __commonJS({
                 } else if (isFlowToken(it.key) && !includesToken(it.sep, "newline")) {
                   const start3 = getFirstKeyStartProps(it.start);
                   const key2 = it.key;
-                  const sep5 = it.sep;
-                  sep5.push(this.sourceToken);
+                  const sep6 = it.sep;
+                  sep6.push(this.sourceToken);
                   delete it.key;
                   delete it.sep;
                   this.stack.push({
                     type: "block-map",
                     offset: this.offset,
                     indent: this.indent,
-                    items: [{ start: start3, key: key2, sep: sep5 }]
+                    items: [{ start: start3, key: key2, sep: sep6 }]
                   });
                 } else if (start2.length > 0) {
                   it.sep = it.sep.concat(start2, this.sourceToken);
@@ -7073,13 +7073,13 @@ var require_parser = __commonJS({
             const prev = getPrevProps(parent);
             const start2 = getFirstKeyStartProps(prev);
             fixFlowSeqItems(fc);
-            const sep5 = fc.end.splice(1, fc.end.length);
-            sep5.push(this.sourceToken);
+            const sep6 = fc.end.splice(1, fc.end.length);
+            sep6.push(this.sourceToken);
             const map = {
               type: "block-map",
               offset: fc.offset,
               indent: fc.indent,
-              items: [{ start: start2, key: fc, sep: sep5 }]
+              items: [{ start: start2, key: fc, sep: sep6 }]
             };
             this.onKeyLine = true;
             this.stack[this.stack.length - 1] = map;
@@ -9642,13 +9642,13 @@ var require_typescript = __commonJS({
       })(Comparison || {});
       var emptyArray = [];
       var emptyMap = /* @__PURE__ */ new Map();
-      function length(array9) {
-        return array9 !== void 0 ? array9.length : 0;
+      function length(array8) {
+        return array8 !== void 0 ? array8.length : 0;
       }
-      function forEach(array9, callback) {
-        if (array9 !== void 0) {
-          for (let i = 0; i < array9.length; i++) {
-            const result = callback(array9[i], i);
+      function forEach(array8, callback) {
+        if (array8 !== void 0) {
+          for (let i = 0; i < array8.length; i++) {
+            const result = callback(array8[i], i);
             if (result) {
               return result;
             }
@@ -9656,10 +9656,10 @@ var require_typescript = __commonJS({
         }
         return void 0;
       }
-      function forEachRight(array9, callback) {
-        if (array9 !== void 0) {
-          for (let i = array9.length - 1; i >= 0; i--) {
-            const result = callback(array9[i], i);
+      function forEachRight(array8, callback) {
+        if (array8 !== void 0) {
+          for (let i = array8.length - 1; i >= 0; i--) {
+            const result = callback(array8[i], i);
             if (result) {
               return result;
             }
@@ -9667,12 +9667,12 @@ var require_typescript = __commonJS({
         }
         return void 0;
       }
-      function firstDefined2(array9, callback) {
-        if (array9 === void 0) {
+      function firstDefined2(array8, callback) {
+        if (array8 === void 0) {
           return void 0;
         }
-        for (let i = 0; i < array9.length; i++) {
-          const result = callback(array9[i], i);
+        for (let i = 0; i < array8.length; i++) {
+          const result = callback(array8[i], i);
           if (result !== void 0) {
             return result;
           }
@@ -9718,58 +9718,58 @@ var require_typescript = __commonJS({
         }
         return result;
       }
-      function every(array9, callback) {
-        if (array9 !== void 0) {
-          for (let i = 0; i < array9.length; i++) {
-            if (!callback(array9[i], i)) {
+      function every(array8, callback) {
+        if (array8 !== void 0) {
+          for (let i = 0; i < array8.length; i++) {
+            if (!callback(array8[i], i)) {
               return false;
             }
           }
         }
         return true;
       }
-      function find(array9, predicate, startIndex) {
-        if (array9 === void 0) return void 0;
-        for (let i = startIndex ?? 0; i < array9.length; i++) {
-          const value = array9[i];
+      function find(array8, predicate, startIndex) {
+        if (array8 === void 0) return void 0;
+        for (let i = startIndex ?? 0; i < array8.length; i++) {
+          const value = array8[i];
           if (predicate(value, i)) {
             return value;
           }
         }
         return void 0;
       }
-      function findLast(array9, predicate, startIndex) {
-        if (array9 === void 0) return void 0;
-        for (let i = startIndex ?? array9.length - 1; i >= 0; i--) {
-          const value = array9[i];
+      function findLast(array8, predicate, startIndex) {
+        if (array8 === void 0) return void 0;
+        for (let i = startIndex ?? array8.length - 1; i >= 0; i--) {
+          const value = array8[i];
           if (predicate(value, i)) {
             return value;
           }
         }
         return void 0;
       }
-      function findIndex(array9, predicate, startIndex) {
-        if (array9 === void 0) return -1;
-        for (let i = startIndex ?? 0; i < array9.length; i++) {
-          if (predicate(array9[i], i)) {
+      function findIndex(array8, predicate, startIndex) {
+        if (array8 === void 0) return -1;
+        for (let i = startIndex ?? 0; i < array8.length; i++) {
+          if (predicate(array8[i], i)) {
             return i;
           }
         }
         return -1;
       }
-      function findLastIndex(array9, predicate, startIndex) {
-        if (array9 === void 0) return -1;
-        for (let i = startIndex ?? array9.length - 1; i >= 0; i--) {
-          if (predicate(array9[i], i)) {
+      function findLastIndex(array8, predicate, startIndex) {
+        if (array8 === void 0) return -1;
+        for (let i = startIndex ?? array8.length - 1; i >= 0; i--) {
+          if (predicate(array8[i], i)) {
             return i;
           }
         }
         return -1;
       }
-      function contains(array9, value, equalityComparer = equateValues) {
-        if (array9 !== void 0) {
-          for (let i = 0; i < array9.length; i++) {
-            if (equalityComparer(array9[i], value)) {
+      function contains(array8, value, equalityComparer = equateValues) {
+        if (array8 !== void 0) {
+          for (let i = 0; i < array8.length; i++) {
+            if (equalityComparer(array8[i], value)) {
               return true;
             }
           }
@@ -9784,11 +9784,11 @@ var require_typescript = __commonJS({
         }
         return -1;
       }
-      function countWhere(array9, predicate) {
+      function countWhere(array8, predicate) {
         let count3 = 0;
-        if (array9 !== void 0) {
-          for (let i = 0; i < array9.length; i++) {
-            const v = array9[i];
+        if (array8 !== void 0) {
+          for (let i = 0; i < array8.length; i++) {
+            const v = array8[i];
             if (predicate(v, i)) {
               count3++;
             }
@@ -9796,16 +9796,16 @@ var require_typescript = __commonJS({
         }
         return count3;
       }
-      function filter(array9, f) {
-        if (array9 !== void 0) {
-          const len = array9.length;
+      function filter(array8, f) {
+        if (array8 !== void 0) {
+          const len = array8.length;
           let i = 0;
-          while (i < len && f(array9[i])) i++;
+          while (i < len && f(array8[i])) i++;
           if (i < len) {
-            const result = array9.slice(0, i);
+            const result = array8.slice(0, i);
             i++;
             while (i < len) {
-              const item = array9[i];
+              const item = array8[i];
               if (f(item)) {
                 result.push(item);
               }
@@ -9814,27 +9814,27 @@ var require_typescript = __commonJS({
             return result;
           }
         }
-        return array9;
+        return array8;
       }
-      function filterMutate(array9, f) {
+      function filterMutate(array8, f) {
         let outIndex = 0;
-        for (let i = 0; i < array9.length; i++) {
-          if (f(array9[i], i, array9)) {
-            array9[outIndex] = array9[i];
+        for (let i = 0; i < array8.length; i++) {
+          if (f(array8[i], i, array8)) {
+            array8[outIndex] = array8[i];
             outIndex++;
           }
         }
-        array9.length = outIndex;
+        array8.length = outIndex;
       }
-      function clear(array9) {
-        array9.length = 0;
+      function clear(array8) {
+        array8.length = 0;
       }
-      function map(array9, f) {
+      function map(array8, f) {
         let result;
-        if (array9 !== void 0) {
+        if (array8 !== void 0) {
           result = [];
-          for (let i = 0; i < array9.length; i++) {
-            result.push(f(array9[i], i));
+          for (let i = 0; i < array8.length; i++) {
+            result.push(f(array8[i], i));
           }
         }
         return result;
@@ -9844,27 +9844,27 @@ var require_typescript = __commonJS({
           yield mapFn(x);
         }
       }
-      function sameMap(array9, f) {
-        if (array9 !== void 0) {
-          for (let i = 0; i < array9.length; i++) {
-            const item = array9[i];
+      function sameMap(array8, f) {
+        if (array8 !== void 0) {
+          for (let i = 0; i < array8.length; i++) {
+            const item = array8[i];
             const mapped = f(item, i);
             if (item !== mapped) {
-              const result = array9.slice(0, i);
+              const result = array8.slice(0, i);
               result.push(mapped);
-              for (i++; i < array9.length; i++) {
-                result.push(f(array9[i], i));
+              for (i++; i < array8.length; i++) {
+                result.push(f(array8[i], i));
               }
               return result;
             }
           }
         }
-        return array9;
+        return array8;
       }
-      function flatten(array9) {
+      function flatten(array8) {
         const result = [];
-        for (let i = 0; i < array9.length; i++) {
-          const v = array9[i];
+        for (let i = 0; i < array8.length; i++) {
+          const v = array8[i];
           if (v) {
             if (isArray(v)) {
               addRange(result, v);
@@ -9875,11 +9875,11 @@ var require_typescript = __commonJS({
         }
         return result;
       }
-      function flatMap(array9, mapfn) {
+      function flatMap(array8, mapfn) {
         let result;
-        if (array9 !== void 0) {
-          for (let i = 0; i < array9.length; i++) {
-            const v = mapfn(array9[i], i);
+        if (array8 !== void 0) {
+          for (let i = 0; i < array8.length; i++) {
+            const v = mapfn(array8[i], i);
             if (v) {
               if (isArray(v)) {
                 result = addRange(result, v);
@@ -9891,11 +9891,11 @@ var require_typescript = __commonJS({
         }
         return result ?? emptyArray;
       }
-      function flatMapToMutable(array9, mapfn) {
+      function flatMapToMutable(array8, mapfn) {
         const result = [];
-        if (array9 !== void 0) {
-          for (let i = 0; i < array9.length; i++) {
-            const v = mapfn(array9[i], i);
+        if (array8 !== void 0) {
+          for (let i = 0; i < array8.length; i++) {
+            const v = mapfn(array8[i], i);
             if (v) {
               if (isArray(v)) {
                 addRange(result, v);
@@ -9914,15 +9914,15 @@ var require_typescript = __commonJS({
           yield* iter2;
         }
       }
-      function sameFlatMap(array9, mapfn) {
+      function sameFlatMap(array8, mapfn) {
         let result;
-        if (array9 !== void 0) {
-          for (let i = 0; i < array9.length; i++) {
-            const item = array9[i];
+        if (array8 !== void 0) {
+          for (let i = 0; i < array8.length; i++) {
+            const item = array8[i];
             const mapped = mapfn(item, i);
             if (result || item !== mapped || isArray(mapped)) {
               if (!result) {
-                result = array9.slice(0, i);
+                result = array8.slice(0, i);
               }
               if (isArray(mapped)) {
                 addRange(result, mapped);
@@ -9932,12 +9932,12 @@ var require_typescript = __commonJS({
             }
           }
         }
-        return result ?? array9;
+        return result ?? array8;
       }
-      function mapAllOrFail(array9, mapFn) {
+      function mapAllOrFail(array8, mapFn) {
         const result = [];
-        for (let i = 0; i < array9.length; i++) {
-          const mapped = mapFn(array9[i], i);
+        for (let i = 0; i < array8.length; i++) {
+          const mapped = mapFn(array8[i], i);
           if (mapped === void 0) {
             return void 0;
           }
@@ -9945,11 +9945,11 @@ var require_typescript = __commonJS({
         }
         return result;
       }
-      function mapDefined(array9, mapFn) {
+      function mapDefined(array8, mapFn) {
         const result = [];
-        if (array9 !== void 0) {
-          for (let i = 0; i < array9.length; i++) {
-            const mapped = mapFn(array9[i], i);
+        if (array8 !== void 0) {
+          for (let i = 0; i < array8.length; i++) {
+            const mapped = mapFn(array8[i], i);
             if (mapped !== void 0) {
               result.push(mapped);
             }
@@ -9983,18 +9983,18 @@ var require_typescript = __commonJS({
       function* singleIterator(value) {
         yield value;
       }
-      function spanMap(array9, keyfn, mapfn) {
+      function spanMap(array8, keyfn, mapfn) {
         let result;
-        if (array9 !== void 0) {
+        if (array8 !== void 0) {
           result = [];
-          const len = array9.length;
+          const len = array8.length;
           let previousKey;
           let key2;
           let start2 = 0;
           let pos = 0;
           while (start2 < len) {
             while (pos < len) {
-              const value = array9[pos];
+              const value = array8[pos];
               key2 = keyfn(value, pos);
               if (pos === 0) {
                 previousKey = key2;
@@ -10004,7 +10004,7 @@ var require_typescript = __commonJS({
               pos++;
             }
             if (start2 < pos) {
-              const v = mapfn(array9.slice(start2, pos), previousKey, start2, pos);
+              const v = mapfn(array8.slice(start2, pos), previousKey, start2, pos);
               if (v) {
                 result.push(v);
               }
@@ -10027,16 +10027,16 @@ var require_typescript = __commonJS({
         });
         return result;
       }
-      function some(array9, predicate) {
-        if (array9 !== void 0) {
+      function some(array8, predicate) {
+        if (array8 !== void 0) {
           if (predicate !== void 0) {
-            for (let i = 0; i < array9.length; i++) {
-              if (predicate(array9[i])) {
+            for (let i = 0; i < array8.length; i++) {
+              if (predicate(array8[i])) {
                 return true;
               }
             }
           } else {
-            return array9.length > 0;
+            return array8.length > 0;
           }
         }
         return false;
@@ -10063,41 +10063,41 @@ var require_typescript = __commonJS({
       function selectIndex(_, i) {
         return i;
       }
-      function indicesOf(array9) {
-        return array9.map(selectIndex);
+      function indicesOf(array8) {
+        return array8.map(selectIndex);
       }
-      function deduplicateRelational(array9, equalityComparer, comparer) {
-        const indices = indicesOf(array9);
-        stableSortIndices(array9, indices, comparer);
-        let last2 = array9[indices[0]];
+      function deduplicateRelational(array8, equalityComparer, comparer) {
+        const indices = indicesOf(array8);
+        stableSortIndices(array8, indices, comparer);
+        let last2 = array8[indices[0]];
         const deduplicated = [indices[0]];
         for (let i = 1; i < indices.length; i++) {
           const index = indices[i];
-          const item = array9[index];
+          const item = array8[index];
           if (!equalityComparer(last2, item)) {
             deduplicated.push(index);
             last2 = item;
           }
         }
         deduplicated.sort();
-        return deduplicated.map((i) => array9[i]);
+        return deduplicated.map((i) => array8[i]);
       }
-      function deduplicateEquality(array9, equalityComparer) {
+      function deduplicateEquality(array8, equalityComparer) {
         const result = [];
-        for (let i = 0; i < array9.length; i++) {
-          pushIfUnique(result, array9[i], equalityComparer);
+        for (let i = 0; i < array8.length; i++) {
+          pushIfUnique(result, array8[i], equalityComparer);
         }
         return result;
       }
-      function deduplicate(array9, equalityComparer, comparer) {
-        return array9.length === 0 ? [] : array9.length === 1 ? array9.slice() : comparer ? deduplicateRelational(array9, equalityComparer, comparer) : deduplicateEquality(array9, equalityComparer);
+      function deduplicate(array8, equalityComparer, comparer) {
+        return array8.length === 0 ? [] : array8.length === 1 ? array8.slice() : comparer ? deduplicateRelational(array8, equalityComparer, comparer) : deduplicateEquality(array8, equalityComparer);
       }
-      function deduplicateSorted(array9, comparer) {
-        if (array9.length === 0) return emptyArray;
-        let last2 = array9[0];
+      function deduplicateSorted(array8, comparer) {
+        if (array8.length === 0) return emptyArray;
+        let last2 = array8[0];
         const deduplicated = [last2];
-        for (let i = 1; i < array9.length; i++) {
-          const next = array9[i];
+        for (let i = 1; i < array8.length; i++) {
+          const next = array8[i];
           switch (comparer(next, last2)) {
             // equality comparison
             case true:
@@ -10115,34 +10115,34 @@ var require_typescript = __commonJS({
       function createSortedArray() {
         return [];
       }
-      function insertSorted(array9, insert, compare, equalityComparer, allowDuplicates) {
-        if (array9.length === 0) {
-          array9.push(insert);
+      function insertSorted(array8, insert, compare, equalityComparer, allowDuplicates) {
+        if (array8.length === 0) {
+          array8.push(insert);
           return true;
         }
-        const insertIndex = binarySearch(array9, insert, identity, compare);
+        const insertIndex = binarySearch(array8, insert, identity, compare);
         if (insertIndex < 0) {
           if (equalityComparer && !allowDuplicates) {
             const idx = ~insertIndex;
-            if (idx > 0 && equalityComparer(insert, array9[idx - 1])) {
+            if (idx > 0 && equalityComparer(insert, array8[idx - 1])) {
               return false;
             }
-            if (idx < array9.length && equalityComparer(insert, array9[idx])) {
-              array9.splice(idx, 1, insert);
+            if (idx < array8.length && equalityComparer(insert, array8[idx])) {
+              array8.splice(idx, 1, insert);
               return true;
             }
           }
-          array9.splice(~insertIndex, 0, insert);
+          array8.splice(~insertIndex, 0, insert);
           return true;
         }
         if (allowDuplicates) {
-          array9.splice(insertIndex, 0, insert);
+          array8.splice(insertIndex, 0, insert);
           return true;
         }
         return false;
       }
-      function sortAndDeduplicate(array9, comparer, equalityComparer) {
-        return deduplicateSorted(toSorted(array9, comparer), equalityComparer ?? comparer ?? compareStringsCaseSensitive);
+      function sortAndDeduplicate(array8, comparer, equalityComparer) {
+        return deduplicateSorted(toSorted(array8, comparer), equalityComparer ?? comparer ?? compareStringsCaseSensitive);
       }
       function arrayIsEqualTo(array1, array22, equalityComparer = equateValues) {
         if (array1 === void 0 || array22 === void 0) {
@@ -10158,20 +10158,20 @@ var require_typescript = __commonJS({
         }
         return true;
       }
-      function compact2(array9) {
+      function compact2(array8) {
         let result;
-        if (array9 !== void 0) {
-          for (let i = 0; i < array9.length; i++) {
-            const v = array9[i];
+        if (array8 !== void 0) {
+          for (let i = 0; i < array8.length; i++) {
+            const v = array8[i];
             if (result ?? !v) {
-              result ?? (result = array9.slice(0, i));
+              result ?? (result = array8.slice(0, i));
               if (v) {
                 result.push(v);
               }
             }
           }
         }
-        return result ?? array9;
+        return result ?? array8;
       }
       function relativeComplement(arrayA, arrayB, comparer) {
         if (!arrayB || !arrayA || arrayB.length === 0 || arrayA.length === 0) return arrayB;
@@ -10220,8 +10220,8 @@ var require_typescript = __commonJS({
         if (isArray(ys)) return append(ys, xs);
         return [xs, ys];
       }
-      function toOffset(array9, offset) {
-        return offset < 0 ? array9.length + offset : offset;
+      function toOffset(array8, offset) {
+        return offset < 0 ? array8.length + offset : offset;
       }
       function addRange(to, from, start2, end) {
         if (from === void 0 || from.length === 0) return to;
@@ -10235,31 +10235,31 @@ var require_typescript = __commonJS({
         }
         return to;
       }
-      function pushIfUnique(array9, toAdd, equalityComparer) {
-        if (contains(array9, toAdd, equalityComparer)) {
+      function pushIfUnique(array8, toAdd, equalityComparer) {
+        if (contains(array8, toAdd, equalityComparer)) {
           return false;
         } else {
-          array9.push(toAdd);
+          array8.push(toAdd);
           return true;
         }
       }
-      function appendIfUnique(array9, toAdd, equalityComparer) {
-        if (array9 !== void 0) {
-          pushIfUnique(array9, toAdd, equalityComparer);
-          return array9;
+      function appendIfUnique(array8, toAdd, equalityComparer) {
+        if (array8 !== void 0) {
+          pushIfUnique(array8, toAdd, equalityComparer);
+          return array8;
         } else {
           return [toAdd];
         }
       }
-      function stableSortIndices(array9, indices, comparer) {
-        indices.sort((x, y) => comparer(array9[x], array9[y]) || compareValues(x, y));
+      function stableSortIndices(array8, indices, comparer) {
+        indices.sort((x, y) => comparer(array8[x], array8[y]) || compareValues(x, y));
       }
-      function toSorted(array9, comparer) {
-        return array9.length === 0 ? emptyArray : array9.slice().sort(comparer);
+      function toSorted(array8, comparer) {
+        return array8.length === 0 ? emptyArray : array8.slice().sort(comparer);
       }
-      function* arrayReverseIterator(array9) {
-        for (let i = array9.length - 1; i >= 0; i--) {
-          yield array9[i];
+      function* arrayReverseIterator(array8) {
+        for (let i = array8.length - 1; i >= 0; i--) {
+          yield array8[i];
         }
       }
       function rangeEquals(array1, array22, pos, end) {
@@ -10271,17 +10271,17 @@ var require_typescript = __commonJS({
         }
         return true;
       }
-      var elementAt = !!Array.prototype.at ? (array9, offset) => array9 == null ? void 0 : array9.at(offset) : (array9, offset) => {
-        if (array9 !== void 0) {
-          offset = toOffset(array9, offset);
-          if (offset < array9.length) {
-            return array9[offset];
+      var elementAt = !!Array.prototype.at ? (array8, offset) => array8 == null ? void 0 : array8.at(offset) : (array8, offset) => {
+        if (array8 !== void 0) {
+          offset = toOffset(array8, offset);
+          if (offset < array8.length) {
+            return array8[offset];
           }
         }
         return void 0;
       };
-      function firstOrUndefined(array9) {
-        return array9 === void 0 || array9.length === 0 ? void 0 : array9[0];
+      function firstOrUndefined(array8) {
+        return array8 === void 0 || array8.length === 0 ? void 0 : array8[0];
       }
       function firstOrUndefinedIterator(iter) {
         if (iter !== void 0) {
@@ -10291,9 +10291,9 @@ var require_typescript = __commonJS({
         }
         return void 0;
       }
-      function first(array9) {
-        Debug.assert(array9.length !== 0);
-        return array9[0];
+      function first(array8) {
+        Debug.assert(array8.length !== 0);
+        return array8[0];
       }
       function firstIterator(iter) {
         for (const value of iter) {
@@ -10301,39 +10301,39 @@ var require_typescript = __commonJS({
         }
         Debug.fail("iterator is empty");
       }
-      function lastOrUndefined(array9) {
-        return array9 === void 0 || array9.length === 0 ? void 0 : array9[array9.length - 1];
+      function lastOrUndefined(array8) {
+        return array8 === void 0 || array8.length === 0 ? void 0 : array8[array8.length - 1];
       }
-      function last(array9) {
-        Debug.assert(array9.length !== 0);
-        return array9[array9.length - 1];
+      function last(array8) {
+        Debug.assert(array8.length !== 0);
+        return array8[array8.length - 1];
       }
-      function singleOrUndefined(array9) {
-        return array9 !== void 0 && array9.length === 1 ? array9[0] : void 0;
+      function singleOrUndefined(array8) {
+        return array8 !== void 0 && array8.length === 1 ? array8[0] : void 0;
       }
-      function single(array9) {
-        return Debug.checkDefined(singleOrUndefined(array9));
+      function single(array8) {
+        return Debug.checkDefined(singleOrUndefined(array8));
       }
-      function singleOrMany(array9) {
-        return array9 !== void 0 && array9.length === 1 ? array9[0] : array9;
+      function singleOrMany(array8) {
+        return array8 !== void 0 && array8.length === 1 ? array8[0] : array8;
       }
-      function replaceElement(array9, index, value) {
-        const result = array9.slice(0);
+      function replaceElement(array8, index, value) {
+        const result = array8.slice(0);
         result[index] = value;
         return result;
       }
-      function binarySearch(array9, value, keySelector, keyComparer, offset) {
-        return binarySearchKey(array9, keySelector(value), keySelector, keyComparer, offset);
+      function binarySearch(array8, value, keySelector, keyComparer, offset) {
+        return binarySearchKey(array8, keySelector(value), keySelector, keyComparer, offset);
       }
-      function binarySearchKey(array9, key2, keySelector, keyComparer, offset) {
-        if (!some(array9)) {
+      function binarySearchKey(array8, key2, keySelector, keyComparer, offset) {
+        if (!some(array8)) {
           return -1;
         }
         let low = offset ?? 0;
-        let high = array9.length - 1;
+        let high = array8.length - 1;
         while (low <= high) {
           const middle = low + (high - low >> 1);
-          const midKey = keySelector(array9[middle], middle);
+          const midKey = keySelector(array8[middle], middle);
           switch (Math.sign(keyComparer(midKey, key2))) {
             case -1:
               low = middle + 1;
@@ -10347,21 +10347,21 @@ var require_typescript = __commonJS({
         }
         return ~low;
       }
-      function reduceLeft(array9, f, initial, start2, count3) {
-        if (array9 && array9.length > 0) {
-          const size = array9.length;
+      function reduceLeft(array8, f, initial, start2, count3) {
+        if (array8 && array8.length > 0) {
+          const size = array8.length;
           if (size > 0) {
             let pos = start2 === void 0 || start2 < 0 ? 0 : start2;
             const end = count3 === void 0 || pos + count3 > size - 1 ? size - 1 : pos + count3;
             let result;
             if (arguments.length <= 2) {
-              result = array9[pos];
+              result = array8[pos];
               pos++;
             } else {
               result = initial;
             }
             while (pos <= end) {
-              result = f(result, array9[pos], pos);
+              result = f(result, array8[pos], pos);
               pos++;
             }
             return result;
@@ -10445,19 +10445,19 @@ var require_typescript = __commonJS({
         }
         return true;
       }
-      function arrayToMap(array9, makeKey, makeValue = identity) {
+      function arrayToMap(array8, makeKey, makeValue = identity) {
         const result = /* @__PURE__ */ new Map();
-        for (let i = 0; i < array9.length; i++) {
-          const value = array9[i];
+        for (let i = 0; i < array8.length; i++) {
+          const value = array8[i];
           const key2 = makeKey(value);
           if (key2 !== void 0) result.set(key2, makeValue(value));
         }
         return result;
       }
-      function arrayToNumericMap(array9, makeKey, makeValue = identity) {
+      function arrayToNumericMap(array8, makeKey, makeValue = identity) {
         const result = [];
-        for (let i = 0; i < array9.length; i++) {
-          const value = array9[i];
+        for (let i = 0; i < array8.length; i++) {
+          const value = array8[i];
           result[makeKey(value)] = makeValue(value);
         }
         return result;
@@ -10479,39 +10479,39 @@ var require_typescript = __commonJS({
           for (let i = 0; i < values3.length; i++) {
             const value = values3[i];
             const key2 = `${keySelector(value)}`;
-            const array9 = result[key2] ?? (result[key2] = []);
-            array9.push(value);
+            const array8 = result[key2] ?? (result[key2] = []);
+            array8.push(value);
           }
         }
         return result;
       }
       function clone(object7) {
         const result = {};
-        for (const id22 in object7) {
-          if (hasOwnProperty.call(object7, id22)) {
-            result[id22] = object7[id22];
+        for (const id23 in object7) {
+          if (hasOwnProperty.call(object7, id23)) {
+            result[id23] = object7[id23];
           }
         }
         return result;
       }
       function extend(first2, second) {
         const result = {};
-        for (const id22 in second) {
-          if (hasOwnProperty.call(second, id22)) {
-            result[id22] = second[id22];
+        for (const id23 in second) {
+          if (hasOwnProperty.call(second, id23)) {
+            result[id23] = second[id23];
           }
         }
-        for (const id22 in first2) {
-          if (hasOwnProperty.call(first2, id22)) {
-            result[id22] = first2[id22];
+        for (const id23 in first2) {
+          if (hasOwnProperty.call(first2, id23)) {
+            result[id23] = first2[id23];
           }
         }
         return result;
       }
       function copyProperties(first2, second) {
-        for (const id22 in second) {
-          if (hasOwnProperty.call(second, id22)) {
-            first2[id22] = second[id22];
+        for (const id23 in second) {
+          if (hasOwnProperty.call(second, id23)) {
+            first2[id23] = second[id23];
           }
         }
       }
@@ -10948,32 +10948,32 @@ var require_typescript = __commonJS({
         }
         return end === fileName.length ? fileName : fileName.slice(0, end);
       }
-      function orderedRemoveItem(array9, item) {
-        for (let i = 0; i < array9.length; i++) {
-          if (array9[i] === item) {
-            orderedRemoveItemAt(array9, i);
+      function orderedRemoveItem(array8, item) {
+        for (let i = 0; i < array8.length; i++) {
+          if (array8[i] === item) {
+            orderedRemoveItemAt(array8, i);
             return true;
           }
         }
         return false;
       }
-      function orderedRemoveItemAt(array9, index) {
-        for (let i = index; i < array9.length - 1; i++) {
-          array9[i] = array9[i + 1];
+      function orderedRemoveItemAt(array8, index) {
+        for (let i = index; i < array8.length - 1; i++) {
+          array8[i] = array8[i + 1];
         }
-        array9.pop();
+        array8.pop();
       }
-      function unorderedRemoveItemAt(array9, index) {
-        array9[index] = array9[array9.length - 1];
-        array9.pop();
+      function unorderedRemoveItemAt(array8, index) {
+        array8[index] = array8[array8.length - 1];
+        array8.pop();
       }
-      function unorderedRemoveItem(array9, item) {
-        return unorderedRemoveFirstItemWhere(array9, (element) => element === item);
+      function unorderedRemoveItem(array8, item) {
+        return unorderedRemoveFirstItemWhere(array8, (element) => element === item);
       }
-      function unorderedRemoveFirstItemWhere(array9, predicate) {
-        for (let i = 0; i < array9.length; i++) {
-          if (predicate(array9[i])) {
-            unorderedRemoveItemAt(array9, i);
+      function unorderedRemoveFirstItemWhere(array8, predicate) {
+        for (let i = 0; i < array8.length; i++) {
+          if (predicate(array8[i])) {
+            unorderedRemoveItemAt(array8, i);
             return true;
           }
         }
@@ -11099,24 +11099,24 @@ var require_typescript = __commonJS({
           }
         }
       }
-      function takeWhile(array9, predicate) {
-        if (array9 !== void 0) {
-          const len = array9.length;
+      function takeWhile(array8, predicate) {
+        if (array8 !== void 0) {
+          const len = array8.length;
           let index = 0;
-          while (index < len && predicate(array9[index])) {
+          while (index < len && predicate(array8[index])) {
             index++;
           }
-          return array9.slice(0, index);
+          return array8.slice(0, index);
         }
       }
-      function skipWhile(array9, predicate) {
-        if (array9 !== void 0) {
-          const len = array9.length;
+      function skipWhile(array8, predicate) {
+        if (array8 !== void 0) {
+          const len = array8.length;
           let index = 0;
-          while (index < len && predicate(array9[index])) {
+          while (index < len && predicate(array8[index])) {
             index++;
           }
-          return array9.slice(index);
+          return array8.slice(index);
         }
       }
       function isNodeLikeSystem() {
@@ -11608,9 +11608,9 @@ Node ${formatSyntaxKind(node.kind)} was unexpected.`,
         }
         Debug2.attachFlowNodeDebugInfo = attachFlowNodeDebugInfo;
         let nodeArrayProto;
-        function attachNodeArrayDebugInfoWorker(array9) {
-          if (!("__tsDebuggerDisplay" in array9)) {
-            Object.defineProperties(array9, {
+        function attachNodeArrayDebugInfoWorker(array8) {
+          if (!("__tsDebuggerDisplay" in array8)) {
+            Object.defineProperties(array8, {
               __tsDebuggerDisplay: {
                 value(defaultValue) {
                   defaultValue = String(defaultValue).replace(/(?:,[\s\w]+:[^,]+)+\]$/, "]");
@@ -11620,16 +11620,16 @@ Node ${formatSyntaxKind(node.kind)} was unexpected.`,
             });
           }
         }
-        function attachNodeArrayDebugInfo(array9) {
+        function attachNodeArrayDebugInfo(array8) {
           if (isDebugInfoEnabled) {
             if (typeof Object.setPrototypeOf === "function") {
               if (!nodeArrayProto) {
                 nodeArrayProto = Object.create(Array.prototype);
                 attachNodeArrayDebugInfoWorker(nodeArrayProto);
               }
-              Object.setPrototypeOf(array9, nodeArrayProto);
+              Object.setPrototypeOf(array8, nodeArrayProto);
             } else {
-              attachNodeArrayDebugInfoWorker(array9);
+              attachNodeArrayDebugInfoWorker(array8);
             }
           }
         }
@@ -11905,8 +11905,8 @@ m2: ${this.mapper2.__debugToString().split("\n").join("\n    ")}`;
             return parents;
           }
           function buildGraphNode(flowNode2, seen) {
-            const id22 = getDebugFlowNodeId(flowNode2);
-            let graphNode = links[id22];
+            const id23 = getDebugFlowNodeId(flowNode2);
+            let graphNode = links[id23];
             if (graphNode && seen.has(flowNode2)) {
               graphNode.circular = true;
               graphNode = {
@@ -11924,7 +11924,7 @@ m2: ${this.mapper2.__debugToString().split("\n").join("\n    ")}`;
             }
             seen.add(flowNode2);
             if (!graphNode) {
-              links[id22] = graphNode = { id: id22, flowNode: flowNode2, edges: [], text: "", lane: -1, endLane: -1, level: -1, circular: false };
+              links[id23] = graphNode = { id: id23, flowNode: flowNode2, edges: [], text: "", lane: -1, endLane: -1, level: -1, circular: false };
               nodes.push(graphNode);
               if (hasAntecedents(flowNode2)) {
                 for (const antecedent of flowNode2.antecedent) {
@@ -12126,15 +12126,15 @@ ${lanes.join("\n")}
             }
             return " ";
           }
-          function fill(array9, value) {
-            if (array9.fill) {
-              array9.fill(value);
+          function fill(array8, value) {
+            if (array8.fill) {
+              array8.fill(value);
             } else {
-              for (let i = 0; i < array9.length; i++) {
-                array9[i] = value;
+              for (let i = 0; i < array8.length; i++) {
+                array8[i] = value;
               }
             }
-            return array9;
+            return array8;
           }
           function repeat(ch, length2) {
             if (ch.repeat) {
@@ -22741,8 +22741,8 @@ ${lanes.join("\n")}
         return identifier21.length >= 2 && identifier21.charCodeAt(0) === 95 && identifier21.charCodeAt(1) === 95 ? "_" + identifier21 : identifier21;
       }
       function unescapeLeadingUnderscores(identifier21) {
-        const id22 = identifier21;
-        return id22.length >= 3 && id22.charCodeAt(0) === 95 && id22.charCodeAt(1) === 95 && id22.charCodeAt(2) === 95 ? id22.substr(1) : id22;
+        const id23 = identifier21;
+        return id23.length >= 3 && id23.charCodeAt(0) === 95 && id23.charCodeAt(1) === 95 && id23.charCodeAt(2) === 95 ? id23.substr(1) : id23;
       }
       function idText(identifierOrPrivateName) {
         return unescapeLeadingUnderscores(identifierOrPrivateName.escapedText);
@@ -23203,8 +23203,8 @@ ${lanes.join("\n")}
       function isToken(n) {
         return isTokenKind(n.kind);
       }
-      function isNodeArray(array9) {
-        return hasProperty(array9, "pos") && hasProperty(array9, "end");
+      function isNodeArray(array8) {
+        return hasProperty(array8, "pos") && hasProperty(array8, "end");
       }
       function isLiteralKind(kind4) {
         return 9 <= kind4 && kind4 <= 15;
@@ -26672,8 +26672,8 @@ ${lanes.join("\n")}
           while (!isIdentifier(nextToLast.expression)) {
             nextToLast = nextToLast.expression;
           }
-          const id22 = nextToLast.expression;
-          if ((id22.escapedText === "exports" || id22.escapedText === "module" && getElementOrPropertyAccessName(nextToLast) === "exports") && // ExportsProperty does not support binding with computed names
+          const id23 = nextToLast.expression;
+          if ((id23.escapedText === "exports" || id23.escapedText === "module" && getElementOrPropertyAccessName(nextToLast) === "exports") && // ExportsProperty does not support binding with computed names
           isBindableStaticAccessExpression(lhs)) {
             return 1;
           }
@@ -28423,8 +28423,8 @@ ${lanes.join("\n")}
         }
         return node.parent.kind === 187;
       }
-      function identifierIsThisKeyword(id22) {
-        return id22.escapedText === "this";
+      function identifierIsThisKeyword(id23) {
+        return id23.escapedText === "this";
       }
       function getAllAccessorDeclarations(declarations, accessor) {
         let firstAccessor;
@@ -31060,11 +31060,11 @@ ${lanes.join("\n")}
       function isIdentifierTypeReference(node) {
         return isTypeReferenceNode(node) && isIdentifier(node.typeName);
       }
-      function arrayIsHomogeneous(array9, comparer = equateValues) {
-        if (array9.length < 2) return true;
-        const first2 = array9[0];
-        for (let i = 1, length2 = array9.length; i < length2; i++) {
-          const target = array9[i];
+      function arrayIsHomogeneous(array8, comparer = equateValues) {
+        if (array8.length < 2) return true;
+        const first2 = array8[0];
+        for (let i = 1, length2 = array8.length; i < length2; i++) {
+          const target = array8[i];
           if (!comparer(first2, target)) return false;
         }
         return true;
@@ -33901,14 +33901,14 @@ ${lanes.join("\n")}
             return array22;
           }
           const length2 = elements.length;
-          const array9 = length2 >= 1 && length2 <= 4 ? elements.slice() : elements;
-          array9.pos = -1;
-          array9.end = -1;
-          array9.hasTrailingComma = !!hasTrailingComma;
-          array9.transformFlags = 0;
-          aggregateChildrenFlags(array9);
-          Debug.attachNodeArrayDebugInfo(array9);
-          return array9;
+          const array8 = length2 >= 1 && length2 <= 4 ? elements.slice() : elements;
+          array8.pos = -1;
+          array8.end = -1;
+          array8.hasTrailingComma = !!hasTrailingComma;
+          array8.transformFlags = 0;
+          aggregateChildrenFlags(array8);
+          Debug.attachNodeArrayDebugInfo(array8);
+          return array8;
         }
         function createBaseNode(kind4) {
           return baseFactory2.createBaseNode(kind4);
@@ -37585,11 +37585,11 @@ ${lanes.join("\n")}
         function createGlobalMethodCall(globalObjectName, methodName, argumentsList) {
           return createMethodCall(createIdentifier(globalObjectName), methodName, argumentsList);
         }
-        function createArraySliceCall(array9, start2) {
-          return createMethodCall(array9, "slice", start2 === void 0 ? [] : [asExpression(start2)]);
+        function createArraySliceCall(array8, start2) {
+          return createMethodCall(array8, "slice", start2 === void 0 ? [] : [asExpression(start2)]);
         }
-        function createArrayConcatCall(array9, argumentsList) {
-          return createMethodCall(array9, "concat", argumentsList);
+        function createArrayConcatCall(array8, argumentsList) {
+          return createMethodCall(array8, "concat", argumentsList);
         }
         function createObjectDefinePropertyCall(target, propertyName, attributes) {
           return createGlobalMethodCall("Object", "defineProperty", [target, asExpression(propertyName), attributes]);
@@ -37898,9 +37898,9 @@ ${lanes.join("\n")}
           Debug.assert(every(nodes, isStatementOrBlock), "Cannot lift nodes to a Block.");
           return singleOrUndefined(nodes) || createBlock(nodes);
         }
-        function findSpanEnd(array9, test, start2) {
+        function findSpanEnd(array8, test, start2) {
           let i = start2;
-          while (i < array9.length && test(array9[i])) {
+          while (i < array8.length && test(array8[i])) {
             i++;
           }
           return i;
@@ -37979,8 +37979,8 @@ ${lanes.join("\n")}
               return updatePropertyAssignment(node, name, node.initializer);
           }
         }
-        function asNodeArray(array9) {
-          return array9 ? createNodeArray(array9) : void 0;
+        function asNodeArray(array8) {
+          return array8 ? createNodeArray(array8) : void 0;
         }
         function asName(name) {
           return typeof name === "string" ? createIdentifier(name) : name;
@@ -43587,9 +43587,9 @@ ${lanes.join("\n")}
           );
         }
         function createNodeArray(elements, pos, end, hasTrailingComma) {
-          const array9 = factoryCreateNodeArray(elements, hasTrailingComma);
-          setTextRangePosEnd(array9, pos, end ?? scanner2.getTokenFullStart());
-          return array9;
+          const array8 = factoryCreateNodeArray(elements, hasTrailingComma);
+          setTextRangePosEnd(array8, pos, end ?? scanner2.getTokenFullStart());
+          return array8;
         }
         function finishNode(node, pos, end) {
           setTextRangePosEnd(node, pos, end ?? scanner2.getTokenFullStart());
@@ -45692,10 +45692,10 @@ ${lanes.join("\n")}
           }
         }
         function parseTypePredicatePrefix() {
-          const id22 = parseIdentifier();
+          const id23 = parseIdentifier();
           if (token() === 142 && !scanner2.hasPrecedingLineBreak()) {
             nextToken();
-            return id22;
+            return id23;
           }
         }
         function parseAssertsTypePredicate() {
@@ -50661,9 +50661,9 @@ ${lanes.join("\n")}
             }
             checkNodePositions(node, aggressiveChecks);
           }
-          function visitArray2(array9) {
-            setTextRangePosEnd(array9, array9.pos + delta, array9.end + delta);
-            for (const node of array9) {
+          function visitArray2(array8) {
+            setTextRangePosEnd(array8, array8.pos + delta, array8.end + delta);
+            for (const node of array8) {
               visitNode3(node);
             }
           }
@@ -50748,11 +50748,11 @@ ${lanes.join("\n")}
             }
             Debug.assert(fullEnd < changeStart);
           }
-          function visitArray2(array9) {
-            Debug.assert(array9.pos <= array9.end);
-            if (array9.pos > changeRangeOldEnd) {
+          function visitArray2(array8) {
+            Debug.assert(array8.pos <= array8.end);
+            if (array8.pos > changeRangeOldEnd) {
               moveElementEntirelyPastChangeRange(
-                array9,
+                array8,
                 sourceFile,
                 /*isArray*/
                 true,
@@ -50763,11 +50763,11 @@ ${lanes.join("\n")}
               );
               return;
             }
-            const fullEnd = array9.end;
+            const fullEnd = array8.end;
             if (fullEnd >= changeStart) {
-              markAsIntersectingIncrementalChange(array9);
-              adjustIntersectingElement(array9, changeStart, changeRangeOldEnd, changeRangeNewEnd, delta);
-              for (const node of array9) {
+              markAsIntersectingIncrementalChange(array8);
+              adjustIntersectingElement(array8, changeStart, changeRangeOldEnd, changeRangeNewEnd, delta);
+              for (const node of array8) {
                 visitNode3(node);
               }
               return;
@@ -50882,13 +50882,13 @@ ${lanes.join("\n")}
               }
               return false;
             }
-            function visitArray2(array9) {
-              if (position >= array9.pos && position < array9.end) {
-                for (let i = 0; i < array9.length; i++) {
-                  const child = array9[i];
+            function visitArray2(array8) {
+              if (position >= array8.pos && position < array8.end) {
+                for (let i = 0; i < array8.length; i++) {
+                  const child = array8[i];
                   if (child) {
                     if (child.pos === position) {
-                      currentArray = array9;
+                      currentArray = array8;
                       currentArrayIndex = i;
                       current2 = child;
                       return true;
@@ -54345,12 +54345,12 @@ ${lanes.join("\n")}
         if (!jsonOptions) {
           return;
         }
-        for (const id22 in jsonOptions) {
-          const opt = optionsNameMap.get(id22);
+        for (const id23 in jsonOptions) {
+          const opt = optionsNameMap.get(id23);
           if (opt) {
-            (defaultOptions || (defaultOptions = {}))[opt.name] = convertJsonOption(opt, jsonOptions[id22], basePath, errors);
+            (defaultOptions || (defaultOptions = {}))[opt.name] = convertJsonOption(opt, jsonOptions[id23], basePath, errors);
           } else {
-            errors.push(createUnknownOptionError(id22, diagnostics));
+            errors.push(createUnknownOptionError(id23, diagnostics));
           }
         }
         return defaultOptions;
@@ -55460,11 +55460,11 @@ ${lanes.join("\n")}
             if (i < rootLength) {
               return void 0;
             }
-            const sep5 = directory.lastIndexOf(directorySeparator, i - 1);
-            if (sep5 === -1) {
+            const sep6 = directory.lastIndexOf(directorySeparator, i - 1);
+            if (sep6 === -1) {
               return void 0;
             }
-            return directory.substr(0, Math.max(sep5, rootLength));
+            return directory.substr(0, Math.max(sep6, rootLength));
           }
         }
       }
@@ -59933,11 +59933,11 @@ ${lanes.join("\n")}
             node.arguments[0],
             /*parent*/
             void 0,
-            (id22, symbol2) => {
+            (id23, symbol2) => {
               if (symbol2) {
                 addDeclarationToSymbol(
                   symbol2,
-                  id22,
+                  id23,
                   1536 | 67108864
                   /* Assignment */
                 );
@@ -59965,11 +59965,11 @@ ${lanes.join("\n")}
             node.left.expression,
             /*parent*/
             void 0,
-            (id22, symbol2) => {
+            (id23, symbol2) => {
               if (symbol2) {
                 addDeclarationToSymbol(
                   symbol2,
-                  id22,
+                  id23,
                   1536 | 67108864
                   /* Assignment */
                 );
@@ -60266,13 +60266,13 @@ ${lanes.join("\n")}
           if (isToplevel && !isPrototypeProperty) {
             const flags = 1536 | 67108864;
             const excludeFlags = 110735 & ~67108864;
-            namespaceSymbol = forEachIdentifierInEntityName(entityName, namespaceSymbol, (id22, symbol, parent3) => {
+            namespaceSymbol = forEachIdentifierInEntityName(entityName, namespaceSymbol, (id23, symbol, parent3) => {
               if (symbol) {
-                addDeclarationToSymbol(symbol, id22, flags);
+                addDeclarationToSymbol(symbol, id23, flags);
                 return symbol;
               } else {
                 const table = parent3 ? parent3.exports : file.jsGlobalAugmentations || (file.jsGlobalAugmentations = createSymbolTable());
-                return declareSymbol(table, parent3, id22, flags, excludeFlags);
+                return declareSymbol(table, parent3, id23, flags, excludeFlags);
               }
             });
           }
@@ -60298,15 +60298,15 @@ ${lanes.join("\n")}
             excludes = 103359;
           } else if (isCallExpression(declaration) && isBindableObjectDefinePropertyCall(declaration)) {
             if (some(declaration.arguments[2].properties, (p) => {
-              const id22 = getNameOfDeclaration(p);
-              return !!id22 && isIdentifier(id22) && idText(id22) === "set";
+              const id23 = getNameOfDeclaration(p);
+              return !!id23 && isIdentifier(id23) && idText(id23) === "set";
             })) {
               includes |= 65536 | 4;
               excludes |= 78783;
             }
             if (some(declaration.arguments[2].properties, (p) => {
-              const id22 = getNameOfDeclaration(p);
-              return !!id22 && isIdentifier(id22) && idText(id22) === "get";
+              const id23 = getNameOfDeclaration(p);
+              return !!id23 && isIdentifier(id23) && idText(id23) === "get";
             })) {
               includes |= 32768 | 4;
               excludes |= 46015;
@@ -63563,15 +63563,15 @@ ${lanes.join("\n")}
           return combined;
         }
         function mergeSymbolTable(target, source, unidirectional = false, mergedParent) {
-          source.forEach((sourceSymbol, id22) => {
-            const targetSymbol = target.get(id22);
+          source.forEach((sourceSymbol, id23) => {
+            const targetSymbol = target.get(id23);
             const merged = targetSymbol ? mergeSymbol(targetSymbol, sourceSymbol, unidirectional) : getMergedSymbol(sourceSymbol);
             if (mergedParent && targetSymbol) {
               if (merged.flags & 33554432) {
                 merged.parent = mergedParent;
               }
             }
-            target.set(id22, merged);
+            target.set(id23, merged);
           });
         }
         function mergeModuleAugmentation(moduleName) {
@@ -63648,8 +63648,8 @@ ${lanes.join("\n")}
         }
         function getSymbolLinks(symbol) {
           if (symbol.flags & 33554432) return symbol.links;
-          const id22 = getSymbolId(symbol);
-          return symbolLinks[id22] ?? (symbolLinks[id22] = new SymbolLinks());
+          const id23 = getSymbolId(symbol);
+          return symbolLinks[id23] ?? (symbolLinks[id23] = new SymbolLinks());
         }
         function getNodeLinks(node) {
           const nodeId2 = getNodeId(node);
@@ -65693,18 +65693,18 @@ ${lanes.join("\n")}
         }
         function extendExportSymbols(target, source, lookupTable, exportNode) {
           if (!source) return;
-          source.forEach((sourceSymbol, id22) => {
-            if (id22 === "default") return;
-            const targetSymbol = target.get(id22);
+          source.forEach((sourceSymbol, id23) => {
+            if (id23 === "default") return;
+            const targetSymbol = target.get(id23);
             if (!targetSymbol) {
-              target.set(id22, sourceSymbol);
+              target.set(id23, sourceSymbol);
               if (lookupTable && exportNode) {
-                lookupTable.set(id22, {
+                lookupTable.set(id23, {
                   specifierText: getTextOfNode(exportNode.moduleSpecifier)
                 });
               }
             } else if (lookupTable && exportNode && targetSymbol && resolveSymbol(targetSymbol) !== resolveSymbol(sourceSymbol)) {
-              const collisionTracker = lookupTable.get(id22);
+              const collisionTracker = lookupTable.get(id23);
               if (!collisionTracker.exportsWithDuplicate) {
                 collisionTracker.exportsWithDuplicate = [exportNode];
               } else {
@@ -65753,16 +65753,16 @@ ${lanes.join("\n")}
                   );
                 }
               }
-              lookupTable.forEach(({ exportsWithDuplicate }, id22) => {
-                if (id22 === "export=" || !(exportsWithDuplicate && exportsWithDuplicate.length) || symbols.has(id22)) {
+              lookupTable.forEach(({ exportsWithDuplicate }, id23) => {
+                if (id23 === "export=" || !(exportsWithDuplicate && exportsWithDuplicate.length) || symbols.has(id23)) {
                   return;
                 }
                 for (const node of exportsWithDuplicate) {
                   diagnostics.add(createDiagnosticForNode(
                     node,
                     Diagnostics.Module_0_has_already_exported_a_member_named_1_Consider_explicitly_re_exporting_to_resolve_the_ambiguity,
-                    lookupTable.get(id22).specifierText,
-                    unescapeLeadingUnderscores(id22)
+                    lookupTable.get(id23).specifierText,
+                    unescapeLeadingUnderscores(id23)
                   ));
                 }
               });
@@ -65799,10 +65799,10 @@ ${lanes.join("\n")}
         }
         function getAlternativeContainingModules(symbol, enclosingDeclaration) {
           const containingFile = getSourceFileOfNode(enclosingDeclaration);
-          const id22 = getNodeId(containingFile);
+          const id23 = getNodeId(containingFile);
           const links = getSymbolLinks(symbol);
           let results;
-          if (links.extendedContainersByFile && (results = links.extendedContainersByFile.get(id22))) {
+          if (links.extendedContainersByFile && (results = links.extendedContainersByFile.get(id23))) {
             return results;
           }
           if (containingFile && containingFile.imports) {
@@ -65820,7 +65820,7 @@ ${lanes.join("\n")}
               results = append(results, resolvedModule);
             }
             if (length(results)) {
-              (links.extendedContainersByFile || (links.extendedContainersByFile = /* @__PURE__ */ new Map())).set(id22, results);
+              (links.extendedContainersByFile || (links.extendedContainersByFile = /* @__PURE__ */ new Map())).set(id23, results);
               return results;
             }
           }
@@ -66002,8 +66002,8 @@ ${lanes.join("\n")}
         function getNamedMembers(members3, container) {
           if (!stableTypeOrdering) {
             let result;
-            members3.forEach((symbol, id22) => {
-              if (isNamedMember(symbol, id22)) {
+            members3.forEach((symbol, id23) => {
+              if (isNamedMember(symbol, id23)) {
                 (result ?? (result = [])).push(symbol);
               }
             });
@@ -66014,15 +66014,15 @@ ${lanes.join("\n")}
           }
           let contained;
           if (container && container.flags & (32 | 64)) {
-            members3.forEach((symbol, id22) => {
-              if (isNamedMember(symbol, id22) && isDeclarationContainedBy(symbol, container)) {
+            members3.forEach((symbol, id23) => {
+              if (isNamedMember(symbol, id23) && isDeclarationContainedBy(symbol, container)) {
                 contained = append(contained, symbol);
               }
             });
           }
           let nonContained;
-          members3.forEach((symbol, id22) => {
-            if (isNamedMember(symbol, id22) && (!container || !(container.flags & (32 | 64)) || !isDeclarationContainedBy(symbol, container))) {
+          members3.forEach((symbol, id23) => {
+            if (isNamedMember(symbol, id23) && (!container || !(container.flags & (32 | 64)) || !isDeclarationContainedBy(symbol, container))) {
               nonContained = append(nonContained, symbol);
             }
           });
@@ -66159,10 +66159,10 @@ ${lanes.join("\n")}
           if (cache.has(key2)) {
             return cache.get(key2);
           }
-          const id22 = getSymbolId(symbol);
-          let visitedSymbolTables = visitedSymbolTablesMap.get(id22);
+          const id23 = getSymbolId(symbol);
+          let visitedSymbolTables = visitedSymbolTablesMap.get(id23);
           if (!visitedSymbolTables) {
-            visitedSymbolTablesMap.set(id22, visitedSymbolTables = []);
+            visitedSymbolTablesMap.set(id23, visitedSymbolTables = []);
           }
           const result = forEachSymbolTableInScope(enclosingDeclaration, getAccessibleSymbolChainFromSymbolTable);
           cache.set(key2, result);
@@ -67166,15 +67166,15 @@ ${lanes.join("\n")}
             return context.encounteredError ? void 0 : resultingNode;
           }
           function addSymbolTypeToContext(context, symbol, type) {
-            const id22 = getSymbolId(symbol);
-            const oldType = context.enclosingSymbolTypes.get(id22);
-            context.enclosingSymbolTypes.set(id22, type);
+            const id23 = getSymbolId(symbol);
+            const oldType = context.enclosingSymbolTypes.get(id23);
+            context.enclosingSymbolTypes.set(id23, type);
             return restore;
             function restore() {
               if (oldType) {
-                context.enclosingSymbolTypes.set(id22, oldType);
+                context.enclosingSymbolTypes.set(id23, oldType);
               } else {
-                context.enclosingSymbolTypes.delete(id22);
+                context.enclosingSymbolTypes.delete(id23);
               }
             }
           }
@@ -67818,11 +67818,11 @@ ${lanes.join("\n")}
               var _a2, _b2, _c;
               const typeId = type2.id;
               const isConstructorObject = getObjectFlags(type2) & 16 && type2.symbol && type2.symbol.flags & 32;
-              const id22 = getObjectFlags(type2) & 4 && type2.node ? "N" + getNodeId(type2.node) : type2.flags & 67108864 ? "N" + getNodeId(type2.root.node) : type2.symbol ? (isConstructorObject ? "+" : "") + getSymbolId(type2.symbol) : void 0;
+              const id23 = getObjectFlags(type2) & 4 && type2.node ? "N" + getNodeId(type2.node) : type2.flags & 67108864 ? "N" + getNodeId(type2.root.node) : type2.symbol ? (isConstructorObject ? "+" : "") + getSymbolId(type2.symbol) : void 0;
               if (!context.visitedTypes) {
                 context.visitedTypes = /* @__PURE__ */ new Set();
               }
-              if (id22 && !context.symbolDepth) {
+              if (id23 && !context.symbolDepth) {
                 context.symbolDepth = /* @__PURE__ */ new Map();
               }
               const links = context.maxExpansionDepth >= 0 ? void 0 : context.enclosingDeclaration && getNodeLinks(context.enclosingDeclaration);
@@ -67846,12 +67846,12 @@ ${lanes.join("\n")}
                 return deepCloneOrReuseNode(cachedResult.node);
               }
               let depth;
-              if (id22) {
-                depth = context.symbolDepth.get(id22) || 0;
+              if (id23) {
+                depth = context.symbolDepth.get(id23) || 0;
                 if (depth > 10) {
                   return createElidedInformationPlaceholder(context);
                 }
-                context.symbolDepth.set(id22, depth + 1);
+                context.symbolDepth.set(id23, depth + 1);
               }
               context.visitedTypes.add(typeId);
               const prevTrackedSymbols = context.trackedSymbols;
@@ -67868,8 +67868,8 @@ ${lanes.join("\n")}
                 });
               }
               context.visitedTypes.delete(typeId);
-              if (id22) {
-                context.symbolDepth.set(id22, depth);
+              if (id23) {
+                context.symbolDepth.set(id23, depth);
               }
               context.trackedSymbols = prevTrackedSymbols;
               return result;
@@ -68085,8 +68085,8 @@ ${lanes.join("\n")}
                 }
                 typeArguments = ref2.typeArguments;
                 const ids6 = getAccessStack(ref2);
-                for (const id22 of ids6) {
-                  qualifier = qualifier ? factory.createQualifiedName(qualifier, id22) : id22;
+                for (const id23 of ids6) {
+                  qualifier = qualifier ? factory.createQualifiedName(qualifier, id23) : id23;
                 }
                 return factory.updateImportTypeNode(
                   root,
@@ -68110,8 +68110,8 @@ ${lanes.join("\n")}
                 }
                 typeArguments = ref2.typeArguments;
                 const ids6 = getAccessStack(ref2);
-                for (const id22 of ids6) {
-                  typeName = factory.createQualifiedName(typeName, id22);
+                for (const id23 of ids6) {
+                  typeName = factory.createQualifiedName(typeName, id23);
                 }
                 return factory.updateTypeReferenceNode(
                   root,
@@ -70014,12 +70014,12 @@ ${lanes.join("\n")}
                           void 0,
                           /*isTypeOnly*/
                           false,
-                          factory.createNamedExports(map(flatMap(excessExports, (e) => getNamesOfDeclaration(e)), (id22) => factory.createExportSpecifier(
+                          factory.createNamedExports(map(flatMap(excessExports, (e) => getNamesOfDeclaration(e)), (id23) => factory.createExportSpecifier(
                             /*isTypeOnly*/
                             false,
                             /*propertyName*/
                             void 0,
-                            id22
+                            id23
                           ))),
                           /*moduleSpecifier*/
                           void 0
@@ -71425,8 +71425,8 @@ ${lanes.join("\n")}
                       }
                       if (isCallExpression(d) && isBindableObjectDefinePropertyCall(d)) {
                         return forEach(d.arguments[2].properties, (propDecl) => {
-                          const id22 = getNameOfDeclaration(propDecl);
-                          if (!!id22 && isIdentifier(id22) && idText(id22) === "set") {
+                          const id23 = getNameOfDeclaration(propDecl);
+                          if (!!id23 && isIdentifier(id23) && idText(id23) === "set") {
                             return propDecl;
                           }
                         });
@@ -71747,10 +71747,10 @@ ${lanes.join("\n")}
             }
             function getUnusedName(input, symbol) {
               var _a2, _b;
-              const id22 = symbol ? getSymbolId(symbol) : void 0;
-              if (id22) {
-                if (context.remappedSymbolNames.has(id22)) {
-                  return context.remappedSymbolNames.get(id22);
+              const id23 = symbol ? getSymbolId(symbol) : void 0;
+              if (id23) {
+                if (context.remappedSymbolNames.has(id23)) {
+                  return context.remappedSymbolNames.get(id23);
                 }
               }
               if (symbol) {
@@ -71763,8 +71763,8 @@ ${lanes.join("\n")}
                 input = `${original}_${i}`;
               }
               (_b = context.usedSymbolNames) == null ? void 0 : _b.add(input);
-              if (id22) {
-                context.remappedSymbolNames.set(id22, input);
+              if (id23) {
+                context.remappedSymbolNames.set(id23, input);
               }
               return input;
             }
@@ -71785,12 +71785,12 @@ ${lanes.join("\n")}
               return localName;
             }
             function getInternalSymbolName(symbol, localName) {
-              const id22 = getSymbolId(symbol);
-              if (context.remappedSymbolNames.has(id22)) {
-                return context.remappedSymbolNames.get(id22);
+              const id23 = getSymbolId(symbol);
+              if (context.remappedSymbolNames.has(id23)) {
+                return context.remappedSymbolNames.get(id23);
               }
               localName = getNameCandidateWorker(symbol, localName);
-              context.remappedSymbolNames.set(id22, localName);
+              context.remappedSymbolNames.set(id23, localName);
               return localName;
             }
           }
@@ -75768,9 +75768,9 @@ ${lanes.join("\n")}
                       propSet = /* @__PURE__ */ new Map();
                       propSet.set(getSymbolId(singleProp), singleProp);
                     }
-                    const id22 = getSymbolId(prop);
-                    if (!propSet.has(id22)) {
-                      propSet.set(id22, prop);
+                    const id23 = getSymbolId(prop);
+                    if (!propSet.has(id23)) {
+                      propSet.set(id23, prop);
                     }
                   }
                   if (propFlags & 98304 && (prop.flags & 98304) !== (propFlags & 98304)) {
@@ -76124,8 +76124,8 @@ ${lanes.join("\n")}
         }
         function symbolsToArray(symbols) {
           const result = [];
-          symbols.forEach((symbol, id22) => {
-            if (!isReservedMemberName(id22)) {
+          symbols.forEach((symbol, id23) => {
+            if (!isReservedMemberName(id23)) {
               result.push(symbol);
             }
           });
@@ -76579,10 +76579,10 @@ ${lanes.join("\n")}
         }
         function getSignatureInstantiationWithoutFillingInTypeArguments(signature, typeArguments) {
           const instantiations = signature.instantiations || (signature.instantiations = /* @__PURE__ */ new Map());
-          const id22 = getTypeListId(typeArguments);
-          let instantiation = instantiations.get(id22);
+          const id23 = getTypeListId(typeArguments);
+          let instantiation = instantiations.get(id23);
           if (!instantiation) {
-            instantiations.set(id22, instantiation = createSignatureInstantiation(signature, typeArguments));
+            instantiations.set(id23, instantiation = createSignatureInstantiation(signature, typeArguments));
           }
           return instantiation;
         }
@@ -76856,11 +76856,11 @@ ${lanes.join("\n")}
           return createTypeReference(target, typeArguments);
         }
         function createTypeReference(target, typeArguments) {
-          const id22 = getTypeListId(typeArguments);
-          let type = target.instantiations.get(id22);
+          const id23 = getTypeListId(typeArguments);
+          let type = target.instantiations.get(id23);
           if (!type) {
             type = createObjectType(4, target.symbol);
-            target.instantiations.set(id22, type);
+            target.instantiations.set(id23, type);
             type.objectFlags |= typeArguments ? getPropagatingFlagsOfTypes(typeArguments) : 0;
             type.target = target;
             type.resolvedTypeArguments = typeArguments;
@@ -76962,29 +76962,29 @@ ${lanes.join("\n")}
           }
           const links = getSymbolLinks(symbol);
           const typeParameters = links.typeParameters;
-          const id22 = getTypeListId(typeArguments) + getAliasId(aliasSymbol, aliasTypeArguments);
-          let instantiation = links.instantiations.get(id22);
+          const id23 = getTypeListId(typeArguments) + getAliasId(aliasSymbol, aliasTypeArguments);
+          let instantiation = links.instantiations.get(id23);
           if (!instantiation) {
-            links.instantiations.set(id22, instantiation = instantiateTypeWithAlias(type, createTypeMapper(typeParameters, fillMissingTypeArguments(typeArguments, typeParameters, getMinTypeArgumentCount(typeParameters), isInJSFile(symbol.valueDeclaration))), aliasSymbol, aliasTypeArguments));
+            links.instantiations.set(id23, instantiation = instantiateTypeWithAlias(type, createTypeMapper(typeParameters, fillMissingTypeArguments(typeArguments, typeParameters, getMinTypeArgumentCount(typeParameters), isInJSFile(symbol.valueDeclaration))), aliasSymbol, aliasTypeArguments));
           }
           return instantiation;
         }
         function getTypeFromTypeAliasReference(node, symbol) {
           if (getCheckFlags(symbol) & 1048576) {
             const typeArguments = typeArgumentsFromTypeReferenceNode(node);
-            const id22 = getAliasId(symbol, typeArguments);
-            let errorType2 = errorTypes.get(id22);
+            const id23 = getAliasId(symbol, typeArguments);
+            let errorType2 = errorTypes.get(id23);
             if (!errorType2) {
               errorType2 = createIntrinsicType(
                 1,
                 "error",
                 /*objectFlags*/
                 void 0,
-                `alias ${id22}`
+                `alias ${id23}`
               );
               errorType2.aliasSymbol = symbol;
               errorType2.aliasTypeArguments = typeArguments;
-              errorTypes.set(id22, errorType2);
+              errorTypes.set(id23, errorType2);
             }
             return errorType2;
           }
@@ -77134,8 +77134,8 @@ ${lanes.join("\n")}
           return constraint.flags & 3 || constraint === baseType || baseType.flags & 1 ? baseType : getOrCreateSubstitutionType(baseType, constraint);
         }
         function getOrCreateSubstitutionType(baseType, constraint) {
-          const id22 = `${getTypeId(baseType)}>${getTypeId(constraint)}`;
-          const cached = substitutionTypes.get(id22);
+          const id23 = `${getTypeId(baseType)}>${getTypeId(constraint)}`;
+          const cached = substitutionTypes.get(id23);
           if (cached) {
             return cached;
           }
@@ -77145,7 +77145,7 @@ ${lanes.join("\n")}
           );
           result.baseType = baseType;
           result.constraint = constraint;
-          substitutionTypes.set(id22, result);
+          substitutionTypes.set(id23, result);
           return result;
         }
         function getSubstitutionIntersection(substitutionType) {
@@ -78104,8 +78104,8 @@ ${lanes.join("\n")}
           if (types.length < 2) {
             return types;
           }
-          const id22 = getTypeListId(types);
-          const match = subtypeReductionCache.get(id22);
+          const id23 = getTypeListId(types);
+          const match = subtypeReductionCache.get(id23);
           if (match) {
             return match;
           }
@@ -78150,7 +78150,7 @@ ${lanes.join("\n")}
               }
             }
           }
-          subtypeReductionCache.set(id22, types);
+          subtypeReductionCache.set(id23, types);
           return types;
         }
         function removeRedundantLiteralTypes(types, includes, reduceVoidUndefined) {
@@ -78246,8 +78246,8 @@ ${lanes.join("\n")}
           if (types.length === 2 && !origin && (types[0].flags & 134217728 || types[1].flags & 134217728)) {
             const infix = unionReduction === 0 ? "N" : unionReduction === 2 ? "S" : "L";
             const index = types[0].id < types[1].id ? 0 : 1;
-            const id22 = types[index].id + infix + types[1 - index].id + getAliasId(aliasSymbol, aliasTypeArguments);
-            let type = unionOfUnionTypes.get(id22);
+            const id23 = types[index].id + infix + types[1 - index].id + getAliasId(aliasSymbol, aliasTypeArguments);
+            let type = unionOfUnionTypes.get(id23);
             if (!type) {
               type = getUnionTypeWorker(
                 types,
@@ -78257,7 +78257,7 @@ ${lanes.join("\n")}
                 /*origin*/
                 void 0
               );
-              unionOfUnionTypes.set(id22, type);
+              unionOfUnionTypes.set(id23, type);
             }
             return type;
           }
@@ -78352,8 +78352,8 @@ ${lanes.join("\n")}
             return types[0];
           }
           const typeKey = !origin ? getTypeListId(types) : origin.flags & 134217728 ? `|${getTypeListId(origin.types)}` : origin.flags & 268435456 ? `&${getTypeListId(origin.types)}` : `#${origin.type.id}|${getTypeListId(types)}`;
-          const id22 = typeKey + getAliasId(aliasSymbol, aliasTypeArguments);
-          let type = unionTypes.get(id22);
+          const id23 = typeKey + getAliasId(aliasSymbol, aliasTypeArguments);
+          let type = unionTypes.get(id23);
           if (!type) {
             type = createType(
               134217728
@@ -78373,7 +78373,7 @@ ${lanes.join("\n")}
               type.flags |= 256;
               type.intrinsicName = "boolean";
             }
-            unionTypes.set(id22, type);
+            unionTypes.set(id23, type);
           }
           return type;
         }
@@ -78583,8 +78583,8 @@ ${lanes.join("\n")}
               }
             }
           }
-          const id22 = getTypeListId(typeSet) + (flags & 2 ? "*" : getAliasId(aliasSymbol, aliasTypeArguments));
-          let result = intersectionTypes.get(id22);
+          const id23 = getTypeListId(typeSet) + (flags & 2 ? "*" : getAliasId(aliasSymbol, aliasTypeArguments));
+          let result = intersectionTypes.get(id23);
           if (!result) {
             if (includes & 134217728) {
               if (intersectUnionsOfPrimitiveTypes(typeSet)) {
@@ -78618,7 +78618,7 @@ ${lanes.join("\n")}
             } else {
               result = createIntersectionType(typeSet, objectFlags, aliasSymbol, aliasTypeArguments);
             }
-            intersectionTypes.set(id22, result);
+            intersectionTypes.set(id23, result);
           }
           return result;
         }
@@ -78857,10 +78857,10 @@ ${lanes.join("\n")}
               return newTypes[0];
             }
           }
-          const id22 = `${getTypeListId(newTypes)}|${map(newTexts, (t) => t.length).join(",")}|${newTexts.join("")}`;
-          let type = templateLiteralTypes.get(id22);
+          const id23 = `${getTypeListId(newTypes)}|${map(newTexts, (t) => t.length).join(",")}|${newTexts.join("")}`;
+          let type = templateLiteralTypes.get(id23);
           if (!type) {
-            templateLiteralTypes.set(id22, type = createTemplateLiteralType(newTexts, newTypes));
+            templateLiteralTypes.set(id23, type = createTemplateLiteralType(newTexts, newTypes));
           }
           return type;
           function addSpans(texts2, types2) {
@@ -78932,10 +78932,10 @@ ${lanes.join("\n")}
           return [texts, types];
         }
         function getStringMappingTypeForGenericType(symbol, type) {
-          const id22 = `${getSymbolId(symbol)},${getTypeId(type)}`;
-          let result = stringMappingTypes.get(id22);
+          const id23 = `${getSymbolId(symbol)},${getTypeId(type)}`;
+          let result = stringMappingTypes.get(id23);
           if (!result) {
-            stringMappingTypes.set(id22, result = createStringMappingType(symbol, type));
+            stringMappingTypes.set(id23, result = createStringMappingType(symbol, type));
           }
           return result;
         }
@@ -79381,10 +79381,10 @@ ${lanes.join("\n")}
               return objectType;
             }
             const persistentAccessFlags = accessFlags & 1;
-            const id22 = objectType.id + "," + indexType.id + "," + persistentAccessFlags + getAliasId(aliasSymbol, aliasTypeArguments);
-            let type = indexedAccessTypes.get(id22);
+            const id23 = objectType.id + "," + indexType.id + "," + persistentAccessFlags + getAliasId(aliasSymbol, aliasTypeArguments);
+            let type = indexedAccessTypes.get(id23);
             if (!type) {
-              indexedAccessTypes.set(id22, type = createIndexedAccessType(objectType, indexType, persistentAccessFlags, aliasSymbol, aliasTypeArguments));
+              indexedAccessTypes.set(id23, type = createIndexedAccessType(objectType, indexType, persistentAccessFlags, aliasSymbol, aliasTypeArguments));
             }
             return type;
           }
@@ -80314,19 +80314,19 @@ ${lanes.join("\n")}
             const typeArguments = map(typeParameters, (t) => getMappedType(t, combinedMapper));
             const newAliasSymbol = aliasSymbol || type.aliasSymbol;
             const newAliasTypeArguments = aliasSymbol ? aliasTypeArguments : instantiateTypes(type.aliasTypeArguments, mapper);
-            const id22 = getTypeListId(typeArguments) + getAliasId(newAliasSymbol, newAliasTypeArguments);
+            const id23 = getTypeListId(typeArguments) + getAliasId(newAliasSymbol, newAliasTypeArguments);
             if (!target.instantiations) {
               target.instantiations = /* @__PURE__ */ new Map();
               target.instantiations.set(getTypeListId(typeParameters) + getAliasId(target.aliasSymbol, target.aliasTypeArguments), target);
             }
-            let result = target.instantiations.get(id22);
+            let result = target.instantiations.get(id23);
             if (!result) {
               let newMapper = createTypeMapper(typeParameters, typeArguments);
               if (target.objectFlags & 134217728 && mapper) {
                 newMapper = combineTypeMappers(newMapper, mapper);
               }
               result = target.objectFlags & 4 ? createDeferredTypeReference(type.target, type.node, newMapper, newAliasSymbol, newAliasTypeArguments) : target.objectFlags & 32 ? instantiateMappedType(target, newMapper, newAliasSymbol, newAliasTypeArguments) : instantiateAnonymousType(target, newMapper, newAliasSymbol, newAliasTypeArguments);
-              target.instantiations.set(id22, result);
+              target.instantiations.set(id23, result);
               const resultObjectFlags = getObjectFlags(result);
               if (result.flags & 403963917 && !(resultObjectFlags & 524288)) {
                 const resultCouldContainTypeVariables = some(typeArguments, couldContainTypeVariables);
@@ -80500,14 +80500,14 @@ ${lanes.join("\n")}
           const root = type.root;
           if (root.outerTypeParameters) {
             const typeArguments = map(root.outerTypeParameters, (t) => getMappedType(t, mapper));
-            const id22 = (forConstraint ? "C" : "") + getTypeListId(typeArguments) + getAliasId(aliasSymbol, aliasTypeArguments);
-            let result = root.instantiations.get(id22);
+            const id23 = (forConstraint ? "C" : "") + getTypeListId(typeArguments) + getAliasId(aliasSymbol, aliasTypeArguments);
+            let result = root.instantiations.get(id23);
             if (!result) {
               const newMapper = createTypeMapper(root.outerTypeParameters, typeArguments);
               const checkType = root.checkType;
               const distributionType = root.isDistributive ? getReducedType(getMappedType(checkType, newMapper)) : void 0;
               result = distributionType && checkType !== distributionType && distributionType.flags & (134217728 | 262144) ? mapTypeWithAlias(distributionType, (t) => getConditionalType(root, prependTypeMapping(checkType, t, newMapper), forConstraint), aliasSymbol, aliasTypeArguments) : getConditionalType(root, newMapper, forConstraint, aliasSymbol, aliasTypeArguments);
-              root.instantiations.set(id22, result);
+              root.instantiations.set(id23, result);
             }
             return result;
           }
@@ -81552,8 +81552,8 @@ ${lanes.join("\n")}
           if (sourceSymbol.escapedName !== targetSymbol.escapedName || !(sourceSymbol.flags & 256) || !(targetSymbol.flags & 256)) {
             return false;
           }
-          const id22 = getSymbolId(sourceSymbol) + "," + getSymbolId(targetSymbol);
-          const entry2 = enumRelation.get(id22);
+          const id23 = getSymbolId(sourceSymbol) + "," + getSymbolId(targetSymbol);
+          const entry2 = enumRelation.get(id23);
           if (entry2 !== void 0 && !(entry2 & 2 && errorReporter)) {
             return !!(entry2 & 1);
           }
@@ -81572,7 +81572,7 @@ ${lanes.join("\n")}
                   ));
                 }
                 enumRelation.set(
-                  id22,
+                  id23,
                   2
                   /* Failed */
                 );
@@ -81598,7 +81598,7 @@ ${lanes.join("\n")}
                     errorReporter(Diagnostics.Each_declaration_of_0_1_differs_in_its_value_where_2_was_expected_but_3_was_given, symbolName(targetSymbol), symbolName(targetProperty), escapedTarget, escapedSource);
                   }
                   enumRelation.set(
-                    id22,
+                    id23,
                     2
                     /* Failed */
                   );
@@ -81612,7 +81612,7 @@ ${lanes.join("\n")}
                     errorReporter(Diagnostics.One_value_of_0_1_is_the_string_2_and_the_other_is_assumed_to_be_an_unknown_numeric_value, symbolName(targetSymbol), symbolName(targetProperty), escapedValue);
                   }
                   enumRelation.set(
-                    id22,
+                    id23,
                     2
                     /* Failed */
                   );
@@ -81622,7 +81622,7 @@ ${lanes.join("\n")}
             }
           }
           enumRelation.set(
-            id22,
+            id23,
             1
             /* Succeeded */
           );
@@ -81768,7 +81768,7 @@ ${lanes.join("\n")}
             reportIncompatibleStack();
           }
           if (overflow) {
-            const id22 = getRelationKey(
+            const id23 = getRelationKey(
               source,
               target,
               /*intersectionState*/
@@ -81777,7 +81777,7 @@ ${lanes.join("\n")}
               /*ignoreConstraints*/
               false
             );
-            relation.set(id22, 2 | (relationCount <= 0 ? 32 : 64));
+            relation.set(id23, 2 | (relationCount <= 0 ? 32 : 64));
             (_a = tracing) == null ? void 0 : _a.instant(tracing.Phase.CheckTypes, "checkTypeRelatedTo_DepthLimit", { sourceId: source.id, targetId: target.id, depth: sourceDepth, targetDepth });
             const message = relationCount <= 0 ? Diagnostics.Excessive_complexity_comparing_types_0_and_1 : Diagnostics.Excessive_stack_depth_comparing_types_0_and_1;
             const diag2 = error2(errorNode || currentNode, message, typeToString(source), typeToString(target));
@@ -82645,7 +82645,7 @@ ${lanes.join("\n")}
             if (overflow) {
               return 0;
             }
-            const id22 = getRelationKey(
+            const id23 = getRelationKey(
               source2,
               target2,
               intersectionState,
@@ -82653,7 +82653,7 @@ ${lanes.join("\n")}
               /*ignoreConstraints*/
               false
             );
-            const entry2 = relation.get(id22);
+            const entry2 = relation.get(id23);
             if (entry2 !== void 0) {
               if (reportErrors2 && entry2 & 2 && !(entry2 & 96)) {
               } else {
@@ -82684,10 +82684,10 @@ ${lanes.join("\n")}
               sourceStack = [];
               targetStack = [];
             } else {
-              if (maybeKeysSet.has(id22)) {
+              if (maybeKeysSet.has(id23)) {
                 return 3;
               }
-              const broadestEquivalentId = id22.startsWith("*") ? getRelationKey(
+              const broadestEquivalentId = id23.startsWith("*") ? getRelationKey(
                 source2,
                 target2,
                 intersectionState,
@@ -82704,8 +82704,8 @@ ${lanes.join("\n")}
               }
             }
             const maybeStart = maybeCount;
-            maybeKeys[maybeCount] = id22;
-            maybeKeysSet.add(id22);
+            maybeKeys[maybeCount] = id23;
+            maybeKeysSet.add(id23);
             maybeCount++;
             const saveExpandingFlags = expandingFlags;
             if (recursionFlags & 1) {
@@ -82768,7 +82768,7 @@ ${lanes.join("\n")}
                 }
               }
             } else {
-              relation.set(id22, 2 | propagatingVarianceFlags);
+              relation.set(id23, 2 | propagatingVarianceFlags);
               relationCount--;
               resetMaybeStack(
                 /*markAllAsSucceeded*/
@@ -86760,12 +86760,12 @@ ${lanes.join("\n")}
               }
               let duplicate = false;
               forEachType(discriminant, (t) => {
-                const id22 = getTypeId(getRegularTypeOfLiteralType(t));
-                const existing = map2.get(id22);
+                const id23 = getTypeId(getRegularTypeOfLiteralType(t));
+                const existing = map2.get(id23);
                 if (!existing) {
-                  map2.set(id22, type);
+                  map2.set(id23, type);
                 } else if (existing !== unknownType) {
-                  map2.set(id22, unknownType);
+                  map2.set(id23, unknownType);
                   duplicate = true;
                 }
               });
@@ -87492,9 +87492,9 @@ ${lanes.join("\n")}
             const flags = flow.flags;
             if (flags & 4096) {
               if (!noCacheCheck) {
-                const id22 = getFlowNodeId(flow);
-                const reachable = flowNodeReachable[id22];
-                return reachable !== void 0 ? reachable : flowNodeReachable[id22] = isReachableFlowNodeWorker(
+                const id23 = getFlowNodeId(flow);
+                const reachable = flowNodeReachable[id23];
+                return reachable !== void 0 ? reachable : flowNodeReachable[id23] = isReachableFlowNodeWorker(
                   flow,
                   /*noCacheCheck*/
                   true
@@ -87559,9 +87559,9 @@ ${lanes.join("\n")}
             const flags = flow.flags;
             if (flags & 4096) {
               if (!noCacheCheck) {
-                const id22 = getFlowNodeId(flow);
-                const postSuper = flowNodePostSuper[id22];
-                return postSuper !== void 0 ? postSuper : flowNodePostSuper[id22] = isPostSuperFlowNode(
+                const id23 = getFlowNodeId(flow);
+                const postSuper = flowNodePostSuper[id23];
+                return postSuper !== void 0 ? postSuper : flowNodePostSuper[id23] = isPostSuperFlowNode(
                   flow,
                   /*noCacheCheck*/
                   true
@@ -87933,8 +87933,8 @@ ${lanes.join("\n")}
             ), seenIncomplete);
           }
           function getTypeAtFlowLoopLabel(flow) {
-            const id22 = getFlowNodeId(flow);
-            const cache = flowLoopCaches[id22] || (flowLoopCaches[id22] = /* @__PURE__ */ new Map());
+            const id23 = getFlowNodeId(flow);
+            const cache = flowLoopCaches[id23] || (flowLoopCaches[id23] = /* @__PURE__ */ new Map());
             const key22 = getOrSetCacheKey();
             if (!key22) {
               return declaredType;
@@ -89180,9 +89180,9 @@ ${lanes.join("\n")}
         }
         function markExportAssignmentAliasReferenced(location) {
           if (isIdentifier(location.expression)) {
-            const id22 = location.expression;
+            const id23 = location.expression;
             const sym = getExportSymbolOfValueSymbolIfExported(resolveEntityName(
-              id22,
+              id23,
               -1,
               /*ignoreErrors*/
               true,
@@ -89191,7 +89191,7 @@ ${lanes.join("\n")}
               location
             ));
             if (sym) {
-              markAliasReferenced(sym, id22);
+              markAliasReferenced(sym, id23);
             }
           }
         }
@@ -90434,8 +90434,8 @@ ${lanes.join("\n")}
             return getPropertyOfType(lhsType, getPropertyNameFromType(propType));
           }
           return void 0;
-          function tryGetPrivateIdentifierPropertyOfType(type, id22) {
-            const lexicallyScopedSymbol = lookupSymbolForPrivateIdentifierDeclaration(id22.escapedText, id22);
+          function tryGetPrivateIdentifierPropertyOfType(type, id23) {
+            const lexicallyScopedSymbol = lookupSymbolForPrivateIdentifierDeclaration(id23.escapedText, id23);
             return lexicallyScopedSymbol && getPrivateIdentifierPropertyOfType(type, lexicallyScopedSymbol);
           }
         }
@@ -90470,10 +90470,10 @@ ${lanes.join("\n")}
                 if (overallAnnotation) {
                   return getTypeFromTypeNode(overallAnnotation);
                 } else if (isIdentifier(lhs.expression)) {
-                  const id22 = lhs.expression;
+                  const id23 = lhs.expression;
                   const parentSymbol = resolveName(
-                    id22,
-                    id22.escapedText,
+                    id23,
+                    id23.escapedText,
                     111551,
                     /*nameNotFoundMessage*/
                     void 0,
@@ -102439,21 +102439,21 @@ ${lanes.join("\n")}
         }
         function createIterationTypes(yieldType = neverType, returnType = neverType, nextType = unknownType) {
           if (yieldType.flags & 402431 && returnType.flags & (1 | 262144 | 2 | 16 | 4) && nextType.flags & (1 | 262144 | 2 | 16 | 4)) {
-            const id22 = getTypeListId([yieldType, returnType, nextType]);
-            let iterationTypes = iterationTypesCache.get(id22);
+            const id23 = getTypeListId([yieldType, returnType, nextType]);
+            let iterationTypes = iterationTypesCache.get(id23);
             if (!iterationTypes) {
               iterationTypes = { yieldType, returnType, nextType };
-              iterationTypesCache.set(id22, iterationTypes);
+              iterationTypesCache.set(id23, iterationTypes);
             }
             return iterationTypes;
           }
           return { yieldType, returnType, nextType };
         }
-        function combineIterationTypes(array9) {
+        function combineIterationTypes(array8) {
           let yieldTypes;
           let returnTypes;
           let nextTypes;
-          for (const iterationTypes of array9) {
+          for (const iterationTypes of array8) {
             if (iterationTypes === void 0 || iterationTypes === noIterationTypes) {
               continue;
             }
@@ -104970,9 +104970,9 @@ ${lanes.join("\n")}
           }
           const isIllegalExportDefaultInCJS = !node.isExportEquals && !(node.flags & 33554432) && compilerOptions.verbatimModuleSyntax && host.getEmitModuleFormatOfFile(getSourceFileOfNode(node)) === 1;
           if (node.expression.kind === 80) {
-            const id22 = node.expression;
+            const id23 = node.expression;
             const sym = getExportSymbolOfValueSymbolIfExported(resolveEntityName(
-              id22,
+              id23,
               -1,
               /*ignoreErrors*/
               true,
@@ -104992,19 +104992,19 @@ ${lanes.join("\n")}
                 /* Value */
               );
               if (getSymbolFlags(sym) & 111551) {
-                checkExpressionCached(id22);
+                checkExpressionCached(id23);
                 if (!isIllegalExportDefaultInCJS && !(node.flags & 33554432) && compilerOptions.verbatimModuleSyntax && typeOnlyDeclaration) {
                   error2(
-                    id22,
+                    id23,
                     node.isExportEquals ? Diagnostics.An_export_declaration_must_reference_a_real_value_when_verbatimModuleSyntax_is_enabled_but_0_resolves_to_a_type_only_declaration : Diagnostics.An_export_default_must_reference_a_real_value_when_verbatimModuleSyntax_is_enabled_but_0_resolves_to_a_type_only_declaration,
-                    idText(id22)
+                    idText(id23)
                   );
                 }
               } else if (!isIllegalExportDefaultInCJS && !(node.flags & 33554432) && compilerOptions.verbatimModuleSyntax) {
                 error2(
-                  id22,
+                  id23,
                   node.isExportEquals ? Diagnostics.An_export_declaration_must_reference_a_value_when_verbatimModuleSyntax_is_enabled_but_0_only_refers_to_a_type : Diagnostics.An_export_default_must_reference_a_value_when_verbatimModuleSyntax_is_enabled_but_0_only_refers_to_a_type,
-                  idText(id22)
+                  idText(id23)
                 );
               }
               if (!isIllegalExportDefaultInCJS && !(node.flags & 33554432) && getIsolatedModules(compilerOptions) && !(sym.flags & 111551)) {
@@ -105017,30 +105017,30 @@ ${lanes.join("\n")}
                 );
                 if (sym.flags & 2097152 && nonLocalMeanings & 788968 && !(nonLocalMeanings & 111551) && (!typeOnlyDeclaration || getSourceFileOfNode(typeOnlyDeclaration) !== getSourceFileOfNode(node))) {
                   error2(
-                    id22,
+                    id23,
                     node.isExportEquals ? Diagnostics._0_resolves_to_a_type_and_must_be_marked_type_only_in_this_file_before_re_exporting_when_1_is_enabled_Consider_using_import_type_where_0_is_imported : Diagnostics._0_resolves_to_a_type_and_must_be_marked_type_only_in_this_file_before_re_exporting_when_1_is_enabled_Consider_using_export_type_0_as_default,
-                    idText(id22),
+                    idText(id23),
                     isolatedModulesLikeFlagName
                   );
                 } else if (typeOnlyDeclaration && getSourceFileOfNode(typeOnlyDeclaration) !== getSourceFileOfNode(node)) {
                   addTypeOnlyDeclarationRelatedInfo(
                     error2(
-                      id22,
+                      id23,
                       node.isExportEquals ? Diagnostics._0_resolves_to_a_type_only_declaration_and_must_be_marked_type_only_in_this_file_before_re_exporting_when_1_is_enabled_Consider_using_import_type_where_0_is_imported : Diagnostics._0_resolves_to_a_type_only_declaration_and_must_be_marked_type_only_in_this_file_before_re_exporting_when_1_is_enabled_Consider_using_export_type_0_as_default,
-                      idText(id22),
+                      idText(id23),
                       isolatedModulesLikeFlagName
                     ),
                     typeOnlyDeclaration,
-                    idText(id22)
+                    idText(id23)
                   );
                 }
               }
             } else {
-              checkExpressionCached(id22);
+              checkExpressionCached(id23);
             }
             if (getEmitDeclarations(compilerOptions)) {
               collectLinkedAliases(
-                id22,
+                id23,
                 /*setVisibility*/
                 true
               );
@@ -105064,7 +105064,7 @@ ${lanes.join("\n")}
           }
         }
         function hasExportedMembers(moduleSymbol) {
-          return forEachEntry(moduleSymbol.exports, (_, id22) => id22 !== "export=");
+          return forEachEntry(moduleSymbol.exports, (_, id23) => id23 !== "export=");
         }
         function checkExternalModuleExports(node) {
           const moduleSymbol = getSymbolOfDeclaration(node);
@@ -105079,8 +105079,8 @@ ${lanes.join("\n")}
             }
             const exports22 = getExportsOfModule(moduleSymbol);
             if (exports22) {
-              exports22.forEach(({ declarations, flags }, id22) => {
-                if (id22 === "__export") {
+              exports22.forEach(({ declarations, flags }, id23) => {
+                if (id23 === "__export") {
                   return;
                 }
                 if (flags & (1920 | 384)) {
@@ -105094,7 +105094,7 @@ ${lanes.join("\n")}
                   if (!isDuplicatedCommonJSExport(declarations)) {
                     for (const declaration of declarations) {
                       if (isNotOverload(declaration)) {
-                        diagnostics.add(createDiagnosticForNode(declaration, Diagnostics.Cannot_redeclare_exported_variable_0, unescapeLeadingUnderscores(id22)));
+                        diagnostics.add(createDiagnosticForNode(declaration, Diagnostics.Cannot_redeclare_exported_variable_0, unescapeLeadingUnderscores(id23)));
                       }
                     }
                   }
@@ -105771,9 +105771,9 @@ ${lanes.join("\n")}
           }
           function copySymbol(symbol, meaning2) {
             if (getCombinedLocalAndExportSymbolFlags(symbol) & meaning2) {
-              const id22 = symbol.escapedName;
-              if (!symbols.has(id22)) {
-                symbols.set(id22, symbol);
+              const id23 = symbol.escapedName;
+              if (!symbols.has(id23)) {
+                symbols.set(id23, symbol);
               }
             }
           }
@@ -107481,9 +107481,9 @@ ${lanes.join("\n")}
             }
             if (file.symbol && file.symbol.globalExports) {
               const source = file.symbol.globalExports;
-              source.forEach((sourceSymbol, id22) => {
-                if (!globals.has(id22)) {
-                  globals.set(id22, sourceSymbol);
+              source.forEach((sourceSymbol, id23) => {
+                if (!globals.has(id23)) {
+                  globals.set(id23, sourceSymbol);
                 }
               });
             }
@@ -109363,11 +109363,11 @@ ${lanes.join("\n")}
           Debug.assert(specifier && nodeIsSynthesized(specifier) && specifier.text === "tslib", `Expected sourceFile.imports[0] to be the synthesized tslib import`);
           return specifier;
         }
-        function sortSymbolsIfTSGoCompat(array9) {
-          if (stableTypeOrdering && array9) {
-            return array9.sort(compareSymbols);
+        function sortSymbolsIfTSGoCompat(array8) {
+          if (stableTypeOrdering && array8) {
+            return array8.sort(compareSymbols);
           }
-          return array9;
+          return array8;
         }
         function compareSymbols(s1, s2) {
           if (s1 === s2) return 0;
@@ -112995,8 +112995,8 @@ ${lanes.join("\n")}
           flattenContext.emitBindingOrAssignment(flattenContext.createArrayBindingOrAssignmentPattern(bindingElements), value, location, pattern);
         }
         if (restContainingElements) {
-          for (const [id22, element] of restContainingElements) {
-            flattenBindingOrAssignmentElement(flattenContext, element, id22, element);
+          for (const [id23, element] of restContainingElements) {
+            flattenBindingOrAssignmentElement(flattenContext, element, id23, element);
           }
         }
       }
@@ -132786,13 +132786,13 @@ ${lanes.join("\n")}
           if (node.isDeclarationFile || !(isEffectiveExternalModule(node, compilerOptions) || node.transformFlags & 8388608)) {
             return node;
           }
-          const id22 = getOriginalNodeId(node);
+          const id23 = getOriginalNodeId(node);
           currentSourceFile = node;
           enclosingBlockScopedContainer = node;
-          moduleInfo = moduleInfoMap[id22] = collectExternalModuleInfo(context, node);
+          moduleInfo = moduleInfoMap[id23] = collectExternalModuleInfo(context, node);
           exportFunction = factory2.createUniqueName("exports");
-          exportFunctionsMap[id22] = exportFunction;
-          contextObject = contextObjectMap[id22] = factory2.createUniqueName("context");
+          exportFunctionsMap[id23] = exportFunction;
+          contextObject = contextObjectMap[id23] = factory2.createUniqueName("context");
           const dependencyGroups = collectDependencyGroups(moduleInfo.externalImports);
           const moduleBodyBlock = createSystemModuleBody(node, dependencyGroups);
           const moduleBodyFunction = factory2.createFunctionExpression(
@@ -132850,7 +132850,7 @@ ${lanes.join("\n")}
             moveEmitHelpers(updated, moduleBodyBlock, (helper) => !helper.scoped);
           }
           if (noSubstitution) {
-            noSubstitutionMap[id22] = noSubstitution;
+            noSubstitutionMap[id23] = noSubstitution;
             noSubstitution = void 0;
           }
           currentSourceFile = void 0;
@@ -133920,14 +133920,14 @@ ${lanes.join("\n")}
         }
         function onEmitNode(hint, node, emitCallback) {
           if (node.kind === 308) {
-            const id22 = getOriginalNodeId(node);
+            const id23 = getOriginalNodeId(node);
             currentSourceFile = node;
-            moduleInfo = moduleInfoMap[id22];
-            exportFunction = exportFunctionsMap[id22];
-            noSubstitution = noSubstitutionMap[id22];
-            contextObject = contextObjectMap[id22];
+            moduleInfo = moduleInfoMap[id23];
+            exportFunction = exportFunctionsMap[id23];
+            noSubstitution = noSubstitutionMap[id23];
+            contextObject = contextObjectMap[id23];
             if (noSubstitution) {
-              delete noSubstitutionMap[id22];
+              delete noSubstitutionMap[id23];
             }
             previousOnEmitNode(hint, node, emitCallback);
             currentSourceFile = void 0;
@@ -136480,9 +136480,9 @@ ${lanes.join("\n")}
                 const mods = ensureModifiers(input);
                 needsDeclare = false;
                 visitNode(inner, visitDeclarationStatements);
-                const id22 = getOriginalNodeId(inner);
-                const body3 = lateStatementReplacementMap.get(id22);
-                lateStatementReplacementMap.delete(id22);
+                const id23 = getOriginalNodeId(inner);
+                const body3 = lateStatementReplacementMap.get(id23);
+                lateStatementReplacementMap.delete(id23);
                 return cleanup(updateModuleDeclarationAndKeyword(
                   input,
                   mods,
@@ -148028,8 +148028,8 @@ ${lanes.join("\n")}
         const next = convertOrRepopulateDiagnosticMessageChainArray(chain.next, sourceFile, newProgram, repopulateInfo);
         return next === chain.next ? chain : { ...chain, next };
       }
-      function convertOrRepopulateDiagnosticMessageChainArray(array9, sourceFile, newProgram, repopulateInfo) {
-        return sameMap(array9, (chain) => convertOrRepopulateDiagnosticMessageChain(chain, sourceFile, newProgram, repopulateInfo));
+      function convertOrRepopulateDiagnosticMessageChainArray(array8, sourceFile, newProgram, repopulateInfo) {
+        return sameMap(array8, (chain) => convertOrRepopulateDiagnosticMessageChain(chain, sourceFile, newProgram, repopulateInfo));
       }
       function convertToDiagnostics(diagnostics, diagnosticFilePath, newProgram) {
         if (!diagnostics.length) return emptyArray;
@@ -148680,18 +148680,18 @@ ${lanes.join("\n")}
           const next = toReusableDiagnosticMessageChainArray(chain.next);
           return next === chain.next ? chain : { ...chain, next };
         }
-        function toReusableDiagnosticMessageChainArray(array9) {
-          if (!array9) return array9;
-          return forEach(array9, (chain, index) => {
+        function toReusableDiagnosticMessageChainArray(array8) {
+          if (!array8) return array8;
+          return forEach(array8, (chain, index) => {
             const reusable = toReusableDiagnosticMessageChain(chain);
             if (chain === reusable) return void 0;
-            const result = index > 0 ? array9.slice(0, index - 1) : [];
+            const result = index > 0 ? array8.slice(0, index - 1) : [];
             result.push(reusable);
-            for (let i = index + 1; i < array9.length; i++) {
-              result.push(toReusableDiagnosticMessageChain(array9[i]));
+            for (let i = index + 1; i < array8.length; i++) {
+              result.push(toReusableDiagnosticMessageChain(array8[i]));
             }
             return result;
-          }) || array9;
+          }) || array8;
         }
         function toChangeFileSet() {
           let changeFileSet;
@@ -158303,8 +158303,8 @@ ${lanes.join("\n")}
       function nodeSeenTracker() {
         const seen = [];
         return (node) => {
-          const id22 = getNodeId(node);
-          return !seen[id22] && (seen[id22] = true);
+          const id23 = getNodeId(node);
+          return !seen[id23] && (seen[id23] = true);
         };
       }
       function getSnapshotText(snap) {
@@ -158507,11 +158507,11 @@ ${lanes.join("\n")}
       function getDocumentSpansEqualityComparer(useCaseSensitiveFileNames2) {
         return (a, b) => documentSpansEqual(a, b, useCaseSensitiveFileNames2);
       }
-      function forEachUnique(array9, callback) {
-        if (array9) {
-          for (let i = 0; i < array9.length; i++) {
-            if (array9.indexOf(array9[i]) === i) {
-              const result = callback(array9[i], i);
+      function forEachUnique(array8, callback) {
+        if (array8) {
+          for (let i = 0; i < array8.length; i++) {
+            if (array8.indexOf(array8[i]) === i) {
+              const result = callback(array8[i], i);
               if (result) {
                 return result;
               }
@@ -159806,13 +159806,13 @@ ${lanes.join("\n")}
             const symbolName2 = typeof names3 === "string" ? names3 : names3[0];
             const capitalizedSymbolName = typeof names3 === "string" ? void 0 : names3[1];
             const moduleName = stripQuotes(moduleSymbol.name);
-            const id22 = exportInfoId++;
+            const id23 = exportInfoId++;
             const target = skipAlias(symbol, checker);
             const storedSymbol = symbol.flags & 33554432 ? void 0 : symbol;
             const storedModuleSymbol = moduleSymbol.flags & 33554432 ? void 0 : moduleSymbol;
-            if (!storedSymbol || !storedModuleSymbol) symbols.set(id22, [symbol, moduleSymbol]);
+            if (!storedSymbol || !storedModuleSymbol) symbols.set(id23, [symbol, moduleSymbol]);
             exportInfo.add(key2(symbolName2, symbol, isExternalModuleNameRelative(moduleName) ? void 0 : moduleName, checker), {
-              id: id22,
+              id: id23,
               symbolTableKey,
               symbolName: symbolName2,
               capitalizedSymbolName,
@@ -159873,8 +159873,8 @@ ${lanes.join("\n")}
         return cache;
         function rehydrateCachedInfo(info) {
           if (info.symbol && info.moduleSymbol) return info;
-          const { id: id22, exportKind, targetFlags, isFromPackageJson, moduleFileName } = info;
-          const [cachedSymbol, cachedModuleSymbol] = symbols.get(id22) || emptyArray;
+          const { id: id23, exportKind, targetFlags, isFromPackageJson, moduleFileName } = info;
+          const [cachedSymbol, cachedModuleSymbol] = symbols.get(id23) || emptyArray;
           if (cachedSymbol && cachedModuleSymbol) {
             return {
               symbol: cachedSymbol,
@@ -159893,7 +159893,7 @@ ${lanes.join("\n")}
             exportKind === 2 ? checker.resolveExternalModuleSymbol(moduleSymbol) : checker.tryGetMemberInModuleExportsAndProperties(unescapeLeadingUnderscores(info.symbolTableKey), moduleSymbol),
             `Could not find symbol '${info.symbolName}' by key '${info.symbolTableKey}' in module ${moduleSymbol.name}`
           );
-          symbols.set(id22, [symbol, moduleSymbol]);
+          symbols.set(id23, [symbol, moduleSymbol]);
           return {
             symbol,
             moduleSymbol,
@@ -164305,7 +164305,7 @@ interface Symbol {
         )) {
           return { error: getLocaleSpecificMessage(Diagnostics.This_file_already_has_a_default_export) };
         }
-        const noSymbolError = (id22) => isIdentifier(id22) && checker.getSymbolAtLocation(id22) ? void 0 : { error: getLocaleSpecificMessage(Diagnostics.Can_only_convert_named_export) };
+        const noSymbolError = (id23) => isIdentifier(id23) && checker.getSymbolAtLocation(id23) ? void 0 : { error: getLocaleSpecificMessage(Diagnostics.Can_only_convert_named_export) };
         switch (exportNode.kind) {
           case 263:
           case 264:
@@ -164596,22 +164596,22 @@ interface Symbol {
         let usedAsNamespaceOrDefault = false;
         const nodesToReplace = [];
         const conflictingNames = /* @__PURE__ */ new Map();
-        ts_FindAllReferences_exports.Core.eachSymbolReferenceInFile(toConvert.name, checker, sourceFile, (id22) => {
-          if (!isPropertyAccessOrQualifiedName(id22.parent)) {
+        ts_FindAllReferences_exports.Core.eachSymbolReferenceInFile(toConvert.name, checker, sourceFile, (id23) => {
+          if (!isPropertyAccessOrQualifiedName(id23.parent)) {
             usedAsNamespaceOrDefault = true;
           } else {
-            const exportName = getRightOfPropertyAccessOrQualifiedName(id22.parent).text;
+            const exportName = getRightOfPropertyAccessOrQualifiedName(id23.parent).text;
             if (checker.resolveName(
               exportName,
-              id22,
+              id23,
               -1,
               /*excludeGlobals*/
               true
             )) {
               conflictingNames.set(exportName, true);
             }
-            Debug.assert(getLeftOfPropertyAccessOrQualifiedName(id22.parent) === id22, "Parent expression should match id");
-            nodesToReplace.push(id22.parent);
+            Debug.assert(getLeftOfPropertyAccessOrQualifiedName(id23.parent) === id23, "Parent expression should match id");
+            nodesToReplace.push(id23.parent);
           }
         });
         const exportNameToImportName = /* @__PURE__ */ new Map();
@@ -164668,17 +164668,17 @@ interface Symbol {
           /* ESNext */
         ) : "module";
         function hasNamespaceNameConflict(namedImport) {
-          return !!ts_FindAllReferences_exports.Core.eachSymbolReferenceInFile(namedImport.name, checker, sourceFile, (id22) => {
+          return !!ts_FindAllReferences_exports.Core.eachSymbolReferenceInFile(namedImport.name, checker, sourceFile, (id23) => {
             const symbol = checker.resolveName(
               preferredName,
-              id22,
+              id23,
               -1,
               /*excludeGlobals*/
               true
             );
             if (symbol) {
               if (toConvertSymbols.has(symbol)) {
-                return isExportSpecifier(id22.parent);
+                return isExportSpecifier(id23.parent);
               }
               return true;
             }
@@ -164690,14 +164690,14 @@ interface Symbol {
         const neededNamedImports = /* @__PURE__ */ new Set();
         for (const element of toConvert.elements) {
           const propertyName = element.propertyName || element.name;
-          ts_FindAllReferences_exports.Core.eachSymbolReferenceInFile(element.name, checker, sourceFile, (id22) => {
+          ts_FindAllReferences_exports.Core.eachSymbolReferenceInFile(element.name, checker, sourceFile, (id23) => {
             const access4 = propertyName.kind === 11 ? factory.createElementAccessExpression(factory.createIdentifier(namespaceImportName), factory.cloneNode(propertyName)) : factory.createPropertyAccessExpression(factory.createIdentifier(namespaceImportName), factory.cloneNode(propertyName));
-            if (isShorthandPropertyAssignment(id22.parent)) {
-              changes.replaceNode(sourceFile, id22.parent, factory.createPropertyAssignment(id22.text, access4));
-            } else if (isExportSpecifier(id22.parent)) {
+            if (isShorthandPropertyAssignment(id23.parent)) {
+              changes.replaceNode(sourceFile, id23.parent, factory.createPropertyAssignment(id23.text, access4));
+            } else if (isExportSpecifier(id23.parent)) {
               neededNamedImports.add(element);
             } else {
-              changes.replaceNode(sourceFile, id22, access4);
+              changes.replaceNode(sourceFile, id23, access4);
             }
           });
         }
@@ -164976,11 +164976,11 @@ interface Symbol {
           /*modifiers*/
           void 0,
           name,
-          typeParameters.map((id22) => factory.updateTypeParameterDeclaration(
-            id22,
-            id22.modifiers,
-            id22.name,
-            id22.constraint,
+          typeParameters.map((id23) => factory.updateTypeParameterDeclaration(
+            id23,
+            id23.modifiers,
+            id23.name,
+            id23.constraint,
             /*defaultType*/
             void 0
           )),
@@ -164993,8 +164993,8 @@ interface Symbol {
           /*blankLineBetween*/
           true
         );
-        changes.replaceNodeRange(file, firstTypeNode, lastTypeNode, factory.createTypeReferenceNode(name, typeParameters.map((id22) => factory.createTypeReferenceNode(
-          id22.name,
+        changes.replaceNodeRange(file, firstTypeNode, lastTypeNode, factory.createTypeReferenceNode(name, typeParameters.map((id23) => factory.createTypeReferenceNode(
+          id23.name,
           /*typeArguments*/
           void 0
         ))), { leadingTriviaOption: ts_textChanges_exports.LeadingTriviaOption.Exclude, trailingTriviaOption: ts_textChanges_exports.TrailingTriviaOption.ExcludeWhitespace });
@@ -165020,8 +165020,8 @@ interface Symbol {
           true
         );
         const { firstTypeNode, lastTypeNode } = getNodesToEdit(info);
-        changes.replaceNodeRange(file, firstTypeNode, lastTypeNode, factory.createTypeReferenceNode(name, typeParameters.map((id22) => factory.createTypeReferenceNode(
-          id22.name,
+        changes.replaceNodeRange(file, firstTypeNode, lastTypeNode, factory.createTypeReferenceNode(name, typeParameters.map((id23) => factory.createTypeReferenceNode(
+          id23.name,
           /*typeArguments*/
           void 0
         ))), { leadingTriviaOption: ts_textChanges_exports.LeadingTriviaOption.Exclude, trailingTriviaOption: ts_textChanges_exports.TrailingTriviaOption.ExcludeWhitespace });
@@ -165077,8 +165077,8 @@ interface Symbol {
             true
           );
         }
-        changes.replaceNodeRange(file, firstTypeNode, lastTypeNode, factory.createTypeReferenceNode(name, typeParameters.map((id22) => factory.createTypeReferenceNode(
-          id22.name,
+        changes.replaceNodeRange(file, firstTypeNode, lastTypeNode, factory.createTypeReferenceNode(name, typeParameters.map((id23) => factory.createTypeReferenceNode(
+          id23.name,
           /*typeArguments*/
           void 0
         ))));
@@ -169176,8 +169176,8 @@ ${newComment.split("\n").map((c) => ` * ${c}`).join("\n")}
           let i = 0;
           for (let curr = unmodifiedNode; curr !== void 0 && i < scopes.length; curr = curr.parent) {
             if (curr === scopes[i]) {
-              seenTypeParameterUsages.forEach((typeParameter, id22) => {
-                usagesPerScope[i].typeParameterUsages.set(id22, typeParameter);
+              seenTypeParameterUsages.forEach((typeParameter, id23) => {
+                usagesPerScope[i].typeParameterUsages.set(id23, typeParameter);
               });
               i++;
             }
@@ -175811,7 +175811,7 @@ ${newComment.split("\n").map((c) => ` * ${c}`).join("\n")}
       }
       function collectFreeIdentifiers(file) {
         const map2 = createMultiMap();
-        forEachFreeIdentifier(file, (id22) => map2.add(id22.text, id22));
+        forEachFreeIdentifier(file, (id23) => map2.add(id23.text, id23));
         return map2;
       }
       function forEachFreeIdentifier(node, cb) {
@@ -190925,10 +190925,10 @@ ${newComment.split("\n").map((c) => ` * ${c}`).join("\n")}
           forEachImport(sourceFile, (importDecl, moduleSpecifier) => {
             const moduleSymbol = checker.getSymbolAtLocation(moduleSpecifier);
             if (moduleSymbol) {
-              const id22 = getSymbolId(moduleSymbol).toString();
-              let imports = map2.get(id22);
+              const id23 = getSymbolId(moduleSymbol).toString();
+              let imports = map2.get(id23);
               if (!imports) {
-                map2.set(id22, imports = []);
+                map2.set(id23, imports = []);
               }
               imports.push(importDecl);
             }
@@ -206241,7 +206241,7 @@ ${options.prefix}` : "\n" : options.prefix
         }
         /** @internal */
         installPackage(req) {
-          const { fileName, packageName, projectName, projectRootPath, id: id22 } = req;
+          const { fileName, packageName, projectName, projectRootPath, id: id23 } = req;
           const validationResult = ts_JsTyping_exports.validatePackageName(packageName);
           if (validationResult !== ts_JsTyping_exports.NameValidationResult.Ok) {
             const message = ts_JsTyping_exports.renderPackageNameValidationFailure(validationResult, packageName);
@@ -206251,7 +206251,7 @@ ${options.prefix}` : "\n" : options.prefix
             const response = {
               kind: ActionPackageInstalled,
               projectName,
-              id: id22,
+              id: id23,
               success: false,
               message
             };
@@ -206269,7 +206269,7 @@ ${options.prefix}` : "\n" : options.prefix
               const response = {
                 kind: ActionPackageInstalled,
                 projectName,
-                id: id22,
+                id: id23,
                 success,
                 message
               };
@@ -206279,7 +206279,7 @@ ${options.prefix}` : "\n" : options.prefix
             const response = {
               kind: ActionPackageInstalled,
               projectName,
-              id: id22,
+              id: id23,
               success: false,
               message: "Could not determine a project root path."
             };
@@ -209891,10 +209891,10 @@ ${options.prefix}` : "\n" : options.prefix
         return protocolOptions;
       }
       function convertCompilerOptions(protocolOptions) {
-        compilerOptionConverters.forEach((mappedValues, id22) => {
-          const propertyValue = protocolOptions[id22];
+        compilerOptionConverters.forEach((mappedValues, id23) => {
+          const propertyValue = protocolOptions[id23];
           if (isString(propertyValue)) {
-            protocolOptions[id22] = mappedValues.get(propertyValue.toLowerCase());
+            protocolOptions[id23] = mappedValues.get(propertyValue.toLowerCase());
           }
         });
         if (isArray(protocolOptions.lib)) {
@@ -210279,7 +210279,7 @@ ${options.prefix}` : "\n" : options.prefix
             watchedFiles,
             path2,
             callback,
-            (id22) => ({ eventName: CreateFileWatcherEvent, data: { id: id22, path: path2 } })
+            (id23) => ({ eventName: CreateFileWatcherEvent, data: { id: id23, path: path2 } })
           );
         }
         function watchDirectory(path2, callback, recursive) {
@@ -210287,10 +210287,10 @@ ${options.prefix}` : "\n" : options.prefix
             recursive ? watchedDirectoriesRecursive : watchedDirectories,
             path2,
             callback,
-            (id22) => ({
+            (id23) => ({
               eventName: CreateDirectoryWatcherEvent,
               data: {
-                id: id22,
+                id: id23,
                 path: path2,
                 recursive: !!recursive,
                 // Special case node_modules as we watch it for changes to closed script infos as well
@@ -210301,22 +210301,22 @@ ${options.prefix}` : "\n" : options.prefix
         }
         function getOrCreateFileWatcher({ pathToId, idToCallbacks }, path2, callback, event) {
           const key2 = service.toPath(path2);
-          let id22 = pathToId.get(key2);
-          if (!id22) pathToId.set(key2, id22 = ids6++);
-          let callbacks = idToCallbacks.get(id22);
+          let id23 = pathToId.get(key2);
+          if (!id23) pathToId.set(key2, id23 = ids6++);
+          let callbacks = idToCallbacks.get(id23);
           if (!callbacks) {
-            idToCallbacks.set(id22, callbacks = /* @__PURE__ */ new Set());
-            service.eventHandler(event(id22));
+            idToCallbacks.set(id23, callbacks = /* @__PURE__ */ new Set());
+            service.eventHandler(event(id23));
           }
           callbacks.add(callback);
           return {
             close() {
-              const callbacks2 = idToCallbacks.get(id22);
+              const callbacks2 = idToCallbacks.get(id23);
               if (!(callbacks2 == null ? void 0 : callbacks2.delete(callback))) return;
               if (callbacks2.size) return;
-              idToCallbacks.delete(id22);
+              idToCallbacks.delete(id23);
               pathToId.delete(key2);
-              service.eventHandler({ eventName: CloseFileWatcherEvent, data: { id: id22 } });
+              service.eventHandler({ eventName: CloseFileWatcherEvent, data: { id: id23 } });
             }
           };
         }
@@ -210324,35 +210324,35 @@ ${options.prefix}` : "\n" : options.prefix
           if (isArray(args)) args.forEach(onWatchChangeRequestArgs);
           else onWatchChangeRequestArgs(args);
         }
-        function onWatchChangeRequestArgs({ id: id22, created, deleted, updated }) {
+        function onWatchChangeRequestArgs({ id: id23, created, deleted, updated }) {
           onWatchEventType(
-            id22,
+            id23,
             created,
             0
             /* Created */
           );
           onWatchEventType(
-            id22,
+            id23,
             deleted,
             2
             /* Deleted */
           );
           onWatchEventType(
-            id22,
+            id23,
             updated,
             1
             /* Changed */
           );
         }
-        function onWatchEventType(id22, paths, eventKind) {
+        function onWatchEventType(id23, paths, eventKind) {
           if (!(paths == null ? void 0 : paths.length)) return;
-          forEachCallback(watchedFiles, id22, paths, (callback, eventPath) => callback(eventPath, eventKind));
-          forEachCallback(watchedDirectories, id22, paths, (callback, eventPath) => callback(eventPath));
-          forEachCallback(watchedDirectoriesRecursive, id22, paths, (callback, eventPath) => callback(eventPath));
+          forEachCallback(watchedFiles, id23, paths, (callback, eventPath) => callback(eventPath, eventKind));
+          forEachCallback(watchedDirectories, id23, paths, (callback, eventPath) => callback(eventPath));
+          forEachCallback(watchedDirectoriesRecursive, id23, paths, (callback, eventPath) => callback(eventPath));
         }
-        function forEachCallback(hostWatcherMap, id22, eventPaths, cb) {
+        function forEachCallback(hostWatcherMap, id23, eventPaths, cb) {
           var _a;
-          (_a = hostWatcherMap.idToCallbacks.get(id22)) == null ? void 0 : _a.forEach((callback) => {
+          (_a = hostWatcherMap.idToCallbacks.get(id23)) == null ? void 0 : _a.forEach((callback) => {
             eventPaths.forEach((eventPath) => cb(callback, normalizeSlashes(eventPath)));
           });
         }
@@ -218893,7 +218893,7 @@ Additional information: BADCLIENT: Bad error code, ${badCode} not found in range
 var import_node_readline = require("node:readline");
 
 // core/interfaces/mcp-server.ts
-var import_node_crypto136 = require("node:crypto");
+var import_node_crypto137 = require("node:crypto");
 var import_node_fs32 = require("node:fs");
 
 // common/craft-common-base/src/digest.ts
@@ -218923,7 +218923,7 @@ function payload(record) {
 }
 
 // core/application/craft-service.ts
-var import_node_crypto134 = require("node:crypto");
+var import_node_crypto135 = require("node:crypto");
 
 // common/craft-common-base/src/scope-policy.ts
 var COGNITIVE_SCOPE_KINDS = ["user", "project", "workspace", "task", "session", "team", "organization", "global"];
@@ -218936,9 +218936,9 @@ function scope(value, fallback2) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("scope envelope scope must be an object");
   const item = value;
   const kind4 = required(item.kind, "scope envelope kind");
-  const id22 = required(item.id, "scope envelope id");
-  if (!COGNITIVE_SCOPE_KINDS.includes(kind4) && !(kind4 === "legacy" && fallback2.kind === "legacy" && id22 === fallback2.id)) throw new Error("scope envelope kind is unsupported");
-  return { kind: kind4, id: id22 };
+  const id23 = required(item.id, "scope envelope id");
+  if (!COGNITIVE_SCOPE_KINDS.includes(kind4) && !(kind4 === "legacy" && fallback2.kind === "legacy" && id23 === fallback2.id)) throw new Error("scope envelope kind is unsupported");
+  return { kind: kind4, id: id23 };
 }
 function defaultPurpose(kind4) {
   if (kind4 === "task" || kind4 === "session") return "working_note";
@@ -219048,9 +219048,9 @@ function parseScope(args) {
 }
 function optionalScope(args) {
   const kind4 = args.scope_kind;
-  const id22 = args.scope_id;
+  const id23 = args.scope_id;
   const kindEmpty = kind4 === void 0 || kind4 === null || typeof kind4 === "string" && !kind4.trim();
-  const idEmpty = id22 === void 0 || id22 === null || typeof id22 === "string" && !id22.trim();
+  const idEmpty = id23 === void 0 || id23 === null || typeof id23 === "string" && !id23.trim();
   if (kindEmpty && idEmpty) return null;
   return parseScope(args);
 }
@@ -219066,17 +219066,28 @@ function fallback(value, defaultValue) {
 function optionalText(value, name) {
   return value === void 0 ? null : text(value, name);
 }
+function array(value, name) {
+  if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
+  return value;
+}
+function finiteInteger(value, name, fallback2, minimum = 1, maximum = Number.MAX_SAFE_INTEGER) {
+  const number7 = value === void 0 ? fallback2 : Number(value);
+  if (!Number.isFinite(number7) || !Number.isInteger(number7) || number7 < minimum || number7 > maximum) {
+    throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
+  }
+  return number7;
+}
 
 // common/craft-common-base/src/context-assets.ts
 var CONTEXT_ASSET_MEMBERS = ["knowledge", "memory", "experience", "codebase", "history", "state"];
 function contextAssetRef(member, item, scope3) {
   if (!CONTEXT_ASSET_MEMBERS.includes(member)) throw new Error("Unsupported Context asset member");
-  const id22 = text(item.memory_id ?? item.claim_id ?? item.procedure_id ?? item.node_id ?? item.ref_id ?? item.id, "Context asset id");
+  const id23 = text(item.memory_id ?? item.claim_id ?? item.procedure_id ?? item.node_id ?? item.ref_id ?? item.id, "Context asset id");
   const version3 = item.memory_version ?? item.claim_version ?? item.procedure_version ?? item.record_version ?? item.version;
   if (!Number.isSafeInteger(version3) || Number(version3) < 1) throw new Error("Context asset version must be explicit and positive");
   return {
     member,
-    id: id22,
+    id: id23,
     version: version3,
     content_version: item.content_version ?? version3,
     digest: item.content_digest ?? item.definition_digest ?? item.source_digest ?? stableDigest(item.content ?? item),
@@ -219147,8 +219158,8 @@ var ContextHostEvaluation = class {
   constructor(store) {
     this.store = store;
   }
-  publish(kind4, id22, payload10) {
-    return this.store.transaction(() => this.store.find(kind4, id22) ?? this.store.create(kind4, id22, payload10));
+  publish(kind4, id23, payload10) {
+    return this.store.transaction(() => this.store.find(kind4, id23) ?? this.store.create(kind4, id23, payload10));
   }
   registerHost(args) {
     const host = text(args.host, "host");
@@ -219157,7 +219168,7 @@ var ContextHostEvaluation = class {
     if (mode2 !== "full_mcp" && mode2 !== "native_deferred") throw new Error("Unsupported discovery mode");
     const protocol = text(args.protocol_version, "protocol_version"), schema2 = text(args.tool_schema_digest, "tool_schema_digest");
     const definitionIds = ids(args.definition_ids, "definition_ids", 4096), initialIds = ids(args.initial_ids, "initial_ids", 4096);
-    if (!initialIds.length || initialIds.some((id22) => !definitionIds.includes(id22))) throw new Error("Initial tools must exist in full definitions");
+    if (!initialIds.length || initialIds.some((id23) => !definitionIds.includes(id23))) throw new Error("Initial tools must exist in full definitions");
     if (mode2 === "full_mcp" && initialIds.length !== definitionIds.length) throw new Error("Full MCP must register all definitions");
     if (mode2 === "native_deferred") {
       const evidence2 = this.store.get("evidence", text(args.conformance_evidence_id, "conformance_evidence_id"));
@@ -219820,11 +219831,11 @@ function parseDocument(raw) {
   }
   return { manifest, body: lines.slice(end + 2).join("\n") };
 }
-function safeFileName(id22) {
-  if (!id22.trim() || id22.includes("/") || id22.includes("\\") || id22.includes("..")) throw new Error("Content record_id is an unsafe identifier");
-  if (SAFE_ID.test(id22)) return id22;
-  const digest35 = (0, import_node_crypto2.createHash)("sha256").update(id22).digest("hex").slice(0, 12);
-  return `${id22.replace(/[^A-Za-z0-9._-]/gu, "_")}-${digest35}`;
+function safeFileName(id23) {
+  if (!id23.trim() || id23.includes("/") || id23.includes("\\") || id23.includes("..")) throw new Error("Content record_id is an unsafe identifier");
+  if (SAFE_ID.test(id23)) return id23;
+  const digest35 = (0, import_node_crypto2.createHash)("sha256").update(id23).digest("hex").slice(0, 12);
+  return `${id23.replace(/[^A-Za-z0-9._-]/gu, "_")}-${digest35}`;
 }
 function titleFromBody(body3) {
   const heading2 = body3.split(/\r?\n/u).find((line2) => /^\s{0,3}#{1,6}\s+\S/u.test(line2));
@@ -220174,51 +220185,51 @@ var CraftStore = class {
   legacyDatabaseDetected() {
     return (0, import_node_fs5.existsSync)(this.paths.legacyDatabaseFile);
   }
-  save(kind4, id22, payload10, version3) {
-    return this.transaction((database) => this.insert(database, { kind: kind4, id: id22, payload: payload10, version: version3 }));
+  save(kind4, id23, payload10, version3) {
+    return this.transaction((database) => this.insert(database, { kind: kind4, id: id23, payload: payload10, version: version3 }));
   }
-  create(kind4, id22, payload10) {
+  create(kind4, id23, payload10) {
     return this.transaction((database) => {
-      const existing = database.prepare("SELECT 1 present FROM records WHERE kind=? AND id=? LIMIT 1").get(kind4, id22);
-      if (existing) throw new Error(`${kind4} already exists: ${id22}`);
-      return this.insert(database, { kind: kind4, id: id22, payload: payload10, version: 1 });
+      const existing = database.prepare("SELECT 1 present FROM records WHERE kind=? AND id=? LIMIT 1").get(kind4, id23);
+      if (existing) throw new Error(`${kind4} already exists: ${id23}`);
+      return this.insert(database, { kind: kind4, id: id23, payload: payload10, version: 1 });
     });
   }
   saveBatch(entries2) {
     if (!entries2.length) return [];
     return this.transaction((database) => entries2.map((entry2) => this.insert(database, entry2)));
   }
-  updateIfVersion(kind4, id22, expectedVersion, payload10) {
+  updateIfVersion(kind4, id23, expectedVersion, payload10) {
     return this.transaction((database) => {
       const current2 = Number(database.prepare(
         "SELECT COALESCE(MAX(version),0) AS version FROM records WHERE kind=? AND id=?"
-      ).get(kind4, id22).version);
-      if (current2 !== expectedVersion) throw new Error(`Concurrent update detected for ${kind4}: ${id22}`);
-      return this.insert(database, { kind: kind4, id: id22, payload: payload10, version: current2 + 1 });
+      ).get(kind4, id23).version);
+      if (current2 !== expectedVersion) throw new Error(`Concurrent update detected for ${kind4}: ${id23}`);
+      return this.insert(database, { kind: kind4, id: id23, payload: payload10, version: current2 + 1 });
     });
   }
   insert(database, entry2) {
-    const { kind: kind4, id: id22, version: version3 } = entry2;
+    const { kind: kind4, id: id23, version: version3 } = entry2;
     const payload10 = payloadOnly(entry2.payload);
     const now3 = (/* @__PURE__ */ new Date()).toISOString();
     const next = version3 ?? Number(database.prepare(
       "SELECT COALESCE(MAX(version),0)+1 AS version FROM records WHERE kind=? AND id=?"
-    ).get(kind4, id22).version);
+    ).get(kind4, id23).version);
     database.prepare(`INSERT INTO records(
-        kind,id,version,payload_json,created_at,updated_at) VALUES(?,?,?,?,?,?)`).run(kind4, id22, next, JSON.stringify(payload10), now3, now3);
-    return { ...payload10, id: id22, version: next, created_at: now3, updated_at: now3 };
+        kind,id,version,payload_json,created_at,updated_at) VALUES(?,?,?,?,?,?)`).run(kind4, id23, next, JSON.stringify(payload10), now3, now3);
+    return { ...payload10, id: id23, version: next, created_at: now3, updated_at: now3 };
   }
-  find(kind4, id22, version3, hydrate = true) {
+  find(kind4, id23, version3, hydrate = true) {
     const row = version3 === void 0 ? this.database.prepare(
       "SELECT * FROM records WHERE kind=? AND id=? ORDER BY version DESC LIMIT 1"
-    ).get(kind4, id22) : this.database.prepare(
+    ).get(kind4, id23) : this.database.prepare(
       "SELECT * FROM records WHERE kind=? AND id=? AND version=?"
-    ).get(kind4, id22, version3);
+    ).get(kind4, id23, version3);
     return row ? this.record(row, hydrate) : null;
   }
-  get(kind4, id22, version3) {
-    const record = this.find(kind4, id22, version3);
-    if (!record) throw new Error(`Unknown ${kind4}: ${id22}`);
+  get(kind4, id23, version3) {
+    const record = this.find(kind4, id23, version3);
+    if (!record) throw new Error(`Unknown ${kind4}: ${id23}`);
     return record;
   }
   list(kind4, limit3 = 20, predicate, hydrate = true, dependencies) {
@@ -220275,9 +220286,9 @@ var CraftStore = class {
       ) latest ON latest.id=r.id AND latest.version=r.version WHERE r.kind=?`).get(kind4, kind4).count);
   }
   /** Bounded metadata history for one asset. Scope/ACL checks belong to its caller. */
-  history(kind4, id22, before, limit3) {
+  history(kind4, id23, before, limit3) {
     if (!Number.isSafeInteger(before) || before < 1 || !Number.isSafeInteger(limit3) || limit3 < 1 || limit3 > 101) throw new Error("Invalid history bounds");
-    const rows4 = this.database.prepare("SELECT * FROM records WHERE kind=? AND id=? AND version<? ORDER BY version DESC LIMIT ?").all(kind4, id22, before, limit3);
+    const rows4 = this.database.prepare("SELECT * FROM records WHERE kind=? AND id=? AND version<? ORDER BY version DESC LIMIT ?").all(kind4, id23, before, limit3);
     return rows4.map((row) => ({ ...JSON.parse(String(row.payload_json)), id: row.id, version: row.version, created_at: row.created_at, updated_at: row.updated_at }));
   }
   /** Return every stored version without hydrating Markdown content. Used by
@@ -220298,10 +220309,10 @@ var CraftStore = class {
   }
   /** Migration-only in-place payload replacement. The caller must create a
    * database backup first; ordinary domain updates remain append-only. */
-  replacePayload(kind4, id22, version3, payload10) {
+  replacePayload(kind4, id23, version3, payload10) {
     this.transaction((database) => {
-      const result = database.prepare("UPDATE records SET payload_json=?,updated_at=? WHERE kind=? AND id=? AND version=?").run(JSON.stringify(payloadOnly(payload10)), (/* @__PURE__ */ new Date()).toISOString(), kind4, id22, version3);
-      if (Number(result.changes) !== 1) throw new Error(`Unknown record version: ${kind4}/${id22}/${version3}`);
+      const result = database.prepare("UPDATE records SET payload_json=?,updated_at=? WHERE kind=? AND id=? AND version=?").run(JSON.stringify(payloadOnly(payload10)), (/* @__PURE__ */ new Date()).toISOString(), kind4, id23, version3);
+      if (Number(result.changes) !== 1) throw new Error(`Unknown record version: ${kind4}/${id23}/${version3}`);
     });
   }
   replacePayloadBatch(entries2) {
@@ -220323,9 +220334,9 @@ var CraftStore = class {
       return { ...item, score };
     }).filter((item) => Number(item.score) > 0).sort((left, right) => Number(right.score) - Number(left.score)).slice(0, bounded4);
   }
-  remove(kind4, id22) {
+  remove(kind4, id23) {
     return this.transaction((database) => {
-      const changes = Number(database.prepare("DELETE FROM records WHERE kind=? AND id=?").run(kind4, id22).changes);
+      const changes = Number(database.prepare("DELETE FROM records WHERE kind=? AND id=?").run(kind4, id23).changes);
       return changes;
     });
   }
@@ -220358,8 +220369,8 @@ var CraftStore = class {
   removeTraceRecords(traceId, eventIds, feedbackIds) {
     return this.transaction((database) => {
       let changes = Number(database.prepare("DELETE FROM records WHERE kind='trace' AND id=?").run(traceId).changes);
-      for (const id22 of eventIds) changes += Number(database.prepare("DELETE FROM records WHERE kind='trace_event' AND id=?").run(id22).changes);
-      for (const id22 of feedbackIds) changes += Number(database.prepare("DELETE FROM records WHERE kind='trace_feedback' AND id=?").run(id22).changes);
+      for (const id23 of eventIds) changes += Number(database.prepare("DELETE FROM records WHERE kind='trace_event' AND id=?").run(id23).changes);
+      for (const id23 of feedbackIds) changes += Number(database.prepare("DELETE FROM records WHERE kind='trace_feedback' AND id=?").run(id23).changes);
       changes += Number(database.prepare("DELETE FROM events WHERE stream=?").run(`trace:${traceId}`).changes);
       return changes;
     });
@@ -220824,104 +220835,6 @@ function submitNode(nodes, leaseId, verdict, provenance2) {
   return propagated;
 }
 
-// core/evaluation.ts
-function numericValues(records2, field) {
-  const values3 = /* @__PURE__ */ new Map();
-  for (const record of records2) {
-    const metrics = record[field];
-    for (const [name, value] of Object.entries(metrics)) {
-      if (typeof value !== "number" || !Number.isFinite(value)) continue;
-      values3.set(name, [...values3.get(name) ?? [], value]);
-    }
-  }
-  return values3;
-}
-function summarize(records2, field, includeSum) {
-  return Object.fromEntries([...numericValues(records2, field)].sort(([left], [right]) => left.localeCompare(right)).map(([name, values3]) => {
-    const sum = values3.reduce((total, value) => total + value, 0);
-    return [name, {
-      count: values3.length,
-      mean: sum / values3.length,
-      min: Math.min(...values3),
-      max: Math.max(...values3),
-      ...includeSum ? { sum } : {}
-    }];
-  }));
-}
-function aggregateEvaluation(run, trials, outcomes) {
-  const verdictCounts = {};
-  const failureTypes = {};
-  for (const outcome2 of outcomes) {
-    const verdict = String(outcome2.verdict);
-    verdictCounts[verdict] = (verdictCounts[verdict] ?? 0) + 1;
-    if (verdict !== "passed") {
-      const failureType = typeof outcome2.failure_type === "string" && outcome2.failure_type ? outcome2.failure_type : "unspecified";
-      failureTypes[failureType] = (failureTypes[failureType] ?? 0) + 1;
-    }
-  }
-  return {
-    evaluation_run_id: run.id,
-    suite_id: run.suite_id,
-    suite_version: run.suite_version,
-    split: run.split,
-    subject_type: run.subject_type,
-    subject_id: run.subject_id,
-    subject_version: run.subject_version,
-    trial_ids: trials.map((trial) => trial.id),
-    case_ids: trials.map((trial) => trial.case_id).sort(),
-    total: outcomes.length,
-    verdict_counts: verdictCounts,
-    pass_rate: outcomes.filter((outcome2) => outcome2.verdict === "passed").length / outcomes.length,
-    scores: summarize(outcomes, "scores", false),
-    costs: summarize(outcomes, "costs", true),
-    failure_types: failureTypes
-  };
-}
-function metricDeltas(baseline, candidate2) {
-  const names3 = [.../* @__PURE__ */ new Set([...Object.keys(baseline), ...Object.keys(candidate2)])].sort();
-  return Object.fromEntries(names3.map((name) => {
-    const baselineMean = baseline[name]?.mean;
-    const candidateMean = candidate2[name]?.mean;
-    return [name, {
-      baseline: baselineMean ?? null,
-      candidate: candidateMean ?? null,
-      delta: typeof baselineMean === "number" && typeof candidateMean === "number" ? candidateMean - baselineMean : null
-    }];
-  }));
-}
-function countDeltas(baseline, candidate2) {
-  const names3 = [.../* @__PURE__ */ new Set([...Object.keys(baseline), ...Object.keys(candidate2)])].sort();
-  return Object.fromEntries(names3.map((name) => {
-    const baselineCount = Number(baseline[name] ?? 0);
-    const candidateCount = Number(candidate2[name] ?? 0);
-    return [name, { baseline: baselineCount, candidate: candidateCount, delta: candidateCount - baselineCount }];
-  }));
-}
-function compareEvaluationAggregates(baseline, candidate2) {
-  const scores = metricDeltas(baseline.scores, candidate2.scores);
-  const costs = metricDeltas(baseline.costs, candidate2.costs);
-  const signals = [
-    candidate2.pass_rate - baseline.pass_rate,
-    ...Object.values(scores).map((item) => item.delta).filter((value) => typeof value === "number"),
-    ...Object.values(costs).map((item) => item.delta).filter((value) => typeof value === "number").map((value) => -value)
-  ];
-  const improved = signals.some((value) => value > 0);
-  const regressed = signals.some((value) => value < 0);
-  const assessment = improved && regressed ? "mixed" : improved ? "improved" : regressed ? "regressed" : "equivalent";
-  return {
-    pass_rate: {
-      baseline: baseline.pass_rate,
-      candidate: candidate2.pass_rate,
-      delta: candidate2.pass_rate - baseline.pass_rate
-    },
-    scores,
-    costs,
-    verdict_counts: countDeltas(baseline.verdict_counts, candidate2.verdict_counts),
-    failure_types: countDeltas(baseline.failure_types, candidate2.failure_types),
-    assessment
-  };
-}
-
 // core/skill-publisher.ts
 var import_node_crypto4 = require("node:crypto");
 var import_promises3 = require("node:fs/promises");
@@ -221321,15 +221234,15 @@ function normalizeModels(value) {
   return value.map(function(item, index) {
     if (!item || typeof item !== "object" || Array.isArray(item)) throw new Error(`models[${index}] must be an object`);
     const entry2 = item;
-    const id22 = text2(entry2.id, `models[${index}].id`, `model-${index}`);
-    if (seen.has(id22)) throw new Error(`Duplicate model id: ${id22}`);
-    seen.add(id22);
+    const id23 = text2(entry2.id, `models[${index}].id`, `model-${index}`);
+    if (seen.has(id23)) throw new Error(`Duplicate model id: ${id23}`);
+    seen.add(id23);
     const protocol = text2(entry2.protocol, `models[${index}].protocol`, "openai-compatible");
     if (protocol !== "openai-compatible" && protocol !== "anthropic") throw new Error(`models[${index}].protocol must be openai-compatible or anthropic`);
     const supportsTools = entry2.supportsTools === void 0 ? true : Boolean(entry2.supportsTools);
     return {
-      id: id22,
-      name: text2(entry2.name, `models[${index}].name`, id22),
+      id: id23,
+      name: text2(entry2.name, `models[${index}].name`, id23),
       protocol,
       baseUrl: httpUrl(entry2.baseUrl, `models[${index}].baseUrl`, "https://api.openai.com/v1"),
       model: text2(entry2.model, `models[${index}].model`, "gpt-4o-mini"),
@@ -221812,10 +221725,10 @@ function nonNegative(value, name, fallback2) {
   return Math.round(result);
 }
 function assetDigest(envelope) {
-  const { kind: kind4, id: id22, version: version3, source, trust, health, effect_scope, cost_profile, policy, tags: tags2, stability } = envelope;
+  const { kind: kind4, id: id23, version: version3, source, trust, health, effect_scope, cost_profile, policy, tags: tags2, stability } = envelope;
   return `sha256:${(0, import_node_crypto8.createHash)("sha256").update(JSON.stringify({
     kind: kind4,
-    id: id22,
+    id: id23,
     version: version3,
     source,
     trust,
@@ -221829,8 +221742,8 @@ function assetDigest(envelope) {
 }
 function defineAsset(input) {
   const kind4 = oneOf(input.kind, "kind", KIND_IDS);
-  const id22 = text(input.id, "id");
-  if (!ASSET_ID.test(id22)) throw new Error(`Unsupported asset id: ${id22}`);
+  const id23 = text(input.id, "id");
+  if (!ASSET_ID.test(id23)) throw new Error(`Unsupported asset id: ${id23}`);
   const version3 = input.version === void 0 ? 1 : Number(input.version);
   if (!Number.isInteger(version3) || version3 < 1) throw new Error("Asset version must be a positive integer");
   const rawStability = input.stability ?? {};
@@ -221843,7 +221756,7 @@ function defineAsset(input) {
   if (typeof cost !== "object" || Array.isArray(cost)) throw new Error("Asset cost_profile must be an object");
   const base = {
     kind: kind4,
-    id: id22,
+    id: id23,
     version: version3,
     source: text(input.source, "source"),
     trust: oneOf(input.trust ?? "unverified", "trust", TRUSTS),
@@ -222024,8 +221937,8 @@ function optionalText3(value, name) {
 function normalizeWorkflowDefinition(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("Workflow definition must be an object");
   const input = raw;
-  const id22 = text(input.id, "workflow id");
-  if (!WORKFLOW_ID.test(id22)) throw new Error(`Unsupported workflow id: ${id22}`);
+  const id23 = text(input.id, "workflow id");
+  if (!WORKFLOW_ID.test(id23)) throw new Error(`Unsupported workflow id: ${id23}`);
   const version3 = input.version === void 0 ? 1 : Number(input.version);
   if (!Number.isInteger(version3) || version3 < 1) throw new Error("Workflow version must be a positive integer");
   const status2 = optionalText3(input.status, "workflow status") ?? "active";
@@ -222042,7 +221955,7 @@ function normalizeWorkflowDefinition(raw) {
   if (!Array.isArray(rawSteps) || !rawSteps.length) throw new Error("Workflow requires at least one step");
   const steps = normalizeSteps(rawSteps);
   return {
-    id: id22,
+    id: id23,
     version: version3,
     title: text(input.title, "workflow title"),
     domain: optionalText3(input.domain, "workflow domain"),
@@ -222148,12 +222061,6 @@ function planWorkflowRetirement(usage2, options) {
   }).sort((a, b) => a.workflow_id.localeCompare(b.workflow_id));
 }
 
-// core/knowledge-index.ts
-var import_node_crypto10 = require("node:crypto");
-var import_node_fs10 = require("node:fs");
-var import_node_path9 = require("node:path");
-var import_node_sqlite2 = require("node:sqlite");
-
 // core/token-budget.ts
 var CJK = /[\u3000-\u303f\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff00-\uffef]/u;
 var STANDARD_STEPS = 4;
@@ -222234,473 +222141,6 @@ function routeModel(request2) {
   return { tier: request2.tier, model: null, downgraded: false, reason: `host_default:${host}` };
 }
 
-// core/compaction.ts
-function digestOf(segments) {
-  return digestJson(segments.map((segment2) => ({ id: segment2.id, role: segment2.role ?? null, content: segment2.content })));
-}
-function compact(request2) {
-  const estimate = request2.estimate ?? estimateTokens;
-  if (typeof estimate !== "function") throw new Error("compaction requires a token estimator");
-  if (!Number.isInteger(request2.max_tokens) || request2.max_tokens < 1) throw new Error("max_tokens must be a positive integer");
-  const share = request2.tail_share ?? 0;
-  if (!Number.isFinite(share) || share < 0 || share > 1) throw new Error("tail_share must be between 0 and 1");
-  if (!Array.isArray(request2.segments)) throw new Error("segments must be an array");
-  const cost = (segment2) => {
-    const value = segment2.tokens ?? estimate(String(segment2.content ?? ""));
-    if (!Number.isFinite(value) || value < 0) throw new Error(`segment ${segment2.id} has an invalid token cost`);
-    return value;
-  };
-  const ids6 = request2.segments.map((segment2) => String(segment2.id));
-  if (new Set(ids6).size !== ids6.length) throw new Error("segment ids must be unique");
-  const protectedIds = new Set(request2.protect ?? []);
-  const protectedSegments = request2.segments.filter((segment2) => protectedIds.has(String(segment2.id)));
-  const matched = new Set(protectedSegments.map((segment2) => String(segment2.id)));
-  const unbound = [...protectedIds].filter((id22) => !matched.has(id22)).sort();
-  const protectedTokens = protectedSegments.reduce((sum, segment2) => sum + cost(segment2), 0);
-  let evictable = request2.segments.filter((segment2) => !protectedIds.has(String(segment2.id)));
-  const kept = /* @__PURE__ */ new Set();
-  let tokens = 0;
-  if (share > 0 && evictable.length) {
-    const ceiling = Math.floor(request2.max_tokens * share);
-    const reserved = [];
-    for (let index = evictable.length - 1; index >= 0; index -= 1) {
-      const segment2 = evictable[index];
-      const value = cost(segment2);
-      if (tokens + value > ceiling) break;
-      reserved.unshift(segment2);
-      tokens += value;
-      kept.add(String(segment2.id));
-    }
-    const reservedIds = new Set(reserved.map((segment2) => String(segment2.id)));
-    evictable = evictable.filter((segment2) => !reservedIds.has(String(segment2.id)));
-  }
-  const position = new Map(request2.segments.map((segment2, index) => [String(segment2.id), index]));
-  const ranked = [...evictable].sort((left, right) => (right.weight ?? 1) - (left.weight ?? 1) || position.get(String(right.id)) - position.get(String(left.id)));
-  for (const segment2 of ranked) {
-    const value = cost(segment2);
-    if (tokens + value > request2.max_tokens) continue;
-    kept.add(String(segment2.id));
-    tokens += value;
-  }
-  const keptIds = request2.segments.filter((segment2) => kept.has(String(segment2.id)) || protectedIds.has(String(segment2.id))).map((segment2) => String(segment2.id));
-  const keptSet = new Set(keptIds);
-  const elidedIds = request2.segments.filter((segment2) => !keptSet.has(String(segment2.id))).map((segment2) => String(segment2.id));
-  const elided = request2.segments.filter((segment2) => !keptSet.has(String(segment2.id)));
-  const summary2 = elided.length === 0 ? null : request2.summarize ? request2.summarize(elided) : `Compacted ${elided.length} earlier segment(s); retain only their digest for replay: ${digestOf(elided)}`;
-  return {
-    kept: keptIds,
-    elided: elidedIds,
-    protected_ids: protectedSegments.map((segment2) => String(segment2.id)),
-    unbound,
-    tokens,
-    protected_tokens: protectedTokens,
-    total_tokens: tokens + protectedTokens,
-    summary: summary2,
-    complete: elided.length === 0,
-    unchanged: elided.length === 0
-  };
-}
-function compactWithPromotion(request2, promoteId) {
-  const target = request2.segments.find((segment2) => String(segment2.id) === promoteId);
-  if (!target) throw new Error(`Context segment ${promoteId} does not exist`);
-  const ceiling = Math.max(0, ...request2.segments.map((segment2) => segment2.weight ?? 1));
-  const promoted = {
-    ...request2,
-    segments: request2.segments.map((segment2) => String(segment2.id) === promoteId ? { ...segment2, weight: ceiling + 1 } : segment2)
-  };
-  const result = compact(promoted);
-  if (!result.kept.includes(promoteId)) {
-    throw new Error(`Context segment ${promoteId} cannot be restored within ${request2.max_tokens} tokens`);
-  }
-  return result;
-}
-
-// common/craft-common-base/src/bm25.ts
-var IDENTIFIER = /[A-Za-z]*\d|^[0-9a-f]{8,}$|[-_/.:]{1}/u;
-function tokenize(value) {
-  const segmenter = new Intl.Segmenter("zh", { granularity: "word" });
-  return value.toLowerCase().split(/[^\p{L}\p{N}_.:/-]+/u).map((token) => token.replace(/^[.:/]+|[.:/]+$/gu, "")).filter(Boolean).flatMap((word) => new RegExp("\\p{Script=Han}", "u").test(word) ? [...segmenter.segment(word)].filter((part) => part.isWordLike).map((part) => part.segment) : [word]);
-}
-var Bm25Index = class {
-  // Tokens and their length live in one entry so a document can never be
-  // half-registered, which removes the need for defensive fallbacks in score().
-  #entries = /* @__PURE__ */ new Map();
-  #totalLength = 0;
-  #documentFrequency = /* @__PURE__ */ new Map();
-  /** Standard BM25 saturation and length-normalisation constants. */
-  #k1;
-  #b;
-  constructor(options = {}) {
-    this.#k1 = options.k1 ?? 1.2;
-    this.#b = options.b ?? 0.75;
-    if (!(this.#k1 > 0)) throw new Error("BM25 k1 must be positive");
-    if (!(this.#b >= 0 && this.#b <= 1)) throw new Error("BM25 b must be between 0 and 1");
-  }
-  get size() {
-    return this.#entries.size;
-  }
-  add(id22, value) {
-    const key2 = text(id22, "id");
-    if (this.#entries.has(key2)) throw new Error(`BM25 document ${key2} already exists`);
-    const tokens = tokenize(text(value, "value"));
-    this.#entries.set(key2, { tokens, length: tokens.length });
-    this.#totalLength += tokens.length;
-    for (const term of new Set(tokens)) {
-      this.#documentFrequency.set(term, (this.#documentFrequency.get(term) ?? 0) + 1);
-    }
-  }
-  /**
-   * Mean document length. Only ever called with at least one document — score()
-   * returns early on an empty index — so there is no empty-corpus case to guard.
-   */
-  #averageLength() {
-    return this.#totalLength / this.#entries.size;
-  }
-  score(query) {
-    const terms3 = tokenize(text(query, "query"));
-    if (!terms3.length || !this.#entries.size) return [];
-    const total = this.#entries.size;
-    const queryIdentifiers = terms3.filter((term) => IDENTIFIER.test(term));
-    const results = [];
-    for (const [id22, entry2] of this.#entries) {
-      const frequencies = /* @__PURE__ */ new Map();
-      for (const token of entry2.tokens) frequencies.set(token, (frequencies.get(token) ?? 0) + 1);
-      let score = 0;
-      for (const term of terms3) {
-        const frequency = frequencies.get(term) ?? 0;
-        if (!frequency) continue;
-        const df = this.#documentFrequency.get(term);
-        const idf = Math.log(1 + (total - df + 0.5) / (df + 0.5));
-        score += idf * (frequency * (this.#k1 + 1) / (frequency + this.#k1 * (1 - this.#b + this.#b * (entry2.length / this.#averageLength()))));
-      }
-      if (score <= 0) continue;
-      const joined = entry2.tokens.join(" ");
-      const exact = queryIdentifiers.some((term) => joined.includes(term));
-      if (exact) score += 10;
-      results.push({ id: id22, score, exact_identifier: exact });
-    }
-    return results.sort((left, right) => right.score - left.score || left.id.localeCompare(right.id));
-  }
-};
-
-// core/context-retrieval-capture.ts
-function fuseRankings(rankings, k = 60) {
-  if (!Number.isFinite(k) || k <= 0) throw new Error("Fusion k must be a positive number");
-  const scores = /* @__PURE__ */ new Map();
-  for (const ranking of rankings) {
-    ranking.forEach((item, index) => {
-      const current2 = scores.get(item.id) ?? { score: 0, sources: 0 };
-      current2.score += 1 / (k + index + 1);
-      current2.sources += 1;
-      scores.set(item.id, current2);
-    });
-  }
-  return [...scores].map(([id22, value]) => ({ id: id22, score: value.score, sources: value.sources })).sort((left, right) => right.score - left.score || left.id.localeCompare(right.id));
-}
-var WEIGHTS = { failure: 30, retry: 8, correction: 26, breadth: 3, novelty: 15, explicit: 50 };
-function decideExperienceCapture(input) {
-  const outcome2 = String(input.outcome);
-  if (!["succeeded", "failed", "abandoned"].includes(outcome2)) throw new Error("Capture outcome is unsupported");
-  const retries = Number(input.retries ?? 0);
-  const corrections = Number(input.corrections ?? 0);
-  const distinctTools = Number(input.distinct_tools ?? 0);
-  for (const [name, value] of [["retries", retries], ["corrections", corrections], ["distinct_tools", distinctTools]]) {
-    if (!Number.isInteger(value) || value < 0) throw new Error(`${name} must be a non-negative integer`);
-  }
-  const novel = input.novel === true;
-  const explicit = input.user_explicit === true;
-  const threshold = input.threshold === void 0 ? 25 : Number(input.threshold);
-  if (!Number.isFinite(threshold) || threshold < 0) throw new Error("Capture threshold must be a non-negative number");
-  const reasons = [];
-  let score = 0;
-  if (outcome2 !== "succeeded") {
-    score += WEIGHTS.failure;
-    reasons.push(`outcome_${outcome2}`);
-  }
-  if (retries > 0) {
-    score += retries * WEIGHTS.retry;
-    reasons.push(`retries_${retries}`);
-  }
-  if (corrections > 0) {
-    score += corrections * WEIGHTS.correction;
-    reasons.push(`corrections_${corrections}`);
-  }
-  if (distinctTools > 2) {
-    score += (distinctTools - 2) * WEIGHTS.breadth;
-    reasons.push(`breadth_${distinctTools}`);
-  }
-  if (novel) {
-    score += WEIGHTS.novelty;
-    reasons.push("novel_situation");
-  }
-  if (explicit) {
-    score += WEIGHTS.explicit;
-    reasons.push("user_requested");
-  }
-  const kind4 = explicit ? "working_pattern" : corrections > 0 ? "correction" : outcome2 !== "succeeded" ? "failure_lesson" : "routine";
-  return {
-    capture: score >= threshold,
-    score,
-    threshold,
-    reasons,
-    kind: kind4,
-    // Deterministic so capturing the same experience twice is detectable.
-    dedupe_key: digestJson({ outcome: outcome2, kind: kind4, reasons, retries, corrections, distinctTools, novel })
-  };
-}
-function buildExperienceRecord(input) {
-  const decision = decideExperienceCapture(input);
-  if (!decision.capture) throw new Error("Experience did not meet the capture threshold");
-  const summary2 = text(input.summary, "summary");
-  const taskId3 = input.task_id === void 0 ? null : text(input.task_id, "task_id");
-  return {
-    experience_id: String(input.experience_id ?? `exp_${decision.dedupe_key.slice(-24)}`),
-    kind: decision.kind,
-    scope: input.scope === void 0 ? "project" : text(input.scope, "scope"),
-    task_id: taskId3,
-    summary: summary2,
-    reasons: decision.reasons,
-    score: decision.score,
-    // Provenance is what separates a captured lesson from a guess.
-    provenance: { source: "deterministic_capture", captured_by: "runtime", signals_digest: decision.dedupe_key },
-    // Only failures and corrections need a human look: they describe something
-    // that went wrong. A user-requested working pattern is already vouched for
-    // by the person who asked for it, so gating it behind review would add
-    // friction without adding safety.
-    requires_review: decision.kind === "failure_lesson" || decision.kind === "correction"
-  };
-}
-
-// core/knowledge-index.ts
-var MAX_FILES2 = 2e3;
-var DEFAULT_CHUNK_CHARS = 4e3;
-var SEARCH_CANDIDATES = 200;
-var KNOWLEDGE_SCOPES = ["user", "project", "task"];
-function digest2(value) {
-  return `sha256:${(0, import_node_crypto10.createHash)("sha256").update(value).digest("hex")}`;
-}
-function walk2(current2, found, limit3) {
-  for (const entry2 of (0, import_node_fs10.readdirSync)(current2, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
-    const absolute = (0, import_node_path9.join)(current2, entry2.name);
-    if ((0, import_node_fs10.lstatSync)(absolute).isSymbolicLink()) continue;
-    if (entry2.isDirectory()) {
-      walk2(absolute, found, limit3);
-      continue;
-    }
-    if (!entry2.name.endsWith(".md")) continue;
-    found.push(absolute);
-    if (found.length > limit3) throw new Error(`Knowledge base exceeds ${limit3} files`);
-  }
-}
-function scanKnowledgeBase(root, options = {}) {
-  const base = (0, import_node_path9.resolve)(root);
-  if (!(0, import_node_fs10.existsSync)(base)) throw new Error("Knowledge base root does not exist");
-  const limit3 = options.limit ?? MAX_FILES2;
-  if (!Number.isInteger(limit3) || limit3 < 1) throw new Error("Knowledge base limit must be a positive integer");
-  const found = [];
-  walk2(base, found, limit3);
-  return found.map((absolute) => {
-    const content = (0, import_node_fs10.readFileSync)(absolute, "utf8");
-    return {
-      path: (0, import_node_path9.relative)(base, absolute).replaceAll("\\", "/"),
-      digest: digest2(content),
-      size_bytes: Buffer.byteLength(content),
-      chunks: chunkMarkdown(content).length
-    };
-  });
-}
-function chunkMarkdown(content, options = {}) {
-  const maxChars = options.maxChars ?? DEFAULT_CHUNK_CHARS;
-  if (!Number.isInteger(maxChars) || maxChars < 1) throw new Error("Knowledge chunk maxChars must be a positive integer");
-  const sections = [];
-  let current2 = { heading: null, body: [] };
-  for (const line2 of content.split(/\r?\n/u)) {
-    const heading2 = /^#{1,6}\s+(.*)$/u.exec(line2);
-    if (heading2) {
-      sections.push(current2);
-      current2 = { heading: heading2[1].trim(), body: [] };
-    } else current2.body.push(line2);
-  }
-  sections.push(current2);
-  const chunks = sections.map((section) => ({ heading: section.heading, body: section.body.join("\n").trim() })).filter((chunk) => chunk.heading !== null || chunk.body.length > 0);
-  return chunks.flatMap((chunk) => {
-    if (chunk.body.length <= maxChars) return [chunk];
-    const parts = [];
-    for (let index = 0; index < chunk.body.length; index += maxChars) {
-      parts.push({ heading: chunk.heading, body: chunk.body.slice(index, index + maxChars) });
-    }
-    return parts;
-  });
-}
-function diffKnowledgeBase(previous, current2) {
-  const before = new Map(previous.map((item) => [item.path, item]));
-  const after = new Set(current2.map((item) => item.path));
-  return {
-    added: current2.filter((item) => !before.has(item.path)),
-    changed: current2.filter((item) => {
-      const prior = before.get(item.path);
-      return prior !== void 0 && prior.digest !== item.digest;
-    }),
-    removed: previous.filter((item) => !after.has(item.path))
-  };
-}
-function knowledgeQueryTokens(query) {
-  const tokens = text(query, "query").match(/[\p{L}\p{N}_]+/gu) ?? [];
-  if (!tokens.length) throw new Error("Knowledge search requires at least one word token");
-  return tokens;
-}
-function locateSnippet(body3, tokens, width = 200) {
-  const haystack = body3.toLowerCase();
-  const at = tokens.map((token) => haystack.indexOf(token.toLowerCase())).filter((index) => index >= 0).sort((a, b) => a - b)[0];
-  if (at === void 0) return body3.slice(0, width);
-  const start2 = Math.max(0, at - Math.floor(width / 2));
-  return body3.slice(start2, start2 + width).trim();
-}
-var KnowledgeIndex = class {
-  file;
-  db;
-  constructor(file) {
-    this.file = (0, import_node_path9.resolve)(file);
-    (0, import_node_fs10.mkdirSync)((0, import_node_path9.dirname)(this.file), { recursive: true });
-    this.db = new import_node_sqlite2.DatabaseSync(this.file);
-    this.db.exec("PRAGMA journal_mode=WAL;");
-    this.db.exec("PRAGMA busy_timeout=15000;");
-    this.db.exec([
-      "CREATE TABLE IF NOT EXISTS knowledge_document(path TEXT PRIMARY KEY, digest TEXT NOT NULL, size_bytes INTEGER NOT NULL, chunks INTEGER NOT NULL);",
-      "CREATE TABLE IF NOT EXISTS knowledge_chunk(path TEXT NOT NULL, ordinal INTEGER NOT NULL, heading TEXT, body TEXT NOT NULL, PRIMARY KEY(path, ordinal));",
-      "CREATE TABLE IF NOT EXISTS knowledge_scope(path TEXT PRIMARY KEY, scope TEXT NOT NULL, expires_at TEXT, updated_at TEXT NOT NULL);"
-    ].join("\n"));
-  }
-  /**
-   * Declare scope and, optionally, an expiry. Omitting `ttl_days` means the
-   * document never expires on its own — which is the right default for durable
-   * project knowledge and the wrong one for a task-scoped note.
-   */
-  setScope(entries2, now3 = Date.now()) {
-    if (!Array.isArray(entries2)) throw new Error("Knowledge scope entries must be an array");
-    const instant20 = new Date(now3).toISOString();
-    return entries2.map((entry2, index) => {
-      if (!entry2 || typeof entry2 !== "object") throw new Error(`Knowledge scope entry ${index} must be an object`);
-      const path2 = text(entry2.path, `scope path at index ${index}`);
-      const scope3 = text(entry2.scope, `scope at index ${index}`);
-      if (!KNOWLEDGE_SCOPES.includes(scope3)) throw new Error(`Unsupported knowledge scope: ${scope3}`);
-      let expiresAt = null;
-      if (entry2.ttl_days !== void 0 && entry2.ttl_days !== null) {
-        const days = Number(entry2.ttl_days);
-        if (!Number.isInteger(days) || days < 1 || days > 3650) {
-          throw new Error(`Knowledge scope ttl_days at index ${index} must be an integer between 1 and 3650`);
-        }
-        expiresAt = new Date(now3 + days * 864e5).toISOString();
-      }
-      this.db.prepare("INSERT INTO knowledge_scope(path, scope, expires_at, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(path) DO UPDATE SET scope = excluded.scope, expires_at = excluded.expires_at, updated_at = excluded.updated_at").run(path2, scope3, expiresAt, instant20);
-      return { path: path2, scope: scope3, expires_at: expiresAt, updated_at: instant20 };
-    });
-  }
-  /** Scope rows, optionally narrowed to one scope. Sorted so two calls read the same. */
-  scopeCatalog(scope3) {
-    if (scope3 !== void 0 && !KNOWLEDGE_SCOPES.includes(scope3)) throw new Error(`Unsupported knowledge scope: ${scope3}`);
-    const rows4 = scope3 === void 0 ? this.db.prepare("SELECT path, scope, expires_at, updated_at FROM knowledge_scope ORDER BY path").all() : this.db.prepare("SELECT path, scope, expires_at, updated_at FROM knowledge_scope WHERE scope = ? ORDER BY path").all(scope3);
-    return rows4.map((row) => ({
-      path: String(row.path),
-      scope: String(row.scope),
-      expires_at: row.expires_at === null || row.expires_at === void 0 ? null : String(row.expires_at),
-      updated_at: String(row.updated_at)
-    }));
-  }
-  /** Entries whose expiry has passed. A document with no expiry is never listed here. */
-  expired(now3 = Date.now()) {
-    const instant20 = new Date(now3).toISOString();
-    return this.db.prepare("SELECT path, scope, expires_at, updated_at FROM knowledge_scope WHERE expires_at IS NOT NULL AND expires_at <= ? ORDER BY path").all(instant20).map((row) => ({
-      path: String(row.path),
-      scope: String(row.scope),
-      expires_at: String(row.expires_at),
-      updated_at: String(row.updated_at)
-    }));
-  }
-  /**
-   * Drop expired documents from the projection and forget their scope rows.
-   *
-   * This removes only the rebuildable projection and scope metadata; Markdown
-   * files are untouched, so "forgetting" is never destructive to the source.
-   *
-   * The deletes run without an explicit transaction on purpose. Forgetting is
-   * idempotent — re-running it after a crash simply finishes the job — so a
-   * rollback branch here would be unreachable code that still has to be
-   * measured, while adding no recovery the caller does not already have.
-   */
-  forgetExpired(now3 = Date.now()) {
-    const stale = this.expired(now3);
-    for (const entry2 of stale) {
-      this.db.prepare("DELETE FROM knowledge_chunk WHERE path = ?").run(entry2.path);
-      this.db.prepare("DELETE FROM knowledge_document WHERE path = ?").run(entry2.path);
-      this.db.prepare("DELETE FROM knowledge_scope WHERE path = ?").run(entry2.path);
-    }
-    return { forgotten: stale.map((entry2) => entry2.path) };
-  }
-  /** Apply a plan by re-reading the Markdown. The files win over the projection, always. */
-  apply(plan, root) {
-    const base = (0, import_node_path9.resolve)(root);
-    const upserts = [...plan.added, ...plan.changed];
-    this.db.exec("BEGIN");
-    try {
-      for (const document3 of upserts) {
-        const content = (0, import_node_fs10.readFileSync)((0, import_node_path9.join)(base, document3.path), "utf8");
-        const chunks = chunkMarkdown(content);
-        this.db.prepare("DELETE FROM knowledge_chunk WHERE path = ?").run(document3.path);
-        this.db.prepare("DELETE FROM knowledge_document WHERE path = ?").run(document3.path);
-        this.db.prepare("INSERT INTO knowledge_document(path, digest, size_bytes, chunks) VALUES (?, ?, ?, ?)").run(document3.path, document3.digest, document3.size_bytes, chunks.length);
-        const insertChunk = this.db.prepare("INSERT INTO knowledge_chunk(path, ordinal, heading, body) VALUES (?, ?, ?, ?)");
-        for (const [ordinal, chunk] of chunks.entries()) {
-          insertChunk.run(document3.path, ordinal, chunk.heading, chunk.body);
-        }
-      }
-      for (const document3 of plan.removed) {
-        this.db.prepare("DELETE FROM knowledge_chunk WHERE path = ?").run(document3.path);
-        this.db.prepare("DELETE FROM knowledge_document WHERE path = ?").run(document3.path);
-      }
-      this.db.exec("COMMIT");
-    } catch (error) {
-      this.db.exec("ROLLBACK");
-      throw error;
-    }
-    return this.status();
-  }
-  /** The projected catalog, so a caller can diff it against the Markdown tree. */
-  catalog() {
-    return this.db.prepare("SELECT path, digest, size_bytes, chunks FROM knowledge_document ORDER BY path").all().map((row) => ({ path: String(row.path), digest: String(row.digest), size_bytes: Number(row.size_bytes), chunks: Number(row.chunks) }));
-  }
-  /**
-   * Portable hybrid search. SQL narrows to chunks containing every query token
-   * (a cheap, FTS5-free candidate fetch); BM25 then orders those candidates by
-   * term rarity so an identifier-dense chunk outranks one that merely shares a
-   * common word. The row order is a stable tie-break, so results are
-   * reproducible across SQLite builds.
-   */
-  search(query, options = {}) {
-    const limit3 = options.limit ?? 10;
-    if (!Number.isInteger(limit3) || limit3 < 1 || limit3 > 100) throw new Error("Knowledge search limit must be an integer between 1 and 100");
-    const tokens = knowledgeQueryTokens(query);
-    const clause = tokens.map(() => "body LIKE ?").join(" AND ");
-    const rows4 = this.db.prepare(`SELECT path, ordinal, heading, body FROM knowledge_chunk WHERE ${clause} ORDER BY path, ordinal LIMIT ?`).all(...tokens.map((token) => `%${token}%`), SEARCH_CANDIDATES).map((row) => ({ path: String(row.path), heading: row.heading === null ? null : String(row.heading), body: String(row.body) }));
-    if (!rows4.length) return [];
-    const index = new Bm25Index();
-    rows4.forEach((row, ordinal) => index.add(String(ordinal), `${row.heading ?? ""}
-${row.body}`));
-    const scored = new Map(index.score(query).map((entry2) => [entry2.id, entry2.score]));
-    const ranked = rows4.map((row, ordinal) => ({ row, ordinal, score: scored.get(String(ordinal)) ?? 0 }));
-    const positive4 = ranked.filter((entry2) => entry2.score > 0);
-    return (positive4.length ? positive4 : ranked).sort((left, right) => right.score - left.score || left.row.path.localeCompare(right.row.path) || left.ordinal - right.ordinal).slice(0, limit3).map((entry2, rank) => ({ path: entry2.row.path, heading: entry2.row.heading, snippet: locateSnippet(entry2.row.body, tokens), rank }));
-  }
-  status() {
-    const documents = Number(this.db.prepare("SELECT COUNT(*) AS count FROM knowledge_document").get().count);
-    const chunks = Number(this.db.prepare("SELECT COUNT(*) AS count FROM knowledge_chunk").get().count);
-    return { documents, chunks, file: this.file };
-  }
-  close() {
-    this.db.close();
-  }
-};
-
 // core/hooks.ts
 var HOOK_POINTS = ["before_step", "after_step", "before_effect", "after_receipt", "on_failure"];
 var BUILTIN_HOOK_TARGETS = ["builtin:audit-log", "builtin:token-meter", "builtin:receipt-check"];
@@ -222715,8 +222155,8 @@ var HOOK_ID = /^[a-z0-9][a-z0-9._-]{0,63}$/u;
 var FAIL_POLICIES = ["fail_closed", "fail_open"];
 var MAX_TIMEOUT_MS = 6e4;
 function defineHook(input) {
-  const id22 = text(input.id, "hook id");
-  if (!HOOK_ID.test(id22)) throw new Error(`Unsupported hook id: ${id22}`);
+  const id23 = text(input.id, "hook id");
+  if (!HOOK_ID.test(id23)) throw new Error(`Unsupported hook id: ${id23}`);
   const point = text(input.point, "hook point");
   if (!HOOK_POINTS.includes(point)) throw new Error(`Unsupported hook point: ${point}`);
   const kind4 = text(input.kind, "hook kind");
@@ -222731,7 +222171,7 @@ function defineHook(input) {
   if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > MAX_TIMEOUT_MS) {
     throw new Error(`Hook timeout_ms must be an integer between 1 and ${MAX_TIMEOUT_MS}`);
   }
-  return { id: id22, point, kind: kind4, target, fail_policy: failPolicy, timeout_ms: timeoutMs };
+  return { id: id23, point, kind: kind4, target, fail_policy: failPolicy, timeout_ms: timeoutMs };
 }
 function defineHooks(entries2) {
   if (entries2 === void 0 || entries2 === null) return [];
@@ -222794,8 +222234,8 @@ function decideExecution(input) {
 }
 
 // core/distribution-and-first-run.ts
-var import_node_fs11 = require("node:fs");
-var import_node_path10 = require("node:path");
+var import_node_fs10 = require("node:fs");
+var import_node_path9 = require("node:path");
 var ENV_NAME = /^[A-Z_][A-Z0-9_]*$/u;
 function createCredentialResolver(sources) {
   const env = {};
@@ -222814,12 +222254,12 @@ function firstRunReadiness(input) {
   const ready = [];
   const blocked = [];
   for (const model of models) {
-    const id22 = text(model.id, "model.id");
+    const id23 = text(model.id, "model.id");
     const variable = text(model.apiKeyEnv, "model.apiKeyEnv");
     if (!ENV_NAME.test(variable)) throw new Error(`apiKeyEnv ${variable} must be an uppercase environment-variable name`);
     const value = resolved[variable];
     const configured = typeof value === "string" && value.length > 0;
-    (configured ? ready : blocked).push({ id: id22, api_key_env: variable, configured });
+    (configured ? ready : blocked).push({ id: id23, api_key_env: variable, configured });
   }
   const usable = ready.length > 0;
   return {
@@ -222911,9 +222351,9 @@ function distributionPlan(input) {
   };
 }
 function readCredentialFile(path2) {
-  const absolute = (0, import_node_path10.resolve)(path2);
-  if (!(0, import_node_fs11.existsSync)(absolute)) return { found: false, path: absolute, names: [], env: {} };
-  const raw = (0, import_node_fs11.readFileSync)(absolute, "utf8");
+  const absolute = (0, import_node_path9.resolve)(path2);
+  if (!(0, import_node_fs10.existsSync)(absolute)) return { found: false, path: absolute, names: [], env: {} };
+  const raw = (0, import_node_fs10.readFileSync)(absolute, "utf8");
   const env = {};
   for (const line2 of raw.split(/\r?\n/u)) {
     const trimmed = line2.trim();
@@ -222929,12 +222369,249 @@ function readCredentialFile(path2) {
   return { found: true, path: absolute, names: Object.keys(env).sort(), env };
 }
 
+// core/compaction.ts
+function digestOf(segments) {
+  return digestJson(segments.map((segment2) => ({ id: segment2.id, role: segment2.role ?? null, content: segment2.content })));
+}
+function compact(request2) {
+  const estimate = request2.estimate ?? estimateTokens;
+  if (typeof estimate !== "function") throw new Error("compaction requires a token estimator");
+  if (!Number.isInteger(request2.max_tokens) || request2.max_tokens < 1) throw new Error("max_tokens must be a positive integer");
+  const share = request2.tail_share ?? 0;
+  if (!Number.isFinite(share) || share < 0 || share > 1) throw new Error("tail_share must be between 0 and 1");
+  if (!Array.isArray(request2.segments)) throw new Error("segments must be an array");
+  const cost = (segment2) => {
+    const value = segment2.tokens ?? estimate(String(segment2.content ?? ""));
+    if (!Number.isFinite(value) || value < 0) throw new Error(`segment ${segment2.id} has an invalid token cost`);
+    return value;
+  };
+  const ids6 = request2.segments.map((segment2) => String(segment2.id));
+  if (new Set(ids6).size !== ids6.length) throw new Error("segment ids must be unique");
+  const protectedIds = new Set(request2.protect ?? []);
+  const protectedSegments = request2.segments.filter((segment2) => protectedIds.has(String(segment2.id)));
+  const matched = new Set(protectedSegments.map((segment2) => String(segment2.id)));
+  const unbound = [...protectedIds].filter((id23) => !matched.has(id23)).sort();
+  const protectedTokens = protectedSegments.reduce((sum, segment2) => sum + cost(segment2), 0);
+  let evictable = request2.segments.filter((segment2) => !protectedIds.has(String(segment2.id)));
+  const kept = /* @__PURE__ */ new Set();
+  let tokens = 0;
+  if (share > 0 && evictable.length) {
+    const ceiling = Math.floor(request2.max_tokens * share);
+    const reserved = [];
+    for (let index = evictable.length - 1; index >= 0; index -= 1) {
+      const segment2 = evictable[index];
+      const value = cost(segment2);
+      if (tokens + value > ceiling) break;
+      reserved.unshift(segment2);
+      tokens += value;
+      kept.add(String(segment2.id));
+    }
+    const reservedIds = new Set(reserved.map((segment2) => String(segment2.id)));
+    evictable = evictable.filter((segment2) => !reservedIds.has(String(segment2.id)));
+  }
+  const position = new Map(request2.segments.map((segment2, index) => [String(segment2.id), index]));
+  const ranked = [...evictable].sort((left, right) => (right.weight ?? 1) - (left.weight ?? 1) || position.get(String(right.id)) - position.get(String(left.id)));
+  for (const segment2 of ranked) {
+    const value = cost(segment2);
+    if (tokens + value > request2.max_tokens) continue;
+    kept.add(String(segment2.id));
+    tokens += value;
+  }
+  const keptIds = request2.segments.filter((segment2) => kept.has(String(segment2.id)) || protectedIds.has(String(segment2.id))).map((segment2) => String(segment2.id));
+  const keptSet = new Set(keptIds);
+  const elidedIds = request2.segments.filter((segment2) => !keptSet.has(String(segment2.id))).map((segment2) => String(segment2.id));
+  const elided = request2.segments.filter((segment2) => !keptSet.has(String(segment2.id)));
+  const summary2 = elided.length === 0 ? null : request2.summarize ? request2.summarize(elided) : `Compacted ${elided.length} earlier segment(s); retain only their digest for replay: ${digestOf(elided)}`;
+  return {
+    kept: keptIds,
+    elided: elidedIds,
+    protected_ids: protectedSegments.map((segment2) => String(segment2.id)),
+    unbound,
+    tokens,
+    protected_tokens: protectedTokens,
+    total_tokens: tokens + protectedTokens,
+    summary: summary2,
+    complete: elided.length === 0,
+    unchanged: elided.length === 0
+  };
+}
+function compactWithPromotion(request2, promoteId) {
+  const target = request2.segments.find((segment2) => String(segment2.id) === promoteId);
+  if (!target) throw new Error(`Context segment ${promoteId} does not exist`);
+  const ceiling = Math.max(0, ...request2.segments.map((segment2) => segment2.weight ?? 1));
+  const promoted = {
+    ...request2,
+    segments: request2.segments.map((segment2) => String(segment2.id) === promoteId ? { ...segment2, weight: ceiling + 1 } : segment2)
+  };
+  const result = compact(promoted);
+  if (!result.kept.includes(promoteId)) {
+    throw new Error(`Context segment ${promoteId} cannot be restored within ${request2.max_tokens} tokens`);
+  }
+  return result;
+}
+
+// common/craft-common-base/src/bm25.ts
+var IDENTIFIER = /[A-Za-z]*\d|^[0-9a-f]{8,}$|[-_/.:]{1}/u;
+function tokenize(value) {
+  const segmenter = new Intl.Segmenter("zh", { granularity: "word" });
+  return value.toLowerCase().split(/[^\p{L}\p{N}_.:/-]+/u).map((token) => token.replace(/^[.:/]+|[.:/]+$/gu, "")).filter(Boolean).flatMap((word) => new RegExp("\\p{Script=Han}", "u").test(word) ? [...segmenter.segment(word)].filter((part) => part.isWordLike).map((part) => part.segment) : [word]);
+}
+var Bm25Index = class {
+  // Tokens and their length live in one entry so a document can never be
+  // half-registered, which removes the need for defensive fallbacks in score().
+  #entries = /* @__PURE__ */ new Map();
+  #totalLength = 0;
+  #documentFrequency = /* @__PURE__ */ new Map();
+  /** Standard BM25 saturation and length-normalisation constants. */
+  #k1;
+  #b;
+  constructor(options = {}) {
+    this.#k1 = options.k1 ?? 1.2;
+    this.#b = options.b ?? 0.75;
+    if (!(this.#k1 > 0)) throw new Error("BM25 k1 must be positive");
+    if (!(this.#b >= 0 && this.#b <= 1)) throw new Error("BM25 b must be between 0 and 1");
+  }
+  get size() {
+    return this.#entries.size;
+  }
+  add(id23, value) {
+    const key2 = text(id23, "id");
+    if (this.#entries.has(key2)) throw new Error(`BM25 document ${key2} already exists`);
+    const tokens = tokenize(text(value, "value"));
+    this.#entries.set(key2, { tokens, length: tokens.length });
+    this.#totalLength += tokens.length;
+    for (const term of new Set(tokens)) {
+      this.#documentFrequency.set(term, (this.#documentFrequency.get(term) ?? 0) + 1);
+    }
+  }
+  /**
+   * Mean document length. Only ever called with at least one document — score()
+   * returns early on an empty index — so there is no empty-corpus case to guard.
+   */
+  #averageLength() {
+    return this.#totalLength / this.#entries.size;
+  }
+  score(query) {
+    const terms3 = tokenize(text(query, "query"));
+    if (!terms3.length || !this.#entries.size) return [];
+    const total = this.#entries.size;
+    const queryIdentifiers = terms3.filter((term) => IDENTIFIER.test(term));
+    const results = [];
+    for (const [id23, entry2] of this.#entries) {
+      const frequencies = /* @__PURE__ */ new Map();
+      for (const token of entry2.tokens) frequencies.set(token, (frequencies.get(token) ?? 0) + 1);
+      let score = 0;
+      for (const term of terms3) {
+        const frequency = frequencies.get(term) ?? 0;
+        if (!frequency) continue;
+        const df = this.#documentFrequency.get(term);
+        const idf = Math.log(1 + (total - df + 0.5) / (df + 0.5));
+        score += idf * (frequency * (this.#k1 + 1) / (frequency + this.#k1 * (1 - this.#b + this.#b * (entry2.length / this.#averageLength()))));
+      }
+      if (score <= 0) continue;
+      const joined = entry2.tokens.join(" ");
+      const exact = queryIdentifiers.some((term) => joined.includes(term));
+      if (exact) score += 10;
+      results.push({ id: id23, score, exact_identifier: exact });
+    }
+    return results.sort((left, right) => right.score - left.score || left.id.localeCompare(right.id));
+  }
+};
+
+// core/context-retrieval-capture.ts
+function fuseRankings(rankings, k = 60) {
+  if (!Number.isFinite(k) || k <= 0) throw new Error("Fusion k must be a positive number");
+  const scores = /* @__PURE__ */ new Map();
+  for (const ranking of rankings) {
+    ranking.forEach((item, index) => {
+      const current2 = scores.get(item.id) ?? { score: 0, sources: 0 };
+      current2.score += 1 / (k + index + 1);
+      current2.sources += 1;
+      scores.set(item.id, current2);
+    });
+  }
+  return [...scores].map(([id23, value]) => ({ id: id23, score: value.score, sources: value.sources })).sort((left, right) => right.score - left.score || left.id.localeCompare(right.id));
+}
+var WEIGHTS = { failure: 30, retry: 8, correction: 26, breadth: 3, novelty: 15, explicit: 50 };
+function decideExperienceCapture(input) {
+  const outcome2 = String(input.outcome);
+  if (!["succeeded", "failed", "abandoned"].includes(outcome2)) throw new Error("Capture outcome is unsupported");
+  const retries = Number(input.retries ?? 0);
+  const corrections = Number(input.corrections ?? 0);
+  const distinctTools = Number(input.distinct_tools ?? 0);
+  for (const [name, value] of [["retries", retries], ["corrections", corrections], ["distinct_tools", distinctTools]]) {
+    if (!Number.isInteger(value) || value < 0) throw new Error(`${name} must be a non-negative integer`);
+  }
+  const novel = input.novel === true;
+  const explicit = input.user_explicit === true;
+  const threshold = input.threshold === void 0 ? 25 : Number(input.threshold);
+  if (!Number.isFinite(threshold) || threshold < 0) throw new Error("Capture threshold must be a non-negative number");
+  const reasons = [];
+  let score = 0;
+  if (outcome2 !== "succeeded") {
+    score += WEIGHTS.failure;
+    reasons.push(`outcome_${outcome2}`);
+  }
+  if (retries > 0) {
+    score += retries * WEIGHTS.retry;
+    reasons.push(`retries_${retries}`);
+  }
+  if (corrections > 0) {
+    score += corrections * WEIGHTS.correction;
+    reasons.push(`corrections_${corrections}`);
+  }
+  if (distinctTools > 2) {
+    score += (distinctTools - 2) * WEIGHTS.breadth;
+    reasons.push(`breadth_${distinctTools}`);
+  }
+  if (novel) {
+    score += WEIGHTS.novelty;
+    reasons.push("novel_situation");
+  }
+  if (explicit) {
+    score += WEIGHTS.explicit;
+    reasons.push("user_requested");
+  }
+  const kind4 = explicit ? "working_pattern" : corrections > 0 ? "correction" : outcome2 !== "succeeded" ? "failure_lesson" : "routine";
+  return {
+    capture: score >= threshold,
+    score,
+    threshold,
+    reasons,
+    kind: kind4,
+    // Deterministic so capturing the same experience twice is detectable.
+    dedupe_key: digestJson({ outcome: outcome2, kind: kind4, reasons, retries, corrections, distinctTools, novel })
+  };
+}
+function buildExperienceRecord(input) {
+  const decision = decideExperienceCapture(input);
+  if (!decision.capture) throw new Error("Experience did not meet the capture threshold");
+  const summary2 = text(input.summary, "summary");
+  const taskId3 = input.task_id === void 0 ? null : text(input.task_id, "task_id");
+  return {
+    experience_id: String(input.experience_id ?? `exp_${decision.dedupe_key.slice(-24)}`),
+    kind: decision.kind,
+    scope: input.scope === void 0 ? "project" : text(input.scope, "scope"),
+    task_id: taskId3,
+    summary: summary2,
+    reasons: decision.reasons,
+    score: decision.score,
+    // Provenance is what separates a captured lesson from a guess.
+    provenance: { source: "deterministic_capture", captured_by: "runtime", signals_digest: decision.dedupe_key },
+    // Only failures and corrections need a human look: they describe something
+    // that went wrong. A user-requested working pattern is already vouched for
+    // by the person who asked for it, so gating it behind review would add
+    // friction without adding safety.
+    requires_review: decision.kind === "failure_lesson" || decision.kind === "correction"
+  };
+}
+
 // core/verification-sensor.ts
-var import_node_crypto11 = require("node:crypto");
+var import_node_crypto10 = require("node:crypto");
 var CHECK_KINDS = /* @__PURE__ */ new Set(["exit_code", "output_contains", "output_matches", "file_digest", "file_absent"]);
 var VERDICTS = /* @__PURE__ */ new Set(["passed", "failed", "blocked", "inconclusive"]);
-function digest3(value) {
-  return `sha256:${(0, import_node_crypto11.createHash)("sha256").update(typeof value === "string" ? value : JSON.stringify(value)).digest("hex")}`;
+function digest2(value) {
+  return `sha256:${(0, import_node_crypto10.createHash)("sha256").update(typeof value === "string" ? value : JSON.stringify(value)).digest("hex")}`;
 }
 function optionalText4(value, name) {
   if (value === void 0 || value === null) return null;
@@ -222949,7 +222626,7 @@ function evaluateVerificationCheck(input) {
     const expected = Number(input.expected_exit_code ?? 0);
     if (!Number.isInteger(expected)) throw new Error("expected_exit_code must be an integer");
     const observed = input.observed_exit_code;
-    if (observed === void 0 || observed === null) return { kind: kind4, name, verdict: "blocked", reason: "check_not_executed", observed_digest: digest3(null) };
+    if (observed === void 0 || observed === null) return { kind: kind4, name, verdict: "blocked", reason: "check_not_executed", observed_digest: digest2(null) };
     const actual = Number(observed);
     if (!Number.isInteger(actual)) throw new Error("observed_exit_code must be an integer");
     const passed = actual === expected;
@@ -222958,13 +222635,13 @@ function evaluateVerificationCheck(input) {
       name,
       verdict: passed ? "passed" : "failed",
       reason: passed ? "exit_code_matched" : `exit_code_${actual}_expected_${expected}`,
-      observed_digest: digest3(actual)
+      observed_digest: digest2(actual)
     };
   }
   if (kind4 === "output_contains" || kind4 === "output_matches") {
     const expected = kind4 === "output_contains" ? text(input.expected_substring, "expected_substring") : text(input.expected_pattern, "expected_pattern");
     const observed = optionalText4(input.observed_output, "observed_output");
-    if (observed === null) return { kind: kind4, name, verdict: "blocked", reason: "check_not_executed", observed_digest: digest3(null) };
+    if (observed === null) return { kind: kind4, name, verdict: "blocked", reason: "check_not_executed", observed_digest: digest2(null) };
     if (kind4 === "output_contains") {
       const passed2 = observed.includes(expected);
       return {
@@ -222972,14 +222649,14 @@ function evaluateVerificationCheck(input) {
         name,
         verdict: passed2 ? "passed" : "failed",
         reason: passed2 ? "substring_present" : "substring_absent",
-        observed_digest: digest3(observed)
+        observed_digest: digest2(observed)
       };
     }
     let pattern;
     try {
       pattern = new RegExp(expected, "u");
     } catch {
-      return { kind: kind4, name, verdict: "blocked", reason: "pattern_invalid", observed_digest: digest3(observed) };
+      return { kind: kind4, name, verdict: "blocked", reason: "pattern_invalid", observed_digest: digest2(observed) };
     }
     const passed = pattern.test(observed);
     return {
@@ -222987,31 +222664,31 @@ function evaluateVerificationCheck(input) {
       name,
       verdict: passed ? "passed" : "failed",
       reason: passed ? "pattern_matched" : "pattern_not_matched",
-      observed_digest: digest3(observed)
+      observed_digest: digest2(observed)
     };
   }
   if (kind4 === "file_digest") {
     const expected = text(input.expected_digest, "expected_digest");
     const observed = optionalText4(input.observed_digest, "observed_digest");
-    if (observed === null) return { kind: kind4, name, verdict: "blocked", reason: "check_not_executed", observed_digest: digest3(null) };
+    if (observed === null) return { kind: kind4, name, verdict: "blocked", reason: "check_not_executed", observed_digest: digest2(null) };
     const passed = observed === expected;
     return {
       kind: kind4,
       name,
       verdict: passed ? "passed" : "failed",
       reason: passed ? "digest_matched" : "digest_mismatched",
-      observed_digest: digest3(observed)
+      observed_digest: digest2(observed)
     };
   }
   const present = input.observed_present;
-  if (present === void 0 || present === null) return { kind: kind4, name, verdict: "blocked", reason: "check_not_executed", observed_digest: digest3(null) };
+  if (present === void 0 || present === null) return { kind: kind4, name, verdict: "blocked", reason: "check_not_executed", observed_digest: digest2(null) };
   if (typeof present !== "boolean") throw new Error("observed_present must be a boolean");
   return {
     kind: kind4,
     name,
     verdict: present ? "failed" : "passed",
     reason: present ? "file_present" : "file_absent",
-    observed_digest: digest3(present)
+    observed_digest: digest2(present)
   };
 }
 function summarizeVerification(checks) {
@@ -223344,7 +223021,7 @@ function checkConsistency(input) {
   const findings2 = rawDeclarations.map((item, index) => {
     if (!item || typeof item !== "object" || Array.isArray(item)) throw new Error(`declarations[${index}] must be an object`);
     const declaration = item;
-    const id22 = text3(declaration, "id", `declarations[${index}].id`);
+    const id23 = text3(declaration, "id", `declarations[${index}].id`);
     const statement = text3(declaration, "statement", `declarations[${index}].statement`);
     const source = text3(declaration, "source", `declarations[${index}].source`);
     const expects = declaration.expects;
@@ -223363,7 +223040,7 @@ function checkConsistency(input) {
       }
     }
     const verdict = mismatches.length ? "contradicted" : unchecked.length ? "unverifiable" : "confirmed";
-    return { id: id22, statement, source, verdict, mismatches, unchecked };
+    return { id: id23, statement, source, verdict, mismatches, unchecked };
   });
   const contradicted = findings2.filter((finding) => finding.verdict === "contradicted");
   const unverifiable = findings2.filter((finding) => finding.verdict === "unverifiable");
@@ -223497,11 +223174,11 @@ function compactionPlan(input) {
   for (const [index, item] of segments.entries()) {
     if (!item || typeof item !== "object" || Array.isArray(item)) throw new Error(`segments[${index}] must be an object`);
     const segment2 = item;
-    const id22 = text4(segment2, "id");
-    (pinnedIds.has(id22) ? pinned : evictable).push(segment2);
+    const id23 = text4(segment2, "id");
+    (pinnedIds.has(id23) ? pinned : evictable).push(segment2);
   }
   const found = new Set(pinned.map((segment2) => String(segment2.id)));
-  const missing = [...pinnedIds].filter((id22) => !found.has(id22));
+  const missing = [...pinnedIds].filter((id23) => !found.has(id23));
   const outcome2 = compact({
     segments: segments.map((segment2) => ({
       id: String(segment2.id),
@@ -223523,7 +223200,7 @@ function compactionPlan(input) {
     // "evictable segments that survived", while the policy reports both kinds as kept. `pinned_tokens`
     // is the **rendered block's** cost rather than the cost of the constraint segments — the two are
     // different quantities, and the block is what actually reaches the model.
-    kept: outcome2.kept.filter((id22) => !pinnedIds.has(id22)),
+    kept: outcome2.kept.filter((id23) => !pinnedIds.has(id23)),
     omitted: [...outcome2.elided],
     tokens: outcome2.tokens,
     // Total cost is explicit: pinning is not free, it is merely cheap.
@@ -223533,7 +223210,7 @@ function compactionPlan(input) {
     unbound_constraints: missing.length ? missing : [...outcome2.unbound],
     // The guarantee, stated as a fact the caller can rely on: no constraint can
     // appear in the omitted set.
-    constraints_preserved: missing.length === 0 && outcome2.unbound.length === 0 && !pin.constraint_ids.some((id22) => outcome2.elided.includes(id22))
+    constraints_preserved: missing.length === 0 && outcome2.unbound.length === 0 && !pin.constraint_ids.some((id23) => outcome2.elided.includes(id23))
   };
 }
 function verifyPinIntact(input) {
@@ -223542,8 +223219,8 @@ function verifyPinIntact(input) {
   const pin = pinConstraints(declared);
   const rendered = input.rendered;
   if (typeof rendered !== "string") throw new Error("rendered must be a string");
-  const present = pin.constraint_ids.filter((id22) => rendered.includes(id22));
-  const missing = pin.constraint_ids.filter((id22) => !present.includes(id22));
+  const present = pin.constraint_ids.filter((id23) => rendered.includes(id23));
+  const missing = pin.constraint_ids.filter((id23) => !present.includes(id23));
   const parsed2 = declared.map((item) => defineConstraint(item));
   const reworded = parsed2.filter((constraint) => !rendered.includes(constraint.statement)).map((constraint) => constraint.id);
   const intact = missing.length === 0 && reworded.length === 0;
@@ -223642,10 +223319,10 @@ function forwardCompatibility(input = {}) {
 }
 
 // core/docker-sandbox.ts
-var import_node_crypto12 = require("node:crypto");
+var import_node_crypto11 = require("node:crypto");
 var import_promises5 = require("node:fs/promises");
 var import_node_child_process2 = require("node:child_process");
-var import_node_path11 = require("node:path");
+var import_node_path10 = require("node:path");
 var OUTPUT_LIMIT = 1024 * 1024;
 function command(value) {
   if (!Array.isArray(value) || !value.length) throw new Error("command must be a non-empty string array");
@@ -223660,10 +223337,10 @@ function scrub(value) {
   return value.replace(/(api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]+/giu, "$1=[REDACTED]");
 }
 function dockerRequestDigest(image, requestedCommand) {
-  return `sha256:${(0, import_node_crypto12.createHash)("sha256").update(JSON.stringify({ image, command: requestedCommand })).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto11.createHash)("sha256").update(JSON.stringify({ image, command: requestedCommand })).digest("hex")}`;
 }
 function containerName(value) {
-  return `craft-${(0, import_node_crypto12.createHash)("sha256").update(value).digest("hex").slice(0, 24)}`;
+  return `craft-${(0, import_node_crypto11.createHash)("sha256").update(value).digest("hex").slice(0, 24)}`;
 }
 function runDocker(argv, timeoutMs, outputLimit = OUTPUT_LIMIT, spawnProcess = import_node_child_process2.spawn) {
   return new Promise((resolveResult, reject) => {
@@ -223775,7 +223452,7 @@ var DockerSandboxAdapter = class {
     const probeId = text(probeIdValue, "probe_id");
     const image = text(imageValue, "image");
     const runtimeRoot = text(runtimeRootValue, "runtime_root");
-    const workspace = (0, import_node_path11.resolve)(runtimeRoot, containerName(probeId));
+    const workspace = (0, import_node_path10.resolve)(runtimeRoot, containerName(probeId));
     await (0, import_promises5.mkdir)(workspace, { recursive: true });
     const configured = dockerFlags(capabilities, workspace);
     const name = containerName(probeId);
@@ -223818,9 +223495,9 @@ var DockerSandboxAdapter = class {
     }
     const ticketId = text(args.ticket_id, "ticket_id");
     const runtimeRoot = text(args.runtime_root, "runtime_root");
-    const workspace = (0, import_node_path11.resolve)(runtimeRoot, ticketId);
-    const relativeWorkspace = (0, import_node_path11.relative)((0, import_node_path11.resolve)(runtimeRoot), workspace);
-    if (!relativeWorkspace || relativeWorkspace.startsWith("..") || (0, import_node_path11.isAbsolute)(relativeWorkspace)) {
+    const workspace = (0, import_node_path10.resolve)(runtimeRoot, ticketId);
+    const relativeWorkspace = (0, import_node_path10.relative)((0, import_node_path10.resolve)(runtimeRoot), workspace);
+    if (!relativeWorkspace || relativeWorkspace.startsWith("..") || (0, import_node_path10.isAbsolute)(relativeWorkspace)) {
       throw new Error("Docker workspace escapes the runtime root");
     }
     await (0, import_promises5.mkdir)(workspace, { recursive: true });
@@ -223855,7 +223532,7 @@ var DockerSandboxAdapter = class {
 };
 
 // core/egress.ts
-var import_node_crypto13 = require("node:crypto");
+var import_node_crypto12 = require("node:crypto");
 var import_promises6 = require("node:dns/promises");
 var import_node_https = require("node:https");
 var import_node_net = require("node:net");
@@ -223884,7 +223561,7 @@ function egressRequestDigest(methodValue, urlValue, headersValue, bodyValue) {
   const target = new URL(text(urlValue, "url"));
   const headers = canonicalHeaders(headersValue);
   const requestBody = body(bodyValue);
-  return `sha256:${(0, import_node_crypto13.createHash)("sha256").update(JSON.stringify({ method, url: target.toString(), headers, body: requestBody })).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto12.createHash)("sha256").update(JSON.stringify({ method, url: target.toString(), headers, body: requestBody })).digest("hex")}`;
 }
 function isPrivateEgressAddress(address) {
   const normalized = address.toLowerCase();
@@ -223993,39 +223670,39 @@ var TrustedEgressBroker = class {
       headers: Object.fromEntries(Object.entries(response.headers).filter(([name]) => !/^(set-cookie|www-authenticate|proxy-authenticate)$/iu.test(name)).map(([name, value]) => [name, redact2(value, secret)])),
       body: redact2(response.body, secret),
       output_limited: response.output_limited,
-      resolved_address_digest: (0, import_node_crypto13.createHash)("sha256").update(selected.address).digest("hex")
+      resolved_address_digest: (0, import_node_crypto12.createHash)("sha256").update(selected.address).digest("hex")
     };
   }
 };
 
 // capability/craft-knowledge/claim-governance.ts
-var import_node_crypto16 = require("node:crypto");
+var import_node_crypto15 = require("node:crypto");
 
 // capability/craft-knowledge/knowledge-source-registry.ts
+var import_node_crypto13 = require("node:crypto");
 var import_node_crypto14 = require("node:crypto");
-var import_node_crypto15 = require("node:crypto");
-var import_node_fs12 = require("node:fs");
-var import_node_path12 = require("node:path");
+var import_node_fs11 = require("node:fs");
+var import_node_path11 = require("node:path");
 var SOURCE_KINDS = /* @__PURE__ */ new Set(["evidence_wiki", "serena", "kefu_wiki", "project_note", "readme", "custom"]);
 var TRUSTS2 = /* @__PURE__ */ new Set(["untrusted", "bounded", "verified"]);
 var ACCESS = /* @__PURE__ */ new Set(["read_only", "proposal_only"]);
 var TRANSITIONS = /* @__PURE__ */ new Set(["disabled", "revoked"]);
 var INGESTIBLE = /* @__PURE__ */ new Set([".md", ".mdx", ".txt"]);
-function digest4(value) {
-  return `sha256:${(0, import_node_crypto15.createHash)("sha256").update(value).digest("hex")}`;
+function digest3(value) {
+  return `sha256:${(0, import_node_crypto14.createHash)("sha256").update(value).digest("hex")}`;
 }
 function within(root, candidate2) {
-  const value = (0, import_node_path12.relative)(root, candidate2);
-  return value === "" || !value.startsWith(`..${import_node_path12.sep}`) && value !== ".." && !value.split(import_node_path12.sep).includes("..");
+  const value = (0, import_node_path11.relative)(root, candidate2);
+  return value === "" || !value.startsWith(`..${import_node_path11.sep}`) && value !== ".." && !value.split(import_node_path11.sep).includes("..");
 }
 function files(root, limit3) {
   const result = [];
   const walk3 = (directory) => {
-    for (const name of (0, import_node_fs12.readdirSync)(directory)) {
+    for (const name of (0, import_node_fs11.readdirSync)(directory)) {
       if (result.length >= limit3 || name === ".git" || name === "node_modules" || name.startsWith(".")) continue;
-      const path2 = (0, import_node_path12.join)(directory, name);
-      const stat4 = (0, import_node_fs12.lstatSync)(path2);
-      if (stat4.isSymbolicLink() || !within(root, (0, import_node_path12.resolve)(path2))) continue;
+      const path2 = (0, import_node_path11.join)(directory, name);
+      const stat4 = (0, import_node_fs11.lstatSync)(path2);
+      if (stat4.isSymbolicLink() || !within(root, (0, import_node_path11.resolve)(path2))) continue;
       if (stat4.isDirectory()) walk3(path2);
       else if (stat4.isFile() && INGESTIBLE.has(name.slice(name.lastIndexOf(".")).toLowerCase())) result.push(path2);
     }
@@ -224078,7 +223755,7 @@ var KnowledgeSourceRegistry = class {
       trust,
       access: access4
     };
-    const sourceId = String(args.source_id ?? `knowledge_source_${(0, import_node_crypto14.randomUUID)().replaceAll("-", "")}`);
+    const sourceId = String(args.source_id ?? `knowledge_source_${(0, import_node_crypto13.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("knowledge_source", sourceId);
     const identityDigest = stableDigest(identity);
     if (existing) {
@@ -224113,10 +223790,10 @@ var KnowledgeSourceRegistry = class {
    */
   sourceIngest(args) {
     const source = this.store.get("knowledge_source", text(args.source_id, "source_id"));
-    const id22 = `knowledge_ingest_${(0, import_node_crypto14.randomUUID)().replaceAll("-", "")}`;
+    const id23 = `knowledge_ingest_${(0, import_node_crypto13.randomUUID)().replaceAll("-", "")}`;
     try {
       const result = this.ingest(args);
-      const receipt = this.store.create("knowledge_ingest_receipt", id22, {
+      const receipt = this.store.create("knowledge_ingest_receipt", id23, {
         source_id: source.id,
         source_version: source.version,
         status: result.status,
@@ -224128,33 +223805,33 @@ var KnowledgeSourceRegistry = class {
       });
       return { ...result, ingestion_receipt: receipt };
     } catch (error) {
-      this.store.create("knowledge_ingest_receipt", id22, { source_id: source.id, source_version: source.version, status: "failed", reason: "ingest_validation_or_read_failed", error_digest: stableDigest(String(error)) });
+      this.store.create("knowledge_ingest_receipt", id23, { source_id: source.id, source_version: source.version, status: "failed", reason: "ingest_validation_or_read_failed", error_digest: stableDigest(String(error)) });
       throw error;
     }
   }
   ingest(args) {
     const source = this.store.get("knowledge_source", text(args.source_id, "source_id"));
     if (source.status !== "active" || source.access !== "read_only") throw new Error("Knowledge Source is unavailable for read-only ingest");
-    const requestedRoot = (0, import_node_path12.resolve)(text(args.root ?? source.locator, "root"));
-    const registeredRoot = (0, import_node_path12.resolve)(String(source.locator));
-    if (!(0, import_node_fs12.existsSync)(registeredRoot) || !(0, import_node_fs12.existsSync)(requestedRoot)) return { status: "unavailable", reason: "source_root_unavailable", source };
-    const locatorStat = (0, import_node_fs12.lstatSync)(registeredRoot);
-    const requestedStat = (0, import_node_fs12.lstatSync)(requestedRoot);
+    const requestedRoot = (0, import_node_path11.resolve)(text(args.root ?? source.locator, "root"));
+    const registeredRoot = (0, import_node_path11.resolve)(String(source.locator));
+    if (!(0, import_node_fs11.existsSync)(registeredRoot) || !(0, import_node_fs11.existsSync)(requestedRoot)) return { status: "unavailable", reason: "source_root_unavailable", source };
+    const locatorStat = (0, import_node_fs11.lstatSync)(registeredRoot);
+    const requestedStat = (0, import_node_fs11.lstatSync)(requestedRoot);
     if (locatorStat.isSymbolicLink() || requestedStat.isSymbolicLink()) return { status: "unavailable", reason: "source_root_symlink_unsupported", source };
-    const allowedRoot = (0, import_node_fs12.realpathSync)(registeredRoot);
-    const root = (0, import_node_fs12.realpathSync)(requestedRoot);
+    const allowedRoot = (0, import_node_fs11.realpathSync)(registeredRoot);
+    const root = (0, import_node_fs11.realpathSync)(requestedRoot);
     if (!within(allowedRoot, root)) throw new Error("Knowledge ingest root is outside the registered Source locator");
     const maxFiles = Number(args.max_files ?? 50);
     const maxChars = Number(args.max_chars_per_fragment ?? 4e3);
     if (!Number.isInteger(maxFiles) || maxFiles < 1 || maxFiles > 500 || !Number.isInteger(maxChars) || maxChars < 100 || maxChars > 2e4) throw new Error("Knowledge ingest budget is invalid");
-    const paths = (0, import_node_fs12.lstatSync)(root).isDirectory() ? files(root, 10001) : [root];
+    const paths = (0, import_node_fs11.lstatSync)(root).isDirectory() ? files(root, 10001) : [root];
     if (paths.length > 1e4) throw new Error("Knowledge source exceeds 10000 files; register narrower sources");
     let sourceBytes = 0;
     const documents = paths.map((path2) => {
-      const name = (0, import_node_path12.relative)(allowedRoot, path2) || ".";
+      const name = (0, import_node_path11.relative)(allowedRoot, path2) || ".";
       let failure = "file_read_failed";
       try {
-        const bytes = (0, import_node_fs12.lstatSync)(path2).size;
+        const bytes = (0, import_node_fs11.lstatSync)(path2).size;
         sourceBytes += bytes;
         if (sourceBytes > 2e7) {
           failure = "source_byte_budget_exceeded";
@@ -224164,10 +223841,10 @@ var KnowledgeSourceRegistry = class {
           failure = "file_byte_budget_exceeded";
           throw new Error("Knowledge document exceeds 2 MiB budget");
         }
-        const body3 = (0, import_node_fs12.readFileSync)(path2, "utf8").replace(/\r\n/g, "\n");
-        return { path: name, body: body3, digest: digest4(body3), id: `knowledge_document_${stableDigest([source.id, name]).slice(-24)}` };
+        const body3 = (0, import_node_fs11.readFileSync)(path2, "utf8").replace(/\r\n/g, "\n");
+        return { path: name, body: body3, digest: digest3(body3), id: `knowledge_document_${stableDigest([source.id, name]).slice(-24)}` };
       } catch (error) {
-        this.store.create("knowledge_ingest_receipt", `knowledge_ingest_file_${(0, import_node_crypto14.randomUUID)().replaceAll("-", "")}`, { source_id: source.id, source_version: source.version, status: "failed", path: name, reason: failure });
+        this.store.create("knowledge_ingest_receipt", `knowledge_ingest_file_${(0, import_node_crypto13.randomUUID)().replaceAll("-", "")}`, { source_id: source.id, source_version: source.version, status: "failed", path: name, reason: failure });
         throw error;
       }
     });
@@ -224218,7 +223895,7 @@ var KnowledgeSourceRegistry = class {
           let fragment = this.store.find("knowledge_fragment", fragmentId);
           if (!fragment) {
             const contentRef = this.store.contentStore.writeSync({ kind: "knowledge", record_id: fragmentId, version: 1, scope: `${source.scope.kind}:${source.scope.id}`, status: "candidate", sensitivity: "internal", source_id: String(source.id), body: excerpt });
-            fragment = this.store.create("knowledge_fragment", fragmentId, { source_id: source.id, source_revision_id: revision2.id, document_id: doc.id, document_digest: doc.digest, path: doc.path, locator: `${doc.path}#chars=${location}-${end}`, content_ref: contentRef, content_digest: digest4(excerpt), status: "current", immutable: true });
+            fragment = this.store.create("knowledge_fragment", fragmentId, { source_id: source.id, source_revision_id: revision2.id, document_id: doc.id, document_digest: doc.digest, path: doc.path, locator: `${doc.path}#chars=${location}-${end}`, content_ref: contentRef, content_digest: digest3(excerpt), status: "current", immutable: true });
           }
           const evidenceId = `evidence_${fragmentId}`;
           const evidence2 = this.store.find("evidence", evidenceId) ?? this.store.create("evidence", evidenceId, { source_type: "knowledge_fragment", source_id: source.id, source_revision_id: fragment.source_revision_id, fragment_id: fragment.id, locator: fragment.locator, claim: "Source fragment retained for review.", confidence: source.trust === "verified" ? "bounded" : "unverified", content_digest: fragment.content_digest, observed_at: (/* @__PURE__ */ new Date()).toISOString() });
@@ -224268,17 +223945,17 @@ function claimReadable(store, claim, args) {
 var KNOWLEDGE_KINDS = /* @__PURE__ */ new Set(["fact", "rule", "decision", "term", "failure_mode"]);
 var KNOWLEDGE_STATUSES = /* @__PURE__ */ new Set(["candidate", "reviewed", "disputed", "superseded", "expired", "stale"]);
 function id(prefix) {
-  return `${prefix}_${(0, import_node_crypto16.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto15.randomUUID)().replaceAll("-", "")}`;
 }
 function valueDigest(value) {
-  return `sha256:${(0, import_node_crypto16.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto15.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var SECRET_ASSIGNMENT = /(?:api[_-]?key|authorization|cookie|password|secret|token)["']?\s*[:=]\s*[^\s]+/iu;
 function document(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value;
 }
-function finiteInteger(value, name, fallback2, minimum = 1, maximum = Number.MAX_SAFE_INTEGER) {
+function finiteInteger2(value, name, fallback2, minimum = 1, maximum = Number.MAX_SAFE_INTEGER) {
   const number7 = value === void 0 ? fallback2 : Number(value);
   if (!Number.isFinite(number7) || !Number.isInteger(number7) || number7 < minimum || number7 > maximum) {
     throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
@@ -224286,7 +223963,7 @@ function finiteInteger(value, name, fallback2, minimum = 1, maximum = Number.MAX
   return number7;
 }
 function uniqueTextArray(value, name, minimum = 1) {
-  const values3 = array(value, name).map((item) => text(item, name));
+  const values3 = array2(value, name).map((item) => text(item, name));
   if (values3.length < minimum || new Set(values3).size !== values3.length) {
     throw new Error(`${name} must contain at least ${minimum} unique values`);
   }
@@ -224294,7 +223971,7 @@ function uniqueTextArray(value, name, minimum = 1) {
 }
 function optionalTextArray(value, name, fallback2 = []) {
   if (value === void 0) return fallback2;
-  const values3 = array(value, name).map((item) => text(item, name));
+  const values3 = array2(value, name).map((item) => text(item, name));
   if (new Set(values3).size !== values3.length) throw new Error(`${name} must contain unique values`);
   return values3;
 }
@@ -224307,7 +223984,7 @@ function validIsoTime(value, name) {
   if (Number.isNaN(parsed2)) throw new Error(`${name} must be an ISO timestamp`);
   return parsed2;
 }
-function array(value, name) {
+function array2(value, name) {
   if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
   return value;
 }
@@ -224350,17 +224027,17 @@ var KnowledgeClaimGovernance = class {
     return { claim, idempotent: false };
   }
   knowledgeClaimGet(args) {
-    const id22 = text(args.claim_id, "claim_id");
-    const current2 = this.store.get("knowledge_claim", id22);
+    const id23 = text(args.claim_id, "claim_id");
+    const current2 = this.store.get("knowledge_claim", id23);
     if (!claimReadable(this.store, current2, args)) throw new Error("Knowledge claim scope or audience denied");
-    const claim = args.version === void 0 ? current2 : this.store.get("knowledge_claim", id22, finiteInteger(args.version, "version", 1));
+    const claim = args.version === void 0 ? current2 : this.store.get("knowledge_claim", id23, finiteInteger2(args.version, "version", 1));
     if (!claimReadable(this.store, claim, args) || claim.scope !== current2.scope) throw new Error("Knowledge claim historical scope or audience denied");
     return { claim };
   }
   knowledgeClaimList(args) {
     const query = String(args.query ?? "").toLowerCase();
     const hydrated = /* @__PURE__ */ new Map();
-    const selected = this.store.list("knowledge_claim", finiteInteger(args.limit, "limit", 20, 1, 1e3), (claim) => {
+    const selected = this.store.list("knowledge_claim", finiteInteger2(args.limit, "limit", 20, 1, 1e3), (claim) => {
       if (!claimReadable(this.store, claim, args)) return false;
       const material = this.store.get("knowledge_claim", String(claim.id), Number(claim.version));
       if (query && !JSON.stringify(material).toLowerCase().includes(query)) return false;
@@ -224405,12 +224082,12 @@ var KnowledgeClaimGovernance = class {
 };
 
 // core/catalog.ts
-var import_node_crypto17 = require("node:crypto");
+var import_node_crypto16 = require("node:crypto");
 var import_promises7 = require("node:fs/promises");
-var import_node_path13 = require("node:path");
+var import_node_path12 = require("node:path");
 var import_yaml = __toESM(require_dist(), 1);
 function stableId(prefix, value) {
-  return `${prefix}_${(0, import_node_crypto17.createHash)("sha256").update(value).digest("hex").slice(0, 20)}`;
+  return `${prefix}_${(0, import_node_crypto16.createHash)("sha256").update(value).digest("hex").slice(0, 20)}`;
 }
 function metadataTerms(metadata) {
   const aliases = (metadata ?? {}).aliases;
@@ -224487,7 +224164,7 @@ async function skillFiles(root, onError) {
     const entries2 = await (0, import_promises7.readdir)(directory, { withFileTypes: true });
     entries2.sort((a, b) => a.name.localeCompare(b.name));
     for (const entry2 of entries2) {
-      const path2 = (0, import_node_path13.join)(directory, entry2.name);
+      const path2 = (0, import_node_path12.join)(directory, entry2.name);
       try {
         const info = await (0, import_promises7.stat)(path2);
         if (info.isDirectory()) {
@@ -224514,16 +224191,16 @@ var Catalog = class {
     this.#semanticStatus = semanticProvider ? { mode: "configured", provider: semanticProvider.label, indexed_capabilities: 0 } : { mode: "disabled", reason: "not_configured", indexed_capabilities: 0 };
   }
   async addSource(path2, label, scan = true, priority2 = 0) {
-    const requested_path = (0, import_node_path13.resolve)(path2);
+    const requested_path = (0, import_node_path12.resolve)(path2);
     const root = await (0, import_promises7.realpath)(requested_path);
     if (!(await (0, import_promises7.stat)(root)).isDirectory()) throw new Error("Capability source must be a directory.");
     if (!Number.isInteger(priority2) || priority2 < -1e3 || priority2 > 1e3) throw new Error("Capability source priority must be an integer between -1000 and 1000.");
     const mountKey = `${pathKey(requested_path)}:${label ?? ""}`;
     const duplicate = this.store.list("source", Number.MAX_SAFE_INTEGER).find((item) => item.mount_key === mountKey);
     if (duplicate) return scan && duplicate.enabled ? this.scanSource(String(duplicate.id)) : duplicate;
-    const id22 = stableId("source", mountKey);
-    this.store.save("source", id22, {
-      label: label || (0, import_node_path13.basename)(root),
+    const id23 = stableId("source", mountKey);
+    this.store.save("source", id23, {
+      label: label || (0, import_node_path12.basename)(root),
       requested_path,
       real_path: root,
       mount_key: mountKey,
@@ -224531,7 +224208,7 @@ var Catalog = class {
       enabled: true,
       scanned_at: null
     });
-    return scan ? this.scanSource(id22) : this.getSource(id22);
+    return scan ? this.scanSource(id23) : this.getSource(id23);
   }
   listSources() {
     return this.store.list("source", Number.MAX_SAFE_INTEGER);
@@ -224542,13 +224219,13 @@ var Catalog = class {
       conflicts: this.store.list("capability_conflict", Number.MAX_SAFE_INTEGER, (conflict) => conflict.logical_capability_ids.includes(String(logical.id)))
     }));
   }
-  getSource(id22) {
-    return this.store.get("source", id22);
+  getSource(id23) {
+    return this.store.get("source", id23);
   }
-  updateSource(id22, enabled, label, priority2) {
-    const current2 = this.getSource(id22);
+  updateSource(id23, enabled, label, priority2) {
+    const current2 = this.getSource(id23);
     if (priority2 !== void 0 && (!Number.isInteger(priority2) || priority2 < -1e3 || priority2 > 1e3)) throw new Error("Capability source priority must be an integer between -1000 and 1000.");
-    const updated = this.store.save("source", id22, {
+    const updated = this.store.save("source", id23, {
       ...current2,
       enabled: enabled ?? current2.enabled,
       label: label ?? current2.label,
@@ -224591,18 +224268,18 @@ var Catalog = class {
     }
     for (const item of this.store.list("capability_conflict", Number.MAX_SAFE_INTEGER)) if (!conflictIds.has(String(item.id))) this.store.remove("capability_conflict", String(item.id));
   }
-  removeSource(id22) {
-    this.getSource(id22);
+  removeSource(id23) {
+    this.getSource(id23);
     for (const capability of this.store.list("capability", Number.MAX_SAFE_INTEGER)) {
-      if (capability.source_id === id22) this.store.remove("capability", String(capability.id));
+      if (capability.source_id === id23) this.store.remove("capability", String(capability.id));
     }
-    this.store.remove("source", id22);
+    this.store.remove("source", id23);
     this.rebuildLogicalCapabilities();
-    return { id: id22, removed: true };
+    return { id: id23, removed: true };
   }
-  async scanSource(id22) {
-    const source = this.getSource(id22);
-    if (!source.enabled) throw new Error(`Capability source is disabled: ${id22}`);
+  async scanSource(id23) {
+    const source = this.getSource(id23);
+    if (!source.enabled) throw new Error(`Capability source is disabled: ${id23}`);
     const issues = [];
     const files5 = await skillFiles(String(source.real_path), (path2, error) => issues.push({
       path: path2,
@@ -224613,8 +224290,8 @@ var Catalog = class {
     let updated = 0;
     let unchanged = 0;
     for (const path2 of files5) {
-      const relative_path = (0, import_node_path13.relative)(String(source.real_path), path2).replaceAll("\\", "/");
-      const assetId = stableId("cap", `${id22}:${relative_path}`);
+      const relative_path = (0, import_node_path12.relative)(String(source.real_path), path2).replaceAll("\\", "/");
+      const assetId = stableId("cap", `${id23}:${relative_path}`);
       live.add(assetId);
       const fileStat = await (0, import_promises7.stat)(path2);
       let previous;
@@ -224628,17 +224305,17 @@ var Catalog = class {
         continue;
       }
       const text31 = await (0, import_promises7.readFile)(path2, "utf8");
-      const digest35 = (0, import_node_crypto17.createHash)("sha256").update(text31).digest("hex");
+      const digest35 = (0, import_node_crypto16.createHash)("sha256").update(text31).digest("hex");
       if (previous?.digest === digest35) {
         this.store.save("capability", assetId, { ...previous, size: fileStat.size, mtime_ms: fileStat.mtimeMs });
         unchanged += 1;
         continue;
       }
-      const skill = parseSkill(text31, (0, import_node_path13.basename)((0, import_node_path13.resolve)(path2, "..")));
+      const skill = parseSkill(text31, (0, import_node_path12.basename)((0, import_node_path12.resolve)(path2, "..")));
       this.store.save("capability", assetId, {
         ...skill,
         kind: "skill",
-        source_id: id22,
+        source_id: id23,
         search_text: `${skill.body}
 ${metadataTerms(skill.metadata).join("\n")}`,
         relative_path,
@@ -224652,14 +224329,14 @@ ${metadataTerms(skill.metadata).join("\n")}`,
     }
     let removed = 0;
     for (const item of this.store.list("capability", Number.MAX_SAFE_INTEGER)) {
-      if (item.source_id === id22 && !live.has(String(item.id))) {
+      if (item.source_id === id23 && !live.has(String(item.id))) {
         this.store.remove("capability", String(item.id));
         removed += 1;
       }
     }
-    this.store.save("source", id22, { ...source, scanned_at: (/* @__PURE__ */ new Date()).toISOString() });
+    this.store.save("source", id23, { ...source, scanned_at: (/* @__PURE__ */ new Date()).toISOString() });
     this.rebuildLogicalCapabilities();
-    return { ...this.getSource(id22), scan: {
+    return { ...this.getSource(id23), scan: {
       added,
       updated,
       unchanged,
@@ -224799,8 +224476,8 @@ ${metadataTerms(skill.metadata).join("\n")}`,
     return this.store.get("capability", assetId);
   }
 };
-function embeddingId(capabilityId, fingerprint4) {
-  return stableId("embedding", `${capabilityId}:${fingerprint4}`);
+function embeddingId(capabilityId, fingerprint5) {
+  return stableId("embedding", `${capabilityId}:${fingerprint5}`);
 }
 function embeddingText(capability) {
   return sanitizeEmbeddingText([capability.name, capability.description, metadataTerms(capability.metadata).join("\n")].filter((value) => typeof value === "string" && value.trim()).join("\n"));
@@ -224811,10 +224488,10 @@ function summary(item) {
 }
 
 // common/craft-common-log/src/index.ts
-var import_node_crypto20 = require("node:crypto");
+var import_node_crypto19 = require("node:crypto");
 
 // common/craft-common-log/src/otlp.ts
-var import_node_crypto18 = require("node:crypto");
+var import_node_crypto17 = require("node:crypto");
 var TRACE_SCHEMA = "craft.trace";
 var TRACE_SCHEMA_REVISION = 1;
 function object2(value, name) {
@@ -224825,8 +224502,8 @@ function text5(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function digest5(value) {
-  return `sha256:${(0, import_node_crypto18.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+function digest4(value) {
+  return `sha256:${(0, import_node_crypto17.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function clean(value) {
   return Object.fromEntries(Object.entries(object2(value, "value")).filter(([key2]) => !/(?:api[_-]?key|authorization|cookie|password|secret|token)/iu.test(key2)));
@@ -224850,7 +224527,7 @@ function standardizeTrace(input) {
     span_id: source.span_id ?? `${traceId}:span:${sequence}`,
     input_refs: Array.isArray(source.input_refs) ? source.input_refs.map((item) => text5(item, "input_refs")) : [],
     output_refs: Array.isArray(source.output_refs) ? source.output_refs.map((item) => text5(item, "output_refs")) : [],
-    data_digest: source.data_digest ?? digest5(clean(source.data ?? {})),
+    data_digest: source.data_digest ?? digest4(clean(source.data ?? {})),
     raw_content: false,
     occurred_at: source.occurred_at ?? source.created_at ?? source.updated_at ?? null,
     duration_ms: source.duration_ms ?? null,
@@ -224858,7 +224535,7 @@ function standardizeTrace(input) {
   };
 }
 function spanHex(traceId, spanId) {
-  return (0, import_node_crypto18.createHash)("sha256").update(`${traceId}:${spanId}`).digest("hex").slice(0, 16);
+  return (0, import_node_crypto17.createHash)("sha256").update(`${traceId}:${spanId}`).digest("hex").slice(0, 16);
 }
 function nanos(value, fallback2) {
   const millis = typeof value === "string" ? Date.parse(value) : fallback2;
@@ -224870,7 +224547,7 @@ function toOtlpTrace(input, events = []) {
   const normalized = events.length ? events.map(standardizeTrace) : [trace];
   const traceId = String(trace.trace_id);
   if (normalized.some((event) => event.trace_id !== traceId)) throw new Error("OTLP events must belong to one trace");
-  const traceHex = /^[0-9a-f]{32}$/iu.test(traceId) ? traceId.toLowerCase() : (0, import_node_crypto18.createHash)("sha256").update(traceId).digest("hex").slice(0, 32);
+  const traceHex = /^[0-9a-f]{32}$/iu.test(traceId) ? traceId.toLowerCase() : (0, import_node_crypto17.createHash)("sha256").update(traceId).digest("hex").slice(0, 32);
   const known = new Map(normalized.map((event) => [String(event.span_id), spanHex(traceId, String(event.span_id))]));
   const fallbackMillis = Date.now();
   const spans = normalized.map((event) => {
@@ -224924,7 +224601,7 @@ async function exportOtlp(endpoint4, payload10, fetchImpl) {
     if (!Number.isSafeInteger(rejected) || rejected < 0) throw new Error("OTLP partialSuccess rejectedSpans is invalid");
     if (rejected > 0) throw new Error(`OTLP partial success rejected ${rejected} span(s)`);
   }
-  return { endpoint: url2, status: response.status, accepted: true, response_digest: digest5(response.body) };
+  return { endpoint: url2, status: response.status, accepted: true, response_digest: digest4(response.body) };
 }
 
 // common/craft-common-log/src/store-sink.ts
@@ -224960,8 +224637,8 @@ var EvaluationContractKernel = class {
   }
   define(input) {
     if (!input.capability_id.trim() || !Number.isInteger(input.capability_version) || input.capability_version < 1 || !input.input_contract.trim() || !input.output_contract.trim()) throw new Error("Evaluation Contract requires capability and IO contracts");
-    const id22 = input.contract_id ?? `evaluation_contract_${digestJson({ capability_id: input.capability_id, version: input.capability_version }).slice(-16)}`;
-    const existing = this.store.find("evaluation_contract", id22);
+    const id23 = input.contract_id ?? `evaluation_contract_${digestJson({ capability_id: input.capability_id, version: input.capability_version }).slice(-16)}`;
+    const existing = this.store.find("evaluation_contract", id23);
     const { contract_id: _ignored, ...contractInput } = input;
     const payload10 = {
       ...contractInput,
@@ -224975,7 +224652,7 @@ var EvaluationContractKernel = class {
       if (existing.contract_digest !== payload10.contract_digest) throw new Error("Evaluation Contract idempotency conflict");
       return { contract: existing, idempotent: true };
     }
-    return { contract: this.store.create("evaluation_contract", id22, payload10), idempotent: false };
+    return { contract: this.store.create("evaluation_contract", id23, payload10), idempotent: false };
   }
   record(input) {
     const current2 = this.store.get("evaluation_contract", input.contract_id);
@@ -224985,11 +224662,11 @@ var EvaluationContractKernel = class {
     if (stageIndex(input.stage) > previous + 1) throw new Error("Evaluation Contract stages must advance one gate at a time");
     const evidence2 = input.evidence;
     if (stageIndex(input.stage) < previous && (!Array.isArray(evidence2) || evidence2.length === 0)) throw new Error("Evaluation Contract stages cannot move backwards without a bound assessment");
-    if (!Array.isArray(evidence2) || !evidence2.length || evidence2.some((id22) => typeof id22 !== "string" || !id22.trim()) || new Set(evidence2).size !== evidence2.length) {
+    if (!Array.isArray(evidence2) || !evidence2.length || evidence2.some((id23) => typeof id23 !== "string" || !id23.trim()) || new Set(evidence2).size !== evidence2.length) {
       throw new Error("Evaluation Contract stage requires distinct evidence references");
     }
-    const verified = evidence2.some((id22) => {
-      const assessment = this.store.find("verification_assessment", id22);
+    const verified = evidence2.some((id23) => {
+      const assessment = this.store.find("verification_assessment", id23);
       if (!assessment || assessment.verdict !== "eligible") return false;
       const plan = this.store.find("verification_plan", String(assessment.verification_id));
       if (!plan || plan.change_ref !== `${input.contract_id}:${input.stage}`) return false;
@@ -225023,7 +224700,7 @@ var EvaluationContractKernel = class {
 };
 
 // common/craft-common-log/src/cost-ledger.ts
-var import_node_crypto19 = require("node:crypto");
+var import_node_crypto18 = require("node:crypto");
 var REPORT_LIMIT = 1e4;
 var METRICS = ["cost_usd", "input_tokens", "output_tokens"];
 function priceRates(record) {
@@ -225051,10 +224728,10 @@ var CostLedgerKernel = class {
     const provider = text(args.provider, "provider");
     const model = text(args.model, "model");
     const { input, output } = priceRates(args);
-    const id22 = String(args.price_id ?? `price_${provider}_${model}`);
+    const id23 = String(args.price_id ?? `price_${provider}_${model}`);
     const record = { provider, model, input_per_million: input, output_per_million: output, effective_at: args.effective_at === void 0 ? (/* @__PURE__ */ new Date()).toISOString() : text(args.effective_at, "effective_at") };
-    const existing = this.store.find("provider_price", id22);
-    return { price: existing ? this.store.save("provider_price", id22, { ...payload(existing), ...record }) : this.store.create("provider_price", id22, record), idempotent: false };
+    const existing = this.store.find("provider_price", id23);
+    return { price: existing ? this.store.save("provider_price", id23, { ...payload(existing), ...record }) : this.store.create("provider_price", id23, record), idempotent: false };
   }
   usageRecord(args) {
     const provider = text(args.provider, "provider");
@@ -225067,8 +224744,8 @@ var CostLedgerKernel = class {
     const rates = priceRates(price);
     const costUsd = Number(input) / 1e6 * rates.input + Number(output) / 1e6 * rates.output;
     if (!Number.isFinite(costUsd)) throw new Error("calculated cost must be finite");
-    const id22 = String(args.usage_id ?? `usage_${(0, import_node_crypto19.randomUUID)().replaceAll("-", "")}`);
-    return { usage: this.store.create("usage_ledger", id22, {
+    const id23 = String(args.usage_id ?? `usage_${(0, import_node_crypto18.randomUUID)().replaceAll("-", "")}`);
+    return { usage: this.store.create("usage_ledger", id23, {
       provider,
       model,
       project_id: args.project_id ?? null,
@@ -225124,7 +224801,7 @@ function telemetryEvent(input) {
   if (input.attributes !== void 0 && (!input.attributes || typeof input.attributes !== "object" || Array.isArray(input.attributes))) throw new Error("telemetry attributes must be an object");
   const evidence2 = input.evidence_ids ?? [];
   if (!Array.isArray(evidence2) || evidence2.length > 32) throw new Error("telemetry evidence_ids must be a bounded array");
-  const evidence_ids = [...new Set(evidence2.map((id22) => required2(id22, "evidence_id")))];
+  const evidence_ids = [...new Set(evidence2.map((id23) => required2(id23, "evidence_id")))];
   if (input.signal === "evaluation" && input.outcome === "verified" && !evidence_ids.length) throw new Error("verified evaluation requires evidence_ids");
   if (input.signal === "usage") {
     const attrs = input.attributes ?? {};
@@ -225140,7 +224817,7 @@ function telemetryEvent(input) {
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(occurred_at) || !Number.isFinite(Date.parse(occurred_at))) throw new Error("occurred_at must be an ISO timestamp");
   return {
     schema: "craft.telemetry.v1",
-    event_id: required2(input.event_id ?? `evt_${(0, import_node_crypto20.randomUUID)()}`, "event_id"),
+    event_id: required2(input.event_id ?? `evt_${(0, import_node_crypto19.randomUUID)()}`, "event_id"),
     signal: input.signal,
     capability_id: required2(input.capability_id, "capability_id"),
     operation: required2(input.operation, "operation"),
@@ -225168,7 +224845,7 @@ var CraftTelemetry = class {
     }
   }
   async capture(input, run) {
-    const span_id = `span_${(0, import_node_crypto20.randomUUID)()}`;
+    const span_id = `span_${(0, import_node_crypto19.randomUUID)()}`;
     const common = { ...input, span_id, parent_span_id: input.parent_span_id ?? null };
     const start2 = Date.now();
     const receipts = [await this.record({ ...common, signal: "trace", outcome: "observed", attributes: input.attributes })];
@@ -225184,14 +224861,14 @@ var CraftTelemetry = class {
 };
 function operationEventId(traceId, requestId, phase) {
   const raw = [required2(traceId, "trace_id"), required2(requestId, "request_id"), required2(phase, "phase")].join(":");
-  return `event_${(0, import_node_crypto20.createHash)("sha256").update(raw).digest("hex").slice(0, 32)}`;
+  return `event_${(0, import_node_crypto19.createHash)("sha256").update(raw).digest("hex").slice(0, 32)}`;
 }
 
 // core/isolated.ts
-var import_node_fs13 = require("node:fs");
+var import_node_fs12 = require("node:fs");
 var import_promises8 = require("node:fs/promises");
 var import_node_child_process3 = require("node:child_process");
-var import_node_path14 = require("node:path");
+var import_node_path13 = require("node:path");
 function processExitCode(code) {
   return code ?? 1;
 }
@@ -225227,7 +224904,7 @@ var LocalIsolatedAdapter = class {
   runner;
   constructor(options = {}) {
     this.platform = options.platform ?? process.platform;
-    this.helperAvailable = options.helperAvailable ?? import_node_fs13.existsSync;
+    this.helperAvailable = options.helperAvailable ?? import_node_fs12.existsSync;
     this.runner = options.runner ?? runLocalProcess;
   }
   async execute(input) {
@@ -225238,9 +224915,9 @@ var LocalIsolatedAdapter = class {
     if (input.effect !== "read_only" && !input.compensation) throw new Error("Write effects require compensation or human approval");
     const relativeCwd = input.cwd ?? ".";
     if (!pathAllowed(relativeCwd, input.path_allowlist)) throw new Error("Local isolated path is not in the allowlist");
-    const workspace = (0, import_node_path14.resolve)(input.runtime_root, input.run_id);
+    const workspace = (0, import_node_path13.resolve)(input.runtime_root, input.run_id);
     await (0, import_promises8.mkdir)(workspace, { recursive: true });
-    const cwd = (0, import_node_path14.resolve)(workspace, relativeCwd);
+    const cwd = (0, import_node_path13.resolve)(workspace, relativeCwd);
     const profile = this.platform === "darwin" ? `(version 1) (allow default) (deny network*)${input.effect === "read_only" ? " (deny file-write*)" : ` (allow file-write* (subpath "${workspace.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"))`}` : "bwrap network disabled";
     const argv = this.platform === "darwin" ? ["-p", profile, input.command, ...input.args] : ["--unshare-net", "--", input.command, ...input.args];
     const result = await this.runner({ helper, argv, cwd, profile });
@@ -225249,11 +224926,11 @@ var LocalIsolatedAdapter = class {
 };
 
 // core/workspace.ts
-var import_node_crypto21 = require("node:crypto");
-var import_node_fs14 = require("node:fs");
-var import_node_path15 = require("node:path");
+var import_node_crypto20 = require("node:crypto");
+var import_node_fs13 = require("node:fs");
+var import_node_path14 = require("node:path");
 function identifier(value, name, prefix) {
-  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto21.randomUUID)().replaceAll("-", "")}` : String(value).trim();
+  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto20.randomUUID)().replaceAll("-", "")}` : String(value).trim();
   if (!/^[a-zA-Z0-9_-]+$/.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
@@ -225267,7 +224944,7 @@ function recordPayload2(record) {
 }
 function relativePath(value, name) {
   const path2 = requiredText(value, name);
-  if ((0, import_node_path15.isAbsolute)(path2) || path2.split(/[\\/]+/).includes("..")) throw new Error(`${name} must be a relative path within the workspace`);
+  if ((0, import_node_path14.isAbsolute)(path2) || path2.split(/[\\/]+/).includes("..")) throw new Error(`${name} must be a relative path within the workspace`);
   return path2 === "." ? path2 : path2.replaceAll("\\", "/").replace(/^\.\//, "");
 }
 function includePaths(value) {
@@ -225277,14 +224954,14 @@ function includePaths(value) {
   return paths.sort();
 }
 function nested2(root, path2) {
-  const target = (0, import_node_path15.resolve)(root, path2);
-  if ((0, import_node_path15.relative)(root, target).startsWith("..") || (0, import_node_path15.relative)(root, target) === "") {
+  const target = (0, import_node_path14.resolve)(root, path2);
+  if ((0, import_node_path14.relative)(root, target).startsWith("..") || (0, import_node_path14.relative)(root, target) === "") {
     if (target !== root) throw new Error("workspace path escapes root");
   }
   return target;
 }
-function digest6(path2) {
-  return (0, import_node_crypto21.createHash)("sha256").update((0, import_node_fs14.readFileSync)(path2)).digest("hex");
+function digest5(path2) {
+  return (0, import_node_crypto20.createHash)("sha256").update((0, import_node_fs13.readFileSync)(path2)).digest("hex");
 }
 function snapshotNodeKind(stat4, path2) {
   if (stat4.isFile()) return "file";
@@ -225293,18 +224970,18 @@ function snapshotNodeKind(stat4, path2) {
 }
 function files2(root, path2) {
   const absolute = nested2(root, path2);
-  if (!(0, import_node_fs14.existsSync)(absolute)) return [];
-  const stat4 = (0, import_node_fs14.lstatSync)(absolute);
+  if (!(0, import_node_fs13.existsSync)(absolute)) return [];
+  const stat4 = (0, import_node_fs13.lstatSync)(absolute);
   if (stat4.isSymbolicLink()) throw new Error(`workspace snapshots do not follow symbolic links: ${path2}`);
-  if (snapshotNodeKind(stat4, path2) === "file") return [{ path: path2, digest: digest6(absolute), size_bytes: stat4.size }];
-  return (0, import_node_fs14.readdirSync)(absolute, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name)).flatMap((entry2) => files2(root, (0, import_node_path15.join)(path2, entry2.name).replaceAll("\\", "/")));
+  if (snapshotNodeKind(stat4, path2) === "file") return [{ path: path2, digest: digest5(absolute), size_bytes: stat4.size }];
+  return (0, import_node_fs13.readdirSync)(absolute, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name)).flatMap((entry2) => files2(root, (0, import_node_path14.join)(path2, entry2.name).replaceAll("\\", "/")));
 }
 function copyEntries(root, snapshotRoot, entries2) {
   for (const entry2 of entries2) {
     const source = nested2(root, entry2.path);
     const target = nested2(snapshotRoot, entry2.path);
-    (0, import_node_fs14.mkdirSync)((0, import_node_path15.dirname)(target), { recursive: true, mode: 448 });
-    (0, import_node_fs14.copyFileSync)(source, target);
+    (0, import_node_fs13.mkdirSync)((0, import_node_path14.dirname)(target), { recursive: true, mode: 448 });
+    (0, import_node_fs13.copyFileSync)(source, target);
   }
 }
 var WorkspaceState = class {
@@ -225316,8 +224993,8 @@ var WorkspaceState = class {
   }
   open(args) {
     const workspaceId = identifier(args.workspace_id, "workspace_id", "workspace");
-    const rootPath = (0, import_node_path15.resolve)(requiredText(args.root_path, "root_path"));
-    if (!(0, import_node_fs14.existsSync)(rootPath) || !(0, import_node_fs14.lstatSync)(rootPath).isDirectory()) throw new Error("root_path must exist and be a directory");
+    const rootPath = (0, import_node_path14.resolve)(requiredText(args.root_path, "root_path"));
+    if (!(0, import_node_fs13.existsSync)(rootPath) || !(0, import_node_fs13.lstatSync)(rootPath).isDirectory()) throw new Error("root_path must exist and be a directory");
     const includes = includePaths(args.include_paths);
     const workspace = this.store.create("workspace", workspaceId, {
       name: requiredText(args.name, "name"),
@@ -225348,7 +225025,7 @@ var WorkspaceState = class {
     const workspaceId = identifier(args.workspace_id, "workspace_id", "workspace");
     const workspace = this.store.get("workspace", workspaceId);
     const checkpointId = identifier(args.checkpoint_id, "checkpoint_id", "workspace_checkpoint");
-    const snapshotRoot = (0, import_node_path15.join)(this.paths.runtimeDir, "workspaces", workspaceId, "snapshots", checkpointId);
+    const snapshotRoot = (0, import_node_path14.join)(this.paths.runtimeDir, "workspaces", workspaceId, "snapshots", checkpointId);
     const root = requiredText(workspace.root_path, "workspace.root_path");
     const entries2 = workspace.include_paths.flatMap((path2) => files2(root, path2)).sort((left, right) => left.path.localeCompare(right.path));
     if (new Set(entries2.map((entry2) => entry2.path)).size !== entries2.length) throw new Error("include_paths must not overlap");
@@ -225403,7 +225080,7 @@ var WorkspaceState = class {
     const root = requiredText(workspace.root_path, "workspace.root_path");
     const includes = workspace.include_paths;
     if (includes.includes(".")) throw new Error("workspace restore cannot replace the workspace root");
-    for (const path2 of includes) (0, import_node_fs14.rmSync)(nested2(root, path2), { recursive: true, force: true });
+    for (const path2 of includes) (0, import_node_fs13.rmSync)(nested2(root, path2), { recursive: true, force: true });
     copyEntries(requiredText(checkpoint.snapshot_root, "checkpoint.snapshot_root"), root, checkpoint.entries);
     const saved = this.store.save("workspace", workspaceId, {
       ...recordPayload2(workspace),
@@ -225427,9 +225104,9 @@ var WorkspaceState = class {
 };
 
 // core/transaction.ts
-var import_node_crypto22 = require("node:crypto");
+var import_node_crypto21 = require("node:crypto");
 function id2(value, name, prefix) {
-  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto22.randomUUID)().replaceAll("-", "")}` : String(value).trim();
+  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto21.randomUUID)().replaceAll("-", "")}` : String(value).trim();
   if (!/^[a-zA-Z0-9_-]+$/.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
@@ -225501,10 +225178,10 @@ var TransactionCoordinator = class {
 };
 
 // core/trajectory.ts
-var import_node_crypto23 = require("node:crypto");
+var import_node_crypto22 = require("node:crypto");
 var SECRET3 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]+/iu;
 function id3(value, name, prefix) {
-  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto23.randomUUID)().replaceAll("-", "")}` : String(value).trim();
+  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto22.randomUUID)().replaceAll("-", "")}` : String(value).trim();
   if (!/^[a-zA-Z0-9_-]+$/.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
@@ -225543,7 +225220,7 @@ var TrajectoryCompiler = class {
       trial_ids: trialIds,
       operations: operations2,
       typescript,
-      source_digest: (0, import_node_crypto23.createHash)("sha256").update(JSON.stringify({ trialIds, operations: operations2 })).digest("hex"),
+      source_digest: (0, import_node_crypto22.createHash)("sha256").update(JSON.stringify({ trialIds, operations: operations2 })).digest("hex"),
       static_checks: { deterministic_template: true, imports: false, dynamic_execution: false },
       lifecycle: "draft"
     });
@@ -225588,9 +225265,9 @@ var TrajectoryCompiler = class {
 };
 
 // core/script-run.ts
-var import_node_crypto24 = require("node:crypto");
+var import_node_crypto23 = require("node:crypto");
 function id4(value, name, prefix) {
-  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto24.randomUUID)().replaceAll("-", "")}` : String(value).trim();
+  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto23.randomUUID)().replaceAll("-", "")}` : String(value).trim();
   if (!/^[a-zA-Z0-9_-]+$/.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
@@ -225652,7 +225329,7 @@ var VerifiedScriptRunner = class {
 };
 
 // core/workbench.ts
-var import_node_crypto25 = require("node:crypto");
+var import_node_crypto24 = require("node:crypto");
 var OBJECT_STATUS = /* @__PURE__ */ new Set(["draft", "accepted", "needs_review", "archived"]);
 var MEMORY_KINDS = /* @__PURE__ */ new Set(["fact", "preference", "decision", "experience"]);
 var MEMORY_STATUS = /* @__PURE__ */ new Set(["active", "superseded", "expired", "rejected"]);
@@ -225660,7 +225337,7 @@ var TASK_GRAPH_NODE_KINDS = /* @__PURE__ */ new Set(["explore", "produce", "veri
 var TASK_GRAPH_NODE_STATUS = /* @__PURE__ */ new Set(["pending", "active", "done", "skipped", "blocked"]);
 var SECRET4 = /(?:api[_-]?key|authorization|cookie|password|passwd|secret|token)\s*[:=]\s*[^\s]{6,}/iu;
 function id5(value, name, prefix) {
-  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto25.randomUUID)().replaceAll("-", "")}` : String(value).trim();
+  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto24.randomUUID)().replaceAll("-", "")}` : String(value).trim();
   if (!/^[a-zA-Z0-9_-]+$/.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
@@ -226066,9 +225743,9 @@ var WorkbenchKernel = class {
 };
 
 // core/changeset.ts
-var import_node_crypto26 = require("node:crypto");
+var import_node_crypto25 = require("node:crypto");
 function id6(value, name, prefix) {
-  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto26.randomUUID)().replaceAll("-", "")}` : String(value).trim();
+  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto25.randomUUID)().replaceAll("-", "")}` : String(value).trim();
   if (!/^[a-zA-Z0-9_-]+$/.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
@@ -226227,9 +225904,9 @@ var ChangeSetKernel = class {
 };
 
 // core/control-plane.ts
-var import_node_crypto27 = require("node:crypto");
+var import_node_crypto26 = require("node:crypto");
 function id7(value, name, prefix) {
-  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto27.randomUUID)().replaceAll("-", "")}` : String(value).trim();
+  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto26.randomUUID)().replaceAll("-", "")}` : String(value).trim();
   if (!/^[a-zA-Z0-9_-]+$/.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
@@ -226481,9 +226158,9 @@ var ControlPlaneKernel = class {
 };
 
 // core/security.ts
-var import_node_crypto28 = require("node:crypto");
+var import_node_crypto27 = require("node:crypto");
 function id8(value, name, prefix) {
-  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto28.randomUUID)().replaceAll("-", "")}` : text(value, name);
+  const result = value === void 0 ? `${prefix}_${(0, import_node_crypto27.randomUUID)().replaceAll("-", "")}` : text(value, name);
   if (!/^[a-zA-Z0-9_-]+$/.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
@@ -226505,8 +226182,8 @@ function containsSensitiveField(value) {
   if (!value || typeof value !== "object") return false;
   return Object.entries(value).some(([key2, child]) => /^(?:api[_-]?key|authorization|cookie|password|secret|token)$/iu.test(key2) || containsSensitiveField(child));
 }
-function digest7(value) {
-  return (0, import_node_crypto28.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
+function digest6(value) {
+  return (0, import_node_crypto27.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
 }
 var SecurityBrokerKernel = class {
   store;
@@ -226573,7 +226250,7 @@ var SecurityBrokerKernel = class {
     if (lease.approval_required_actions.includes(action) && !args.approval_ref) throw new Error("Egress action requires an approval reference");
     const requestDigest = text(args.request_digest, "request_digest");
     const receiptId = id8(args.receipt_id, "receipt_id", "egress");
-    const requestFingerprint = digest7({
+    const requestFingerprint = digest6({
       lease_id: lease.id,
       url: target.toString(),
       action,
@@ -226732,7 +226409,7 @@ var SecurityBrokerKernel = class {
 };
 
 // core/untrusted-parser.ts
-var import_node_crypto29 = require("node:crypto");
+var import_node_crypto28 = require("node:crypto");
 var MAX_CONTENT_BYTES = 1024 * 1024;
 function requiredText2(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
@@ -226821,7 +226498,7 @@ var DataOnlyParserAdapter = class {
     const parserFormat = String(analysis.format);
     const parserSelectors = analysis.selectors;
     const content = this.security.store.get("untrusted_content", contentId);
-    const actualDigest = `sha256:${(0, import_node_crypto29.createHash)("sha256").update(raw).digest("hex")}`;
+    const actualDigest = `sha256:${(0, import_node_crypto28.createHash)("sha256").update(raw).digest("hex")}`;
     if (content.content_digest !== actualDigest) throw new Error("raw_content digest does not match the registered content envelope");
     const structuredData = analysis.structured_data;
     const fieldSources = {};
@@ -226869,7 +226546,7 @@ var DataOnlyParserAdapter = class {
       if (extractionMatch) extractionPassed += 1;
       return {
         case_id: caseId,
-        content_digest: `sha256:${(0, import_node_crypto29.createHash)("sha256").update(raw).digest("hex")}`,
+        content_digest: `sha256:${(0, import_node_crypto28.createHash)("sha256").update(raw).digest("hex")}`,
         actual_signals: actual,
         expected_signals: [...expectedSet],
         extraction_match: extractionMatch
@@ -226878,7 +226555,7 @@ var DataOnlyParserAdapter = class {
     if (new Set(results.map((result) => result.case_id)).size !== results.length) throw new Error("case_id values must be unique");
     const precision = truePositive + falsePositive === 0 ? 1 : truePositive / (truePositive + falsePositive);
     const recall = truePositive + falseNegative === 0 ? 1 : truePositive / (truePositive + falseNegative);
-    const suiteDigest = (0, import_node_crypto29.createHash)("sha256").update(JSON.stringify(cases)).digest("hex");
+    const suiteDigest = (0, import_node_crypto28.createHash)("sha256").update(JSON.stringify(cases)).digest("hex");
     const suiteVersion = Number(args.suite_version);
     if (!Number.isInteger(suiteVersion) || suiteVersion < 1) throw new Error("suite_version must be a positive integer");
     const evaluation = this.security.store.create(
@@ -226907,21 +226584,21 @@ var DataOnlyParserAdapter = class {
 };
 
 // core/parser-process.ts
-var import_node_crypto30 = require("node:crypto");
-var import_node_fs15 = require("node:fs");
-var import_node_path16 = require("node:path");
+var import_node_crypto29 = require("node:crypto");
+var import_node_fs14 = require("node:fs");
+var import_node_path15 = require("node:path");
 var import_node_child_process4 = require("node:child_process");
 var MAX_OUTPUT_BYTES = 2 * 1024 * 1024;
 function text7(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value;
 }
-function resolveParserWorkerPath(entry2 = process.argv[1] ?? "", cwd = process.cwd(), fileExists = import_node_fs15.existsSync) {
-  const entryDir = (0, import_node_path16.dirname)(entry2);
-  const candidates = entry2.endsWith(".ts") ? [(0, import_node_path16.join)(cwd, "bin", "craft-parser-worker.ts")] : [
-    (0, import_node_path16.join)(entryDir, "craft-parser-worker.js"),
-    (0, import_node_path16.join)(entryDir, "..", "bin", "craft-parser-worker.js"),
-    (0, import_node_path16.join)(cwd, "dist", "bin", "craft-parser-worker.js")
+function resolveParserWorkerPath(entry2 = process.argv[1] ?? "", cwd = process.cwd(), fileExists = import_node_fs14.existsSync) {
+  const entryDir = (0, import_node_path15.dirname)(entry2);
+  const candidates = entry2.endsWith(".ts") ? [(0, import_node_path15.join)(cwd, "bin", "craft-parser-worker.ts")] : [
+    (0, import_node_path15.join)(entryDir, "craft-parser-worker.js"),
+    (0, import_node_path15.join)(entryDir, "..", "bin", "craft-parser-worker.js"),
+    (0, import_node_path15.join)(cwd, "dist", "bin", "craft-parser-worker.js")
   ];
   const found = candidates.find(fileExists);
   if (!found) throw new Error("Parser worker entrypoint is unavailable; rebuild the Craft distribution");
@@ -226991,9 +226668,9 @@ var ParserProcessAdapter = class {
     const contentId = text7(args.content_id, "content_id").trim();
     const raw = text7(args.raw_content, "raw_content");
     const content = this.security.store.get("untrusted_content", contentId);
-    const digest35 = `sha256:${(0, import_node_crypto30.createHash)("sha256").update(raw).digest("hex")}`;
+    const digest35 = `sha256:${(0, import_node_crypto29.createHash)("sha256").update(raw).digest("hex")}`;
     if (content.content_digest !== digest35) throw new Error("raw_content digest does not match the registered content envelope");
-    const receiptId = typeof args.receipt_id === "string" && args.receipt_id.trim() ? args.receipt_id.trim() : `parser_process_${(0, import_node_crypto30.randomUUID)().replaceAll("-", "")}`;
+    const receiptId = typeof args.receipt_id === "string" && args.receipt_id.trim() ? args.receipt_id.trim() : `parser_process_${(0, import_node_crypto29.randomUUID)().replaceAll("-", "")}`;
     const started = Date.now();
     try {
       const analysis = await runParserWorker(
@@ -227039,7 +226716,7 @@ var ParserProcessAdapter = class {
 };
 
 // core/sandbox.ts
-var import_node_crypto31 = require("node:crypto");
+var import_node_crypto30 = require("node:crypto");
 var BACKENDS = /* @__PURE__ */ new Set(["local_process", "container", "remote"]);
 var FILESYSTEM = /* @__PURE__ */ new Set(["none", "read_only", "workspace_overlay"]);
 var NETWORK = /* @__PURE__ */ new Set(["denied", "allowlist", "unrestricted"]);
@@ -227059,8 +226736,8 @@ function positiveLimits(value, name) {
   }
   return limits2;
 }
-function digest8(value) {
-  return (0, import_node_crypto31.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
+function digest7(value) {
+  return (0, import_node_crypto30.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
 }
 function normalizeCapabilities(value) {
   const input = object(value, "capabilities");
@@ -227085,7 +226762,7 @@ var SandboxKernel = class {
     this.store = store;
   }
   profileSave(args) {
-    const profileId = args.profile_id === void 0 ? `sandbox_${(0, import_node_crypto31.randomUUID)().replaceAll("-", "")}` : text(args.profile_id, "profile_id");
+    const profileId = args.profile_id === void 0 ? `sandbox_${(0, import_node_crypto30.randomUUID)().replaceAll("-", "")}` : text(args.profile_id, "profile_id");
     const backend = text(args.backend, "backend");
     if (!BACKENDS.has(backend)) throw new Error("Sandbox backend is unsupported");
     const capabilities = normalizeCapabilities(args.capabilities);
@@ -227094,7 +226771,7 @@ var SandboxKernel = class {
       backend,
       adapter_id: text(args.adapter_id, "adapter_id"),
       capabilities,
-      capability_digest: digest8(capabilities),
+      capability_digest: digest7(capabilities),
       lifecycle: "declared",
       evidence_ids: []
     });
@@ -227108,8 +226785,8 @@ var SandboxKernel = class {
     const evidenceIds2 = strings5(args.evidence_ids, "evidence_ids");
     if (!evidenceIds2.length) throw new Error("Sandbox verification requires evidence_ids");
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
-    const matches3 = digest8(observed) === profile.capability_digest;
-    const assessment = this.store.create("sandbox_assessment", String(args.assessment_id ?? `sandbox_assessment_${(0, import_node_crypto31.randomUUID)().replaceAll("-", "")}`), {
+    const matches3 = digest7(observed) === profile.capability_digest;
+    const assessment = this.store.create("sandbox_assessment", String(args.assessment_id ?? `sandbox_assessment_${(0, import_node_crypto30.randomUUID)().replaceAll("-", "")}`), {
       profile_id: profile.id,
       profile_version: profile.version,
       verifier: text(args.verifier, "verifier"),
@@ -227154,7 +226831,7 @@ var SandboxKernel = class {
     if (missing.length) return { compatible: false, profile, missing, ticket: null };
     if (args.dry_run === true) return { compatible: true, profile, missing: [], ticket: null, dry_run: true };
     const requestDigest = text(args.request_digest, "request_digest");
-    const ticket = this.store.create("sandbox_ticket", String(args.ticket_id ?? `sandbox_ticket_${(0, import_node_crypto31.randomUUID)().replaceAll("-", "")}`), {
+    const ticket = this.store.create("sandbox_ticket", String(args.ticket_id ?? `sandbox_ticket_${(0, import_node_crypto30.randomUUID)().replaceAll("-", "")}`), {
       task_id: text(args.task_id, "task_id"),
       profile_id: profile.id,
       profile_version: profile.version,
@@ -227169,7 +226846,7 @@ var SandboxKernel = class {
     const ticket = this.store.get("sandbox_ticket", text(args.ticket_id, "ticket_id"));
     const receiptId = text(args.receipt_id, "receipt_id");
     const existing = this.store.find("sandbox_receipt", receiptId);
-    const fingerprint4 = digest8({
+    const fingerprint5 = digest7({
       ticket_id: ticket.id,
       adapter_id: args.adapter_id,
       profile_version: args.profile_version,
@@ -227178,7 +226855,7 @@ var SandboxKernel = class {
       evidence_ids: args.evidence_ids
     });
     if (existing) {
-      if (existing.request_fingerprint !== fingerprint4) throw new Error("Sandbox receipt idempotency conflict");
+      if (existing.request_fingerprint !== fingerprint5) throw new Error("Sandbox receipt idempotency conflict");
       return { receipt: existing, idempotent: true };
     }
     if (ticket.status !== "issued") throw new Error("Sandbox ticket is not active");
@@ -227189,7 +226866,7 @@ var SandboxKernel = class {
     const status2 = text(args.status, "status");
     if (!(/* @__PURE__ */ new Set(["passed", "failed", "cancelled", "timed_out"])).has(status2)) throw new Error("Sandbox receipt status is unsupported");
     const observed = normalizeCapabilities(args.observed_capabilities);
-    const boundaryMatches = digest8(observed) === ticket.profile_digest;
+    const boundaryMatches = digest7(observed) === ticket.profile_digest;
     if (status2 === "passed" && !boundaryMatches) throw new Error("A passed Sandbox receipt must prove the exact profile boundaries");
     const evidenceIds2 = strings5(args.evidence_ids, "evidence_ids");
     if (!evidenceIds2.length) throw new Error("Sandbox receipt requires evidence_ids");
@@ -227204,7 +226881,7 @@ var SandboxKernel = class {
       boundary_matches: boundaryMatches,
       observed_capabilities: observed,
       evidence_ids: evidenceIds2,
-      request_fingerprint: fingerprint4,
+      request_fingerprint: fingerprint5,
       request_digest: ticket.request_digest
     });
     this.store.updateIfVersion("sandbox_ticket", String(ticket.id), Number(ticket.version), { ...payload(ticket), status: "completed", receipt_id: receipt.id });
@@ -227213,7 +226890,7 @@ var SandboxKernel = class {
 };
 
 // core/effects.ts
-var import_node_crypto32 = require("node:crypto");
+var import_node_crypto31 = require("node:crypto");
 var RESULTS = /* @__PURE__ */ new Set(["succeeded", "failed", "indeterminate"]);
 function strings6(value, name) {
   if (!Array.isArray(value) || !value.length) throw new Error(`${name} must be a non-empty array`);
@@ -227228,11 +226905,11 @@ function statusCodes(value, name) {
   if (new Set(result).size !== result.length) throw new Error(`${name} must contain unique values`);
   return result;
 }
-function digest9(value) {
-  return (0, import_node_crypto32.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
+function digest8(value) {
+  return (0, import_node_crypto31.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
 }
 function generated(prefix) {
-  return `${prefix}_${(0, import_node_crypto32.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto31.randomUUID)().replaceAll("-", "")}`;
 }
 var ExternalEffectKernel = class {
   store;
@@ -227297,7 +226974,7 @@ var ExternalEffectKernel = class {
     if (!RESULTS.has(status2)) throw new Error("External effect result is unsupported");
     const evidenceIds2 = strings6(args.evidence_ids, "evidence_ids");
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
-    const fingerprint4 = digest9({
+    const fingerprint5 = digest8({
       effect_id: operation2.id,
       status: status2,
       remote_operation_id: args.remote_operation_id ?? null,
@@ -227306,7 +226983,7 @@ var ExternalEffectKernel = class {
     });
     const existing = this.store.find("external_effect_receipt", receiptId);
     if (existing) {
-      if (existing.fingerprint !== fingerprint4) throw new Error("External effect receipt idempotency conflict");
+      if (existing.fingerprint !== fingerprint5) throw new Error("External effect receipt idempotency conflict");
       return { effect: operation2, receipt: existing, idempotent: true };
     }
     if (operation2.status !== "executing") throw new Error("External effect is not executing");
@@ -227318,7 +226995,7 @@ var ExternalEffectKernel = class {
       remote_operation_id: args.remote_operation_id ?? null,
       response_digest: args.response_digest ?? null,
       evidence_ids: evidenceIds2,
-      fingerprint: fingerprint4
+      fingerprint: fingerprint5
     });
     const updated = this.store.updateIfVersion("external_effect", String(operation2.id), Number(operation2.version), {
       ...payload(operation2),
@@ -227360,7 +227037,7 @@ var ExternalEffectKernel = class {
     const failed = statusCodes(args.failed_http_statuses, "failed_http_statuses");
     if (succeeded.some((code) => failed.includes(code))) throw new Error("Reconciliation HTTP status mappings must not overlap");
     const reconciliationId = String(args.reconciliation_id ?? generated("reconciliation"));
-    const fingerprint4 = digest9({
+    const fingerprint5 = digest8({
       effect_id: operation2.id,
       authorization_id: authorization.id,
       succeeded_http_statuses: succeeded,
@@ -227368,7 +227045,7 @@ var ExternalEffectKernel = class {
     });
     const existing = this.store.find("effect_reconciliation", reconciliationId);
     if (existing) {
-      if (existing.fingerprint !== fingerprint4) throw new Error("Effect reconciliation idempotency conflict");
+      if (existing.fingerprint !== fingerprint5) throw new Error("Effect reconciliation idempotency conflict");
       return { effect: operation2, reconciliation: existing, idempotent: true };
     }
     if (operation2.status !== "indeterminate") throw new Error("Only an indeterminate external effect can be reconciled");
@@ -227382,7 +227059,7 @@ var ExternalEffectKernel = class {
       method: "GET",
       succeeded_http_statuses: succeeded,
       failed_http_statuses: failed,
-      fingerprint: fingerprint4,
+      fingerprint: fingerprint5,
       status: "executing"
     });
     return { effect: operation2, reconciliation, idempotent: false };
@@ -227434,7 +227111,7 @@ var ExternalEffectKernel = class {
     const failed = authorization ? statusCodes(args.failed_http_statuses, "failed_http_statuses") : [];
     if (succeeded.some((code) => failed.includes(code))) throw new Error("Compensation HTTP status mappings must not overlap");
     const approvalRef = text(args.approval_ref, "approval_ref");
-    const fingerprint4 = digest9({
+    const fingerprint5 = digest8({
       effect_id: operation2.id,
       authorization_id: authorization?.id ?? null,
       approval_ref: approvalRef,
@@ -227443,7 +227120,7 @@ var ExternalEffectKernel = class {
     });
     const existing = this.store.find("effect_compensation", compensationId);
     if (existing) {
-      if (existing.fingerprint !== fingerprint4) throw new Error("Effect compensation idempotency conflict");
+      if (existing.fingerprint !== fingerprint5) throw new Error("Effect compensation idempotency conflict");
       return { effect: operation2, compensation: existing, idempotent: true };
     }
     if (operation2.status !== "succeeded" || !operation2.compensation) throw new Error("Only a succeeded compensatable effect can be compensated");
@@ -227461,7 +227138,7 @@ var ExternalEffectKernel = class {
       authorization_id: authorization?.id ?? null,
       succeeded_http_statuses: succeeded,
       failed_http_statuses: failed,
-      fingerprint: fingerprint4,
+      fingerprint: fingerprint5,
       status: "executing"
     });
     const updated = this.store.updateIfVersion("external_effect", String(operation2.id), Number(operation2.version), {
@@ -227546,7 +227223,7 @@ var ExternalEffectKernel = class {
   }
   sagaGet(args) {
     const saga = this.store.get("effect_saga", text(args.saga_id, "saga_id"));
-    return { saga, ...this.sagaState(saga, saga.effect_ids.map((id22) => this.store.get("external_effect", id22))) };
+    return { saga, ...this.sagaState(saga, saga.effect_ids.map((id23) => this.store.get("external_effect", id23))) };
   }
   sagaState(saga, effects) {
     const failure = effects.find((effect3) => ["failed", "indeterminate", "compensation_failed", "compensation_indeterminate"].includes(String(effect3.status)));
@@ -227563,7 +227240,7 @@ var ExternalEffectKernel = class {
 };
 
 // core/recovery.ts
-var import_node_crypto33 = require("node:crypto");
+var import_node_crypto32 = require("node:crypto");
 function positiveInteger(value, name, fallback2, maximum) {
   const result = value === void 0 ? fallback2 : Number(value);
   if (!Number.isInteger(result) || result < 1 || result > maximum) throw new Error(`${name} must be an integer between 1 and ${maximum}`);
@@ -227615,7 +227292,7 @@ var RecoveryQueueKernel = class {
     const leaseSeconds = positiveInteger(args.lease_seconds, "lease_seconds", 300, 3600);
     const item = this.store.list("recovery_item", 1e4, (entry2) => entry2.status === "open" && actions.includes(String(entry2.action))).sort((left, right) => Number(right.priority) - Number(left.priority) || String(left.id).localeCompare(String(right.id)))[0];
     if (!item) return { item: null };
-    const token = (0, import_node_crypto33.randomUUID)();
+    const token = (0, import_node_crypto32.randomUUID)();
     const leased = this.store.updateIfVersion("recovery_item", String(item.id), Number(item.version), {
       ...payload(item),
       status: "leased",
@@ -227684,7 +227361,7 @@ var RecoveryQueueKernel = class {
       else if (effect3.status === "compensation_indeterminate") candidates.push(this.candidate(effect3, "external_effect", "resolve_compensation", 100, { compensation_id: effect3.compensation_id }));
     }
     for (const saga of this.store.list("effect_saga", 1e4)) {
-      const effects = saga.effect_ids.map((id22) => this.store.get("external_effect", id22));
+      const effects = saga.effect_ids.map((id23) => this.store.get("external_effect", id23));
       const failed = effects.some((effect3) => ["failed", "indeterminate", "compensation_failed", "compensation_indeterminate"].includes(String(effect3.status)));
       const compensatable = failed ? effects.filter((effect3) => effect3.status === "succeeded" && effect3.compensation).reverse()[0] : void 0;
       if (compensatable) candidates.push(this.candidate(saga, "effect_saga", "execute_compensation", 95, { effect_id: compensatable.id }));
@@ -227721,7 +227398,7 @@ var RecoveryQueueKernel = class {
 };
 
 // core/trigger.ts
-var import_node_crypto34 = require("node:crypto");
+var import_node_crypto33 = require("node:crypto");
 function id9(value, name) {
   const result = text(value, name);
   if (!/^[a-zA-Z0-9_-]{1,128}$/u.test(result)) throw new Error(`${name} is invalid`);
@@ -227809,10 +227486,10 @@ var TriggerKernel = class {
     const variable = secretRef.startsWith("env:") ? secretRef.slice(4) : "";
     const secret = variable ? this.env[variable] : void 0;
     if (!secret) throw new Error("Webhook signing secret is unavailable");
-    const expected = (0, import_node_crypto34.createHmac)("sha256", secret).update(`${timestamp3}.${rawBody}`).digest("hex");
+    const expected = (0, import_node_crypto33.createHmac)("sha256", secret).update(`${timestamp3}.${rawBody}`).digest("hex");
     const supplied = text(args.signature, "signature").replace(/^sha256=/u, "");
-    if (!/^[a-f0-9]{64}$/u.test(supplied) || !(0, import_node_crypto34.timingSafeEqual)(Buffer.from(expected), Buffer.from(supplied))) throw new Error("Webhook signature is invalid");
-    const bodyDigest2 = `sha256:${(0, import_node_crypto34.createHash)("sha256").update(rawBody).digest("hex")}`;
+    if (!/^[a-f0-9]{64}$/u.test(supplied) || !(0, import_node_crypto33.timingSafeEqual)(Buffer.from(expected), Buffer.from(supplied))) throw new Error("Webhook signature is invalid");
+    const bodyDigest2 = `sha256:${(0, import_node_crypto33.createHash)("sha256").update(rawBody).digest("hex")}`;
     const recordId = `${subscription.id}_${eventId}`;
     const existing = this.store.find("trigger_event", recordId);
     if (existing) {
@@ -227876,7 +227553,7 @@ var TriggerKernel = class {
 };
 
 // core/speculative.ts
-var import_node_crypto35 = require("node:crypto");
+var import_node_crypto34 = require("node:crypto");
 var OPERATIONS = /* @__PURE__ */ new Set(["index", "summarize", "draft", "prefetch_metadata"]);
 function integer4(value, name, fallback2, min, max) {
   const result = value === void 0 ? fallback2 : Number(value);
@@ -227982,7 +227659,7 @@ var SpeculativeKernel = class {
     const now3 = instant3(args.now, "now");
     const candidate2 = this.store.list("speculative_candidate", 1e4, (item) => item.status === "queued" && Date.parse(String(item.expires_at)) > now3 && allowed.includes(String(item.operation)))[0];
     if (!candidate2) return { candidate: null };
-    const lease = `lease_${(0, import_node_crypto35.randomUUID)().replaceAll("-", "")}`;
+    const lease = `lease_${(0, import_node_crypto34.randomUUID)().replaceAll("-", "")}`;
     const saved = this.store.updateIfVersion("speculative_candidate", String(candidate2.id), Number(candidate2.version), {
       ...payload(candidate2),
       status: "leased",
@@ -228070,7 +227747,7 @@ var SpeculativeKernel = class {
 };
 
 // core/lineage.ts
-var import_node_crypto36 = require("node:crypto");
+var import_node_crypto35 = require("node:crypto");
 var ENTITY_KINDS = /* @__PURE__ */ new Set([
   "work_object",
   "artifact",
@@ -228089,7 +227766,7 @@ function integer5(value, name, fallback2, min = 1, max = Number.MAX_SAFE_INTEGER
   if (!Number.isInteger(result) || result < min || result > max) throw new Error(`${name} must be an integer between ${min} and ${max}`);
   return result;
 }
-function array2(value, name) {
+function array3(value, name) {
   if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
   return value;
 }
@@ -228102,8 +227779,8 @@ function locator(value, name) {
 function key(ref2) {
   return `${ref2.kind}:${ref2.id}:v${ref2.version}:${ref2.locator ?? ""}`;
 }
-function digest10(value) {
-  return (0, import_node_crypto36.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
+function digest9(value) {
+  return (0, import_node_crypto35.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
 }
 var LineageKernel = class {
   store;
@@ -228114,21 +227791,21 @@ var LineageKernel = class {
     const input = object(value, name);
     const kind4 = text(input.kind, `${name}.kind`);
     if (!ENTITY_KINDS.has(kind4)) throw new Error(`${name}.kind is unsupported`);
-    const id22 = text(input.id, `${name}.id`);
+    const id23 = text(input.id, `${name}.id`);
     const version3 = integer5(input.version, `${name}.version`, 0);
-    const record = this.store.get(kind4, id22, version3);
+    const record = this.store.get(kind4, id23, version3);
     if (kind4 === "work_object" && record.workspace_id !== workspaceId) throw new Error(`${name} work object belongs to another workspace`);
     if (taskId3 && record.task_id && record.task_id !== taskId3) throw new Error(`${name} belongs to another task`);
-    return { kind: kind4, id: id22, version: version3, locator: locator(input.locator, `${name}.locator`) };
+    return { kind: kind4, id: id23, version: version3, locator: locator(input.locator, `${name}.locator`) };
   }
   record(args) {
     const workspace = this.store.get("workspace", text(args.workspace_id, "workspace_id"));
     const task = args.task_id === void 0 ? null : this.store.get("task", text(args.task_id, "task_id"));
     const output = this.reference(args.output, "output", String(workspace.id), task ? String(task.id) : null);
-    const inputs = array2(args.sources, "sources").map((item, index) => this.reference(item, `sources[${index}]`, String(workspace.id), task ? String(task.id) : null));
+    const inputs = array3(args.sources, "sources").map((item, index) => this.reference(item, `sources[${index}]`, String(workspace.id), task ? String(task.id) : null));
     if (!inputs.length || new Set(inputs.map(key)).size !== inputs.length) throw new Error("inputs must contain unique source references");
     if (inputs.some((input) => key(input) === key(output))) throw new Error("Lineage output cannot directly depend on itself");
-    const evidenceIds2 = array2(args.evidence_ids, "evidence_ids").map((item) => text(item, "evidence_id"));
+    const evidenceIds2 = array3(args.evidence_ids, "evidence_ids").map((item) => text(item, "evidence_id"));
     if (!evidenceIds2.length || new Set(evidenceIds2).size !== evidenceIds2.length) throw new Error("evidence_ids must contain unique Evidence");
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
     const actorType = text(args.actor_type, "actor_type");
@@ -228151,7 +227828,7 @@ var LineageKernel = class {
       summary: text(args.summary, "summary")
     };
     if (existingOutput) {
-      if (existingOutput.statement_digest !== digest10(identity)) throw new Error("Lineage output already has a different derivation");
+      if (existingOutput.statement_digest !== digest9(identity)) throw new Error("Lineage output already has a different derivation");
       return { lineage: existingOutput, idempotent: true };
     }
     const adjacency = this.store.list("lineage_edge", 1e4, (edge) => edge.workspace_id === workspace.id);
@@ -228164,12 +227841,12 @@ var LineageKernel = class {
       for (const edge of adjacency) if (edge.input_keys.includes(current2)) pending.push(String(edge.output_key));
     }
     if (inputs.some((input) => reachable.has(key(input)))) throw new Error("Lineage references would form a cycle");
-    const lineageId = String(args.lineage_id ?? `lineage_${digest10(identity)}`);
+    const lineageId = String(args.lineage_id ?? `lineage_${digest9(identity)}`);
     const lineage = this.store.create("lineage_edge", lineageId, {
       ...identity,
       output_key: outputKey,
       input_keys: inputs.map(key),
-      statement_digest: digest10(identity),
+      statement_digest: digest9(identity),
       immutable: true
     });
     return { lineage, idempotent: false };
@@ -228224,7 +227901,7 @@ var LineageKernel = class {
 };
 
 // core/hydration.ts
-var import_node_crypto37 = require("node:crypto");
+var import_node_crypto36 = require("node:crypto");
 function integer6(value, name, fallback2, min, max) {
   const result = value === void 0 ? fallback2 : Number(value);
   if (!Number.isInteger(result) || result < min || result > max) throw new Error(`${name} must be an integer between ${min} and ${max}`);
@@ -228243,7 +227920,7 @@ function instant4(value, name) {
   return result;
 }
 function fingerprint(value) {
-  return `sha256:${(0, import_node_crypto37.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto36.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function reference(record) {
   return { id: record.id, version: record.version };
@@ -228264,11 +227941,11 @@ var HydrationKernel = class {
     if (wait?.workspace_id && workspace?.id !== wait.workspace_id) throw new Error("Snapshot workspace does not match the durable wait");
     const budgetIds = strings8(args.budget_ids, "budget_ids");
     const recoveryIds = strings8(args.recovery_item_ids, "recovery_item_ids");
-    const budgets = budgetIds.map((id22) => this.store.get("budget_account", id22));
+    const budgets = budgetIds.map((id23) => this.store.get("budget_account", id23));
     if (budgets.some((budget) => budget.status !== "active" || budget.owner_id !== task.id && budget.owner_id !== run?.id)) {
       throw new Error("Snapshot budgets must be active and owned by the task or runtime run");
     }
-    const recovery = recoveryIds.map((id22) => this.store.get("recovery_item", id22));
+    const recovery = recoveryIds.map((id23) => this.store.get("recovery_item", id23));
     if (recovery.some((item) => item.task_id !== task.id || !(/* @__PURE__ */ new Set(["open", "leased"])).has(String(item.status)))) {
       throw new Error("Snapshot recovery items must be active and belong to the task");
     }
@@ -228291,7 +227968,7 @@ var HydrationKernel = class {
       budgets: budgets.map((item) => ({ ...reference(item), status: item.status })),
       recovery_items: recovery.map(reference)
     };
-    const snapshotId = String(args.snapshot_id ?? `dehydration_${(0, import_node_crypto37.randomUUID)().replaceAll("-", "")}`);
+    const snapshotId = String(args.snapshot_id ?? `dehydration_${(0, import_node_crypto36.randomUUID)().replaceAll("-", "")}`);
     const stateFingerprint = fingerprint(state4);
     const existing = this.store.find("dehydration_snapshot", snapshotId);
     if (existing) {
@@ -228360,7 +228037,7 @@ var HydrationKernel = class {
     const inspection = this.inspect(args);
     if (inspection.readiness === "still_waiting") return { snapshot, inspection, idempotent: true };
     const claimKey = text(args.claim_key, "claim_key");
-    const leaseId = `hydration_lease_${(0, import_node_crypto37.randomUUID)().replaceAll("-", "")}`;
+    const leaseId = `hydration_lease_${(0, import_node_crypto36.randomUUID)().replaceAll("-", "")}`;
     const saved = this.store.updateIfVersion("dehydration_snapshot", String(snapshot.id), Number(snapshot.version), {
       ...payload(snapshot),
       status: "hydrating",
@@ -228425,7 +228102,7 @@ var HydrationKernel = class {
 };
 
 // core/autonomy.ts
-var import_node_crypto38 = require("node:crypto");
+var import_node_crypto37 = require("node:crypto");
 var ACTIONS = /* @__PURE__ */ new Set(["read", "draft", "sandbox_write", "external_write", "communication", "computer_use", "destructive", "financial"]);
 var LEVELS = /* @__PURE__ */ new Set(["automatic", "notify_only", "human_approval", "multi_sig"]);
 var HIGH_RISK = /* @__PURE__ */ new Set(["destructive", "financial"]);
@@ -228487,7 +228164,7 @@ var AutonomyKernel = class {
     const now3 = instant5(args.now, "now");
     const ttl = integer7(args.ttl_seconds, "ttl_seconds", Number(policy.default_ttl_seconds), 60, 86400);
     const identity = { policy_id: policy.id, policy_version: policy.version, task_id: taskId3, action, target, request_digest: requestDigest };
-    const requestId = String(args.request_id ?? `authorization_${(0, import_node_crypto38.randomUUID)().replaceAll("-", "")}`);
+    const requestId = String(args.request_id ?? `authorization_${(0, import_node_crypto37.randomUUID)().replaceAll("-", "")}`);
     const requestFingerprint = digestJson(identity);
     const existing = this.store.find("autonomy_request", requestId);
     if (existing) {
@@ -228563,7 +228240,7 @@ var AutonomyKernel = class {
 };
 
 // core/contracts.ts
-var import_node_crypto39 = require("node:crypto");
+var import_node_crypto38 = require("node:crypto");
 var ADAPTERS = /* @__PURE__ */ new Set(["api", "mcp", "computer_use"]);
 var EFFECTS3 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_write", "destructive", "unknown"]);
 function strings9(value, name, minimum = 1) {
@@ -228586,7 +228263,7 @@ var ContractInferenceKernel = class {
     const outcome2 = text(args.outcome, "outcome");
     if (!(/* @__PURE__ */ new Set(["succeeded", "failed"])).has(outcome2)) throw new Error("Contract observation outcome is unsupported");
     const evidenceIds2 = strings9(args.evidence_ids, "evidence_ids");
-    for (const id22 of evidenceIds2) this.store.get("evidence", id22);
+    for (const id23 of evidenceIds2) this.store.get("evidence", id23);
     const inputSchema = object(args.input_schema, "input_schema");
     const outputSchema = object(args.output_schema, "output_schema");
     const identity = {
@@ -228601,11 +228278,11 @@ var ContractInferenceKernel = class {
       compensation_observed: args.compensation_observed === true,
       credential_handles_required: strings9(args.credential_handles_required ?? [], "credential_handles_required", 0)
     };
-    const observationId = String(args.observation_id ?? `contract_observation_${(0, import_node_crypto39.randomUUID)().replaceAll("-", "")}`);
-    const fingerprint4 = stableDigest({ ...identity, outcome: outcome2, evidence_ids: evidenceIds2 });
+    const observationId = String(args.observation_id ?? `contract_observation_${(0, import_node_crypto38.randomUUID)().replaceAll("-", "")}`);
+    const fingerprint5 = stableDigest({ ...identity, outcome: outcome2, evidence_ids: evidenceIds2 });
     const existing = this.store.find("contract_observation", observationId);
     if (existing) {
-      if (existing.fingerprint !== fingerprint4) throw new Error("Contract observation idempotency conflict");
+      if (existing.fingerprint !== fingerprint5) throw new Error("Contract observation idempotency conflict");
       return { observation: existing, idempotent: true };
     }
     return { observation: this.store.create("contract_observation", observationId, {
@@ -228614,18 +228291,18 @@ var ContractInferenceKernel = class {
       output_schema: outputSchema,
       outcome: outcome2,
       evidence_ids: evidenceIds2,
-      fingerprint: fingerprint4,
+      fingerprint: fingerprint5,
       raw_payload_stored: false
     }), idempotent: false };
   }
   infer(args) {
     const ids6 = strings9(args.observation_ids, "observation_ids", 2);
-    const observations = ids6.map((id22) => this.store.get("contract_observation", id22));
+    const observations = ids6.map((id23) => this.store.get("contract_observation", id23));
     const first = observations[0];
     const same3 = ["task_id", "adapter_kind", "endpoint", "operation", "input_schema_digest", "output_schema_digest", "observed_effect"];
     if (observations.some((item) => same3.some((key2) => item[key2] !== first[key2]))) throw new Error("Contract observations are not structurally consistent");
     if (observations.some((item) => item.outcome !== "succeeded")) throw new Error("Contract inference requires successful observations");
-    const candidateId2 = String(args.candidate_id ?? `contract_candidate_${(0, import_node_crypto39.randomUUID)().replaceAll("-", "")}`);
+    const candidateId2 = String(args.candidate_id ?? `contract_candidate_${(0, import_node_crypto38.randomUUID)().replaceAll("-", "")}`);
     const candidateFingerprint = stableDigest({ observation_ids: [...ids6].sort() });
     const existing = this.store.find("contract_candidate", candidateId2);
     if (existing) {
@@ -228727,11 +228404,11 @@ var ContractInferenceKernel = class {
     const reviewed = object(contract.reviewed_contract, "reviewed_contract");
     const effect3 = String(reviewed.effect);
     if (!(/* @__PURE__ */ new Set(["read_only", "local_write", "external_write", "destructive"])).has(effect3)) throw new Error("Contract publication effect is not executable");
-    const publicationId = String(args.publication_id ?? `contract_publication_${(0, import_node_crypto39.randomUUID)().replaceAll("-", "")}`);
-    const fingerprint4 = stableDigest({ candidate_id: contract.id, candidate_version: contract.version, asset_id: args.asset_id });
+    const publicationId = String(args.publication_id ?? `contract_publication_${(0, import_node_crypto38.randomUUID)().replaceAll("-", "")}`);
+    const fingerprint5 = stableDigest({ candidate_id: contract.id, candidate_version: contract.version, asset_id: args.asset_id });
     const existing = this.store.find("contract_publication", publicationId);
     if (existing) {
-      if (existing.fingerprint !== fingerprint4) throw new Error("Contract publication idempotency conflict");
+      if (existing.fingerprint !== fingerprint5) throw new Error("Contract publication idempotency conflict");
       return { publication: existing, asset: this.store.get("capability_asset", String(existing.asset_id), Number(existing.asset_version)), idempotent: true };
     }
     const assetId = text(args.asset_id, "asset_id");
@@ -228758,7 +228435,7 @@ var ContractInferenceKernel = class {
       asset_version: asset.version,
       publisher,
       approval_ref: text(args.approval_ref, "approval_ref"),
-      fingerprint: fingerprint4,
+      fingerprint: fingerprint5,
       status: "active"
     });
     return { publication, asset, idempotent: false };
@@ -228781,7 +228458,7 @@ var ContractInferenceKernel = class {
 };
 
 // core/capability-canary.ts
-var import_node_crypto40 = require("node:crypto");
+var import_node_crypto39 = require("node:crypto");
 function number2(value, name, min = 0, max = Number.MAX_SAFE_INTEGER) {
   const result = Number(value);
   if (!Number.isFinite(result) || result < min || result > max) throw new Error(`${name} must be between ${min} and ${max}`);
@@ -228792,8 +228469,8 @@ function integer8(value, name, min, max) {
   if (!Number.isInteger(result)) throw new Error(`${name} must be an integer`);
   return result;
 }
-function digest11(value) {
-  return Number.parseInt((0, import_node_crypto40.createHash)("sha256").update(value).digest("hex").slice(0, 8), 16) % 1e4;
+function digest10(value) {
+  return Number.parseInt((0, import_node_crypto39.createHash)("sha256").update(value).digest("hex").slice(0, 8), 16) % 1e4;
 }
 var CapabilityCanaryKernel = class {
   store;
@@ -228808,7 +228485,7 @@ var CapabilityCanaryKernel = class {
     if (baseline.effect !== candidate2.effect || baseline.asset_type !== candidate2.asset_type) throw new Error("Canary assets are not comparable");
     const thresholds = object(args.thresholds, "thresholds");
     for (const key2 of ["max_failure_rate_delta", "max_cost_ratio", "max_latency_ratio", "max_correction_rate_delta"]) number2(thresholds[key2], `thresholds.${key2}`, 0);
-    const canary = this.store.create("capability_canary", String(args.canary_id ?? `capability_canary_${(0, import_node_crypto40.randomUUID)().replaceAll("-", "")}`), {
+    const canary = this.store.create("capability_canary", String(args.canary_id ?? `capability_canary_${(0, import_node_crypto39.randomUUID)().replaceAll("-", "")}`), {
       publication_id: publication.id,
       baseline_asset_id: baseline.id,
       baseline_asset_version: baseline.version,
@@ -228825,12 +228502,12 @@ var CapabilityCanaryKernel = class {
   route(args) {
     const canary = this.store.get("capability_canary", text(args.canary_id, "canary_id"));
     const key2 = text(args.routing_key, "routing_key");
-    const candidate2 = canary.status === "running" && digest11(`${canary.id}:${key2}`) < Number(canary.allocation_percent) * 100;
+    const candidate2 = canary.status === "running" && digest10(`${canary.id}:${key2}`) < Number(canary.allocation_percent) * 100;
     return {
       arm: candidate2 ? "candidate" : "baseline",
       asset_id: candidate2 ? canary.candidate_asset_id : canary.baseline_asset_id,
       asset_version: candidate2 ? canary.candidate_asset_version : canary.baseline_asset_version,
-      bucket: digest11(`${canary.id}:${key2}`),
+      bucket: digest10(`${canary.id}:${key2}`),
       sticky: true
     };
   }
@@ -228840,11 +228517,11 @@ var CapabilityCanaryKernel = class {
     if (!(/* @__PURE__ */ new Set(["baseline", "candidate"])).has(arm)) throw new Error("Canary arm is unsupported");
     const evidenceIds2 = args.evidence_ids;
     if (!Array.isArray(evidenceIds2) || !evidenceIds2.length) throw new Error("Canary observation requires Evidence");
-    for (const id22 of evidenceIds2) this.store.get("evidence", text(id22, "evidence_id"));
+    for (const id23 of evidenceIds2) this.store.get("evidence", text(id23, "evidence_id"));
     const outcome2 = text(args.outcome, "outcome");
     if (!(/* @__PURE__ */ new Set(["passed", "failed"])).has(outcome2)) throw new Error("Canary outcome is unsupported");
     const sampleId = text(args.sample_id, "sample_id");
-    const fingerprint4 = (0, import_node_crypto40.createHash)("sha256").update(JSON.stringify({
+    const fingerprint5 = (0, import_node_crypto39.createHash)("sha256").update(JSON.stringify({
       canary_id: canary.id,
       arm,
       outcome: outcome2,
@@ -228855,7 +228532,7 @@ var CapabilityCanaryKernel = class {
     })).digest("hex");
     const existing = this.store.find("capability_canary_sample", sampleId);
     if (existing) {
-      if (existing.fingerprint !== fingerprint4) throw new Error("Canary sample idempotency conflict");
+      if (existing.fingerprint !== fingerprint5) throw new Error("Canary sample idempotency conflict");
       return { sample: existing, idempotent: true };
     }
     if (canary.status !== "running") throw new Error("Canary is not accepting samples");
@@ -228867,7 +228544,7 @@ var CapabilityCanaryKernel = class {
       latency_ms: number2(args.latency_ms, "latency_ms"),
       corrected: args.corrected === true,
       evidence_ids: evidenceIds2,
-      fingerprint: fingerprint4
+      fingerprint: fingerprint5
     }), idempotent: false };
   }
   evaluate(args) {
@@ -228910,7 +228587,7 @@ var CapabilityCanaryKernel = class {
 };
 
 // core/federation.ts
-var import_node_crypto41 = require("node:crypto");
+var import_node_crypto40 = require("node:crypto");
 function strings10(value, name, minimum = 0) {
   if (!Array.isArray(value) || value.length < minimum) throw new Error(`${name} must contain at least ${minimum} values`);
   const result = value.map((item) => text(item, name));
@@ -228938,16 +228615,16 @@ var CapabilityFederationKernel = class {
     const asset = this.store.get("capability_asset", text(args.asset_id, "asset_id"), Number(args.asset_version));
     if (asset.trust !== "verified" || asset.health !== "healthy") throw new Error("Only a healthy verified Capability Asset can be shared");
     const evidenceIds2 = strings10(args.evidence_ids, "evidence_ids", 1);
-    for (const id22 of evidenceIds2) this.store.get("evidence", id22);
+    for (const id23 of evidenceIds2) this.store.get("evidence", id23);
     const audience = text(args.audience, "audience");
     if (!(/* @__PURE__ */ new Set(["personal", "team", "organization"])).has(audience)) throw new Error("Federation audience is unsupported");
     const manifest = object(args.manifest, "manifest");
     safe(manifest);
-    const bundleId = String(args.bundle_id ?? `capability_bundle_${(0, import_node_crypto41.randomUUID)().replaceAll("-", "")}`);
-    const fingerprint4 = stableDigest({ asset_id: asset.id, asset_version: asset.version, audience, manifest, evidence_ids: [...evidenceIds2].sort() });
+    const bundleId = String(args.bundle_id ?? `capability_bundle_${(0, import_node_crypto40.randomUUID)().replaceAll("-", "")}`);
+    const fingerprint5 = stableDigest({ asset_id: asset.id, asset_version: asset.version, audience, manifest, evidence_ids: [...evidenceIds2].sort() });
     const existing = this.store.find("capability_bundle", bundleId);
     if (existing) {
-      if (existing.fingerprint !== fingerprint4) throw new Error("Capability bundle idempotency conflict");
+      if (existing.fingerprint !== fingerprint5) throw new Error("Capability bundle idempotency conflict");
       return { bundle: existing, idempotent: true };
     }
     return { bundle: this.store.create("capability_bundle", bundleId, {
@@ -228956,7 +228633,7 @@ var CapabilityFederationKernel = class {
       audience,
       manifest,
       evidence_ids: evidenceIds2,
-      fingerprint: fingerprint4,
+      fingerprint: fingerprint5,
       status: "proposed",
       execution_authority: false,
       raw_trajectory_stored: false
@@ -228985,7 +228662,7 @@ var CapabilityFederationKernel = class {
     const asset = this.store.get("capability_asset", String(bundle.asset_id), Number(bundle.asset_version));
     const currentAsset = this.store.get("capability_asset", String(bundle.asset_id));
     if (asset.trust !== "verified" || asset.health !== "healthy" || currentAsset.health !== "healthy") throw new Error("Capability bundle asset is no longer publishable");
-    const releaseId = String(args.release_id ?? `capability_release_${(0, import_node_crypto41.randomUUID)().replaceAll("-", "")}`);
+    const releaseId = String(args.release_id ?? `capability_release_${(0, import_node_crypto40.randomUUID)().replaceAll("-", "")}`);
     const releaseDigest = stableDigest({ bundle_id: bundle.id, bundle_version: bundle.version, asset_id: asset.id, asset_version: asset.version, manifest: bundle.manifest });
     const approvalRef = text(args.approval_ref, "approval_ref");
     const publicationFingerprint = stableDigest({ release_digest: releaseDigest, publisher, approval_ref: approvalRef });
@@ -229015,11 +228692,11 @@ var CapabilityFederationKernel = class {
     const currentRelease = this.store.get("capability_release", String(release.id));
     if (release.status !== "active" || currentRelease.status !== "active") throw new Error("Capability release is not active");
     const consumer = text(args.consumer, "consumer");
-    const subscriptionId = String(args.subscription_id ?? `capability_subscription_${(0, import_node_crypto41.randomUUID)().replaceAll("-", "")}`);
-    const fingerprint4 = stableDigest({ release_id: release.id, release_version: release.version, release_digest: release.release_digest, consumer });
+    const subscriptionId = String(args.subscription_id ?? `capability_subscription_${(0, import_node_crypto40.randomUUID)().replaceAll("-", "")}`);
+    const fingerprint5 = stableDigest({ release_id: release.id, release_version: release.version, release_digest: release.release_digest, consumer });
     const existing = this.store.find("capability_subscription", subscriptionId);
     if (existing) {
-      if (existing.fingerprint !== fingerprint4) throw new Error("Capability subscription idempotency conflict");
+      if (existing.fingerprint !== fingerprint5) throw new Error("Capability subscription idempotency conflict");
       return { subscription: existing, idempotent: true };
     }
     return { subscription: this.store.create("capability_subscription", subscriptionId, {
@@ -229029,7 +228706,7 @@ var CapabilityFederationKernel = class {
       consumer,
       asset_id: release.asset_id,
       asset_version: release.asset_version,
-      fingerprint: fingerprint4,
+      fingerprint: fingerprint5,
       status: "pinned",
       execution_authority: false
     }), idempotent: false };
@@ -229057,7 +228734,7 @@ var CapabilityFederationKernel = class {
 };
 
 // core/hub-sync.ts
-var import_node_crypto42 = require("node:crypto");
+var import_node_crypto41 = require("node:crypto");
 function integer9(value, name, min, max) {
   const result = Number(value);
   if (!Number.isInteger(result) || result < min || result > max) throw new Error(`${name} must be an integer between ${min} and ${max}`);
@@ -229095,23 +228772,23 @@ var HubSyncKernel = class {
     const publicKey = text(args.public_key_pem, "public_key_pem");
     let key2;
     try {
-      key2 = (0, import_node_crypto42.createPublicKey)(publicKey);
+      key2 = (0, import_node_crypto41.createPublicKey)(publicKey);
     } catch {
       throw new Error("Hub public key is invalid");
     }
     if (key2.asymmetricKeyType !== "ed25519") throw new Error("Hub source requires an Ed25519 public key");
-    const sourceId = String(args.source_id ?? `hub_source_${(0, import_node_crypto42.randomUUID)().replaceAll("-", "")}`);
-    const fingerprint4 = stableDigest({ endpoint: endpoint4.toString(), public_key_pem: publicKey, publisher: args.publisher });
+    const sourceId = String(args.source_id ?? `hub_source_${(0, import_node_crypto41.randomUUID)().replaceAll("-", "")}`);
+    const fingerprint5 = stableDigest({ endpoint: endpoint4.toString(), public_key_pem: publicKey, publisher: args.publisher });
     const existing = this.store.find("hub_source", sourceId);
     if (existing) {
-      if (existing.fingerprint !== fingerprint4) throw new Error("Hub source idempotency conflict");
+      if (existing.fingerprint !== fingerprint5) throw new Error("Hub source idempotency conflict");
       return { source: existing, idempotent: true };
     }
     return { source: this.store.create("hub_source", sourceId, {
       endpoint: endpoint4.toString(),
       publisher: text(args.publisher, "publisher"),
       public_key_pem: publicKey,
-      fingerprint: fingerprint4,
+      fingerprint: fingerprint5,
       status: "active",
       cursor_revision: 0,
       cursor_digest: "genesis",
@@ -229136,8 +228813,8 @@ var HubSyncKernel = class {
     } catch {
       throw new Error("Hub signature is invalid");
     }
-    if (!signature.length || !(0, import_node_crypto42.verify)(null, Buffer.from(canonicalJson(envelope)), String(source.public_key_pem), signature)) throw new Error("Hub page signature verification failed");
-    const receiptId = String(args.receipt_id ?? `hub_sync_${(0, import_node_crypto42.randomUUID)().replaceAll("-", "")}`);
+    if (!signature.length || !(0, import_node_crypto41.verify)(null, Buffer.from(canonicalJson(envelope)), String(source.public_key_pem), signature)) throw new Error("Hub page signature verification failed");
+    const receiptId = String(args.receipt_id ?? `hub_sync_${(0, import_node_crypto41.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("hub_sync_receipt", receiptId);
     if (existing) {
       if (existing.page_digest !== pageDigest) throw new Error("Hub sync receipt idempotency conflict");
@@ -229147,14 +228824,14 @@ var HubSyncKernel = class {
     if (previousDigest !== source.cursor_digest) throw new Error("Hub previous digest does not match the trusted cursor");
     const saved = this.store.transaction((database) => {
       const now3 = (/* @__PURE__ */ new Date()).toISOString();
-      const insert = (kind4, id22, data, version3) => {
-        database.prepare("INSERT INTO records(kind,id,version,payload_json,created_at,updated_at) VALUES(?,?,?,?,?,?)").run(kind4, id22, version3, JSON.stringify(data), now3, now3);
-        return { ...data, id: id22, version: version3, created_at: now3, updated_at: now3 };
+      const insert = (kind4, id23, data, version3) => {
+        database.prepare("INSERT INTO records(kind,id,version,payload_json,created_at,updated_at) VALUES(?,?,?,?,?,?)").run(kind4, id23, version3, JSON.stringify(data), now3, now3);
+        return { ...data, id: id23, version: version3, created_at: now3, updated_at: now3 };
       };
       for (const item of entries2) {
-        const id22 = `${source.id}:${item.entry_id}`;
-        const row = database.prepare("SELECT COALESCE(MAX(version),0)+1 version FROM records WHERE kind='hub_catalog_entry' AND id=?").get(id22);
-        insert("hub_catalog_entry", id22, { ...item, source_id: source.id, source_revision: revision2, page_digest: pageDigest }, Number(row.version));
+        const id23 = `${source.id}:${item.entry_id}`;
+        const row = database.prepare("SELECT COALESCE(MAX(version),0)+1 version FROM records WHERE kind='hub_catalog_entry' AND id=?").get(id23);
+        insert("hub_catalog_entry", id23, { ...item, source_id: source.id, source_revision: revision2, page_digest: pageDigest }, Number(row.version));
       }
       const nextSource = insert("hub_source", String(source.id), { ...payload(source), cursor_revision: revision2, cursor_digest: pageDigest, last_sync_at: issuedAt }, Number(source.version) + 1);
       const receipt = insert("hub_sync_receipt", receiptId, {
@@ -229187,14 +228864,14 @@ var HubSyncKernel = class {
 };
 
 // core/materialization.ts
-var import_node_crypto43 = require("node:crypto");
+var import_node_crypto42 = require("node:crypto");
 var import_promises9 = require("node:fs/promises");
-var import_node_path17 = __toESM(require("node:path"), 1);
+var import_node_path16 = __toESM(require("node:path"), 1);
 var TYPES2 = /* @__PURE__ */ new Set(["skill", "workflow", "tool", "mcp", "script", "adapter", "agent", "template"]);
 var EFFECTS4 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_write", "destructive", "unknown"]);
 function safeRelative(value) {
   const result = text(value, "file.path").replaceAll("\\", "/");
-  if (import_node_path17.default.posix.isAbsolute(result) || result.split("/").some((part) => !part || part === "." || part === "..") || /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/iu.test(import_node_path17.default.posix.basename(result))) throw new Error("Materialized file path is unsafe");
+  if (import_node_path16.default.posix.isAbsolute(result) || result.split("/").some((part) => !part || part === "." || part === "..") || /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/iu.test(import_node_path16.default.posix.basename(result))) throw new Error("Materialized file path is unsafe");
   return result;
 }
 function decode(value) {
@@ -229210,7 +228887,7 @@ function files3(value) {
     const filePath = safeRelative(item.path);
     const content = decode(item.content_base64);
     if (content.length > 1048576) throw new Error("Materialized file exceeds 1 MiB");
-    return { path: filePath, content, size: content.length, digest: `sha256:${(0, import_node_crypto43.createHash)("sha256").update(content).digest("hex")}` };
+    return { path: filePath, content, size: content.length, digest: `sha256:${(0, import_node_crypto42.createHash)("sha256").update(content).digest("hex")}` };
   });
   if (new Set(result.map((item) => item.path.toLowerCase())).size !== result.length) throw new Error("Materialized file paths must be unique across platforms");
   if (result.reduce((sum, item) => sum + item.size, 0) > 5242880) throw new Error("Materialized package exceeds 5 MiB");
@@ -229219,11 +228896,11 @@ function files3(value) {
 function findings(items2) {
   const result = [];
   for (const item of items2) {
-    const extension2 = import_node_path17.default.posix.extname(item.path).toLowerCase();
+    const extension2 = import_node_path16.default.posix.extname(item.path).toLowerCase();
     const body3 = item.content.toString("utf8");
     if ((/* @__PURE__ */ new Set([".exe", ".dll", ".so", ".dylib", ".wasm", ".node"])).has(extension2)) result.push({ severity: "critical", code: "native_executable", path: item.path });
     if (/(?:bearer\s+[a-z0-9._-]{8,}|sk-[a-z0-9_-]{8,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)/iu.test(body3)) result.push({ severity: "high", code: "secret_like_content", path: item.path });
-    if (import_node_path17.default.posix.basename(item.path).toLowerCase() === "package.json") {
+    if (import_node_path16.default.posix.basename(item.path).toLowerCase() === "package.json") {
       try {
         const parsed2 = JSON.parse(body3);
         if (parsed2.scripts && typeof parsed2.scripts === "object" && Object.keys(parsed2.scripts).length) result.push({ severity: "high", code: "package_lifecycle_scripts", path: item.path });
@@ -229249,31 +228926,31 @@ var MaterializationKernel = class {
     const entry2 = this.store.get("hub_catalog_entry", `${source.id}:${text(args.entry_id, "entry_id")}`);
     if (entry2.status !== "active") throw new Error("Hub catalog entry is not active");
     const packageFiles = files3(args.files);
-    if (!packageFiles.some((item) => (/* @__PURE__ */ new Set(["skill.md", "capability.json", "plugin.json"])).has(import_node_path17.default.posix.basename(item.path).toLowerCase()))) throw new Error("Materialized package requires a capability descriptor");
+    if (!packageFiles.some((item) => (/* @__PURE__ */ new Set(["skill.md", "capability.json", "plugin.json"])).has(import_node_path16.default.posix.basename(item.path).toLowerCase()))) throw new Error("Materialized package requires a capability descriptor");
     const manifest = packageFiles.map(({ path: filePath, size, digest: fileDigest2 }) => ({ path: filePath, size, digest: fileDigest2 }));
     const contentDigest = stableDigest(manifest);
     if (contentDigest !== entry2.content_digest) throw new Error("Materialized package digest does not match the signed catalog");
     const scan = findings(packageFiles);
     if (scan.some((item) => item.severity === "critical")) throw new Error("Materialized package contains a critical finding");
-    const materializationId = String(args.materialization_id ?? `materialization_${(0, import_node_crypto43.randomUUID)().replaceAll("-", "")}`);
-    const fingerprint4 = stableDigest({ source_id: source.id, entry_id: entry2.entry_id, content_digest: contentDigest });
+    const materializationId = String(args.materialization_id ?? `materialization_${(0, import_node_crypto42.randomUUID)().replaceAll("-", "")}`);
+    const fingerprint5 = stableDigest({ source_id: source.id, entry_id: entry2.entry_id, content_digest: contentDigest });
     const existing = this.store.find("capability_materialization", materializationId);
     if (existing) {
-      if (existing.fingerprint !== fingerprint4) throw new Error("Materialization idempotency conflict");
+      if (existing.fingerprint !== fingerprint5) throw new Error("Materialization idempotency conflict");
       return { materialization: existing, idempotent: true };
     }
-    const root = import_node_path17.default.resolve(this.store.paths.cacheDir, "hub-packages", String(source.id), String(entry2.entry_id), contentDigest.slice(7));
-    const base = import_node_path17.default.resolve(this.store.paths.cacheDir, "hub-packages");
-    if (import_node_path17.default.relative(base, root).startsWith("..")) throw new Error("Materialization target escaped the cache root");
-    const temporary = `${root}.tmp-${process.pid}-${(0, import_node_crypto43.randomUUID)()}`;
+    const root = import_node_path16.default.resolve(this.store.paths.cacheDir, "hub-packages", String(source.id), String(entry2.entry_id), contentDigest.slice(7));
+    const base = import_node_path16.default.resolve(this.store.paths.cacheDir, "hub-packages");
+    if (import_node_path16.default.relative(base, root).startsWith("..")) throw new Error("Materialization target escaped the cache root");
+    const temporary = `${root}.tmp-${process.pid}-${(0, import_node_crypto42.randomUUID)()}`;
     try {
       await (0, import_promises9.mkdir)(temporary, { recursive: true });
       for (const item of packageFiles) {
-        const target = import_node_path17.default.resolve(temporary, ...item.path.split("/"));
-        await (0, import_promises9.mkdir)(import_node_path17.default.dirname(target), { recursive: true });
+        const target = import_node_path16.default.resolve(temporary, ...item.path.split("/"));
+        await (0, import_promises9.mkdir)(import_node_path16.default.dirname(target), { recursive: true });
         await (0, import_promises9.writeFile)(target, item.content, { flag: "wx" });
       }
-      await (0, import_promises9.mkdir)(import_node_path17.default.dirname(root), { recursive: true });
+      await (0, import_promises9.mkdir)(import_node_path16.default.dirname(root), { recursive: true });
       let destinationExists = false;
       try {
         await (0, import_promises9.access)(root);
@@ -229298,7 +228975,7 @@ var MaterializationKernel = class {
       risk_level: riskLevel4,
       status: "quarantined",
       execution_authority: false,
-      fingerprint: fingerprint4
+      fingerprint: fingerprint5
     }), idempotent: false };
   }
   review(args) {
@@ -229306,10 +228983,10 @@ var MaterializationKernel = class {
     if (item.status !== "quarantined") throw new Error("Materialization is not awaiting review");
     const decision = text(args.decision, "decision");
     if (!(/* @__PURE__ */ new Set(["approve", "reject"])).has(decision)) throw new Error("Materialization review decision is unsupported");
-    const evidenceIds2 = decision === "approve" ? Array.isArray(args.evidence_ids) && args.evidence_ids.length ? args.evidence_ids.map((id22) => text(id22, "evidence_id")) : (() => {
+    const evidenceIds2 = decision === "approve" ? Array.isArray(args.evidence_ids) && args.evidence_ids.length ? args.evidence_ids.map((id23) => text(id23, "evidence_id")) : (() => {
       throw new Error("Approved materialization requires Evidence");
     })() : [];
-    for (const id22 of evidenceIds2) this.store.get("evidence", id22);
+    for (const id23 of evidenceIds2) this.store.get("evidence", id23);
     if (decision === "approve" && item.risk_level === "high" && !args.security_approval_ref) throw new Error("High-risk materialization requires security approval");
     return { materialization: this.store.save("capability_materialization", String(item.id), {
       ...payload(item),
@@ -229354,7 +229031,7 @@ var MaterializationKernel = class {
 };
 
 // core/certification.ts
-var import_node_crypto44 = require("node:crypto");
+var import_node_crypto43 = require("node:crypto");
 function integer10(value, name) {
   const result = Number(value);
   if (!Number.isInteger(result) || result < 1) throw new Error(`${name} must be a positive integer`);
@@ -229395,15 +229072,15 @@ var CapabilityCertificationKernel = class {
     }
     const signoff = this.store.get("signoff", text(args.signoff_id, "signoff_id"));
     if (signoff.decision !== "passed" || signoff.evaluation_run_id !== evaluation.id || signoff.subject_type !== "capability_asset" || signoff.subject_id !== asset.id || Number(signoff.subject_version) !== Number(asset.version)) throw new Error("Certification requires a passed Signoff for the exact Evaluation");
-    const grades = signoff.grade_ids.map((id22) => this.store.get("grade", id22));
+    const grades = signoff.grade_ids.map((id23) => this.store.get("grade", id23));
     for (const trialId of trialIds) {
       const grade = grades.find((item) => item.trial_id === trialId && item.grader_type === "program" && item.verdict === "passed" && Array.isArray(item.evidence_ids) && item.evidence_ids.length);
       if (!grade) throw new Error("Certification requires an evidence-backed passing program Grade for every Trial");
     }
     const certifier = text(args.certifier, "certifier");
     if (certifier === materialization.reviewer) throw new Error("Certification requires an independent certifier");
-    const certificationId = String(args.certification_id ?? `capability_certification_${(0, import_node_crypto44.randomUUID)().replaceAll("-", "")}`);
-    const fingerprint4 = stableDigest({
+    const certificationId = String(args.certification_id ?? `capability_certification_${(0, import_node_crypto43.randomUUID)().replaceAll("-", "")}`);
+    const fingerprint5 = stableDigest({
       materialization_id: materialization.id,
       materialization_version: materialization.version,
       asset_id: asset.id,
@@ -229417,7 +229094,7 @@ var CapabilityCertificationKernel = class {
     });
     const existing = this.store.find("capability_certification", certificationId);
     if (existing) {
-      if (existing.fingerprint !== fingerprint4) throw new Error("Capability certification idempotency conflict");
+      if (existing.fingerprint !== fingerprint5) throw new Error("Capability certification idempotency conflict");
       return { certification: existing, idempotent: true };
     }
     return { certification: this.store.create("capability_certification", certificationId, {
@@ -229432,7 +229109,7 @@ var CapabilityCertificationKernel = class {
       sandbox_receipt_ids: [...receiptIds].sort(),
       certifier,
       certification_ref: text(args.certification_ref, "certification_ref"),
-      fingerprint: fingerprint4,
+      fingerprint: fingerprint5,
       status: "eligible",
       execution_authority: false
     }), idempotent: false };
@@ -229461,7 +229138,7 @@ var CapabilityCertificationKernel = class {
 };
 
 // core/supply-chain.ts
-var import_node_crypto45 = require("node:crypto");
+var import_node_crypto44 = require("node:crypto");
 function strings12(value, name) {
   if (!Array.isArray(value) || !value.length) throw new Error(`${name} must be a non-empty array`);
   const result = value.map((item) => text(item, name));
@@ -229484,12 +229161,12 @@ var SupplyChainKernel = class {
     const severity = text(args.severity, "severity");
     if (!SEVERITIES.has(severity)) throw new Error("Advisory severity is unsupported");
     const evidenceIds2 = strings12(args.evidence_ids, "evidence_ids");
-    for (const id22 of evidenceIds2) this.store.get("evidence", id22);
-    const advisoryId = String(args.advisory_id ?? `supply_chain_advisory_${(0, import_node_crypto45.randomUUID)().replaceAll("-", "")}`);
-    const fingerprint4 = stableDigest({ source_id: source.id, entry_id: entryId, asset_id: assetId, severity, evidence_ids: [...evidenceIds2].sort(), summary: args.summary });
+    for (const id23 of evidenceIds2) this.store.get("evidence", id23);
+    const advisoryId = String(args.advisory_id ?? `supply_chain_advisory_${(0, import_node_crypto44.randomUUID)().replaceAll("-", "")}`);
+    const fingerprint5 = stableDigest({ source_id: source.id, entry_id: entryId, asset_id: assetId, severity, evidence_ids: [...evidenceIds2].sort(), summary: args.summary });
     const existing = this.store.find("supply_chain_advisory", advisoryId);
     if (existing) {
-      if (existing.fingerprint !== fingerprint4) throw new Error("Supply-chain advisory idempotency conflict");
+      if (existing.fingerprint !== fingerprint5) throw new Error("Supply-chain advisory idempotency conflict");
       return { advisory: existing, idempotent: true };
     }
     return { advisory: this.store.create("supply_chain_advisory", advisoryId, {
@@ -229499,7 +229176,7 @@ var SupplyChainKernel = class {
       severity,
       summary: text(args.summary, "summary"),
       evidence_ids: evidenceIds2,
-      fingerprint: fingerprint4,
+      fingerprint: fingerprint5,
       status: "active"
     }), idempotent: false };
   }
@@ -229507,7 +229184,7 @@ var SupplyChainKernel = class {
     const advisory = this.store.get("supply_chain_advisory", text(args.advisory_id, "advisory_id"));
     if (advisory.status === "resolved") return { advisory, idempotent: true };
     const evidenceIds2 = strings12(args.evidence_ids, "evidence_ids");
-    for (const id22 of evidenceIds2) this.store.get("evidence", id22);
+    for (const id23 of evidenceIds2) this.store.get("evidence", id23);
     return { advisory: this.store.save("supply_chain_advisory", String(advisory.id), {
       ...payload(advisory),
       status: "resolved",
@@ -229760,13 +229437,13 @@ var HomeKernel = class {
       const eventPayload = event.payload;
       for (const evidenceId of Array.isArray(eventPayload.evidence_ids) ? eventPayload.evidence_ids : []) evidenceIds2.add(String(evidenceId));
     }
-    const evidence2 = [...evidenceIds2].map((id22) => this.store.find("evidence", id22)).filter((item) => item !== null);
+    const evidence2 = [...evidenceIds2].map((id23) => this.store.find("evidence", id23)).filter((item) => item !== null);
     const artifactIds = new Set(evidence2.flatMap((item) => item.artifact_id ? [String(item.artifact_id)] : []));
     for (const event of traces) {
       const eventPayload = event.payload;
       for (const artifactId of Array.isArray(eventPayload.artifact_ids) ? eventPayload.artifact_ids : []) artifactIds.add(String(artifactId));
     }
-    const artifacts = [...artifactIds].map((id22) => this.store.find("artifact", id22)).filter((item) => item !== null);
+    const artifacts = [...artifactIds].map((id23) => this.store.find("artifact", id23)).filter((item) => item !== null);
     const runs = ["runtime_run", "workflow_run", "orchestration_plan"].flatMap((kind4) => this.store.list(kind4, 1e4, (item) => item.task_id === taskId3).map((item) => ({ ...item, run_kind: kind4 })));
     const taskEvents = this.store.events(`task:${taskId3}`);
     const hostRuns = this.store.list("host_run", limit3, (item) => item.task_id === taskId3);
@@ -229807,9 +229484,9 @@ var HomeKernel = class {
 };
 
 // core/codex-driver.ts
-var import_node_crypto46 = require("node:crypto");
+var import_node_crypto45 = require("node:crypto");
 var import_promises10 = require("node:fs/promises");
-var import_node_path18 = require("node:path");
+var import_node_path17 = require("node:path");
 var import_node_url = require("node:url");
 
 // core/host-driver.ts
@@ -229909,14 +229586,14 @@ var CodexHostKernel = class {
   prepare(args) {
     const task = this.store.get("task", text(args.task_id, "task_id"));
     const prompt = text(args.prompt, "prompt");
-    const workspace = (0, import_node_path18.resolve)(text(args.workspace, "workspace"));
+    const workspace = (0, import_node_path17.resolve)(text(args.workspace, "workspace"));
     const sandbox = String(args.sandbox ?? "read-only");
     if (!(/* @__PURE__ */ new Set(["read-only", "workspace-write"])).has(sandbox)) throw new Error("Codex sandbox is unsupported");
     const model = args.model === void 0 ? null : text(args.model, "model");
     const evaluationMode = args.evaluation_mode === void 0 ? false : args.evaluation_mode === true ? true : args.evaluation_mode === false ? false : (() => {
       throw new Error("evaluation_mode must be a boolean");
     })();
-    const dispatchId = String(args.dispatch_id ?? `codex_dispatch_${(0, import_node_crypto46.randomUUID)().replaceAll("-", "")}`);
+    const dispatchId = String(args.dispatch_id ?? `codex_dispatch_${(0, import_node_crypto45.randomUUID)().replaceAll("-", "")}`);
     const identity = { task_id: task.id, task_version: task.version, workspace, sandbox, model, evaluation_mode: evaluationMode, prompt_digest: digestJson(prompt) };
     const requestDigest = digestJson(identity);
     const existing = this.store.find("codex_dispatch", dispatchId);
@@ -229954,9 +229631,9 @@ var CodexHostKernel = class {
     const failed = parsed2.events.some((event) => event.type === "turn.failed" || event.type === "error");
     const status2 = result.exitCode === 0 && !result.timedOut && !result.cancelled && !result.outputLimited && result.signal === null && parsed2.invalidLines === 0 && !failed && completed.length === 1 && parsed2.events.at(-1) === completed[0] ? "completed" : "failed";
     const receiptPayload = { dispatch_id: dispatch.id, task_id: dispatch.task_id, host: "codex-cli", sandbox: dispatch.sandbox, model: dispatch.model, model_fingerprint: digestJson({ model: dispatch.model }), evaluation_mode: dispatch.evaluation_mode === true, status: status2, exit_code: result.exitCode, signal: result.signal, timed_out: result.timedOut, cancelled: result.cancelled ?? false, output_limited: result.outputLimited, invalid_jsonl_lines: parsed2.invalidLines, event_count: parsed2.events.length, event_types: [...new Set(parsed2.events.map((event) => String(event.type)))], thread_id: parsed2.threadId, final_message: parsed2.finalMessage, usage: parsed2.usage, stderr_digest: digestJson(result.stderr), completed_at: (/* @__PURE__ */ new Date()).toISOString() };
-    const directory = (0, import_node_path18.join)(this.store.paths.artifactsDir, "codex");
+    const directory = (0, import_node_path17.join)(this.store.paths.artifactsDir, "codex");
     await (0, import_promises10.mkdir)(directory, { recursive: true });
-    const receiptPath = (0, import_node_path18.join)(directory, `${dispatch.id}.json`);
+    const receiptPath = (0, import_node_path17.join)(directory, `${dispatch.id}.json`);
     await (0, import_promises10.writeFile)(receiptPath, `${JSON.stringify(receiptPayload, null, 2)}
 `, { encoding: "utf8", mode: 384 });
     const receipt = this.store.create("codex_receipt", `receipt_${dispatch.id}`, { ...receiptPayload, uri: (0, import_node_url.pathToFileURL)(receiptPath).toString(), digest: digestJson(receiptPayload) });
@@ -229967,9 +229644,9 @@ var CodexHostKernel = class {
 };
 
 // core/claude-driver.ts
-var import_node_crypto47 = require("node:crypto");
+var import_node_crypto46 = require("node:crypto");
 var import_promises11 = require("node:fs/promises");
-var import_node_path19 = require("node:path");
+var import_node_path18 = require("node:path");
 var import_node_url2 = require("node:url");
 function integer12(value, name, fallback2, minimum, maximum) {
   const result = value === void 0 ? fallback2 : Number(value);
@@ -230026,13 +229703,13 @@ var ClaudeHostKernel = class {
   prepare(args) {
     const task = this.store.get("task", text(args.task_id, "task_id"));
     const prompt = text(args.prompt, "prompt");
-    const workspace = (0, import_node_path19.resolve)(text(args.workspace, "workspace"));
+    const workspace = (0, import_node_path18.resolve)(text(args.workspace, "workspace"));
     const sandbox = String(args.sandbox ?? "read-only");
     if (!(/* @__PURE__ */ new Set(["read-only", "workspace-write"])).has(sandbox)) throw new Error("Claude sandbox is unsupported");
     const model = args.model === void 0 ? null : text(args.model, "model");
     const maxTurns = integer12(args.max_turns, "max_turns", 12, 1, 100);
     const maxBudgetUsd = optionalMoney(args.max_budget_usd);
-    const dispatchId = String(args.dispatch_id ?? `claude_dispatch_${(0, import_node_crypto47.randomUUID)().replaceAll("-", "")}`);
+    const dispatchId = String(args.dispatch_id ?? `claude_dispatch_${(0, import_node_crypto46.randomUUID)().replaceAll("-", "")}`);
     const identity = { task_id: task.id, task_version: task.version, workspace, sandbox, model, max_turns: maxTurns, max_budget_usd: maxBudgetUsd, prompt_digest: digestJson(prompt) };
     const requestDigest = digestJson(identity);
     const existing = this.store.find("claude_dispatch", dispatchId);
@@ -230071,9 +229748,9 @@ var ClaudeHostKernel = class {
     const failed = parsed2.events.some((event) => event.type === "error" || event.is_error === true);
     const status2 = execution.exitCode === 0 && !execution.timedOut && !execution.cancelled && !execution.outputLimited && execution.signal === null && parsed2.invalidLines === 0 && !failed && terminals.length === 1 && parsed2.events.at(-1) === terminals[0] && parsed2.resultSubtype === "success" ? "completed" : "failed";
     const receiptPayload = { dispatch_id: dispatch.id, task_id: dispatch.task_id, host: this.host, sandbox: dispatch.sandbox, status: status2, exit_code: execution.exitCode, signal: execution.signal, timed_out: execution.timedOut, cancelled: execution.cancelled ?? false, output_limited: execution.outputLimited, invalid_jsonl_lines: parsed2.invalidLines, event_count: parsed2.events.length, event_types: [...new Set(parsed2.events.map((event) => String(event.type)))], session_id: parsed2.sessionId, final_message: parsed2.finalMessage, usage: parsed2.usage, cost_usd: parsed2.costUsd, result_subtype: parsed2.resultSubtype, stderr_digest: digestJson(execution.stderr), completed_at: (/* @__PURE__ */ new Date()).toISOString() };
-    const directory = (0, import_node_path19.join)(this.store.paths.artifactsDir, "claude");
+    const directory = (0, import_node_path18.join)(this.store.paths.artifactsDir, "claude");
     await (0, import_promises11.mkdir)(directory, { recursive: true });
-    const receiptPath = (0, import_node_path19.join)(directory, `${dispatch.id}.json`);
+    const receiptPath = (0, import_node_path18.join)(directory, `${dispatch.id}.json`);
     await (0, import_promises11.writeFile)(receiptPath, `${JSON.stringify(receiptPayload, null, 2)}
 `, { encoding: "utf8", mode: 384 });
     const receipt = this.store.create("claude_receipt", `receipt_${dispatch.id}`, { ...receiptPayload, uri: (0, import_node_url2.pathToFileURL)(receiptPath).toString(), digest: digestJson(receiptPayload) });
@@ -230084,9 +229761,9 @@ var ClaudeHostKernel = class {
 };
 
 // core/generic-driver.ts
-var import_node_crypto48 = require("node:crypto");
+var import_node_crypto47 = require("node:crypto");
 var import_promises12 = require("node:fs/promises");
-var import_node_path20 = require("node:path");
+var import_node_path19 = require("node:path");
 var import_node_url3 = require("node:url");
 function integer13(value, name, fallback2, minimum, maximum) {
   const result = value === void 0 ? fallback2 : Number(value);
@@ -230119,11 +229796,11 @@ var GenericCliHostKernel = class {
   prepare(args) {
     const task = this.store.get("task", text(args.task_id, "task_id"));
     const prompt = text(args.prompt, "prompt");
-    const workspace = (0, import_node_path20.resolve)(text(args.workspace, "workspace"));
+    const workspace = (0, import_node_path19.resolve)(text(args.workspace, "workspace"));
     const sandbox = String(args.sandbox ?? "read-only");
     if (!SANDBOXES.has(sandbox)) throw new Error("Host sandbox is unsupported");
     const model = hostModelFor(this.profile, args.model);
-    const dispatchId = String(args.dispatch_id ?? `${this.dispatchKind}_${(0, import_node_crypto48.randomUUID)().replaceAll("-", "")}`);
+    const dispatchId = String(args.dispatch_id ?? `${this.dispatchKind}_${(0, import_node_crypto47.randomUUID)().replaceAll("-", "")}`);
     const identity = { host: this.host, task_id: task.id, task_version: task.version, workspace, sandbox, model, prompt_digest: digestJson(prompt) };
     const requestDigest = digestJson(identity);
     const existing = this.store.find(this.dispatchKind, dispatchId);
@@ -230216,9 +229893,9 @@ var GenericCliHostKernel = class {
       stderr_digest: digestJson(execution.stderr),
       completed_at: (/* @__PURE__ */ new Date()).toISOString()
     };
-    const directory = (0, import_node_path20.join)(this.store.paths.artifactsDir, this.host);
+    const directory = (0, import_node_path19.join)(this.store.paths.artifactsDir, this.host);
     await (0, import_promises12.mkdir)(directory, { recursive: true });
-    const receiptPath = (0, import_node_path20.join)(directory, `${dispatch.id}.json`);
+    const receiptPath = (0, import_node_path19.join)(directory, `${dispatch.id}.json`);
     await (0, import_promises12.writeFile)(receiptPath, `${JSON.stringify(receiptPayload, null, 2)}
 `, { encoding: "utf8", mode: 384 });
     const receipt = this.store.create(this.receiptKind(), `receipt_${dispatch.id}`, {
@@ -230243,10 +229920,10 @@ var GenericCliHostKernel = class {
 };
 
 // core/host-run.ts
-var import_node_crypto51 = require("node:crypto");
+var import_node_crypto50 = require("node:crypto");
 
 // core/trace-kernel.ts
-var import_node_crypto50 = require("node:crypto");
+var import_node_crypto49 = require("node:crypto");
 
 // core/runtime-truth.ts
 function clean2(value) {
@@ -230323,14 +230000,14 @@ function createWorkNote(args) {
 }
 
 // core/trace-archive-store.ts
-var import_node_crypto49 = require("node:crypto");
-var import_node_fs16 = require("node:fs");
-var import_node_path21 = require("node:path");
+var import_node_crypto48 = require("node:crypto");
+var import_node_fs15 = require("node:fs");
+var import_node_path20 = require("node:path");
 var import_node_zlib = require("node:zlib");
 var FORMAT = "craft.trace.archive.v1";
 var LOCAL_STORAGE = "local_jsonl_gzip";
-function digest12(value) {
-  return `sha256:${(0, import_node_crypto49.createHash)("sha256").update(value).digest("hex")}`;
+function digest11(value) {
+  return `sha256:${(0, import_node_crypto48.createHash)("sha256").update(value).digest("hex")}`;
 }
 function validTimestamp(value) {
   if (Number.isNaN(Date.parse(value))) throw new Error("archived_at must be an ISO timestamp");
@@ -230349,7 +230026,7 @@ function encode(bundle) {
   for (const feedback of bundle.feedback) records2.push(line("feedback", object(feedback, "feedback")));
   const payload10 = `${records2.join("\n")}
 `;
-  const contentDigest = digest12(payload10);
+  const contentDigest = digest11(payload10);
   const manifest = JSON.stringify({ format: FORMAT, trace_id: traceId, trace_version: traceVersion, archived_at: archivedAt, content_digest: contentDigest });
   return { compressed: (0, import_node_zlib.gzipSync)(Buffer.from(`${manifest}
 ${payload10}`, "utf8")), contentDigest };
@@ -230372,7 +230049,7 @@ function decode2(body3, pointer3) {
   if (manifest.format !== FORMAT || manifest.content_digest !== pointer3.content_digest) throw new Error("Trace archive digest does not match pointer");
   const payload10 = `${lines.slice(1, -1).join("\n")}
 `;
-  if (digest12(payload10) !== pointer3.content_digest) throw new Error("Trace archive digest does not match payload");
+  if (digest11(payload10) !== pointer3.content_digest) throw new Error("Trace archive digest does not match payload");
   const traceId = text(manifest.trace_id, "archive trace_id");
   const traceVersion = Number(manifest.trace_version);
   if (!Number.isInteger(traceVersion) || traceVersion < 1) throw new Error("Trace archive trace_version is invalid");
@@ -230401,7 +230078,7 @@ function dateParts(archivedAt) {
   return [String(date2.getUTCFullYear()), String(date2.getUTCMonth() + 1).padStart(2, "0"), String(date2.getUTCDate()).padStart(2, "0")];
 }
 function traceFilename(bundle, contentDigest) {
-  return `trace-${digest12(bundle.trace_id).slice(-24)}.v${bundle.trace_version}.${contentDigest.slice(-16)}.jsonl.gz`;
+  return `trace-${digest11(bundle.trace_id).slice(-24)}.v${bundle.trace_version}.${contentDigest.slice(-16)}.jsonl.gz`;
 }
 function safeLocator(locator2, prefix) {
   const normalized = text(locator2, "archive locator").replaceAll("\\", "/");
@@ -230420,23 +230097,23 @@ var LocalTraceArchiveStore = class {
     const encoded = encode(bundle);
     const [year, month, day] = dateParts(bundle.archived_at);
     const locator2 = `trace-archive/${year}/${month}/${day}/${traceFilename(bundle, encoded.contentDigest)}`;
-    const path2 = (0, import_node_path21.join)(this.logsDir, ...locator2.split("/"));
+    const path2 = (0, import_node_path20.join)(this.logsDir, ...locator2.split("/"));
     const result = pointer2(LOCAL_STORAGE, locator2, encoded.contentDigest, encoded.compressed.byteLength);
-    (0, import_node_fs16.mkdirSync)((0, import_node_path21.join)(this.logsDir, "trace-archive", year, month, day), { recursive: true });
-    if ((0, import_node_fs16.existsSync)(path2)) {
+    (0, import_node_fs15.mkdirSync)((0, import_node_path20.join)(this.logsDir, "trace-archive", year, month, day), { recursive: true });
+    if ((0, import_node_fs15.existsSync)(path2)) {
       this.read(result);
       return result;
     }
-    const temporary = `${path2}.${process.pid}.${(0, import_node_crypto49.randomUUID)()}.tmp`;
-    (0, import_node_fs16.writeFileSync)(temporary, encoded.compressed, { mode: 384 });
-    (0, import_node_fs16.renameSync)(temporary, path2);
-    if (process.platform !== "win32") (0, import_node_fs16.chmodSync)(path2, 384);
+    const temporary = `${path2}.${process.pid}.${(0, import_node_crypto48.randomUUID)()}.tmp`;
+    (0, import_node_fs15.writeFileSync)(temporary, encoded.compressed, { mode: 384 });
+    (0, import_node_fs15.renameSync)(temporary, path2);
+    if (process.platform !== "win32") (0, import_node_fs15.chmodSync)(path2, 384);
     return result;
   }
   read(value) {
     if (value.storage !== LOCAL_STORAGE || value.format !== FORMAT) throw new Error("Trace archive storage is unsupported");
     const locator2 = safeLocator(value.locator, "trace-archive");
-    return decode2((0, import_node_fs16.readFileSync)((0, import_node_path21.join)(this.logsDir, ...locator2.split("/"))), value);
+    return decode2((0, import_node_fs15.readFileSync)((0, import_node_path20.join)(this.logsDir, ...locator2.split("/"))), value);
   }
 };
 
@@ -230480,7 +230157,7 @@ var TraceKernel = class {
   }
   start(args) {
     const taskId3 = text(args.task_id, "task_id");
-    const traceId = String(args.trace_id ?? `trace_${(0, import_node_crypto50.randomUUID)().replaceAll("-", "")}`);
+    const traceId = String(args.trace_id ?? `trace_${(0, import_node_crypto49.randomUUID)().replaceAll("-", "")}`);
     const identity = { task_id: taskId3, launch_id: optional(args.launch_id), run_id: optional(args.run_id), trial_id: optional(args.trial_id), attempt_id: optional(args.attempt_id), operation_id: optional(args.operation_id), model_fingerprint: optional(args.model_fingerprint), environment_fingerprint: optional(args.environment_fingerprint), capability_fingerprint: optional(args.capability_fingerprint), policy_fingerprint: optional(args.policy_fingerprint) };
     const identityDigest = stableDigest(identity);
     const existing = this.store.find("trace", traceId);
@@ -230646,10 +230323,10 @@ var TraceKernel = class {
   }
   resolveRetentionPolicy(args) {
     if (args.max_days !== void 0) return { id: "override", revision: 0, maxDays: Number(args.max_days), source: "override" };
-    const id22 = text(args.policy_id ?? "default", "policy_id");
-    const stored = this.store.find("trace_policy", id22);
-    if (stored) return { id: id22, revision: Number(stored.policy_revision ?? 1), maxDays: Number(stored.max_days), source: "stored" };
-    if (id22 !== "default") throw new Error("Unknown Trace retention policy");
+    const id23 = text(args.policy_id ?? "default", "policy_id");
+    const stored = this.store.find("trace_policy", id23);
+    if (stored) return { id: id23, revision: Number(stored.policy_revision ?? 1), maxDays: Number(stored.max_days), source: "stored" };
+    if (id23 !== "default") throw new Error("Unknown Trace retention policy");
     return { id: "default", revision: 0, maxDays: 7, source: "builtin" };
   }
 };
@@ -230664,7 +230341,7 @@ var HostRunKernel = class {
   controllers = /* @__PURE__ */ new Map();
   completions = /* @__PURE__ */ new Map();
   trace;
-  constructor(store, drivers, ownerId = `runner_${(0, import_node_crypto51.randomUUID)().replaceAll("-", "")}`, terminalObserver, trace) {
+  constructor(store, drivers, ownerId = `runner_${(0, import_node_crypto50.randomUUID)().replaceAll("-", "")}`, terminalObserver, trace) {
     this.store = store;
     this.drivers = new Map(drivers.map((driver) => [driver.host, driver]));
     this.ownerId = ownerId;
@@ -230685,7 +230362,7 @@ var HostRunKernel = class {
     if (!driver) throw new Error("Host Driver is unavailable");
     const dispatchId = text(args.dispatch_id, "dispatch_id");
     const prompt = text(args.prompt, "prompt");
-    const runId = String(args.run_id ?? `host_run_${(0, import_node_crypto51.randomUUID)().replaceAll("-", "")}`);
+    const runId = String(args.run_id ?? `host_run_${(0, import_node_crypto50.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("host_run", runId);
     if (existing) {
       if (existing.host !== host || existing.dispatch_id !== dispatchId) throw new Error("Host run idempotency conflict");
@@ -230764,9 +230441,9 @@ var HostRunKernel = class {
 };
 
 // core/internal-host-driver.ts
-var import_node_crypto52 = require("node:crypto");
+var import_node_crypto51 = require("node:crypto");
 var import_promises13 = require("node:fs/promises");
-var import_node_path22 = require("node:path");
+var import_node_path21 = require("node:path");
 var import_node_url4 = require("node:url");
 
 // core/internal-tool-authorization.ts
@@ -230968,7 +230645,7 @@ var InternalHostDriver = class {
     const tier = String(args.tier ?? "standard");
     const selected = selectModel(provider, tier);
     const limits2 = defineLoopLimits(args.limits ?? {});
-    const dispatchId = String(args.dispatch_id ?? `internal_dispatch_${(0, import_node_crypto52.randomUUID)().replaceAll("-", "")}`);
+    const dispatchId = String(args.dispatch_id ?? `internal_dispatch_${(0, import_node_crypto51.randomUUID)().replaceAll("-", "")}`);
     const identity = {
       host: this.host,
       task_id: task.id,
@@ -231135,9 +230812,9 @@ var InternalHostDriver = class {
       failure: failure === null ? null : redact6(failure),
       completed_at: (/* @__PURE__ */ new Date()).toISOString()
     };
-    const directory = (0, import_node_path22.join)(this.store.paths.artifactsDir, this.host);
+    const directory = (0, import_node_path21.join)(this.store.paths.artifactsDir, this.host);
     await (0, import_promises13.mkdir)(directory, { recursive: true });
-    const receiptPath = (0, import_node_path22.join)(directory, `${dispatch.id}.json`);
+    const receiptPath = (0, import_node_path21.join)(directory, `${dispatch.id}.json`);
     await (0, import_promises13.writeFile)(receiptPath, `${JSON.stringify(receiptPayload, null, 2)}
 `, { encoding: "utf8", mode: 384 });
     const receipt = this.store.create(
@@ -233605,9 +233282,9 @@ var MetricsKernel = class {
 };
 
 // core/guided-work.ts
-var import_node_crypto53 = require("node:crypto");
+var import_node_crypto52 = require("node:crypto");
 function id10(prefix) {
-  return `${prefix}_${(0, import_node_crypto53.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto52.randomUUID)().replaceAll("-", "")}`;
 }
 function entries(value, name) {
   if (value === void 0) return [];
@@ -233672,8 +233349,8 @@ var GuidedWorkKernel = class {
 };
 
 // core/execution-safety.ts
-var import_node_crypto54 = require("node:crypto");
-var import_node_path23 = require("node:path");
+var import_node_crypto53 = require("node:crypto");
+var import_node_path22 = require("node:path");
 function integer14(value, name, minimum, maximum) {
   const result = Number(value);
   if (!Number.isInteger(result) || result < minimum || result > maximum) throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
@@ -233697,7 +233374,7 @@ var ExecutionSafetyKernel = class {
     if (!(/* @__PURE__ */ new Set(["read-only", "workspace-write"])).has(sandbox)) throw new Error("Safety preflight sandbox is unsupported");
     const profileId = text(args.profile_id, "profile_id");
     const profileVersion = integer14(args.profile_version, "profile_version", 1, Number.MAX_SAFE_INTEGER);
-    const workspace = (0, import_node_path23.resolve)(text(args.workspace, "workspace"));
+    const workspace = (0, import_node_path22.resolve)(text(args.workspace, "workspace"));
     const resources2 = { timeout_ms: integer14(args.timeout_ms, "timeout_ms", 1e3, 36e5), output_limit: integer14(args.output_limit, "output_limit", 4096, 16777216) };
     resources2.max_turns = args.max_turns !== void 0 ? integer14(args.max_turns, "max_turns", 1, 100) : null;
     resources2.max_budget_usd = args.max_budget_usd !== void 0 ? money(Number(args.max_budget_usd)) : null;
@@ -233706,7 +233383,7 @@ var ExecutionSafetyKernel = class {
     if (planned.compatible !== true) throw new Error(`Safety preflight requirements are not satisfied: ${planned.missing.join(", ")}`);
     const profile = planned.profile;
     const identity = { task_id: task.id, host, workspace, sandbox, profile_id: profile.id, profile_version: profile.version, profile_digest: profile.capability_digest, requirements, resources: resources2 };
-    const preflightId = String(args.preflight_id ?? `execution_safety_preflight_${(0, import_node_crypto54.randomUUID)().replaceAll("-", "")}`);
+    const preflightId = String(args.preflight_id ?? `execution_safety_preflight_${(0, import_node_crypto53.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("execution_safety_preflight", preflightId);
     if (existing) {
       if (existing.identity_digest !== digestJson(identity)) throw new Error("Safety preflight idempotency conflict");
@@ -233741,7 +233418,7 @@ var ExecutionSafetyKernel = class {
 };
 
 // core/a2a-discovery.ts
-var import_node_crypto55 = require("node:crypto");
+var import_node_crypto54 = require("node:crypto");
 function strings14(value) {
   return Array.isArray(value) ? value.filter((item) => typeof item === "string").map((item) => item.trim()).filter(Boolean) : [];
 }
@@ -233763,7 +233440,7 @@ var A2ADiscoveryKernel = class {
     const raw = JSON.stringify(card);
     if (/(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]/iu.test(raw)) throw new Error("A2A Agent Card contains sensitive assignments");
     const identity = { discovery_url: url2.toString(), name, endpoint: endpoint4.toString(), protocol_version: typeof card.protocolVersion === "string" ? card.protocolVersion : null, skills: strings14(card.skills).length ? strings14(card.skills) : Array.isArray(card.skills) ? card.skills.map((skill) => object(skill, "A2A Agent Card.skill")).map((skill) => text(skill.id, "A2A Agent Card.skill.id")) : [], card_digest: digestJson(card) };
-    const cardId = String(args.card_id ?? `a2a_agent_card_${(0, import_node_crypto55.randomUUID)().replaceAll("-", "")}`);
+    const cardId = String(args.card_id ?? `a2a_agent_card_${(0, import_node_crypto54.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("a2a_agent_card", cardId);
     if (existing) {
       if (existing.identity_digest !== digestJson(identity)) throw new Error("A2A Agent Card idempotency conflict or drift");
@@ -233891,7 +233568,7 @@ var DeliveryEvaluationKernel = class {
 };
 
 // core/platform-execution.ts
-var import_node_fs17 = require("node:fs");
+var import_node_fs16 = require("node:fs");
 var PlatformExecutionKernel = class {
   store;
   constructor(store) {
@@ -233961,7 +233638,7 @@ var PlatformExecutionKernel = class {
   probe(args) {
     const platform2 = args.platform === void 0 ? process.platform : text(args.platform, "platform");
     if (platform2 !== process.platform) throw new Error("Platform probe must target the current local platform");
-    const observed = { platform: platform2, node_version: process.version, sandbox_exec_available: (0, import_node_fs17.existsSync)("/usr/bin/sandbox-exec"), verified: false, note: "Probe is health telemetry only and never verifies an execution boundary." };
+    const observed = { platform: platform2, node_version: process.version, sandbox_exec_available: (0, import_node_fs16.existsSync)("/usr/bin/sandbox-exec"), verified: false, note: "Probe is health telemetry only and never verifies an execution boundary." };
     const probeId = String(args.probe_id ?? `platform_execution_probe_${platform2}`);
     const existing = this.store.find("platform_execution_probe", probeId);
     const probeDigest = digestJson(observed);
@@ -234019,7 +233696,7 @@ var DeliveryLoopKernel = class {
 };
 
 // core/task-control.ts
-var import_node_path24 = require("node:path");
+var import_node_path23 = require("node:path");
 var EFFECTS5 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_write"]);
 var HANDOFF_REASONS = /* @__PURE__ */ new Set(["operator_handoff", "approval_wait", "environment_block", "user_pause", "recovery"]);
 function values(value) {
@@ -234061,7 +233738,7 @@ var TaskControlKernel = class {
   save(args) {
     const task = this.store.get("task", text(args.task_id, "task_id"));
     const allowedEffects = values(args.allowed_effects);
-    const workspace = (0, import_node_path24.resolve)(text(args.workspace, "workspace"));
+    const workspace = (0, import_node_path23.resolve)(text(args.workspace, "workspace"));
     const profile = ref(this.store, "activation_profile", args.activation_profile_id, args.activation_profile_version);
     const budget = ref(this.store, "budget_account", args.budget_account_id, args.budget_account_version);
     if (profile && profile.task_id !== task.id) throw new Error("Activation profile does not match task");
@@ -234088,7 +233765,7 @@ var TaskControlKernel = class {
     const contract = this.store.get("task_control_contract", text(args.contract_id, "contract_id"));
     const launch = this.store.get("work_launch", text(args.launch_id, "launch_id"));
     if (contract.status !== "active" || launch.task_id !== contract.task_id) throw new Error("Work Launch does not match active task control contract");
-    if ((0, import_node_path24.resolve)(String(launch.workspace)) !== contract.workspace) throw new Error("Work Launch workspace does not match task control contract");
+    if ((0, import_node_path23.resolve)(String(launch.workspace)) !== contract.workspace) throw new Error("Work Launch workspace does not match task control contract");
     if (!contract.allowed_effects.includes(launchEffect(launch))) throw new Error("Work Launch effect is not allowed by task control contract");
     if (contract.acceptance_required === true && !launch.acceptance_plan_id) throw new Error("Task control contract requires an acceptance plan");
     if (contract.launch_id !== null) {
@@ -234157,8 +233834,8 @@ var TaskControlKernel = class {
 };
 
 // core/task-run.ts
-function current(store, kind4, id22) {
-  return store.get(kind4, text(id22, `${kind4}_id`));
+function current(store, kind4, id23) {
+  return store.get(kind4, text(id23, `${kind4}_id`));
 }
 var TaskRunKernel = class {
   store;
@@ -234428,19 +234105,19 @@ function terms(value) {
 }
 
 // core/state-workspace.ts
-var import_node_crypto56 = require("node:crypto");
-var import_node_fs18 = require("node:fs");
-var import_node_path25 = require("node:path");
+var import_node_crypto55 = require("node:crypto");
+var import_node_fs17 = require("node:fs");
+var import_node_path24 = require("node:path");
 function fileDigest(path2) {
-  return `sha256:${(0, import_node_crypto56.createHash)("sha256").update((0, import_node_fs18.readFileSync)(path2)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto55.createHash)("sha256").update((0, import_node_fs17.readFileSync)(path2)).digest("hex")}`;
 }
 function relativePath2(value, name) {
   const item = text(value, name).replaceAll("\\", "/");
-  if ((0, import_node_path25.isAbsolute)(item) || item.split("/").includes("..")) throw new Error(`${name} must be relative to the workspace`);
+  if ((0, import_node_path24.isAbsolute)(item) || item.split("/").includes("..")) throw new Error(`${name} must be relative to the workspace`);
   return item.replace(/^\.\//, "") || ".";
 }
 function nested3(root, path2) {
-  return (0, import_node_path25.resolve)(root, relativePath2(path2, "path"));
+  return (0, import_node_path24.resolve)(root, relativePath2(path2, "path"));
 }
 function kind(stat4, path2) {
   if (stat4.isFile()) return "file";
@@ -234449,11 +234126,11 @@ function kind(stat4, path2) {
 }
 function files4(root, path2) {
   const target = nested3(root, path2);
-  if (!(0, import_node_fs18.existsSync)(target)) return [];
-  const stat4 = (0, import_node_fs18.lstatSync)(target);
+  if (!(0, import_node_fs17.existsSync)(target)) return [];
+  const stat4 = (0, import_node_fs17.lstatSync)(target);
   if (stat4.isSymbolicLink()) throw new Error(`state adapters do not follow symbolic links: ${path2}`);
   if (kind(stat4, path2) === "file") return [{ path: path2, digest: fileDigest(target), size_bytes: stat4.size }];
-  return (0, import_node_fs18.readdirSync)(target, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name)).flatMap((entry2) => files4(root, (0, import_node_path25.join)(path2, entry2.name).replaceAll("\\", "/")));
+  return (0, import_node_fs17.readdirSync)(target, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name)).flatMap((entry2) => files4(root, (0, import_node_path24.join)(path2, entry2.name).replaceAll("\\", "/")));
 }
 var StateWorkspaceKernel = class {
   store;
@@ -234502,10 +234179,10 @@ var StateWorkspaceKernel = class {
 };
 
 // core/runtime-contracts.ts
-var import_node_crypto57 = require("node:crypto");
+var import_node_crypto56 = require("node:crypto");
 var INTERACTION_MODES = ["turn", "goal", "plan", "execute", "verify", "learn"];
 function digestContract(value) {
-  return (0, import_node_crypto57.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
+  return (0, import_node_crypto56.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
 }
 function nonEmpty(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must be a non-empty string`);
@@ -234647,11 +234324,11 @@ var VerifiedWorkLoopKernel = class {
 };
 
 // core/knowledge-auto-review.ts
-var import_node_crypto58 = require("node:crypto");
+var import_node_crypto57 = require("node:crypto");
 var DEFAULT_POLICY_ID = "knowledge-promotion-default";
 var CONFIDENCE_ORDER = { bounded: 1, confirmed: 2 };
-function digest13(value) {
-  return `sha256:${(0, import_node_crypto58.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+function digest12(value) {
+  return `sha256:${(0, import_node_crypto57.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function claimContentIsIntact(store, claim) {
   if (typeof claim.content === "string") return true;
@@ -234686,12 +234363,12 @@ var KnowledgeAutoReviewKernel = class {
     if (confidence2 !== "bounded" && confidence2 !== "confirmed") throw new Error("minimum_confidence must be bounded or confirmed");
     const automatic = args.automatic === void 0 ? existing.automatic : args.automatic === true;
     const identity = { automatic, minimum_independent_support: minimum, minimum_confidence: confidence2 };
-    if (existing.identity_digest === digest13(identity)) return { policy: existing, idempotent: true };
+    if (existing.identity_digest === digest12(identity)) return { policy: existing, idempotent: true };
     const saved = this.store.save("knowledge_promotion_policy", DEFAULT_POLICY_ID, {
       ...identity,
       policy_id: DEFAULT_POLICY_ID,
       revision: Number(existing.revision) + 1,
-      identity_digest: digest13(identity),
+      identity_digest: digest12(identity),
       changed_at: (/* @__PURE__ */ new Date()).toISOString(),
       changed_by: String(args.actor ?? "local_operator")
     });
@@ -234724,7 +234401,7 @@ var KnowledgeAutoReviewKernel = class {
       evidence_fragments: fragments,
       rubric: { supported: "Claim is directly supported by supplied fragments within the same scope.", contradicted: "Supplied fragments contradict the Claim.", insufficient: "Fragments do not establish the Claim or scope." }
     };
-    return { status: "ready", packet, packet_digest: digest13(packet) };
+    return { status: "ready", packet, packet_digest: digest12(packet) };
   }
   /** Optional OpenAI-compatible reviewer. Credentials are read only at call time. */
   async providerReview(args) {
@@ -234780,10 +234457,10 @@ var KnowledgeAutoReviewKernel = class {
     const scope3 = text(args.scope ?? claim.scope, "scope");
     if (scope3 !== claim.scope) throw new Error("Knowledge support scope must match the claim scope");
     const identity = { claim_id: claim.id, claim_version: claim.version, evidence_id: evidence2.id, observation_key: observationKey, scope: scope3 };
-    const supportId = String(args.support_id ?? `knowledge_support_${digest13(identity).slice(-24)}`);
+    const supportId = String(args.support_id ?? `knowledge_support_${digest12(identity).slice(-24)}`);
     const existing = this.store.find("knowledge_claim_support", supportId);
     if (existing) {
-      if (existing.identity_digest !== digest13(identity)) throw new Error("Knowledge support idempotency conflict");
+      if (existing.identity_digest !== digest12(identity)) throw new Error("Knowledge support idempotency conflict");
       return { support: existing, idempotent: true };
     }
     const sameObservation = this.store.list("knowledge_claim_support", 1e4, (item) => item.claim_id === claim.id && item.observation_key === observationKey);
@@ -234792,7 +234469,7 @@ var KnowledgeAutoReviewKernel = class {
     if (sameEvidence.length) throw new Error("Knowledge support evidence is already recorded for this claim");
     const support = this.store.create("knowledge_claim_support", supportId, {
       ...identity,
-      identity_digest: digest13(identity),
+      identity_digest: digest12(identity),
       recorded_at: (/* @__PURE__ */ new Date()).toISOString(),
       source_type: evidence2.source_type,
       confidence: evidence2.confidence
@@ -234838,8 +234515,8 @@ var KnowledgeAutoReviewKernel = class {
       const packet = this.reviewPacket({ claim_id: claim.id });
       if (packet.status !== "ready" || packet.packet_digest !== packetDigest) throw new Error("packet_digest must match the exact semantic review packet");
     }
-    const credibleEvidence = Array.isArray(claim.evidence_ids) && claim.evidence_ids.some((id22) => {
-      const evidence3 = this.store.find("evidence", String(id22));
+    const credibleEvidence = Array.isArray(claim.evidence_ids) && claim.evidence_ids.some((id23) => {
+      const evidence3 = this.store.find("evidence", String(id23));
       return evidence3 && ["bounded", "confirmed"].includes(String(evidence3.confidence));
     });
     const blockingReasons = [];
@@ -234875,11 +234552,11 @@ var KnowledgeAutoReviewKernel = class {
       reason_code: reasonCode,
       blocking_reasons: blockingReasons
     };
-    const reviewId = `knowledge_host_review_${String(claim.id)}_${digest13(identity).slice(-16)}`;
+    const reviewId = `knowledge_host_review_${String(claim.id)}_${digest12(identity).slice(-16)}`;
     const existing = this.store.find("knowledge_host_review", reviewId);
     const review = existing ?? this.store.create("knowledge_host_review", reviewId, {
       ...identity,
-      identity_digest: digest13(identity),
+      identity_digest: digest12(identity),
       reviewed_at: new Date(now3).toISOString(),
       automated: true,
       host_attested: true,
@@ -234931,7 +234608,7 @@ var KnowledgeAutoReviewKernel = class {
   assess(args = {}) {
     const claimIds = args.claim_ids === void 0 ? this.store.list("knowledge_claim", 1e4).map((claim) => String(claim.id)) : (() => {
       if (!Array.isArray(args.claim_ids) || !args.claim_ids.length) throw new Error("claim_ids must be a non-empty array");
-      return [...new Set(args.claim_ids.map((id22) => text(id22, "claim_ids")))].sort();
+      return [...new Set(args.claim_ids.map((id23) => text(id23, "claim_ids")))].sort();
     })();
     const now3 = args.now === void 0 ? Date.now() : Date.parse(text(args.now, "now"));
     if (!Number.isFinite(now3)) throw new Error("now must be an ISO timestamp");
@@ -234957,8 +234634,8 @@ var KnowledgeAutoReviewKernel = class {
       const sourceId = typeof claim.source_id === "string" ? claim.source_id : null;
       const source = sourceId ? this.store.find("knowledge_source", sourceId) : null;
       const evidenceIds2 = Array.isArray(claim.evidence_ids) ? claim.evidence_ids.map(String) : [];
-      const credibleEvidence = evidenceIds2.filter((id22) => {
-        const evidence2 = this.store.find("evidence", id22);
+      const credibleEvidence = evidenceIds2.filter((id23) => {
+        const evidence2 = this.store.find("evidence", id23);
         return evidence2 && ["bounded", "confirmed"].includes(String(evidence2.confidence));
       });
       if (String(claim.scope ?? "").startsWith("legacy:")) reasons.push("legacy_scope_requires_live_revalidation");
@@ -234979,12 +234656,12 @@ var KnowledgeAutoReviewKernel = class {
       verdict = reasons.length ? "revalidation_required" : "eligible";
     }
     const identity = { claim_id: claim.id, claim_version: claim.version, claim_status: claim.status, claim_identity_digest: claim.identity_digest ?? null, verdict, reasons, policy_id: policy.id, policy_revision: policy.revision };
-    const reviewId = `knowledge_auto_review_${String(claim.id)}_${digest13(identity).slice(-16)}`;
+    const reviewId = `knowledge_auto_review_${String(claim.id)}_${digest12(identity).slice(-16)}`;
     const existing = this.store.find("knowledge_auto_review", reviewId);
-    const review = existing ?? this.store.create("knowledge_auto_review", reviewId, { ...identity, identity_digest: digest13(identity), automated: true, reviewed_at: new Date(now3).toISOString() });
+    const review = existing ?? this.store.create("knowledge_auto_review", reviewId, { ...identity, identity_digest: digest12(identity), automated: true, reviewed_at: new Date(now3).toISOString() });
     let reviewedClaim = null;
     if (autoPromote && policy.automatic && verdict === "eligible") {
-      reviewedClaim = this.store.save("knowledge_claim", String(claim.id), { ...payload(claim), status: "reviewed", review: { reviewer: "automated-promotion-policy", source_digest: this.store.get("knowledge_source", String(claim.source_id)).content_digest, reason_digest: digest13({ review_id: review.id, verdict, policy_id: policy.id, policy_revision: policy.revision }), reviewed_at: new Date(now3).toISOString(), automated: true, policy_id: policy.id, policy_revision: policy.revision } });
+      reviewedClaim = this.store.save("knowledge_claim", String(claim.id), { ...payload(claim), status: "reviewed", review: { reviewer: "automated-promotion-policy", source_digest: this.store.get("knowledge_source", String(claim.source_id)).content_digest, reason_digest: digest12({ review_id: review.id, verdict, policy_id: policy.id, policy_revision: policy.revision }), reviewed_at: new Date(now3).toISOString(), automated: true, policy_id: policy.id, policy_revision: policy.revision } });
     }
     return { claim_id: claim.id, claim_version: claim.version, verdict, reasons, review, claim: reviewedClaim ?? claim, promoted: reviewedClaim !== null, independent_support: this.supports(claim).length, required_independent_support: policy.minimum_independent_support, idempotent: existing !== null };
   }
@@ -234992,7 +234669,7 @@ var KnowledgeAutoReviewKernel = class {
     const stored = this.store.find("knowledge_promotion_policy", DEFAULT_POLICY_ID);
     if (stored) return stored;
     const identity = { automatic: true, minimum_independent_support: 2, minimum_confidence: "bounded" };
-    return { id: DEFAULT_POLICY_ID, policy_id: DEFAULT_POLICY_ID, revision: 1, ...identity, identity_digest: digest13(identity), defaulted: true };
+    return { id: DEFAULT_POLICY_ID, policy_id: DEFAULT_POLICY_ID, revision: 1, ...identity, identity_digest: digest12(identity), defaulted: true };
   }
   supports(claim) {
     return this.store.list("knowledge_claim_support", 1e4, (item) => item.claim_id === claim.id);
@@ -235000,9 +234677,9 @@ var KnowledgeAutoReviewKernel = class {
 };
 
 // core/decision-context-gate.ts
-var import_node_crypto59 = require("node:crypto");
-function digest14(value) {
-  return `sha256:${(0, import_node_crypto59.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+var import_node_crypto58 = require("node:crypto");
+function digest13(value) {
+  return `sha256:${(0, import_node_crypto58.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function ids2(value, name) {
   if (value === void 0) return [];
@@ -235055,7 +234732,7 @@ var DecisionPointContextGate = class {
     const action = status2 === "ready" ? "continue" : status2 === "blocked" ? "clarify_or_replan" : "declare_scope";
     const requiredConstraints = ids2(args.required_constraint_ids, "required_constraint_ids");
     const recalledConstraints = ids2(args.recalled_constraint_ids, "recalled_constraint_ids");
-    if (recalledConstraints.some((id22) => !requiredConstraints.includes(id22))) throw new Error("recalled_constraint_ids must be a subset of required_constraint_ids");
+    if (recalledConstraints.some((id23) => !requiredConstraints.includes(id23))) throw new Error("recalled_constraint_ids must be a subset of required_constraint_ids");
     const constraintRecall = requiredConstraints.length ? recalledConstraints.length / requiredConstraints.length : null;
     const decisionMetrics = {
       constraint_recall_at_decision: constraintRecall,
@@ -235070,7 +234747,7 @@ var DecisionPointContextGate = class {
     const identity = {
       task_id: taskId3,
       decision_kind: decisionKind,
-      query_digest: digest14(query),
+      query_digest: digest13(query),
       scope_kind: args.scope_kind ?? null,
       scope_id: args.scope_id ?? null,
       context_receipt_id: receipt?.id ?? null,
@@ -235082,9 +234759,9 @@ var DecisionPointContextGate = class {
       recalled_constraints: recalledConstraints,
       decision_metrics: decisionMetrics
     };
-    const gateId = String(args.gate_id ?? `decision_context_gate_${(0, import_node_crypto59.randomUUID)().replaceAll("-", "")}`);
+    const gateId = String(args.gate_id ?? `decision_context_gate_${(0, import_node_crypto58.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("decision_context_gate", gateId);
-    const identityDigest = digest14(identity);
+    const identityDigest = digest13(identity);
     if (existing) {
       if (existing.identity_digest !== identityDigest) throw new Error("Decision Context Gate idempotency conflict");
       return { gate: existing, resolution, idempotent: true };
@@ -235177,26 +234854,26 @@ var EvalCampaignKernel = class {
 };
 
 // core/capability-connector.ts
-var import_node_crypto60 = require("node:crypto");
+var import_node_crypto59 = require("node:crypto");
 var CONNECTOR_KINDS = /* @__PURE__ */ new Set(["builtin", "github_skill", "volcengine_skill", "mcp_stdio", "mcp_http", "serena_mcp"]);
 var ASSET_TYPES = /* @__PURE__ */ new Set(["skill", "mcp_server", "tool", "workflow", "adapter", "validator", "grader", "eval_suite"]);
 var EFFECTS6 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_write", "destructive"]);
 var EXTERNAL_CONNECTORS = /* @__PURE__ */ new Set(["github_skill", "volcengine_skill", "mcp_stdio", "mcp_http", "serena_mcp"]);
 var SECRET_PATTERN = /(?:authorization|bearer|cookie|password|secret|token|api[_-]?key)\s*[=:]|https?:\/\/[^/\s@]+:[^/\s@]+@/iu;
 function id11(prefix) {
-  return `${prefix}_${(0, import_node_crypto60.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto59.randomUUID)().replaceAll("-", "")}`;
 }
 function optionalText5(value, name) {
   if (value === void 0 || value === null || value === "") return null;
   return text(value, name);
 }
-function array3(value, name) {
+function array4(value, name) {
   if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
   return value;
 }
 function operations(value, kind4) {
   const defaults = kind4 === "builtin" ? ["*"] : kind4 === "serena_mcp" ? ["discover", "inspect", "read", "resolve"] : ["inspect", "read"];
-  const result = value === void 0 ? defaults : array3(value, "allowed_operations").map((item) => assertSafe(text(item, "allowed_operations item"), "allowed_operations item"));
+  const result = value === void 0 ? defaults : array4(value, "allowed_operations").map((item) => assertSafe(text(item, "allowed_operations item"), "allowed_operations item"));
   if (!result.length || result.length > 20 || new Set(result).size !== result.length) throw new Error("allowed_operations must contain between 1 and 20 unique entries");
   return [...result].sort();
 }
@@ -235268,7 +234945,7 @@ var CapabilityConnectorKernel = class {
   discover(args) {
     const connector = this.connector(args.connector_id);
     this.assertActive(connector);
-    const entries2 = array3(args.assets, "assets");
+    const entries2 = array4(args.assets, "assets");
     if (!entries2.length || entries2.length > 100) throw new Error("assets must contain between 1 and 100 entries");
     const seen = /* @__PURE__ */ new Set();
     const assets = entries2.map((value, index) => this.discoverOne(connector, object(value, `assets[${index}]`), seen));
@@ -235290,7 +234967,7 @@ var CapabilityConnectorKernel = class {
     if (!["healthy", "degraded", "unhealthy"].includes(status2)) throw new Error("Connector health status is unsupported");
     const sourceDigest = text(args.source_digest, "source_digest");
     if (sourceDigest !== connector.metadata_digest) throw new Error("Connector health source digest does not match");
-    const evidenceIds2 = args.evidence_ids === void 0 ? [] : array3(args.evidence_ids, "evidence_ids").map((value) => text(value, "evidence_id"));
+    const evidenceIds2 = args.evidence_ids === void 0 ? [] : array4(args.evidence_ids, "evidence_ids").map((value) => text(value, "evidence_id"));
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
     const healthId = `connector_health_${connector.id}`;
     if (args.health_id !== void 0 && text(args.health_id, "health_id") !== healthId) throw new Error("Connector health id is derived from connector_id");
@@ -235481,7 +235158,7 @@ var CapabilityConnectorKernel = class {
     seen.add(logicalId);
     const summary2 = assertSafe(optionalText5(entry2.summary, "summary") ?? name, "summary");
     const locator2 = assertSafe(optionalText5(entry2.source_locator, "source_locator") ?? logicalId, "source_locator");
-    const aliases = entry2.aliases === void 0 ? [] : array3(entry2.aliases, "aliases").map((item) => text(item, "alias"));
+    const aliases = entry2.aliases === void 0 ? [] : array4(entry2.aliases, "aliases").map((item) => text(item, "alias"));
     if (new Set(aliases).size !== aliases.length) throw new Error("aliases must be unique");
     const sourceDigest = text(entry2.source_digest ?? digestJson({ logicalId, summary: summary2, locator: locator2 }), "source_digest");
     return this.store.create("capability_connector_asset", String(entry2.connector_asset_id ?? id11("connector_asset")), {
@@ -235504,34 +235181,23 @@ var CapabilityConnectorKernel = class {
 };
 
 // core/capability-access.ts
-var import_node_crypto61 = require("node:crypto");
+var import_node_crypto60 = require("node:crypto");
 var import_promises14 = require("node:fs/promises");
 var ASSET_TYPES2 = /* @__PURE__ */ new Set(["skill", "mcp_server", "tool", "workflow", "adapter", "validator", "grader", "eval_suite"]);
 var TRUST_LEVELS = /* @__PURE__ */ new Set(["trusted", "untrusted", "verified"]);
 var HEALTH_STATUSES = /* @__PURE__ */ new Set(["healthy", "stale", "failed", "unknown"]);
 var SECRET_ASSIGNMENT2 = /(?:api[_-]?key|authorization|cookie|password|secret|token)["']?\s*[:=]\s*[^\s]+/iu;
 function id12(prefix) {
-  return `${prefix}_${(0, import_node_crypto61.randomUUID)().replaceAll("-", "")}`;
-}
-function array4(value, name) {
-  if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
-  return value;
+  return `${prefix}_${(0, import_node_crypto60.randomUUID)().replaceAll("-", "")}`;
 }
 function optionalBoolean(value, name) {
   if (value === void 0) return void 0;
   if (typeof value !== "boolean") throw new Error(`${name} must be a boolean`);
   return value;
 }
-function finiteInteger2(value, name, fallback2, minimum = 1, maximum = Number.MAX_SAFE_INTEGER) {
-  const number7 = value === void 0 ? fallback2 : Number(value);
-  if (!Number.isFinite(number7) || !Number.isInteger(number7) || number7 < minimum || number7 > maximum) {
-    throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
-  }
-  return number7;
-}
 function optionalTextArray2(value, name, fallback2 = []) {
   if (value === void 0) return fallback2;
-  const values3 = array4(value, name).map((item) => text(item, name));
+  const values3 = array(value, name).map((item) => text(item, name));
   if (new Set(values3).size !== values3.length) throw new Error(`${name} must contain unique values`);
   return values3;
 }
@@ -235542,7 +235208,7 @@ function uniqueTextArray2(value, name) {
 }
 function fingerprint2(value) {
   const canonical2 = Object.entries(value).sort(([left], [right]) => left.localeCompare(right)).map(([key2, item]) => `${JSON.stringify(key2)}:${JSON.stringify(item)}`).join(",");
-  return (0, import_node_crypto61.createHash)("sha256").update(`{${canonical2}}`).digest("hex");
+  return (0, import_node_crypto60.createHash)("sha256").update(`{${canonical2}}`).digest("hex");
 }
 function recordPayload7(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...payload10 } = record;
@@ -235570,13 +235236,13 @@ var CapabilityAccessKernel = class {
     const allowedEffects = uniqueTextArray2(args.allowed_effects ?? ["read_only"], "allowed_effects");
     if (allowedEffects.some((effect3) => effect3 !== "read_only")) throw new Error("Indexed local capabilities may only be activated as read_only context");
     const profileId = args.context_profile_id === void 0 ? null : text(args.context_profile_id, "context_profile_id");
-    const profileVersion = args.context_profile_version === void 0 ? null : finiteInteger2(args.context_profile_version, "context_profile_version", 1);
+    const profileVersion = args.context_profile_version === void 0 ? null : finiteInteger(args.context_profile_version, "context_profile_version", 1);
     if (profileId === null !== (profileVersion === null)) throw new Error("Context profile id and version must be supplied together");
     if (profileId !== null) {
       const profile = this.store.get("context_profile", profileId, profileVersion);
       if (profile.task_id !== null && profile.task_id !== task.id) throw new Error("Context profile does not belong to the task");
     }
-    const candidates = await this.catalog.searchHybrid(query, finiteInteger2(args.limit, "limit", 3, 1, 10));
+    const candidates = await this.catalog.searchHybrid(query, finiteInteger(args.limit, "limit", 3, 1, 10));
     const selected = candidates.filter((candidate2) => candidate2.logical_capability_id !== null).map((candidate2) => {
       const logical = this.store.get("logical_capability", String(candidate2.logical_capability_id));
       return {
@@ -235631,12 +235297,12 @@ var CapabilityAccessKernel = class {
     const plan = audited.plan;
     const audit = audited.audit;
     if (audit.status !== "active") throw new Error("Activation plan is stale and cannot load local capability content");
-    const maxChars = finiteInteger2(args.max_chars, "max_chars", 16e3, 1, 1e5);
+    const maxChars = finiteInteger(args.max_chars, "max_chars", 16e3, 1, 1e5);
     const capabilities = await Promise.all(plan.selected.map(async (selected) => {
       const logical = this.store.get("logical_capability", String(selected.logical_capability_id));
       const capability = this.store.get("capability", String(logical.selected_capability_id));
       const content = await (0, import_promises14.readFile)(text(capability.path, "capability.path"), "utf8");
-      const digest35 = (0, import_node_crypto61.createHash)("sha256").update(content).digest("hex");
+      const digest35 = (0, import_node_crypto60.createHash)("sha256").update(content).digest("hex");
       if (digest35 !== selected.content_digest) throw new Error("Capability file digest drifted; rescan the source before loading it");
       assertNoSecret2(content, "capability content");
       if (content.length > maxChars) throw new Error("Capability content exceeds the requested context limit");
@@ -235911,10 +235577,10 @@ var ExecutionFabricKernel = class {
 
 // core/host-protocol.ts
 var EXECUTION_HOST_MODES = ["embedded", "managed", "remote"];
-function executionHostDescriptor(id22, mode2) {
-  if (!id22.trim()) throw new Error("Execution Host id must not be empty");
+function executionHostDescriptor(id23, mode2) {
+  if (!id23.trim()) throw new Error("Execution Host id must not be empty");
   return {
-    id: id22.trim(),
+    id: id23.trim(),
     mode: mode2,
     executesOutsideCraft: true,
     startsChildProcess: mode2 === "managed",
@@ -235925,8 +235591,8 @@ function assertExecutionHostMode(value) {
   if (!EXECUTION_HOST_MODES.includes(value)) throw new Error(`Unsupported Execution Host mode: ${value}`);
   return value;
 }
-function defaultExecutionHostMode(id22) {
-  const normalized = id22.trim().toLowerCase();
+function defaultExecutionHostMode(id23) {
+  const normalized = id23.trim().toLowerCase();
   if (normalized.endsWith("-cli") || normalized === "local-worker") return "managed";
   if (normalized.startsWith("a2a:") || normalized.startsWith("remote:")) return "remote";
   return "embedded";
@@ -236216,8 +235882,8 @@ var ManagedRunKernel = class {
     if (observation.managed_run_id !== run.id) throw new Error("Managed Run Handoff must use this Run's observation");
     const artifactIds = ids3(args.artifact_ids, "artifact_ids");
     const evidenceIds2 = ids3(args.evidence_ids, "evidence_ids");
-    for (const id22 of artifactIds) this.store.get("artifact", id22);
-    for (const id22 of evidenceIds2) this.store.get("evidence", id22);
+    for (const id23 of artifactIds) this.store.get("artifact", id23);
+    for (const id23 of evidenceIds2) this.store.get("evidence", id23);
     const identity = { managed_run_id: run.id, observation_id: observation.id, observation_version: observation.version, reason_digest: digestJson(text(args.reason, "reason")), artifact_ids: artifactIds, evidence_ids: evidenceIds2, resume_action: args.resume_action === void 0 ? "reobserve_and_resume" : text(args.resume_action, "resume_action") };
     const handoffId = String(args.handoff_id ?? `managed_run_handoff_${run.id}_${digestJson(identity).slice(-16)}`);
     const existing = this.store.find("managed_run_handoff", handoffId);
@@ -236595,7 +236261,7 @@ var EvaluationOperationsKernel = class {
   programSave(args) {
     const developmentCaseIds = strings15(args.development_case_ids, "development_case_ids", 1);
     const heldOutCaseIds = strings15(args.held_out_case_ids, "held_out_case_ids", 1);
-    if (developmentCaseIds.some((id22) => heldOutCaseIds.includes(id22))) throw new Error("Evaluation Program case partitions must not overlap");
+    if (developmentCaseIds.some((id23) => heldOutCaseIds.includes(id23))) throw new Error("Evaluation Program case partitions must not overlap");
     this.validateCases(developmentCaseIds, "development");
     this.validateCases(heldOutCaseIds, "held_out");
     const definition2 = {
@@ -236692,8 +236358,8 @@ var EvaluationOperationsKernel = class {
     return { program, runs, campaigns, due: this.due({ program_id: program.id }) };
   }
   validateCases(ids6, partition) {
-    for (const id22 of ids6) {
-      const item = this.store.get("delivery_evaluation_case", id22);
+    for (const id23 of ids6) {
+      const item = this.store.get("delivery_evaluation_case", id23);
       if (item.partition !== partition || item.sanitized !== true) throw new Error(`Evaluation Program requires sanitized ${partition} Cases`);
       if (partition === "held_out" && !item.approved_by) throw new Error("Held-out Evaluation Case is missing independent approval");
     }
@@ -236720,7 +236386,7 @@ function integer16(value, name, fallback2, minimum, maximum) {
   return result;
 }
 function confirmedEvidence(store, ids6) {
-  for (const id22 of ids6) if (store.get("evidence", id22).confidence !== "confirmed") throw new Error("Enterprise boundary verification requires confirmed Evidence");
+  for (const id23 of ids6) if (store.get("evidence", id23).confidence !== "confirmed") throw new Error("Enterprise boundary verification requires confirmed Evidence");
 }
 var EnterpriseAccessKernel = class {
   store;
@@ -236851,8 +236517,8 @@ var EnterpriseAccessKernel = class {
   get(args) {
     return { ticket: this.store.get("enterprise_access_ticket", text(args.ticket_id, "ticket_id")) };
   }
-  verifiedProvider(id22) {
-    const provider = this.store.get("enterprise_identity_provider", id22);
+  verifiedProvider(id23) {
+    const provider = this.store.get("enterprise_identity_provider", id23);
     if (provider.lifecycle !== "verified") throw new Error("Enterprise identity provider is not verified");
     return provider;
   }
@@ -236876,7 +236542,7 @@ function instant10(value, name) {
   return result;
 }
 function confirmedEvidence2(store, ids6) {
-  for (const id22 of ids6) if (store.get("evidence", id22).confidence !== "confirmed") throw new Error("A2A trust requires confirmed Evidence");
+  for (const id23 of ids6) if (store.get("evidence", id23).confidence !== "confirmed") throw new Error("A2A trust requires confirmed Evidence");
 }
 var A2ADelegationKernel = class {
   store;
@@ -236934,7 +236600,7 @@ var A2ADelegationKernel = class {
     if (session.lifecycle !== "active") throw new Error("A2A collaboration session is not active");
     const artifactIds = strings17(args.artifact_ids ?? [], "artifact_ids", 0);
     const evidenceIds2 = strings17(args.evidence_ids, "evidence_ids", 1);
-    for (const id22 of artifactIds) this.store.get("artifact", id22);
+    for (const id23 of artifactIds) this.store.get("artifact", id23);
     confirmedEvidence2(this.store, evidenceIds2);
     const expiresAt = new Date(instant10(args.now, "now") + integer17(args.ttl_seconds, "ttl_seconds", 900, 60, 3600) * 1e3).toISOString();
     const identity = { session_id: session.id, session_digest: session.session_digest, objective_digest: digestJson(text(args.objective, "objective")), artifact_ids: artifactIds, evidence_ids: evidenceIds2, effect: "read_only", expires_at: expiresAt };
@@ -237001,7 +236667,7 @@ var A2ADelegationKernel = class {
 };
 
 // core/autonomous-runtime.ts
-var import_node_crypto62 = require("node:crypto");
+var import_node_crypto61 = require("node:crypto");
 function limits(value) {
   const input = value && typeof value === "object" && !Array.isArray(value) ? value : {};
   const maxSteps = input.max_steps === void 0 ? 24 : Number(input.max_steps);
@@ -237026,7 +236692,7 @@ var AutonomousRuntimeKernel = class {
     const taskId3 = text(args.task_id, "task_id");
     const goal = text(args.goal, "goal");
     const model = text(args.model, "model");
-    const runId = String(args.run_id ?? `autonomous_run_${(0, import_node_crypto62.randomUUID)().replaceAll("-", "")}`);
+    const runId = String(args.run_id ?? `autonomous_run_${(0, import_node_crypto61.randomUUID)().replaceAll("-", "")}`);
     const runLimits = limits(args.limits);
     const requestDigest = digestJson({ task_id: taskId3, goal, model, limits: runLimits });
     const existing = this.store.find("autonomous_run", runId);
@@ -237198,7 +236864,7 @@ var CapabilityLifecycleKernel = class {
 };
 
 // core/memory-consolidation.ts
-var import_node_crypto63 = require("node:crypto");
+var import_node_crypto62 = require("node:crypto");
 function searchScope(value) {
   if (value === void 0) return { scope: null, skipped: false };
   if (value === null) return { scope: null, skipped: true };
@@ -237206,9 +236872,9 @@ function searchScope(value) {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     const record = value;
     const kind4 = record.kind ?? record.scope_kind;
-    const id22 = record.id ?? record.scope_id;
-    if (typeof kind4 !== "string" || typeof id22 !== "string" || !kind4.trim() || !id22.trim()) return { scope: null, skipped: true };
-    return { scope: `${kind4.trim()}:${id22.trim()}`, skipped: false };
+    const id23 = record.id ?? record.scope_id;
+    if (typeof kind4 !== "string" || typeof id23 !== "string" || !kind4.trim() || !id23.trim()) return { scope: null, skipped: true };
+    return { scope: `${kind4.trim()}:${id23.trim()}`, skipped: false };
   }
   throw new Error("scope must be a string or scope object");
 }
@@ -237229,7 +236895,7 @@ var MemoryConsolidationKernel = class {
     }
   }
   remember(args) {
-    const memoryId = String(args.memory_id ?? `memory_${(0, import_node_crypto63.randomUUID)().replaceAll("-", "")}`);
+    const memoryId = String(args.memory_id ?? `memory_${(0, import_node_crypto62.randomUUID)().replaceAll("-", "")}`);
     const scope3 = text(args.scope ?? "task", "scope");
     const content = text(args.content, "content");
     const source = text(args.source ?? "work", "source");
@@ -237268,7 +236934,7 @@ var MemoryConsolidationKernel = class {
     const scope3 = text(args.scope ?? memories[0].scope, "scope");
     const content = text(args.content ?? memories.map((memory) => this.body(memory)).filter(Boolean).join("\n"), "content");
     if (SECRET5.test(content)) throw new Error("Semantic memory content must not contain credentials or secrets");
-    const semanticId = String(args.semantic_id ?? `semantic_memory_${(0, import_node_crypto63.randomUUID)().replaceAll("-", "")}`);
+    const semanticId = String(args.semantic_id ?? `semantic_memory_${(0, import_node_crypto62.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = digestJson({ scope: scope3, content, memory_ids: memoryIds });
     const existing = this.store.find("semantic_memory", semanticId);
     if (existing) {
@@ -237316,7 +236982,7 @@ var MemoryConsolidationKernel = class {
 };
 
 // core/remote-interop.ts
-var import_node_crypto64 = require("node:crypto");
+var import_node_crypto63 = require("node:crypto");
 function httpsUrl(value) {
   const url2 = text(value, "endpoint");
   if (!url2.startsWith("https://")) throw new Error("Remote endpoint must use HTTPS");
@@ -237332,7 +236998,7 @@ var RemoteInteropKernel = class {
     const agent = text(args.agent, "agent");
     const operation2 = text(args.operation, "operation");
     const taskId3 = text(args.task_id, "task_id");
-    const requestId = String(args.request_id ?? `remote_request_${(0, import_node_crypto64.randomUUID)().replaceAll("-", "")}`);
+    const requestId = String(args.request_id ?? `remote_request_${(0, import_node_crypto63.randomUUID)().replaceAll("-", "")}`);
     const requestDigest = digestJson({ endpoint: endpoint4, agent, operation: operation2, task_id: taskId3, input_digest: text(args.input_digest, "input_digest") });
     const existing = this.store.find("remote_request", requestId);
     if (existing) {
@@ -237367,14 +237033,14 @@ var RemoteInteropKernel = class {
 };
 
 // core/platform-operations.ts
-var import_node_crypto65 = require("node:crypto");
+var import_node_crypto64 = require("node:crypto");
 var PlatformOperationsKernel = class {
   store;
   constructor(store) {
     this.store = store;
   }
   memberSave(args) {
-    const memberId = String(args.member_id ?? `member_${(0, import_node_crypto65.randomUUID)().replaceAll("-", "")}`);
+    const memberId = String(args.member_id ?? `member_${(0, import_node_crypto64.randomUUID)().replaceAll("-", "")}`);
     const name = text(args.name, "name");
     const roles = Array.isArray(args.roles) ? args.roles.map((item) => text(item, "roles")) : ["member"];
     const identityDigest = digestJson({ name, roles });
@@ -237390,13 +237056,13 @@ var PlatformOperationsKernel = class {
     const action = text(args.action, "action");
     const required5 = text(args.required_role ?? "member", "required_role");
     const allowed = member.active === true && (member.roles.includes(required5) || member.roles.includes("admin"));
-    const decision = this.store.create("platform_authorization", String(args.authorization_id ?? `authorization_${(0, import_node_crypto65.randomUUID)().replaceAll("-", "")}`), { member_id: member.id, action, required_role: required5, allowed, reason: allowed ? "role_granted" : "role_missing" });
+    const decision = this.store.create("platform_authorization", String(args.authorization_id ?? `authorization_${(0, import_node_crypto64.randomUUID)().replaceAll("-", "")}`), { member_id: member.id, action, required_role: required5, allowed, reason: allowed ? "role_granted" : "role_missing" });
     return { authorization: decision, allowed };
   }
   observe(args) {
     const event = text(args.event, "event");
     const status2 = text(args.status ?? "ok", "status");
-    const observation = this.store.create("platform_observation", String(args.observation_id ?? `observation_${(0, import_node_crypto65.randomUUID)().replaceAll("-", "")}`), { event, status: status2, run_id: args.run_id ?? null, metric: args.metric ?? null, value: args.value ?? null, value_digest: digestJson(args.value ?? null) });
+    const observation = this.store.create("platform_observation", String(args.observation_id ?? `observation_${(0, import_node_crypto64.randomUUID)().replaceAll("-", "")}`), { event, status: status2, run_id: args.run_id ?? null, metric: args.metric ?? null, value: args.value ?? null, value_digest: digestJson(args.value ?? null) });
     return { observation };
   }
   exportObservations(args) {
@@ -237490,7 +237156,7 @@ var UsageKernel = class {
 };
 
 // core/intent-compiler.ts
-var import_node_crypto66 = require("node:crypto");
+var import_node_crypto65 = require("node:crypto");
 function strings18(value, name) {
   if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
   return value.map((item) => text(item, name));
@@ -237572,7 +237238,7 @@ var IntentCompilerKernel = class {
       acceptance_required: route !== "simple",
       compiler_version: "1"
     };
-    const intentId = String(args.intent_id ?? `intent_${(0, import_node_crypto66.randomUUID)().replaceAll("-", "")}`);
+    const intentId = String(args.intent_id ?? `intent_${(0, import_node_crypto65.randomUUID)().replaceAll("-", "")}`);
     const requestDigest = stableDigest(contract);
     const existing = this.store.find("task_intent", intentId);
     if (existing) {
@@ -237720,7 +237386,7 @@ var TraceArchiveStorageKernel = class {
 };
 
 // core/host-session-events.ts
-var import_node_crypto67 = require("node:crypto");
+var import_node_crypto66 = require("node:crypto");
 var KINDS = /* @__PURE__ */ new Set(["session.started", "host.dispatched", "host.receipt", "state.observed", "session.paused", "session.resumed", "session.completed", "session.failed", "session.cancelled"]);
 var TERMINAL4 = /* @__PURE__ */ new Set(["session.completed", "session.failed", "session.cancelled"]);
 var SENSITIVE2 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]/iu;
@@ -237746,7 +237412,7 @@ var HostSessionEventKernel = class {
     this.trace = trace;
   }
   open(args) {
-    const sessionId = String(args.session_id ?? `host_session_${(0, import_node_crypto67.randomUUID)().replaceAll("-", "")}`);
+    const sessionId = String(args.session_id ?? `host_session_${(0, import_node_crypto66.randomUUID)().replaceAll("-", "")}`);
     const traceId = String(args.trace_id ?? `host_session_trace_${sessionId}`);
     const taskId3 = text(args.task_id, "task_id");
     const identity = { trace_id: traceId, task_id: taskId3, host_id: text(args.host_id, "host_id"), environment_fingerprint: text(args.environment_fingerprint, "environment_fingerprint"), policy_fingerprint: text(args.policy_fingerprint, "policy_fingerprint"), capability_fingerprint: text(args.capability_fingerprint, "capability_fingerprint"), model_fingerprint: args.model_fingerprint === void 0 ? null : text(args.model_fingerprint, "model_fingerprint"), budget_fingerprint: args.budget_fingerprint === void 0 ? null : text(args.budget_fingerprint, "budget_fingerprint") };
@@ -237798,7 +237464,7 @@ var HostSessionEventKernel = class {
 };
 
 // core/outcome-observer.ts
-var import_node_crypto68 = require("node:crypto");
+var import_node_crypto67 = require("node:crypto");
 var KINDS2 = /* @__PURE__ */ new Set(["program", "workspace", "human", "external"]);
 var VERDICTS2 = /* @__PURE__ */ new Set(["passed", "failed", "blocked", "inconclusive"]);
 function ids4(value) {
@@ -237830,7 +237496,7 @@ var OutcomeObserverKernel = class {
     if (verdict === "passed" && !evidenceIds2.length) throw new Error("Passed Outcome Observation requires Evidence");
     for (const evidenceId of evidenceIds2) if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(this.store.get("evidence", evidenceId).confidence))) throw new Error("Outcome Observation Evidence must be confirmed or bounded");
     const identity = { trace_id: trace.id, host_id: hostId, observer_id: observerId, observer_kind: kind4, environment_fingerprint: environment, verdict, state_snapshot_ref: text(args.state_snapshot_ref, "state_snapshot_ref"), evidence_ids: evidenceIds2 };
-    const observationId = String(args.observation_id ?? `outcome_observation_${(0, import_node_crypto68.randomUUID)().replaceAll("-", "")}`);
+    const observationId = String(args.observation_id ?? `outcome_observation_${(0, import_node_crypto67.randomUUID)().replaceAll("-", "")}`);
     const observationDigest = digestJson(identity);
     const existing = this.store.find("outcome_observation", observationId);
     if (existing) {
@@ -237848,7 +237514,7 @@ var OutcomeObserverKernel = class {
 };
 
 // core/runtime-truth-kernel.ts
-var import_node_crypto69 = require("node:crypto");
+var import_node_crypto68 = require("node:crypto");
 var RuntimeTruthKernel = class {
   store;
   constructor(store) {
@@ -237856,10 +237522,10 @@ var RuntimeTruthKernel = class {
   }
   standardize(args) {
     const trace = standardizeTrace(object(args.trace ?? args, "trace"));
-    const id22 = text(args.export_id ?? `trace_export_${(0, import_node_crypto69.randomUUID)().replaceAll("-", "")}`, "export_id");
-    const existing = this.store.find("trace_export", id22);
+    const id23 = text(args.export_id ?? `trace_export_${(0, import_node_crypto68.randomUUID)().replaceAll("-", "")}`, "export_id");
+    const existing = this.store.find("trace_export", id23);
     if (existing) return { export: existing, idempotent: true };
-    return { export: this.store.create("trace_export", id22, { format: "craft.trace", schema: "craft.trace", schema_revision: trace.schema_revision, trace_id: trace.trace_id, trace }), idempotent: false };
+    return { export: this.store.create("trace_export", id23, { format: "craft.trace", schema: "craft.trace", schema_revision: trace.schema_revision, trace_id: trace.trace_id, trace }), idempotent: false };
   }
   otlp(args) {
     const trace = standardizeTrace(object(args.trace ?? args, "trace"));
@@ -237877,18 +237543,18 @@ var RuntimeTruthKernel = class {
       return { status: response.status, body: await response.text() };
     };
     const result = await exportOtlp(endpoint4, mapped.payload, transport);
-    const id22 = text(args.export_id ?? `trace_otlp_${(0, import_node_crypto69.randomUUID)().replaceAll("-", "")}`, "export_id");
-    const existing = this.store.find("trace_otlp_export", id22);
+    const id23 = text(args.export_id ?? `trace_otlp_${(0, import_node_crypto68.randomUUID)().replaceAll("-", "")}`, "export_id");
+    const existing = this.store.find("trace_otlp_export", id23);
     if (existing) return { export: existing, idempotent: true };
-    const payloadDigest = `sha256:${(0, import_node_crypto69.createHash)("sha256").update(JSON.stringify(mapped.payload)).digest("hex")}`;
-    return { export: this.store.create("trace_otlp_export", id22, { endpoint: endpoint4, status: result.status, accepted: result.accepted, payload_digest: payloadDigest, raw_content: false }), idempotent: false };
+    const payloadDigest = `sha256:${(0, import_node_crypto68.createHash)("sha256").update(JSON.stringify(mapped.payload)).digest("hex")}`;
+    return { export: this.store.create("trace_otlp_export", id23, { endpoint: endpoint4, status: result.status, accepted: result.accepted, payload_digest: payloadDigest, raw_content: false }), idempotent: false };
   }
   compact(args) {
     const messages = args.messages;
     if (!Array.isArray(messages)) throw new Error("messages must be an array");
     const result = compactConversation(messages, [void 0, Number(args.max_chars)][Number(args.max_chars !== void 0)]);
-    const id22 = text(args.session_id ?? `context_${(0, import_node_crypto69.randomUUID)().replaceAll("-", "")}`, "session_id");
-    const saved = this.store.save("context_compaction", id22, { session_id: id22, compacted: result.compacted, omitted: result.omitted, summary_digest: result.summary_digest, messages: result.messages });
+    const id23 = text(args.session_id ?? `context_${(0, import_node_crypto68.randomUUID)().replaceAll("-", "")}`, "session_id");
+    const saved = this.store.save("context_compaction", id23, { session_id: id23, compacted: result.compacted, omitted: result.omitted, summary_digest: result.summary_digest, messages: result.messages });
     return { ...result, compaction: saved };
   }
   /**
@@ -237915,10 +237581,10 @@ var RuntimeTruthKernel = class {
   }
   workNote(args) {
     const note = createWorkNote({ goal: text(args.goal, "goal"), decisions: args.decisions, constraints: args.constraints, open_questions: args.open_questions, artifacts: args.artifacts });
-    const id22 = text(args.note_id ?? `work_note_${(0, import_node_crypto69.randomUUID)().replaceAll("-", "")}`, "note_id");
-    const existing = this.store.find("work_note", id22);
+    const id23 = text(args.note_id ?? `work_note_${(0, import_node_crypto68.randomUUID)().replaceAll("-", "")}`, "note_id");
+    const existing = this.store.find("work_note", id23);
     if (existing) return { note: existing, idempotent: true };
-    return { note: this.store.create("work_note", id22, note), idempotent: false };
+    return { note: this.store.create("work_note", id23, note), idempotent: false };
   }
   /**
    * Read back one work note.
@@ -237934,7 +237600,7 @@ var RuntimeTruthKernel = class {
 };
 
 // core/os-security.ts
-var import_node_crypto70 = require("node:crypto");
+var import_node_crypto69 = require("node:crypto");
 var PLATFORMS = /* @__PURE__ */ new Set(["win32", "darwin", "linux"]);
 var NETWORK2 = /* @__PURE__ */ new Set(["denied", "allowlist"]);
 var FILESYSTEM2 = /* @__PURE__ */ new Set(["read_only", "workspace_write"]);
@@ -237954,7 +237620,7 @@ var OsSecurityKernel = class {
     const allowlist = list(args.egress_allowlist, "egress_allowlist");
     const boundary = { platform: platform2, workspace, network, filesystem, egress_allowlist: allowlist, process_isolation: platform2 === "win32" ? "job_object" : platform2 === "darwin" ? "sandbox_profile" : "landlock_or_namespace", secret_broker: args.secret_broker === true, fail_closed: true };
     const boundaryDigest = digestJson(boundary);
-    const planId = String(args.plan_id ?? `os_security_${(0, import_node_crypto70.randomUUID)().replaceAll("-", "")}`);
+    const planId = String(args.plan_id ?? `os_security_${(0, import_node_crypto69.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("os_security_plan", planId);
     if (existing) {
       if (existing.boundary_digest !== boundaryDigest) throw new Error("OS security plan idempotency conflict");
@@ -237978,7 +237644,7 @@ var OsSecurityKernel = class {
 };
 
 // core/mcp-registry.ts
-var import_node_crypto71 = require("node:crypto");
+var import_node_crypto70 = require("node:crypto");
 function https(value, name) {
   const result = text(value, name);
   if (!result.startsWith("https://")) throw new Error(`${name} must use HTTPS`);
@@ -237992,7 +237658,7 @@ var McpRegistryKernel = class {
     this.store = store;
   }
   sourceRegister(args) {
-    const sourceId = String(args.source_id ?? `mcp_registry_source_${(0, import_node_crypto71.randomUUID)().replaceAll("-", "")}`);
+    const sourceId = String(args.source_id ?? `mcp_registry_source_${(0, import_node_crypto70.randomUUID)().replaceAll("-", "")}`);
     const endpoint4 = https(args.endpoint, "endpoint");
     const trust = text(args.trust ?? "community", "trust");
     if (!TRUST2.has(trust)) throw new Error("Unsupported registry trust");
@@ -238100,7 +237766,7 @@ var A2ATransportKernel = class {
 };
 
 // core/remote-runtime.ts
-var import_node_crypto72 = require("node:crypto");
+var import_node_crypto71 = require("node:crypto");
 function epoch(value, name) {
   return value === void 0 ? Date.now() : instant11(value, name);
 }
@@ -238119,7 +237785,7 @@ function uniqueStrings(value, name, minimum = 0) {
   return values3.sort();
 }
 function opaqueHandle() {
-  return (0, import_node_crypto72.randomBytes)(32).toString("base64url");
+  return (0, import_node_crypto71.randomBytes)(32).toString("base64url");
 }
 var RemoteRuntimeKernel = class {
   store;
@@ -238162,7 +237828,7 @@ var RemoteRuntimeKernel = class {
       scopes,
       expires_at: new Date(expires).toISOString()
     };
-    const bindingId = String(args.binding_id ?? `remote_task_${(0, import_node_crypto72.randomBytes)(12).toString("hex")}`);
+    const bindingId = String(args.binding_id ?? `remote_task_${(0, import_node_crypto71.randomBytes)(12).toString("hex")}`);
     const existing = this.store.find("remote_task_binding", bindingId);
     const bindingDigest = digestJson(identity);
     if (existing) {
@@ -238195,7 +237861,7 @@ var RemoteRuntimeKernel = class {
     if (text(args.audience, "audience") !== binding.audience) throw new Error("Remote task audience does not match");
     const scopes = uniqueStrings(args.scopes, "scopes", 1);
     if (binding.scopes.some((scope3) => !scopes.includes(scope3))) throw new Error("Remote task scope is insufficient");
-    const receiptId = String(fallback(args.receipt_id, `remote_task_access_${binding.id}_${operation2}_${(0, import_node_crypto72.randomBytes)(8).toString("hex")}`));
+    const receiptId = String(fallback(args.receipt_id, `remote_task_access_${binding.id}_${operation2}_${(0, import_node_crypto71.randomBytes)(8).toString("hex")}`));
     const identity = { binding_id: binding.id, binding_version: binding.version, operation: operation2, at: new Date(now3).toISOString(), principal_digest: binding.principal_digest, tenant_id: binding.tenant_id };
     const existing = this.store.find("remote_task_access_receipt", receiptId);
     if (existing) {
@@ -238217,8 +237883,8 @@ var RemoteRuntimeKernel = class {
     const binding = this.store.get("remote_task_binding", text(args.binding_id, "binding_id"));
     return { binding, receipts: this.store.list("remote_task_access_receipt", 1e4, (item) => item.binding_id === binding.id) };
   }
-  activeTenant(id22, version3) {
-    const tenant = this.store.get("remote_tenant", id22, version3);
+  activeTenant(id23, version3) {
+    const tenant = this.store.get("remote_tenant", id23, version3);
     if (tenant.status !== "active") throw new Error("Remote tenant is not active");
     return tenant;
   }
@@ -238230,7 +237896,7 @@ var RemoteRuntimeKernel = class {
 };
 
 // core/supply-chain-attestation.ts
-var import_node_crypto73 = require("node:crypto");
+var import_node_crypto72 = require("node:crypto");
 var SUBJECT_KINDS = /* @__PURE__ */ new Set(["capability_asset", "mcp_registry_server", "hub_catalog_entry"]);
 function sha2562(value, name) {
   const result = text(value, name);
@@ -238247,7 +237913,7 @@ var SupplyChainAttestationKernel = class {
     const publicKeyPem = text(args.public_key_pem, "public_key_pem");
     let keyFingerprint;
     try {
-      keyFingerprint = digestJson((0, import_node_crypto73.createPublicKey)(publicKeyPem).export({ format: "der", type: "spki" }).toString("base64"));
+      keyFingerprint = digestJson((0, import_node_crypto72.createPublicKey)(publicKeyPem).export({ format: "der", type: "spki" }).toString("base64"));
     } catch {
       throw new Error("publisher public_key_pem is invalid");
     }
@@ -238270,7 +237936,7 @@ var SupplyChainAttestationKernel = class {
     const signature = Buffer.from(text(args.signature, "signature"), "base64url");
     let verified = false;
     try {
-      verified = (0, import_node_crypto73.verify)(null, Buffer.from(subjectDigest, "utf8"), (0, import_node_crypto73.createPublicKey)(String(publisher.public_key_pem)), signature);
+      verified = (0, import_node_crypto72.verify)(null, Buffer.from(subjectDigest, "utf8"), (0, import_node_crypto72.createPublicKey)(String(publisher.public_key_pem)), signature);
     } catch {
       throw new Error("Supply-chain signature is invalid");
     }
@@ -238301,7 +237967,7 @@ var SupplyChainAttestationKernel = class {
 };
 
 // core/runtime-acceptance.ts
-var import_node_crypto74 = require("node:crypto");
+var import_node_crypto73 = require("node:crypto");
 function unique(value, name, exact) {
   if (!Array.isArray(value) || !value.length) throw new Error(`${name} must be a non-empty array`);
   const values3 = value.map((item) => text(item, name));
@@ -238326,7 +237992,7 @@ var RuntimeAcceptanceKernel = class {
     const trials = integer18(args.trials_per_pair, "trials_per_pair", 3, 5);
     const identity = { case_ids: caseIds, host_ids: hostIds, baseline_harness: text(args.baseline_harness, "baseline_harness"), candidate_harness: text(args.candidate_harness, "candidate_harness"), environment_fingerprint: text(args.environment_fingerprint, "environment_fingerprint"), budget_fingerprint: text(args.budget_fingerprint, "budget_fingerprint"), trials_per_pair: trials, observer_kind: text(args.observer_kind, "observer_kind") };
     if (identity.baseline_harness === identity.candidate_harness) throw new Error("Runtime acceptance candidate must differ from baseline");
-    const planId = String(args.plan_id ?? `runtime_acceptance_${(0, import_node_crypto74.randomUUID)().replaceAll("-", "")}`);
+    const planId = String(args.plan_id ?? `runtime_acceptance_${(0, import_node_crypto73.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("runtime_acceptance_plan", planId);
     const planDigest = digestJson(identity);
     if (existing) {
@@ -238409,7 +238075,7 @@ var RuntimeAcceptanceKernel = class {
 };
 
 // core/a2a-v1-adapter.ts
-var import_node_crypto75 = require("node:crypto");
+var import_node_crypto74 = require("node:crypto");
 function endpoint2(value) {
   const url2 = new URL(text(value, "endpoint"));
   if (url2.protocol !== "https:" || url2.username || url2.password) throw new Error("A2A v1 endpoint must be an HTTPS URL without credentials");
@@ -238458,7 +238124,7 @@ var A2AV1AdapterKernel = class {
     const card = this.store.get("a2a_v1_card_observation", text(args.card_observation_id, "card_observation_id"));
     const requestId = text(args.request_id, "request_id");
     const identity = { grant_id: grant.id, grant_digest: grant.grant_digest, card_observation_id: card.id, card_observation_version: card.version, request_id: requestId, input_digest: text(args.input_digest, "input_digest") };
-    const taskId3 = String(args.task_id ?? `a2a_v1_task_${(0, import_node_crypto75.randomUUID)().replaceAll("-", "")}`);
+    const taskId3 = String(args.task_id ?? `a2a_v1_task_${(0, import_node_crypto74.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("a2a_v1_task", taskId3);
     const taskDigest = digestJson(identity);
     if (existing) {
@@ -238508,7 +238174,7 @@ var A2AV1AdapterKernel = class {
 };
 
 // core/org-sync.ts
-var import_node_crypto76 = require("node:crypto");
+var import_node_crypto75 = require("node:crypto");
 function array5(value, name) {
   if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
   return value.map((item) => text(item, name));
@@ -238524,7 +238190,7 @@ var OrgSyncKernel = class {
     const recordRefs = array5(args.record_refs ?? [], "record_refs");
     const manifest = { workspace_id: workspaceId, member_ids: memberIds, record_refs: recordRefs, encryption: "adapter_managed", deletion_tombstones: true };
     const manifestDigest = digestJson(manifest);
-    const syncId = String(args.sync_id ?? `org_sync_${(0, import_node_crypto76.randomUUID)().replaceAll("-", "")}`);
+    const syncId = String(args.sync_id ?? `org_sync_${(0, import_node_crypto75.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("org_sync_manifest", syncId);
     if (existing) {
       if (existing.manifest_digest !== manifestDigest) throw new Error("Organization sync manifest conflict");
@@ -238543,10 +238209,10 @@ var OrgSyncKernel = class {
 };
 
 // core/work-session.ts
-var import_node_crypto78 = require("node:crypto");
+var import_node_crypto77 = require("node:crypto");
 
 // capability/craft-knowledge/project-brain.ts
-var import_node_crypto77 = require("node:crypto");
+var import_node_crypto76 = require("node:crypto");
 function list2(value, name) {
   if (value === void 0) return [];
   if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
@@ -238567,14 +238233,14 @@ var ProjectBrainKernel = class {
   }
   open(args) {
     const project = projectId(args.project_id);
-    const id22 = String(args.brain_id ?? brainId(project));
-    const existing = this.store.find("project_brain", id22);
+    const id23 = String(args.brain_id ?? brainId(project));
+    const existing = this.store.find("project_brain", id23);
     const identity = { project_id: project, name: text(args.name ?? project, "name"), description_digest: digestJson(args.description ?? "") };
     if (existing) {
       if (existing.project_id !== project || existing.description_digest !== identity.description_digest) throw new Error("Project Brain idempotency conflict");
       return { brain: existing, idempotent: true };
     }
-    return { brain: this.store.create("project_brain", id22, {
+    return { brain: this.store.create("project_brain", id23, {
       project_id: project,
       name: identity.name,
       description_digest: identity.description_digest,
@@ -238619,34 +238285,34 @@ var ProjectBrainKernel = class {
   goalSave(args) {
     const project = projectId(args.project_id);
     this.require(project);
-    const id22 = String(args.goal_id ?? `goal_${(0, import_node_crypto77.randomUUID)().replaceAll("-", "")}`);
-    const previous = this.store.find("project_goal", id22);
+    const id23 = String(args.goal_id ?? `goal_${(0, import_node_crypto76.randomUUID)().replaceAll("-", "")}`);
+    const previous = this.store.find("project_goal", id23);
     const record = { project_id: project, title: text(args.title ?? previous?.title, "title"), status: String(args.status ?? previous?.status ?? "active"), constraint_digests: list2(args.constraint_digests ?? previous?.constraint_digests, "constraint_digests"), metric: args.metric === void 0 ? previous?.metric ?? null : text(args.metric, "metric"), content_digest: digestJson({ title: args.title ?? previous?.title, constraints: args.constraint_digests ?? previous?.constraint_digests ?? [], metric: args.metric ?? previous?.metric ?? null }) };
-    if (previous) return { goal: this.store.save("project_goal", id22, { ...payload(previous), ...record }), idempotent: false };
-    return { goal: this.store.create("project_goal", id22, record), idempotent: false };
+    if (previous) return { goal: this.store.save("project_goal", id23, { ...payload(previous), ...record }), idempotent: false };
+    return { goal: this.store.create("project_goal", id23, record), idempotent: false };
   }
   decisionSave(args) {
     const project = projectId(args.project_id);
     this.require(project);
-    const id22 = String(args.decision_id ?? `decision_${(0, import_node_crypto77.randomUUID)().replaceAll("-", "")}`);
-    const previous = this.store.find("project_decision", id22);
+    const id23 = String(args.decision_id ?? `decision_${(0, import_node_crypto76.randomUUID)().replaceAll("-", "")}`);
+    const previous = this.store.find("project_decision", id23);
     const record = { project_id: project, title: text(args.title, "title"), rationale_digest: digestJson(text(args.rationale, "rationale")), chosen_ref: text(args.chosen_ref, "chosen_ref"), excluded_refs: list2(args.excluded_refs, "excluded_refs"), status: String(args.status ?? "active") };
-    return { decision: previous ? this.store.save("project_decision", id22, { ...payload(previous), ...record }) : this.store.create("project_decision", id22, record), idempotent: false };
+    return { decision: previous ? this.store.save("project_decision", id23, { ...payload(previous), ...record }) : this.store.create("project_decision", id23, record), idempotent: false };
   }
   materialBind(args) {
     const project = projectId(args.project_id);
     this.require(project);
-    const id22 = String(args.material_id ?? `material_${(0, import_node_crypto77.randomUUID)().replaceAll("-", "")}`);
+    const id23 = String(args.material_id ?? `material_${(0, import_node_crypto76.randomUUID)().replaceAll("-", "")}`);
     const material = { project_id: project, name: text(args.name, "name"), uri: text(args.uri, "uri"), content_digest: text(args.content_digest, "content_digest"), source_type: String(args.source_type ?? "user"), scope: String(args.scope ?? "project"), status: "bound" };
-    const previous = this.store.find("project_material", id22);
-    return { material: previous ? this.store.save("project_material", id22, { ...payload(previous), ...material }) : this.store.create("project_material", id22, material), idempotent: false };
+    const previous = this.store.find("project_material", id23);
+    return { material: previous ? this.store.save("project_material", id23, { ...payload(previous), ...material }) : this.store.create("project_material", id23, material), idempotent: false };
   }
   outcomeRecord(args) {
     const project = projectId(args.project_id);
     this.require(project);
-    const id22 = String(args.outcome_id ?? `project_outcome_${(0, import_node_crypto77.randomUUID)().replaceAll("-", "")}`);
+    const id23 = String(args.outcome_id ?? `project_outcome_${(0, import_node_crypto76.randomUUID)().replaceAll("-", "")}`);
     const outcome2 = { project_id: project, task_id: args.task_id === void 0 ? null : text(args.task_id, "task_id"), session_id: args.session_id === void 0 ? null : text(args.session_id, "session_id"), verdict: text(args.verdict, "verdict"), summary_digest: digestJson(text(args.summary, "summary")), evidence_ids: list2(args.evidence_ids, "evidence_ids"), artifact_ids: list2(args.artifact_ids, "artifact_ids"), status: "recorded" };
-    const saved = this.store.create("project_outcome", id22, outcome2);
+    const saved = this.store.create("project_outcome", id23, outcome2);
     const brain = this.store.list("project_brain", 1e4, (item) => item.project_id === project)[0];
     this.store.save("project_brain", String(brain.id), { ...payload(brain), latest_outcome_id: saved.id });
     return { outcome: saved };
@@ -238654,9 +238320,9 @@ var ProjectBrainKernel = class {
   experienceRecord(args) {
     const project = projectId(args.project_id);
     this.require(project);
-    const id22 = String(args.experience_id ?? `experience_${(0, import_node_crypto77.randomUUID)().replaceAll("-", "")}`);
+    const id23 = String(args.experience_id ?? `experience_${(0, import_node_crypto76.randomUUID)().replaceAll("-", "")}`);
     const experience = { project_id: project, name: text(args.name, "name"), pattern_digest: digestJson(text(args.pattern, "pattern")), source_outcome_id: args.source_outcome_id === void 0 ? null : text(args.source_outcome_id, "source_outcome_id"), status: "candidate" };
-    return { experience: this.store.create("project_experience", id22, experience) };
+    return { experience: this.store.create("project_experience", id23, experience) };
   }
   refresh(args) {
     return this.snapshot(args);
@@ -238697,7 +238363,7 @@ var WorkSessionKernel = class {
     this.brain.get({ project_id: projectId2 });
     const task = this.store.get("task", text(args.task_id, "task_id"));
     if (task.project_id !== null && task.project_id !== projectId2) throw new Error("Task does not belong to the Project Brain");
-    const sessionId = String(args.session_id ?? `work_session_${(0, import_node_crypto78.randomUUID)().replaceAll("-", "")}`);
+    const sessionId = String(args.session_id ?? `work_session_${(0, import_node_crypto77.randomUUID)().replaceAll("-", "")}`);
     const knowledge = refs2(args.knowledge_refs, "knowledge_refs");
     const capabilities = refs2(args.capability_refs, "capability_refs");
     const workflows = refs2(args.workflow_refs, "workflow_refs");
@@ -238809,7 +238475,7 @@ var WorkbenchExperienceKernel = class {
 };
 
 // core/long-task-worker.ts
-var import_node_crypto79 = require("node:crypto");
+var import_node_crypto78 = require("node:crypto");
 function now(value) {
   const result = value === void 0 ? (/* @__PURE__ */ new Date()).toISOString() : text(value, "now");
   if (Number.isNaN(Date.parse(result))) throw new Error("now must be an ISO timestamp");
@@ -238824,7 +238490,7 @@ var LongTaskWorkerKernel = class {
     const session = this.store.get("work_session", text(args.session_id, "session_id"));
     const taskRun = args.task_run_id === void 0 ? null : this.store.get("task_run", text(args.task_run_id, "task_run_id"));
     if (taskRun && taskRun.contract_id && taskRun.launch_id && this.store.get("work_launch", String(taskRun.launch_id)).task_id !== session.task_id) throw new Error("Task Run does not belong to the session");
-    const checkpointId = String(args.checkpoint_id ?? `long_task_${(0, import_node_crypto79.randomUUID)().replaceAll("-", "")}`);
+    const checkpointId = String(args.checkpoint_id ?? `long_task_${(0, import_node_crypto78.randomUUID)().replaceAll("-", "")}`);
     const waitCondition = text(args.wait_condition, "wait_condition");
     const resumeAction = text(args.resume_action ?? "revalidate_and_resume", "resume_action");
     const state4 = { session_id: session.id, session_version: session.version, task_run_id: taskRun?.id ?? null, task_run_version: taskRun?.version ?? null, host_run_id: args.host_run_id ?? null, wait_condition: waitCondition, resume_action: resumeAction, context_digest: session.context_digest, state_digest: digestJson({ session: session.id, session_version: session.version, task_run: taskRun?.id ?? null, task_run_version: taskRun?.version ?? null, wait_condition: waitCondition, resume_action: resumeAction }) };
@@ -238878,7 +238544,7 @@ var LongTaskWorkerKernel = class {
 };
 
 // core/context-plane.ts
-var import_node_crypto80 = require("node:crypto");
+var import_node_crypto79 = require("node:crypto");
 var MANIFEST_FIELDS = ["knowledge_refs", "capability_refs", "workflow_refs", "excluded_refs"];
 var ContextPlaneKernel = class {
   store;
@@ -238888,7 +238554,7 @@ var ContextPlaneKernel = class {
   save(args) {
     const projectId2 = text(args.project_id, "project_id");
     const taskId3 = text(args.task_id, "task_id");
-    const manifestId = String(args.manifest_id ?? `context_manifest_${(0, import_node_crypto80.randomUUID)().replaceAll("-", "")}`);
+    const manifestId = String(args.manifest_id ?? `context_manifest_${(0, import_node_crypto79.randomUUID)().replaceAll("-", "")}`);
     const refs6 = Object.fromEntries(MANIFEST_FIELDS.map((field) => [field, uniqueList(args[field], field)]));
     const identity = {
       project_id: projectId2,
@@ -238924,14 +238590,14 @@ var ContextPlaneKernel = class {
 };
 
 // core/domain-evaluator.ts
-var import_node_crypto81 = require("node:crypto");
+var import_node_crypto80 = require("node:crypto");
 var DomainEvaluatorKernel = class {
   store;
   constructor(store) {
     this.store = store;
   }
   save(args) {
-    const evaluatorId = String(args.evaluator_id ?? `domain_evaluator_${(0, import_node_crypto81.randomUUID)().replaceAll("-", "")}`);
+    const evaluatorId = String(args.evaluator_id ?? `domain_evaluator_${(0, import_node_crypto80.randomUUID)().replaceAll("-", "")}`);
     const domain = text(args.domain, "domain");
     const name = text(args.name, "name");
     const criteria = object(args.rules ?? args.criteria, "rules");
@@ -238955,14 +238621,14 @@ var DomainEvaluatorKernel = class {
 };
 
 // core/feedback-learning.ts
-var import_node_crypto82 = require("node:crypto");
+var import_node_crypto81 = require("node:crypto");
 var FeedbackLearningKernel = class {
   store;
   constructor(store) {
     this.store = store;
   }
   record(args) {
-    const signalId = String(args.signal_id ?? `feedback_signal_${(0, import_node_crypto82.randomUUID)().replaceAll("-", "")}`);
+    const signalId = String(args.signal_id ?? `feedback_signal_${(0, import_node_crypto81.randomUUID)().replaceAll("-", "")}`);
     const scope3 = String(args.scope ?? "project");
     if (!["task", "project", "global"].includes(scope3)) throw new Error("Unsupported feedback scope");
     const identity = { scope: scope3, project_id: args.project_id === void 0 ? null : text(args.project_id, "project_id"), task_id: args.task_id === void 0 ? null : text(args.task_id, "task_id"), outcome_id: args.outcome_id === void 0 ? null : text(args.outcome_id, "outcome_id"), action: text(args.action, "action"), diff_digest: text(args.diff_digest, "diff_digest"), reason_digest: digestJson(text(args.reason, "reason")), accepted: args.accepted === true };
@@ -238983,14 +238649,14 @@ var FeedbackLearningKernel = class {
 };
 
 // core/handoff-manifest.ts
-var import_node_crypto83 = require("node:crypto");
+var import_node_crypto82 = require("node:crypto");
 var HandoffManifestKernel = class {
   store;
   constructor(store) {
     this.store = store;
   }
   create(args) {
-    const handoffId = String(args.handoff_id ?? `handoff_manifest_${(0, import_node_crypto83.randomUUID)().replaceAll("-", "")}`);
+    const handoffId = String(args.handoff_id ?? `handoff_manifest_${(0, import_node_crypto82.randomUUID)().replaceAll("-", "")}`);
     const identity = { task_id: text(args.task_id, "task_id"), session_id: args.session_id === void 0 ? null : text(args.session_id, "session_id"), context_manifest_id: text(args.context_manifest_id, "context_manifest_id"), host: text(args.host, "host"), model: args.model === void 0 ? null : text(args.model, "model"), allowed_effects: uniqueList(args.allowed_effects, "allowed_effects"), artifact_ids: uniqueList(args.artifact_ids, "artifact_ids"), evidence_ids: uniqueList(args.evidence_ids, "evidence_ids"), outcome_id: args.outcome_id === void 0 ? null : text(args.outcome_id, "outcome_id") };
     const handoffDigest = digestJson(identity);
     const existing = this.store.find("handoff_manifest", handoffId);
@@ -239046,23 +238712,23 @@ var LocalRuntimeServiceKernel = class {
 };
 
 // capability/craft-experience/procedure-automation.ts
-var import_node_crypto85 = require("node:crypto");
+var import_node_crypto84 = require("node:crypto");
 
 // capability/craft-experience/procedure-release.ts
-var import_node_fs19 = require("node:fs");
-var import_node_path26 = require("node:path");
+var import_node_fs18 = require("node:fs");
+var import_node_path25 = require("node:path");
 function preserveProcedureRelease(store, current2) {
   if (current2?.routeable !== true || current2.lifecycle !== "routeable") return;
   const existing = store.find("experience_release", String(current2.id));
   if (existing?.record_version === current2.version) return;
   store.save("experience_release", String(current2.id), { record_version: current2.version, definition_digest: current2.definition_digest, status: "active" });
 }
-function activeProcedure(store, id22) {
-  const latest = store.get("experience_procedure", id22);
+function activeProcedure(store, id23) {
+  const latest = store.get("experience_procedure", id23);
   if (latest.routeable === true && latest.lifecycle === "routeable") return latest;
-  const release = store.find("experience_release", id22);
+  const release = store.find("experience_release", id23);
   if (!release || release.status !== "active") return null;
-  const active = store.get("experience_procedure", id22, Number(release.record_version));
+  const active = store.get("experience_procedure", id23, Number(release.record_version));
   if (latest.definition_digest === active.definition_digest) return null;
   return { ...active, scope_envelope: latest.scope_envelope };
 }
@@ -239075,47 +238741,47 @@ function updateProcedureRelease(store, latest) {
   if (release && release.definition_digest === latest.definition_digest && ["rejected", "rolled_back"].includes(String(latest.lifecycle)) && release.status !== "revoked")
     store.save("experience_release", String(latest.id), { ...payload(release), status: "revoked" });
 }
-function selectedProcedure(store, id22, channel) {
-  if (channel === void 0 || channel === "current") return activeProcedure(store, id22);
+function selectedProcedure(store, id23, channel) {
+  if (channel === void 0 || channel === "current") return activeProcedure(store, id23);
   if (channel !== "test") throw new Error("Unsupported Procedure release_channel");
-  const candidate2 = store.get("experience_procedure", id22);
+  const candidate2 = store.get("experience_procedure", id23);
   return candidate2.lifecycle === "candidate" ? candidate2 : null;
 }
 function assertProcedureTestIsolation(store, args, actualWorkspaceId) {
   const testId = text(args.test_workspace_id, "test_workspace_id"), baselineId = text(args.baseline_workspace_id, "baseline_workspace_id");
   if (testId === baselineId || actualWorkspaceId !== void 0 && actualWorkspaceId !== testId) throw new Error("Test workspace isolation mismatch");
   const test = store.get("workspace", testId), baseline = store.get("workspace", baselineId);
-  const testRoot = (0, import_node_fs19.realpathSync)(String(test.root_path)), baselineRoot = (0, import_node_fs19.realpathSync)(String(baseline.root_path));
+  const testRoot = (0, import_node_fs18.realpathSync)(String(test.root_path)), baselineRoot = (0, import_node_fs18.realpathSync)(String(baseline.root_path));
   const separate = (a, b) => {
-    const delta = (0, import_node_path26.relative)(a, b);
-    return (0, import_node_path26.isAbsolute)(delta) || delta === ".." || delta.startsWith(`..${import_node_path26.sep}`);
+    const delta = (0, import_node_path25.relative)(a, b);
+    return (0, import_node_path25.isAbsolute)(delta) || delta === ".." || delta.startsWith(`..${import_node_path25.sep}`);
   };
   if (!separate(testRoot, baselineRoot) || !separate(baselineRoot, testRoot) || !test.latest_checkpoint_id || !baseline.latest_checkpoint_id) throw new Error("Test workspaces must be disjoint and checkpointed");
 }
 
 // capability/craft-experience/procedure-definition.ts
-var import_node_fs20 = require("node:fs");
-var import_node_crypto84 = require("node:crypto");
-var import_node_path27 = require("node:path");
+var import_node_fs19 = require("node:fs");
+var import_node_crypto83 = require("node:crypto");
+var import_node_path26 = require("node:path");
 function slug(value) {
   const result = value.normalize("NFKC").replace(/[\\/]/gu, " ").replace(/[^\p{L}\p{N}._ -]/gu, " ").trim().replace(/\s+/gu, "-").replace(/-+/gu, "-").slice(0, 96);
   return result || "untitled";
 }
-function experienceGraphDirectory(paths, id22, legacy = false) {
-  const portable = /^[a-z0-9][a-z0-9_-]{0,95}$/u.test(id22) && !/^(?:con|prn|aux|nul|com[0-9]|lpt[0-9])$/iu.test(id22);
-  return (0, import_node_path27.join)(paths.experienceDir, "graph", !legacy && portable ? id22 : `${slug(id22)}--${stableDigest(id22).slice(-12)}`);
+function experienceGraphDirectory(paths, id23, legacy = false) {
+  const portable = /^[a-z0-9][a-z0-9_-]{0,95}$/u.test(id23) && !/^(?:con|prn|aux|nul|com[0-9]|lpt[0-9])$/iu.test(id23);
+  return (0, import_node_path26.join)(paths.experienceDir, "graph", !legacy && portable ? id23 : `${slug(id23)}--${stableDigest(id23).slice(-12)}`);
 }
 function checkedExperiencePath(paths, path2, create = false) {
-  const root = (0, import_node_path27.resolve)(paths.experienceDir), target = (0, import_node_path27.resolve)(path2), part = (0, import_node_path27.relative)(root, target);
-  if (!part || part.startsWith("..") || (0, import_node_path27.isAbsolute)(part)) throw new Error("Experience path is outside the managed directory");
+  const root = (0, import_node_path26.resolve)(paths.experienceDir), target = (0, import_node_path26.resolve)(path2), part = (0, import_node_path26.relative)(root, target);
+  if (!part || part.startsWith("..") || (0, import_node_path26.isAbsolute)(part)) throw new Error("Experience path is outside the managed directory");
   let current2 = root;
   for (const segment2 of ["", ...part.split(/[\\/]/u)]) {
-    current2 = segment2 ? (0, import_node_path27.join)(current2, segment2) : current2;
+    current2 = segment2 ? (0, import_node_path26.join)(current2, segment2) : current2;
     try {
-      if ((0, import_node_fs20.lstatSync)(current2).isSymbolicLink()) throw new Error("Experience path must not be a symbolic link");
+      if ((0, import_node_fs19.lstatSync)(current2).isSymbolicLink()) throw new Error("Experience path must not be a symbolic link");
     } catch (error) {
       if (error.code !== "ENOENT") throw error;
-      if (create && current2 !== target) (0, import_node_fs20.mkdirSync)(current2, { mode: 448 });
+      if (create && current2 !== target) (0, import_node_fs19.mkdirSync)(current2, { mode: 448 });
     }
   }
   return target;
@@ -239135,7 +238801,7 @@ var ProcedureDefinitionStore = class {
     const checked = definition(value);
     const canonical2 = JSON.stringify(checked, null, 2);
     const digest35 = stableDigest(checked);
-    const path2 = checkedExperiencePath(this.paths, (0, import_node_path27.join)(experienceGraphDirectory(this.paths, checked.procedure_id), "versions", `${String(checked.procedure_version).padStart(6, "0")}.json`), true);
+    const path2 = checkedExperiencePath(this.paths, (0, import_node_path26.join)(experienceGraphDirectory(this.paths, checked.procedure_id), "versions", `${String(checked.procedure_version).padStart(6, "0")}.json`), true);
     let publish = false;
     try {
       this.read({ format: "json", procedure_id: checked.procedure_id, procedure_version: checked.procedure_version, kind: checked.kind, path: path2, digest: digest35 });
@@ -239144,14 +238810,14 @@ var ProcedureDefinitionStore = class {
       publish = true;
     }
     if (publish) {
-      const temporary = `${path2}.${process.pid}.${(0, import_node_crypto84.randomUUID)()}.tmp`;
+      const temporary = `${path2}.${process.pid}.${(0, import_node_crypto83.randomUUID)()}.tmp`;
       try {
-        (0, import_node_fs20.writeFileSync)(temporary, `${canonical2}
+        (0, import_node_fs19.writeFileSync)(temporary, `${canonical2}
 `, { encoding: "utf8", mode: 384, flag: "wx" });
-        (0, import_node_fs20.renameSync)(temporary, path2);
+        (0, import_node_fs19.renameSync)(temporary, path2);
       } catch (error) {
         try {
-          (0, import_node_fs20.unlinkSync)(temporary);
+          (0, import_node_fs19.unlinkSync)(temporary);
         } catch {
         }
         throw error;
@@ -239160,13 +238826,13 @@ var ProcedureDefinitionStore = class {
     return { format: "json", procedure_id: checked.procedure_id, procedure_version: checked.procedure_version, kind: checked.kind, path: path2, digest: digest35 };
   }
   read(ref2) {
-    const path2 = (0, import_node_path27.resolve)(ref2.path), legacyRoot = (0, import_node_path27.resolve)(this.paths.experienceProcedureDir);
+    const path2 = (0, import_node_path26.resolve)(ref2.path), legacyRoot = (0, import_node_path26.resolve)(this.paths.experienceProcedureDir);
     const filename = `${String(ref2.procedure_version).padStart(6, "0")}.json`;
-    const canonical2 = (0, import_node_path27.join)(experienceGraphDirectory(this.paths, ref2.procedure_id), "versions", filename);
-    const previous = (0, import_node_path27.join)(experienceGraphDirectory(this.paths, ref2.procedure_id, true), "versions", filename);
+    const canonical2 = (0, import_node_path26.join)(experienceGraphDirectory(this.paths, ref2.procedure_id), "versions", filename);
+    const previous = (0, import_node_path26.join)(experienceGraphDirectory(this.paths, ref2.procedure_id, true), "versions", filename);
     if (path2 !== canonical2 && path2 !== previous && (!(path2.startsWith(`${legacyRoot}/`) || path2.startsWith(`${legacyRoot}\\`)) || !path2.endsWith(`.v${ref2.procedure_version}.json`))) throw new Error("Procedure definition path is outside the managed directory");
     checkedExperiencePath(this.paths, path2);
-    const parsed2 = JSON.parse((0, import_node_fs20.readFileSync)(path2, "utf8"));
+    const parsed2 = JSON.parse((0, import_node_fs19.readFileSync)(path2, "utf8"));
     if (!parsed2 || typeof parsed2 !== "object" || Array.isArray(parsed2)) throw new Error("Procedure definition is invalid");
     const value = definition(parsed2);
     if (value.schema_version !== "craft.procedure.v1" || value.procedure_id !== ref2.procedure_id || value.procedure_version !== ref2.procedure_version || value.kind !== ref2.kind) throw new Error("Procedure definition metadata drifted");
@@ -239295,7 +238961,7 @@ var ProcedureAutomationKernel = class {
     const now3 = timestamp2(args.now, "now");
     const eligibility = this.eligibilityFor(job, now3);
     if (eligibility.decision !== "run") return { status: "skipped", reason: eligibility.reason, job, eligibility };
-    const runId = String(args.run_id ?? `procedure_automation_run_${(0, import_node_crypto85.randomUUID)().replaceAll("-", "")}`);
+    const runId = String(args.run_id ?? `procedure_automation_run_${(0, import_node_crypto84.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("procedure_automation_run", runId);
     if (existing) {
       if (existing.job_id !== job.id) throw new Error("Procedure Automation run idempotency conflict");
@@ -239380,7 +239046,7 @@ var ProcedureAutomationKernel = class {
     if (!session.trace_id || observation.trace_id !== session.trace_id || !observation.observer_id || observation.observer_id === session.host_id || observation.subject_digest !== bindingDigest) throw new Error("Procedure Automation requires an independent Outcome Observation");
     const evidenceIds2 = Array.isArray(args.acceptance_evidence_ids) ? args.acceptance_evidence_ids.map((value) => text8(value, "acceptance_evidence_ids")) : [];
     if (!evidenceIds2.length) throw new Error("Procedure Automation requires acceptance Evidence");
-    const evidence2 = evidenceIds2.map((id22) => this.store.get("evidence", id22));
+    const evidence2 = evidenceIds2.map((id23) => this.store.get("evidence", id23));
     const expectedStatus = observation.verdict === "passed" ? "passed" : "failed";
     for (const item of evidence2) {
       const metadata = object4(item.metadata, "acceptance Evidence metadata");
@@ -239470,8 +239136,8 @@ var ProcedureAutomationKernel = class {
     return { decision: "run", reason: "eligible", spent_slots: spentSlots, quota_slots: job.quota_slots, window_start: windowStart };
   }
   settleQuota(job, run, outcome2, now3) {
-    const id22 = `procedure_automation_quota_${stableDigest({ job: job.id, run: run.id }).slice(-20)}`;
-    return this.store.create("procedure_automation_quota_settlement", id22, {
+    const id23 = `procedure_automation_quota_${stableDigest({ job: job.id, run: run.id }).slice(-20)}`;
+    return this.store.create("procedure_automation_quota_settlement", id23, {
       job_id: job.id,
       run_id: run.id,
       outcome_id: outcome2.id,
@@ -239534,7 +239200,7 @@ var ProcedureAutomationKernel = class {
 };
 
 // core/project-bundle.ts
-var import_node_crypto86 = require("node:crypto");
+var import_node_crypto85 = require("node:crypto");
 function positive3(value, name, fallback2, max) {
   const result = value === void 0 ? fallback2 : Number(value);
   if (!Number.isInteger(result) || result < 1 || result > max) throw new Error(`${name} must be an integer between 1 and ${max}`);
@@ -239552,13 +239218,13 @@ var ProjectBundleKernel = class {
     const records2 = kinds.flatMap((kind4) => this.store.list(kind4, max, (item) => item.project_id === projectId2 || item.task_id === projectId2 || item.workspace_id === projectId2));
     const identity = { format: "craft.project-bundle", schema: 1, project_id: projectId2, records: records2.map((record) => ({ kind: "project_record", ref: `${record.id}@${record.version}`, digest: digestJson(record) })) };
     const bundle = { ...identity, exported_at: args.exported_at === void 0 ? (/* @__PURE__ */ new Date()).toISOString() : text(args.exported_at, "exported_at") };
-    const id22 = String(args.bundle_id ?? `project_bundle_${(0, import_node_crypto86.randomUUID)().replaceAll("-", "")}`);
-    const existing = this.store.find("project_bundle", id22);
+    const id23 = String(args.bundle_id ?? `project_bundle_${(0, import_node_crypto85.randomUUID)().replaceAll("-", "")}`);
+    const existing = this.store.find("project_bundle", id23);
     if (existing) {
       if (existing.bundle_digest !== digestJson(identity)) throw new Error("Project Bundle idempotency conflict");
       return { bundle: existing, idempotent: true };
     }
-    return { bundle: this.store.create("project_bundle", id22, { ...bundle, bundle_digest: digestJson(identity), portable: true }), idempotent: false };
+    return { bundle: this.store.create("project_bundle", id23, { ...bundle, bundle_digest: digestJson(identity), portable: true }), idempotent: false };
   }
   verify(args) {
     const bundle = this.store.get("project_bundle", text(args.bundle_id, "bundle_id"));
@@ -239568,32 +239234,32 @@ var ProjectBundleKernel = class {
 };
 
 // core/knowledge-memory-bundle.ts
-var import_node_crypto88 = require("node:crypto");
-var import_node_fs22 = require("node:fs");
-var import_node_path29 = require("node:path");
+var import_node_crypto87 = require("node:crypto");
+var import_node_fs21 = require("node:fs");
+var import_node_path28 = require("node:path");
 
 // capability/craft-experience/graph-version-manifest.ts
-var import_node_fs21 = require("node:fs");
-var import_node_crypto87 = require("node:crypto");
-var import_node_path28 = require("node:path");
-function syncGraphVersionManifest(store, id22) {
+var import_node_fs20 = require("node:fs");
+var import_node_crypto86 = require("node:crypto");
+var import_node_path27 = require("node:path");
+function syncGraphVersionManifest(store, id23) {
   try {
     return store.transaction(() => {
-      const record = store.find("experience_procedure", id22), ref2 = record?.definition_ref;
+      const record = store.find("experience_procedure", id23), ref2 = record?.definition_ref;
       const version3 = procedureDefinitionRef(ref2) ? new ProcedureDefinitionStore(store.paths).read(ref2).procedure_version : null;
       if (record) updateProcedureRelease(store, record);
-      const active = record ? activeProcedure(store, id22) : null;
+      const active = record ? activeProcedure(store, id23) : null;
       const currentVersion = active && procedureDefinitionRef(active.definition_ref) ? new ProcedureDefinitionStore(store.paths).read(active.definition_ref).procedure_version : null;
       const versions = { current_version: currentVersion, test_version: version3 === currentVersion ? null : version3 };
-      const path2 = checkedExperiencePath(store.paths, (0, import_node_path28.join)(experienceGraphDirectory(store.paths, id22), "graph.yml"), true);
-      const temporary = `${path2}.${process.pid}.${(0, import_node_crypto87.randomUUID)()}.tmp`;
+      const path2 = checkedExperiencePath(store.paths, (0, import_node_path27.join)(experienceGraphDirectory(store.paths, id23), "graph.yml"), true);
+      const temporary = `${path2}.${process.pid}.${(0, import_node_crypto86.randomUUID)()}.tmp`;
       try {
-        (0, import_node_fs21.writeFileSync)(temporary, `current_version: ${versions.current_version}
+        (0, import_node_fs20.writeFileSync)(temporary, `current_version: ${versions.current_version}
 test_version: ${versions.test_version}
 `, { encoding: "utf8", mode: 384, flag: "wx" });
-        (0, import_node_fs21.renameSync)(temporary, path2);
+        (0, import_node_fs20.renameSync)(temporary, path2);
       } finally {
-        if ((0, import_node_fs21.existsSync)(temporary)) (0, import_node_fs21.unlinkSync)(temporary);
+        if ((0, import_node_fs20.existsSync)(temporary)) (0, import_node_fs20.unlinkSync)(temporary);
       }
       return { ...versions, manifest_path: path2, manifest_status: "ready" };
     });
@@ -239705,8 +239371,8 @@ var KnowledgeMemoryBundleKernel = class {
     const memoryCandidates = this.store.list("memory_candidate", limit3, (item) => exactScope(item.scope, scope3));
     const usageSignals = this.store.list("memory_usage_signal", limit3, (item) => exactScope(item.scope, scope3));
     const observationIds = /* @__PURE__ */ new Set();
-    const workflowObservations = this.store.list("workflow_evolution_observation", limit3, (item) => Array.isArray(item.evidence_ids) && item.evidence_ids.some((id22) => evidenceIds2.has(String(id22))));
-    const experienceObservations = this.store.list("experience_observation", limit3, (item) => Array.isArray(item.evidence_ids) && item.evidence_ids.some((id22) => evidenceIds2.has(String(id22))));
+    const workflowObservations = this.store.list("workflow_evolution_observation", limit3, (item) => Array.isArray(item.evidence_ids) && item.evidence_ids.some((id23) => evidenceIds2.has(String(id23))));
+    const experienceObservations = this.store.list("experience_observation", limit3, (item) => Array.isArray(item.evidence_ids) && item.evidence_ids.some((id23) => evidenceIds2.has(String(id23))));
     experienceObservations.forEach((item) => observationIds.add(String(item.id)));
     const patterns = this.store.list("experience_pattern", limit3, (item) => Array.isArray(item.observation_refs) && item.observation_refs.some((ref2) => isObject(ref2, "observation_ref").id !== void 0 && observationIds.has(String(isObject(ref2, "observation_ref").id))));
     const patternIds = new Set(patterns.map((item) => String(item.id)));
@@ -239742,7 +239408,7 @@ var KnowledgeMemoryBundleKernel = class {
     ];
     const deviceId = args.device_id === void 0 ? "local" : text(args.device_id, "device_id");
     const cursor = args.cursor === void 0 ? null : text(args.cursor, "cursor");
-    const exportId = args.export_id === void 0 ? `craft_export_${(0, import_node_crypto88.randomUUID)().replaceAll("-", "")}` : text(args.export_id, "export_id");
+    const exportId = args.export_id === void 0 ? `craft_export_${(0, import_node_crypto87.randomUUID)().replaceAll("-", "")}` : text(args.export_id, "export_id");
     const identity = { format: FORMAT2, schema_version: SCHEMA, scope: scope3, device_id: deviceId, export_id: exportId, cursor, records: records2 };
     return { bundle: { ...identity, exported_at: args.exported_at === void 0 ? (/* @__PURE__ */ new Date()).toISOString() : text(args.exported_at, "exported_at"), digest: stableDigest(identity) }, record_count: records2.length };
   }
@@ -239779,7 +239445,7 @@ var KnowledgeMemoryBundleKernel = class {
     if (args.approved !== true) throw new Error("Data Bundle import requires approved: true after reviewing import_plan");
     const bundle = this.bundle(args.bundle);
     const plan = this.importPlan({ bundle });
-    const importId = String(args.import_id ?? `knowledge_memory_import_${(0, import_node_crypto88.randomUUID)().replaceAll("-", "")}`);
+    const importId = String(args.import_id ?? `knowledge_memory_import_${(0, import_node_crypto87.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("knowledge_memory_import", importId);
     if (existing) {
       if (existing.bundle_digest !== bundle.digest) throw new Error("Data Bundle import idempotency conflict");
@@ -239826,17 +239492,17 @@ var KnowledgeMemoryBundleKernel = class {
     const operation2 = text(args.operation, "operation");
     const transport = text(args.transport, "transport");
     if (transport !== "directory" && transport !== "git_worktree") throw new Error("Bundle transport must be directory or git_worktree");
-    const root = args.transport_root === void 0 ? (0, import_node_path29.join)(this.store.paths.artifactsDir, "bundles") : (0, import_node_path29.resolve)(text(args.transport_root, "transport_root"));
-    if (transport === "git_worktree" && !(0, import_node_fs22.existsSync)((0, import_node_path29.join)(root, ".git"))) return { status: "unavailable", reason: "git_worktree_unavailable" };
-    const directory = transport === "git_worktree" ? (0, import_node_path29.join)(root, ".craft", "craft-bundles") : root;
+    const root = args.transport_root === void 0 ? (0, import_node_path28.join)(this.store.paths.artifactsDir, "bundles") : (0, import_node_path28.resolve)(text(args.transport_root, "transport_root"));
+    if (transport === "git_worktree" && !(0, import_node_fs21.existsSync)((0, import_node_path28.join)(root, ".git"))) return { status: "unavailable", reason: "git_worktree_unavailable" };
+    const directory = transport === "git_worktree" ? (0, import_node_path28.join)(root, ".craft", "craft-bundles") : root;
     if (operation2 === "write") {
       if (args.allow_local_write !== true) throw new Error("Bundle transport write requires allow_local_write: true");
       const bundle = this.bundle(args.bundle);
       this.assertValid(bundle);
-      (0, import_node_fs22.mkdirSync)(directory, { recursive: true, mode: 448 });
+      (0, import_node_fs21.mkdirSync)(directory, { recursive: true, mode: 448 });
       const fileName = `craft-bundle-${bundle.digest.replace(/^sha256:/u, "")}.json`;
-      const path2 = (0, import_node_path29.join)(directory, fileName);
-      (0, import_node_fs22.writeFileSync)(path2, `${JSON.stringify(bundle)}
+      const path2 = (0, import_node_path28.join)(directory, fileName);
+      (0, import_node_fs21.writeFileSync)(path2, `${JSON.stringify(bundle)}
 `, { encoding: "utf8", mode: 384 });
       return {
         status: "written",
@@ -239849,9 +239515,9 @@ var KnowledgeMemoryBundleKernel = class {
     if (operation2 === "read") {
       const fileName = text(args.file_name, "file_name");
       if (!/^craft-bundle-[a-f0-9]{64}\.json$/u.test(fileName)) throw new Error("Bundle transport file_name is invalid");
-      const path2 = (0, import_node_path29.join)(directory, fileName);
-      if (!(0, import_node_fs22.existsSync)(path2)) return { status: "unavailable", reason: "bundle_file_unavailable" };
-      const bundle = this.bundle(JSON.parse((0, import_node_fs22.readFileSync)(path2, "utf8")));
+      const path2 = (0, import_node_path28.join)(directory, fileName);
+      if (!(0, import_node_fs21.existsSync)(path2)) return { status: "unavailable", reason: "bundle_file_unavailable" };
+      const bundle = this.bundle(JSON.parse((0, import_node_fs21.readFileSync)(path2, "utf8")));
       this.assertValid(bundle);
       return { status: "read", transport, bundle, receipt: this.transportReceipt("read", transport, root, fileName, bundle.digest) };
     }
@@ -239957,14 +239623,14 @@ var KnowledgeMemoryBundleKernel = class {
     return ["project_identity", "scope_alias", "knowledge_source", "knowledge_source_revision", "knowledge_document", "knowledge_fragment", "evidence", "knowledge_claim", "knowledge_claim_support", "memory_ledger", "memory_candidate", "memory_usage_signal", "experience_observation", "experience_pattern", "experience_intervention", "workflow_evolution_observation", "workflow_evolution_request", "workflow_evolution_proposal", "experience_procedure", "experience_procedure_gate", "experience_skill_export", "maintenance_schedule_receipt"].indexOf(kind4) + 1;
   }
   transportReceipt(operation2, transport, root, fileName, bundleDigest) {
-    const identity = { operation: operation2, transport, root_digest: stableDigest((0, import_node_path29.resolve)(root)), file_name: fileName, bundle_digest: bundleDigest };
-    const id22 = `knowledge_memory_bundle_transport_${stableDigest(identity).slice(-20)}`;
-    return this.store.find("knowledge_memory_bundle_transport_receipt", id22) ?? this.store.create("knowledge_memory_bundle_transport_receipt", id22, identity);
+    const identity = { operation: operation2, transport, root_digest: stableDigest((0, import_node_path28.resolve)(root)), file_name: fileName, bundle_digest: bundleDigest };
+    const id23 = `knowledge_memory_bundle_transport_${stableDigest(identity).slice(-20)}`;
+    return this.store.find("knowledge_memory_bundle_transport_receipt", id23) ?? this.store.create("knowledge_memory_bundle_transport_receipt", id23, identity);
   }
 };
 
 // core/replay-runner.ts
-var import_node_crypto89 = require("node:crypto");
+var import_node_crypto88 = require("node:crypto");
 var ReplayRunnerKernel = class {
   store;
   constructor(store) {
@@ -239976,7 +239642,7 @@ var ReplayRunnerKernel = class {
     if (!["completed", "failed", "cancelled", "blocked"].includes(String(trace.status))) throw new Error("Replay requires a terminal Trace");
     const events = this.store.list("trace_event", 1e4, (item) => item.trace_id === traceId && item.action_contract !== null).sort((left, right) => Number(left.sequence) - Number(right.sequence));
     if (!events.length) throw new Error("Trace has no replayable action contracts");
-    const replayId = String(args.replay_id ?? `replay_${(0, import_node_crypto89.randomUUID)().replaceAll("-", "")}`);
+    const replayId = String(args.replay_id ?? `replay_${(0, import_node_crypto88.randomUUID)().replaceAll("-", "")}`);
     const identity = { trace_id: traceId, trace_version: trace.version, event_ids: events.map((event) => event.id), approval_ref: text(args.approval_ref, "approval_ref"), workspace_digest: text(args.workspace_digest, "workspace_digest") };
     const replayDigest = digestJson(identity);
     const existing = this.store.find("replay_run", replayId);
@@ -239993,7 +239659,7 @@ var ReplayRunnerKernel = class {
     if (args.approval_ref !== void 0 && text(args.approval_ref, "approval_ref") !== replay.approval_ref) throw new Error("Replay approval does not match");
     const trace = this.store.get("trace", String(replay.trace_id));
     if (Number(trace.version) !== Number(replay.trace_version)) throw new Error("Replay source Trace changed; revalidate first");
-    const events = replay.event_ids.map((id22) => this.store.get("trace_event", id22));
+    const events = replay.event_ids.map((id23) => this.store.get("trace_event", id23));
     const results = [];
     for (const event of events) {
       const result = executor ? await executor(String(event.event_kind), event.action_contract, Number(event.sequence)) : { mode: "dry_run", action: event.event_kind, sequence: event.sequence };
@@ -240008,7 +239674,7 @@ var ReplayRunnerKernel = class {
 };
 
 // core/verified-autonomous-work.ts
-var import_node_crypto90 = require("node:crypto");
+var import_node_crypto89 = require("node:crypto");
 function list3(value, name) {
   if (value === void 0) return [];
   if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
@@ -240023,7 +239689,7 @@ var VerifiedAutonomousWorkKernel = class {
     this.store = store;
   }
   prepare(args) {
-    const workId = String(args.work_id ?? `verified_work_${(0, import_node_crypto90.randomUUID)().replaceAll("-", "")}`);
+    const workId = String(args.work_id ?? `verified_work_${(0, import_node_crypto89.randomUUID)().replaceAll("-", "")}`);
     const identity = { task_id: text(args.task_id, "task_id"), context_manifest_id: text(args.context_manifest_id, "context_manifest_id"), host: text(args.host, "host"), model: args.model === void 0 ? null : text(args.model, "model"), effect: text(args.effect ?? "read_only", "effect"), workspace_digest: text(args.workspace_digest, "workspace_digest"), action_digest: text(args.action_digest, "action_digest"), acceptance_ref: text(args.acceptance_ref, "acceptance_ref"), budget: args.budget === void 0 ? {} : object(args.budget, "budget") };
     if (!EFFECTS9.has(identity.effect)) throw new Error("Unsupported verified work effect");
     const workDigest = digestJson(identity);
@@ -240093,7 +239759,7 @@ var VerifiedAutonomousWorkKernel = class {
     const work = this.store.get("verified_work", text(args.work_id, "work_id"));
     if (!["authorized", "running", "paused", "needs_replan"].includes(String(work.status))) throw new Error("Work is not handoffable");
     const targetHost = text(args.target_host, "target_host");
-    const handoffId = String(args.handoff_id ?? `verified_handoff_${(0, import_node_crypto90.randomUUID)().replaceAll("-", "")}`);
+    const handoffId = String(args.handoff_id ?? `verified_handoff_${(0, import_node_crypto89.randomUUID)().replaceAll("-", "")}`);
     const identity = { work_id: work.id, target_host: targetHost, context_manifest_id: work.context_manifest_id, action_count: work.action_count, allowed_effect: work.effect, resume_digest: digestJson({ work_id: work.id, targetHost, action_count: work.action_count }) };
     const existing = this.store.find("verified_handoff", handoffId);
     if (existing) return { handoff: existing, idempotent: true };
@@ -240111,12 +239777,12 @@ var SandboxConformanceKernel = class {
     this.store = store;
   }
   save(args) {
-    const id22 = String(args.profile_id ?? `sandbox_conformance_${text(args.platform, "platform")}`);
+    const id23 = String(args.profile_id ?? `sandbox_conformance_${text(args.platform, "platform")}`);
     const platform2 = text(args.platform, "platform");
     const checks = object(args.checks, "checks");
     const record = { platform: platform2, isolation: text(args.isolation, "isolation"), network: text(args.network, "network"), checks, verifier: text(args.verifier, "verifier"), status: args.status === void 0 ? "unverified" : text(args.status, "status"), capabilities: list3(args.capabilities, "capabilities") };
-    const existing = this.store.find("sandbox_conformance", id22);
-    return { profile: existing ? this.store.save("sandbox_conformance", id22, { ...payload(existing), ...record }) : this.store.create("sandbox_conformance", id22, record), idempotent: false };
+    const existing = this.store.find("sandbox_conformance", id23);
+    return { profile: existing ? this.store.save("sandbox_conformance", id23, { ...payload(existing), ...record }) : this.store.create("sandbox_conformance", id23, record), idempotent: false };
   }
   admit(args) {
     const effect3 = text(args.effect, "effect");
@@ -240146,9 +239812,9 @@ var TraceExplorerKernel = class {
 };
 
 // core/runtime-completion.ts
-var import_node_crypto91 = require("node:crypto");
+var import_node_crypto90 = require("node:crypto");
 var import_promises15 = require("node:fs/promises");
-var import_node_path30 = require("node:path");
+var import_node_path29 = require("node:path");
 var import_node_os2 = require("node:os");
 function list4(value, name) {
   if (value === void 0) return [];
@@ -240163,10 +239829,10 @@ var ActionGatewayKernel = class {
   dataRoot;
   constructor(store, dataRoot2) {
     this.store = store;
-    this.dataRoot = dataRoot2 ?? (0, import_node_path30.join)((0, import_node_os2.homedir)(), ".craft_data");
+    this.dataRoot = dataRoot2 ?? (0, import_node_path29.join)((0, import_node_os2.homedir)(), ".craft_data");
   }
   prepare(args) {
-    const actionId = String(fallback(args.action_id, `action_${(0, import_node_crypto91.randomUUID)().replaceAll("-", "")}`));
+    const actionId = String(fallback(args.action_id, `action_${(0, import_node_crypto90.randomUUID)().replaceAll("-", "")}`));
     const effect3 = text(args.effect ?? "read_only", "effect");
     if (!EFFECTS10.has(effect3)) throw new Error("Unsupported action effect");
     const contract = { task_id: text(args.task_id, "task_id"), workspace: text(args.workspace, "workspace"), operation: text(args.operation, "operation"), effect: effect3, input_digest: text(args.input_digest, "input_digest"), approval_ref: optionalText(args.approval_ref, "approval_ref") };
@@ -240187,14 +239853,14 @@ var ActionGatewayKernel = class {
     if (action.status !== "prepared") throw new Error("Action is not executable");
     const effect3 = String(action.effect);
     if (effect3 !== "read_only" && args.approved !== true) throw new Error("Write actions require explicit approval");
-    const workspace = (0, import_node_path30.resolve)(text(action.workspace, "workspace"));
-    const dataRoot2 = (0, import_node_path30.resolve)(this.dataRoot);
+    const workspace = (0, import_node_path29.resolve)(text(action.workspace, "workspace"));
+    const dataRoot2 = (0, import_node_path29.resolve)(this.dataRoot);
     const operation2 = String(action.operation);
     const relativePath3 = text(fallback(args.relative_path, ""), "relative_path");
-    const inWorkspace = (0, import_node_path30.isAbsolute)(relativePath3) ? false : !(0, import_node_path30.relative)(workspace, (0, import_node_path30.resolve)(workspace, relativePath3)).startsWith("..");
-    const inDataRoot = (0, import_node_path30.isAbsolute)(relativePath3) && !(0, import_node_path30.relative)(dataRoot2, (0, import_node_path30.resolve)(relativePath3)).startsWith("..");
+    const inWorkspace = (0, import_node_path29.isAbsolute)(relativePath3) ? false : !(0, import_node_path29.relative)(workspace, (0, import_node_path29.resolve)(workspace, relativePath3)).startsWith("..");
+    const inDataRoot = (0, import_node_path29.isAbsolute)(relativePath3) && !(0, import_node_path29.relative)(dataRoot2, (0, import_node_path29.resolve)(relativePath3)).startsWith("..");
     if (!inWorkspace && !inDataRoot) throw new Error("Action path escapes workspace and Craft data root");
-    const target = inWorkspace ? (0, import_node_path30.resolve)(workspace, relativePath3) : (0, import_node_path30.resolve)(relativePath3);
+    const target = inWorkspace ? (0, import_node_path29.resolve)(workspace, relativePath3) : (0, import_node_path29.resolve)(relativePath3);
     if (operation2 === "workspace_read") {
       const content = await (0, import_promises15.readFile)(target, "utf8");
       const result = { operation: operation2, path: relativePath3, content, result_digest: digestJson(content) };
@@ -240203,7 +239869,7 @@ var ActionGatewayKernel = class {
     if (operation2 === "workspace_write") {
       if (effect3 !== "local_write") throw new Error("workspace_write requires local_write effect");
       const content = text(args.content, "content");
-      await (0, import_promises15.mkdir)((0, import_node_path30.resolve)(target, ".."), { recursive: true });
+      await (0, import_promises15.mkdir)((0, import_node_path29.resolve)(target, ".."), { recursive: true });
       await (0, import_promises15.writeFile)(target, content, "utf8");
       return this.finish(action, { operation: operation2, path: relativePath3, bytes: Buffer.byteLength(content), result_digest: digestJson(content) });
     }
@@ -240225,7 +239891,7 @@ var AcceptanceGateKernel = class {
     this.store = store;
   }
   prepare(args) {
-    const gateId = String(fallback(args.gate_id, `acceptance_gate_${(0, import_node_crypto91.randomUUID)().replaceAll("-", "")}`));
+    const gateId = String(fallback(args.gate_id, `acceptance_gate_${(0, import_node_crypto90.randomUUID)().replaceAll("-", "")}`));
     const identity = { task_id: text(args.task_id, "task_id"), work_id: text(args.work_id, "work_id"), acceptance_ref: text(args.acceptance_ref, "acceptance_ref"), required_artifact_ids: list4(args.required_artifact_ids, "required_artifact_ids"), required_evidence_ids: list4(args.required_evidence_ids, "required_evidence_ids") };
     const gateDigest = digestJson(identity);
     const existing = this.store.find("acceptance_gate", gateId);
@@ -240249,10 +239915,10 @@ var AcceptanceGateKernel = class {
   outcome(args) {
     const gate = this.store.get("acceptance_gate", text(args.gate_id, "gate_id"));
     if (gate.status !== "passed") throw new Error("Outcome requires a passed Acceptance Gate");
-    const id22 = `verified_outcome_${gate.work_id}`;
-    const existing = this.store.find("verified_outcome", id22);
+    const id23 = `verified_outcome_${gate.work_id}`;
+    const existing = this.store.find("verified_outcome", id23);
     if (existing) return { outcome: existing, idempotent: true };
-    return { outcome: this.store.create("verified_outcome", id22, { task_id: gate.task_id, work_id: gate.work_id, gate_id: gate.id, verdict: "passed", summary: text(args.summary ?? "Acceptance passed", "summary"), artifact_ids: gate.artifact_ids, evidence_ids: gate.evidence_ids, outcome_digest: digestJson(gate) }), idempotent: false };
+    return { outcome: this.store.create("verified_outcome", id23, { task_id: gate.task_id, work_id: gate.work_id, gate_id: gate.id, verdict: "passed", summary: text(args.summary ?? "Acceptance passed", "summary"), artifact_ids: gate.artifact_ids, evidence_ids: gate.evidence_ids, outcome_digest: digestJson(gate) }), idempotent: false };
   }
   get(args) {
     return { gate: this.store.get("acceptance_gate", text(args.gate_id, "gate_id")) };
@@ -240281,7 +239947,7 @@ var DurableWorkerKernel = class {
   }
   enqueue(args) {
     const workerId = String(fallback(args.worker_id, "craft-worker"));
-    const jobId = String(fallback(args.job_id, `job_${(0, import_node_crypto91.randomUUID)().replaceAll("-", "")}`));
+    const jobId = String(fallback(args.job_id, `job_${(0, import_node_crypto90.randomUUID)().replaceAll("-", "")}`));
     const existing = this.store.find("worker_job", jobId);
     if (existing) return { job: existing, idempotent: true };
     return { job: this.store.create("worker_job", jobId, { worker_id: workerId, task_id: text(args.task_id, "task_id"), action: text(args.action, "action"), status: "pending", payload_digest: digestJson(fallback(args.payload, {})) }), idempotent: false };
@@ -240314,7 +239980,7 @@ var ProviderRouterKernel = class {
     if (!providers.length) throw new Error("providers must not be empty");
     const preferred = args.preferred === void 0 ? providers[0] : text(args.preferred, "preferred");
     if (!providers.includes(preferred)) throw new Error("preferred provider must be declared");
-    const routeId = String(fallback(args.route_id, `provider_route_${(0, import_node_crypto91.randomUUID)().replaceAll("-", "")}`));
+    const routeId = String(fallback(args.route_id, `provider_route_${(0, import_node_crypto90.randomUUID)().replaceAll("-", "")}`));
     const identity = { providers, preferred, fallback: providers.filter((item) => item !== preferred), task_id: args.task_id ?? null, budget_digest: digestJson(fallback(args.budget, {})) };
     const existing = this.store.find("provider_route", routeId);
     if (existing) {
@@ -240348,7 +240014,7 @@ var A2AProtocolKernel = class {
   async request(args, operation2, body3, fetchImpl) {
     const endpoint4 = text(args.endpoint, "endpoint");
     if (!endpoint4.startsWith("https://")) throw new Error("A2A endpoint must use HTTPS");
-    const response = await fetchImpl(endpoint4, { method: "POST", headers: { "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", method: operation2, params: body3, id: text(args.request_id ?? (0, import_node_crypto91.randomUUID)(), "request_id") }) });
+    const response = await fetchImpl(endpoint4, { method: "POST", headers: { "content-type": "application/json", accept: "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", method: operation2, params: body3, id: text(args.request_id ?? (0, import_node_crypto90.randomUUID)(), "request_id") }) });
     if (!response.ok) throw new Error(`A2A ${operation2} failed: HTTP ${response.status}`);
     const value = await response.json();
     return { operation: operation2, response_digest: digestJson(value), task_id: value.task_id ?? null, status: value.status ?? "accepted", raw_content: false };
@@ -240529,7 +240195,7 @@ function instant12(value, name) {
   return result;
 }
 function confirmedEvidence3(store, ids6) {
-  for (const id22 of ids6) if (store.get("evidence", id22).confidence !== "confirmed") throw new Error("Federated delegation requires confirmed Evidence");
+  for (const id23 of ids6) if (store.get("evidence", id23).confidence !== "confirmed") throw new Error("Federated delegation requires confirmed Evidence");
 }
 function taskId2(run) {
   const launch = run.launch_identity;
@@ -240548,11 +240214,11 @@ var FederatedDelegationKernel = class {
     if (text(args.card_digest, "card_digest") !== card.card_digest) throw new Error("Remote Agent health does not match the current Agent Card");
     const evidenceIds2 = strings20(args.evidence_ids, "evidence_ids", 1);
     confirmedEvidence3(this.store, evidenceIds2);
-    const id22 = String(args.health_id ?? `federated_agent_health_${card.id}`);
+    const id23 = String(args.health_id ?? `federated_agent_health_${card.id}`);
     const value = { card_id: card.id, card_version: card.version, card_digest: card.card_digest, status: status2, evidence_ids: evidenceIds2, observed_by: text(args.observed_by, "observed_by"), health_digest: digestJson({ card_id: card.id, card_version: card.version, card_digest: card.card_digest, status: status2, evidence_ids: evidenceIds2 }) };
-    const existing = this.store.find("federated_agent_health", id22);
+    const existing = this.store.find("federated_agent_health", id23);
     if (existing?.health_digest === value.health_digest) return { health: existing, idempotent: true };
-    return { health: existing ? this.store.save("federated_agent_health", id22, { ...value }) : this.store.create("federated_agent_health", id22, value), idempotent: false };
+    return { health: existing ? this.store.save("federated_agent_health", id23, { ...value }) : this.store.create("federated_agent_health", id23, value), idempotent: false };
   }
   issue(args) {
     const delegation = this.store.get("a2a_delegation", text(args.delegation_id, "delegation_id"));
@@ -240568,11 +240234,11 @@ var FederatedDelegationKernel = class {
     if (taskId2(run) !== session.task_id) throw new Error("Federated Grant parent Task Run belongs to another task");
     const capabilityIds = strings20(args.capability_ids ?? [], "capability_ids");
     const advertised = Array.isArray(card.skills) ? card.skills.map((item) => String(item)) : [];
-    if (capabilityIds.some((id22) => !advertised.includes(id22))) throw new Error("Federated Grant capability is not advertised by the Agent Card");
+    if (capabilityIds.some((id23) => !advertised.includes(id23))) throw new Error("Federated Grant capability is not advertised by the Agent Card");
     const artifactIds = strings20(args.artifact_ids ?? delegation.artifact_ids, "artifact_ids");
     const delegatedArtifacts = strings20(delegation.artifact_ids ?? [], "delegation artifact_ids");
     if (JSON.stringify(artifactIds) !== JSON.stringify(delegatedArtifacts)) throw new Error("Federated Grant cannot widen delegation Artifact scope");
-    const artifacts = artifactIds.map((id22) => this.store.get("artifact", id22));
+    const artifacts = artifactIds.map((id23) => this.store.get("artifact", id23));
     const identity = { delegation_id: delegation.id, delegation_digest: delegation.delegation_digest, session_id: session.id, session_digest: session.session_digest, trust_id: trust.id, trust_version: trust.version, card_id: card.id, card_version: card.version, card_digest: card.card_digest, parent_task_run_id: run.id, parent_task_run_version: run.version, parent_operation_ref: text(args.parent_operation_ref, "parent_operation_ref"), audience: text(args.audience, "audience"), capability_ids: capabilityIds, artifact_ids: artifactIds, effect: "read_only", expires_at: delegation.expires_at };
     const grantId = text(args.grant_id, "grant_id");
     const grantDigest = digestJson(identity);
@@ -240667,7 +240333,7 @@ function strings21(value, name) {
   return result.sort();
 }
 function confirmed(store, ids6) {
-  for (const id22 of ids6) if (store.get("evidence", id22).confidence !== "confirmed") throw new Error("Harness topology requires confirmed Evidence");
+  for (const id23 of ids6) if (store.get("evidence", id23).confidence !== "confirmed") throw new Error("Harness topology requires confirmed Evidence");
 }
 var HarnessTopologyKernel = class {
   store;
@@ -240743,7 +240409,7 @@ function strings22(value, name) {
   return result.sort();
 }
 function confirmed2(store, ids6) {
-  for (const id22 of ids6) if (store.get("evidence", id22).confidence !== "confirmed") throw new Error("Runtime readiness requires confirmed Evidence");
+  for (const id23 of ids6) if (store.get("evidence", id23).confidence !== "confirmed") throw new Error("Runtime readiness requires confirmed Evidence");
 }
 var RuntimeReadinessKernel = class {
   store;
@@ -240810,7 +240476,7 @@ function confirmedEvidence4(store, value) {
   if (!Array.isArray(value) || !value.length) throw new Error("evidence_ids must contain at least one value");
   const ids6 = value.map((item) => text(item, "evidence_id"));
   if (new Set(ids6).size !== ids6.length) throw new Error("evidence_ids must be unique");
-  for (const id22 of ids6) if (store.get("evidence", id22).confidence !== "confirmed") throw new Error("Recovery drill requires confirmed Evidence");
+  for (const id23 of ids6) if (store.get("evidence", id23).confidence !== "confirmed") throw new Error("Recovery drill requires confirmed Evidence");
   return ids6.sort();
 }
 var AssuredPilotKernel = class {
@@ -240941,8 +240607,8 @@ var AssuredPilotKernel = class {
     const pilot = this.store.get("assured_work_pilot", text(args.pilot_id, "pilot_id"));
     return { pilot, task_run: this.store.get("task_run", String(pilot.task_run_id)), attestation: this.store.get("runtime_assurance_attestation", String(pilot.attestation.id), Number(pilot.attestation.version)), readiness: this.store.get("runtime_readiness_assessment", String(pilot.readiness.id), Number(pilot.readiness.version)), recovery_drill: this.store.get("runtime_recovery_drill", String(pilot.recovery_drill.id), Number(pilot.recovery_drill.version)), activation_profile: this.store.get("activation_profile", String(pilot.activation_profile.id), Number(pilot.activation_profile.version)), sealed_access: this.store.get("sealed_evaluation_access", String(pilot.sealed_access.id), Number(pilot.sealed_access.version)), attention: pilot.attention ?? [] };
   }
-  sealed(id22) {
-    return this.store.get("sealed_evaluation_case", text(id22, "sealed_case_id"));
+  sealed(id23) {
+    return this.store.get("sealed_evaluation_case", text(id23, "sealed_case_id"));
   }
   assertRecoveryFacts(run, attestation, readiness, environmentDigest) {
     const taskId3 = String(run.launch_identity.task_id);
@@ -241008,7 +240674,7 @@ var AssuredPilotKernel = class {
 };
 
 // core/capability-kit-runtime.ts
-var import_node_crypto92 = require("node:crypto");
+var import_node_crypto91 = require("node:crypto");
 var KIT_ID = /^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$/u;
 var SEMVER = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u;
 var EFFECTS12 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_write", "destructive"]);
@@ -241102,7 +240768,7 @@ var CapabilityKitRuntime = class {
     assertNoSecret3(proposal, "proposal");
     const evidenceIds2 = optionalStrings2(args.evidence_ids, "evidence_ids");
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
-    const contributionId = String(args.contribution_id ?? `kit_contribution_${(0, import_node_crypto92.randomUUID)().replaceAll("-", "")}`);
+    const contributionId = String(args.contribution_id ?? `kit_contribution_${(0, import_node_crypto91.randomUUID)().replaceAll("-", "")}`);
     const contribution = this.store.create("capability_kit_contribution", contributionId, {
       kit_id: kit.id,
       kit_version: kit.version,
@@ -241165,8 +240831,8 @@ var CapabilityKitRuntime = class {
   }
   manifest(input) {
     assertNoSecret3(input, "manifest");
-    const id22 = text(input.id, "manifest.id");
-    if (!KIT_ID.test(id22)) throw new Error("manifest.id is unsupported");
+    const id23 = text(input.id, "manifest.id");
+    if (!KIT_ID.test(id23)) throw new Error("manifest.id is unsupported");
     const manifestVersion = text(input.version, "manifest.version");
     if (!SEMVER.test(manifestVersion)) throw new Error("manifest.version must be semantic version");
     const compatibility = text(input.compatibility, "manifest.compatibility");
@@ -241175,7 +240841,7 @@ var CapabilityKitRuntime = class {
     const metadata = input.metadata === void 0 ? void 0 : object(input.metadata, "manifest.metadata");
     if (metadata !== void 0) assertNoSecret3(metadata, "manifest.metadata");
     return {
-      id: id22,
+      id: id23,
       manifest_version: manifestVersion,
       name: text(input.name, "manifest.name"),
       description: text(input.description, "manifest.description"),
@@ -241250,13 +240916,13 @@ var CapabilityKitRuntime = class {
     return affected;
   }
 };
-function builtin(id22, name, provides, effects, entrypoints, hooks) {
-  return { id: id22, version: "1.0.0", name, description: `${name} is a built-in declarative Capability Kit.`, compatibility: `^${CRAFT_RELEASE_VERSION}`, provides, effects, data_scopes: ["project_root"], entrypoints, hooks, surfaces: ["skill", "mcp", "cli", "plugin"], healthcheck: "builtin-declared", eval_suite: "capability-platform-fixtures" };
+function builtin(id23, name, provides, effects, entrypoints, hooks) {
+  return { id: id23, version: "1.0.0", name, description: `${name} is a built-in declarative Capability Kit.`, compatibility: `^${CRAFT_RELEASE_VERSION}`, provides, effects, data_scopes: ["project_root"], entrypoints, hooks, surfaces: ["skill", "mcp", "cli", "plugin"], healthcheck: "builtin-declared", eval_suite: "capability-platform-fixtures" };
 }
 
 // capability/verified-evaluation-receipt.ts
 var VERIFIED_EVALUATION_RECEIPT_KIND = "craft.engineering-evaluation.v1";
-function digest15(value, name) {
+function digest14(value, name) {
   const result = text(value, name);
   if (!/^sha256:[A-Za-z0-9._-]+$/u.test(result)) throw new Error(`${name} must be a sha256 digest`);
   return result;
@@ -241270,7 +240936,7 @@ function check(value, name) {
   const item = object(value, name);
   const status2 = text(item.status, `${name}.status`);
   if (status2 !== "passed" && status2 !== "failed") throw new Error(`${name}.status is unsupported`);
-  return { evidence_id: text(item.evidence_id, `${name}.evidence_id`), command_digest: digest15(item.command_digest, `${name}.command_digest`), result_digest: digest15(item.result_digest, `${name}.result_digest`), status: status2 };
+  return { evidence_id: text(item.evidence_id, `${name}.evidence_id`), command_digest: digest14(item.command_digest, `${name}.command_digest`), result_digest: digest14(item.result_digest, `${name}.result_digest`), status: status2 };
 }
 function receiptEvidenceIds(receipt) {
   return [receipt.host_terminal, receipt.acceptance, ...receipt.siblings, receipt.effect_check, receipt.safety_check, receipt.factual_check].map((item) => item.evidence_id).concat([...receipt.root_cause_evidence_ids]);
@@ -241285,15 +240951,15 @@ function verifiedEvaluationReceipt(value) {
   }
   if (!Array.isArray(item.siblings) || item.siblings.length !== 2) throw new Error("verified_receipt.siblings must contain exactly two checks");
   if (!Array.isArray(item.root_cause_evidence_ids) || !item.root_cause_evidence_ids.length) throw new Error("verified_receipt.root_cause_evidence_ids must not be empty");
-  const rootCause = item.root_cause_evidence_ids.map((id22, index) => text(id22, `verified_receipt.root_cause_evidence_ids[${index}]`));
+  const rootCause = item.root_cause_evidence_ids.map((id23, index) => text(id23, `verified_receipt.root_cause_evidence_ids[${index}]`));
   if (new Set(rootCause).size !== rootCause.length) throw new Error("verified_receipt.root_cause_evidence_ids must be unique");
   return {
     kind: VERIFIED_EVALUATION_RECEIPT_KIND,
     issued_by: "engineering-eval-cli",
     host_terminal: check(item.host_terminal, "verified_receipt.host_terminal"),
-    frozen_input_digest: digest15(item.frozen_input_digest, "verified_receipt.frozen_input_digest"),
-    workspace_before_digest: digest15(item.workspace_before_digest, "verified_receipt.workspace_before_digest"),
-    workspace_after_digest: digest15(item.workspace_after_digest, "verified_receipt.workspace_after_digest"),
+    frozen_input_digest: digest14(item.frozen_input_digest, "verified_receipt.frozen_input_digest"),
+    workspace_before_digest: digest14(item.workspace_before_digest, "verified_receipt.workspace_before_digest"),
+    workspace_after_digest: digest14(item.workspace_after_digest, "verified_receipt.workspace_after_digest"),
     acceptance: check(item.acceptance, "verified_receipt.acceptance"),
     siblings: [check(item.siblings[0], "verified_receipt.siblings[0]"), check(item.siblings[1], "verified_receipt.siblings[1]")],
     effect_check: check(item.effect_check, "verified_receipt.effect_check"),
@@ -241593,7 +241259,7 @@ var EngineeringQualityProfileKernel = class {
     if (observation.trace_id !== session.trace_id || observation.host_id !== plan.host_id || observation.observer_kind !== plan.observer_kind || observation.observer_id === plan.host_id) throw new Error("Engineering Quality Profile Outcome Observation is not independent or does not match the Host Session");
     const receipt = verifiedEvaluationReceipt(args.verified_receipt);
     const evidenceIds2 = receiptEvidenceIds(receipt);
-    const evidence2 = evidenceIds2.map((id22) => this.store.get("evidence", id22));
+    const evidence2 = evidenceIds2.map((id23) => this.store.get("evidence", id23));
     if (evidence2.some((item) => item.source_type !== "program" || item.confidence !== "confirmed")) throw new Error("Engineering Quality Profile receipt requires confirmed program Evidence");
     const testCase = this.store.get("engineering_quality_profile_case", caseId);
     if (receipt.frozen_input_digest !== testCase.frozen_input_digest) throw new Error("Engineering Quality Profile receipt frozen_input_digest drifted");
@@ -241604,8 +241270,8 @@ var EngineeringQualityProfileKernel = class {
       const metadata = object(this.store.get("evidence", check2.evidence_id).metadata, "program Evidence metadata");
       if (metadata.case_id !== caseId || metadata.command_digest !== check2.command_digest || metadata.result_digest !== check2.result_digest || metadata.status !== check2.status) throw new Error("Engineering Quality Profile program Evidence contradicts the receipt");
     }
-    const rootSupported = receipt.root_cause_evidence_ids.every((id22) => {
-      const metadata = object(this.store.get("evidence", id22).metadata, "root cause Evidence metadata");
+    const rootSupported = receipt.root_cause_evidence_ids.every((id23) => {
+      const metadata = object(this.store.get("evidence", id23).metadata, "root cause Evidence metadata");
       return metadata.case_id === caseId && metadata.status === "passed" && metadata.check_kind === "root_cause";
     });
     const identity = { receipt_validation_version: 2, plan_id: plan.id, plan_version: plan.version, case_id: caseId, trial_index: trialIndex, arm, host_session_id: session.id, host_session_version: session.version, observation_id: observation.id, observation_version: observation.version, receipt_digest: stableDigest(receipt), evidence_ids: evidenceIds2.sort(), retry_count: receipt.retry_count, cost_units: receipt.cost_units, latency_ms: receipt.latency_ms };
@@ -241730,8 +241396,7 @@ var EngineeringQualityProfileKernel = class {
   }
 };
 
-// common/craft-common-base/src/retrieval-port.ts
-var import_node_sqlite3 = require("node:sqlite");
+// common/craft-common-base/src/keyword-retrieval.ts
 var KeywordRetrievalPort = class {
   async search(query, documents) {
     const started = Date.now(), index = new Bm25Index();
@@ -241740,122 +241405,8 @@ var KeywordRetrievalPort = class {
     return { hits, execution: { requested: "keyword", used: "keyword", provider: null, model: null, latency_ms: Date.now() - started, cost_summary: null, unavailable_reason: null } };
   }
 };
-function cosine2(left, right) {
-  const dot = left.reduce((sum, value, index) => sum + value * right[index], 0);
-  const norm = (values3) => Math.sqrt(values3.reduce((sum, value) => sum + value * value, 0));
-  return norm(left) && norm(right) ? dot / (norm(left) * norm(right)) : 0;
-}
-function embeddingRows(value, expected) {
-  const data = value && typeof value === "object" ? value.data : void 0;
-  if (!Array.isArray(data) || data.length !== expected) throw new Error("invalid_embedding_response");
-  const result = [], indices = /* @__PURE__ */ new Set();
-  data.forEach((item, position) => {
-    if (!item || typeof item !== "object" || Array.isArray(item)) throw new Error("invalid_embedding_response");
-    const row = item, index = row.index === void 0 ? position : row.index;
-    if (typeof index !== "number" || !Number.isSafeInteger(index) || index < 0 || index >= expected || indices.has(index)) throw new Error("invalid_embedding_response");
-    const vector = row.embedding;
-    if (!Array.isArray(vector) || !vector.length || vector.length > 8192 || vector.some((n) => typeof n !== "number" || !Number.isFinite(n)) || !Number.isFinite(vector.reduce((sum, n) => sum + n * n, 0))) throw new Error("invalid_embedding_response");
-    indices.add(index);
-    result[index] = vector;
-  });
-  return result;
-}
-var OpenAiCompatibleEmbeddingRetrievalPort = class _OpenAiCompatibleEmbeddingRetrievalPort {
-  /** Process-local cache pinned to endpoint, configured model identifier and content.
-   * A mutable provider model alias is not an attested model revision. */
-  static embeddings = /* @__PURE__ */ new Map();
-  endpoint;
-  model;
-  credentialEnv;
-  cachePath;
-  revision;
-  beforeRequest;
-  constructor(configuration, cachePath, beforeRequest) {
-    this.cachePath = cachePath;
-    this.beforeRequest = beforeRequest;
-    this.revision = typeof configuration.model_revision === "string" ? configuration.model_revision : "unversioned";
-    this.endpoint = typeof configuration.endpoint === "string" ? configuration.endpoint : "";
-    this.model = typeof configuration.model === "string" ? configuration.model : "";
-    this.credentialEnv = typeof configuration.credential_env === "string" ? configuration.credential_env : "";
-  }
-  async search(query, documents) {
-    const started = Date.now();
-    const key2 = this.credentialEnv ? process.env[this.credentialEnv] : void 0;
-    if (!this.endpoint || !this.model || !key2) return { hits: [], execution: { requested: "vector", used: "keyword", provider: this.endpoint ? "openai-compatible" : null, model: this.model || null, latency_ms: Date.now() - started, cost_summary: null, unavailable_reason: "embedding_provider_unavailable" } };
-    const input = [query, ...documents.map((item) => item.body)];
-    if (input.length > 10001 || input.reduce((n, body3) => n + body3.length, 0) > 8e6 || input.some((body3) => body3.length > 32e3))
-      return { hits: [], execution: { requested: "vector", used: "keyword", provider: "openai-compatible", model: this.model, latency_ms: Date.now() - started, cost_summary: null, unavailable_reason: "embedding_input_budget_exceeded" } };
-    const cacheKeys = input.map((value) => stableDigest({ endpoint: this.endpoint, model: this.model, revision: this.revision, value }));
-    const cache = new Map(_OpenAiCompatibleEmbeddingRetrievalPort.embeddings);
-    let database;
-    let unavailableReason = "embedding_request_failed";
-    let result;
-    try {
-      if (this.cachePath) {
-        database = new import_node_sqlite3.DatabaseSync(this.cachePath);
-        database.exec("PRAGMA busy_timeout=5000; CREATE TABLE IF NOT EXISTS embeddings (key TEXT PRIMARY KEY, vector TEXT NOT NULL, touched INTEGER NOT NULL)");
-        for (const cacheKey of new Set(cacheKeys)) {
-          const row = database.prepare("SELECT vector FROM embeddings WHERE key=?").get(cacheKey);
-          if (row) cache.set(cacheKey, embeddingRows({ data: [{ embedding: JSON.parse(String(row.vector)) }] }, 1)[0]);
-        }
-      }
-      const missing = [...new Set(cacheKeys.filter((cacheKey) => !cache.has(cacheKey)))];
-      let usage2;
-      let usageComplete = true;
-      const pending = /* @__PURE__ */ new Map();
-      const deadline = AbortSignal.timeout(6e4);
-      for (let offset = 0; offset < missing.length; ) {
-        const batch = [];
-        let chars = 0;
-        while (offset < missing.length && batch.length < 32) {
-          const cacheKey = missing[offset], value = input[cacheKeys.indexOf(cacheKey)];
-          if (batch.length && chars + value.length > 32e3) break;
-          batch.push(cacheKey);
-          chars += value.length;
-          offset++;
-        }
-        const inputs = batch.map((cacheKey) => input[cacheKeys.indexOf(cacheKey)]);
-        unavailableReason = "embedding_request_failed";
-        this.beforeRequest?.();
-        const response = await fetch(this.endpoint, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${key2}` }, body: JSON.stringify({ model: this.model, input: inputs }), signal: AbortSignal.any([deadline, AbortSignal.timeout(1e4)]) });
-        if (!response.ok) {
-          unavailableReason = `http_${response.status}`;
-          throw new Error(unavailableReason);
-        }
-        unavailableReason = "invalid_embedding_response";
-        const body3 = await response.json();
-        const vectors2 = embeddingRows(body3, batch.length);
-        batch.forEach((cacheKey, index) => pending.set(cacheKey, vectors2[index]));
-        const units = body3.usage?.total_tokens;
-        if (typeof units !== "number" || !Number.isSafeInteger(units) || units < 0) usageComplete = false;
-        else usage2 = { batches: Number(usage2?.batches ?? 0) + 1, total_tokens: Number(usage2?.total_tokens ?? 0) + units };
-      }
-      const vectors = cacheKeys.map((cacheKey) => pending.get(cacheKey) ?? cache.get(cacheKey));
-      if (new Set(vectors.map((vector) => vector.length)).size !== 1) throw new Error("invalid_embedding_response");
-      this.beforeRequest?.();
-      if (database) {
-        database.exec("BEGIN IMMEDIATE");
-        try {
-          for (const [cacheKey, vector] of pending) database.prepare("INSERT OR REPLACE INTO embeddings VALUES(?,?,?)").run(cacheKey, JSON.stringify(vector), Date.now());
-          database.exec("DELETE FROM embeddings WHERE key IN (SELECT key FROM embeddings ORDER BY touched DESC,key LIMIT -1 OFFSET 10000); COMMIT");
-        } catch (error) {
-          database.exec("ROLLBACK");
-          throw error;
-        }
-      }
-      for (const [cacheKey, vector] of pending) _OpenAiCompatibleEmbeddingRetrievalPort.embeddings.set(cacheKey, vector);
-      while (_OpenAiCompatibleEmbeddingRetrievalPort.embeddings.size > 4096) _OpenAiCompatibleEmbeddingRetrievalPort.embeddings.delete(_OpenAiCompatibleEmbeddingRetrievalPort.embeddings.keys().next().value);
-      const queryVector = vectors[0];
-      const hits = documents.map((document3, index) => ({ id: document3.id, score: cosine2(queryVector, vectors[index + 1]), reason: "vector_cosine" })).filter((item) => item.score > 0).sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
-      result = { hits, execution: { requested: "vector", used: "vector", provider: "openai-compatible", model: this.model, latency_ms: Date.now() - started, cost_summary: { usage_digest: usage2 ? stableDigest(usage2) : null, billable_units: usageComplete ? Number(usage2?.total_tokens ?? 0) : null }, unavailable_reason: null } };
-    } catch {
-      result = { hits: [], execution: { requested: "vector", used: "keyword", provider: "openai-compatible", model: this.model, latency_ms: Date.now() - started, cost_summary: null, unavailable_reason: unavailableReason } };
-    } finally {
-      if (database) database.close();
-    }
-    return result;
-  }
-};
+
+// common/craft-common-base/src/memory-temporal-policy.ts
 function temporalMemorySelect(items2, now3, history) {
   if (!Number.isFinite(now3.valueOf())) throw new Error("Memory Context now must be a valid timestamp");
   const groups = /* @__PURE__ */ new Map();
@@ -241887,12 +241438,14 @@ function temporalMemorySelect(items2, now3, history) {
       }
     }
     const key2 = typeof item.topic === "string" && item.topic ? item.topic : `entry:${item.id}`;
-    groups.set(key2, [...groups.get(key2) ?? [], item]);
+    const group = groups.get(key2);
+    if (group) group.push(item);
+    else groups.set(key2, [item]);
   }
   const selected = [];
   for (const [topic, group] of groups) {
     const current2 = group.sort((left, right) => Date.parse(String(right.effective_from ?? right.updated_at ?? "1970-01-01T00:00:00Z")) - Date.parse(String(left.effective_from ?? left.updated_at ?? "1970-01-01T00:00:00Z")) || Number(right.version) - Number(left.version));
-    if (current2.length > 1 && !history && current2[0].content_digest !== current2[1].content_digest && current2[0].status === "active" && current2[1].status === "active") {
+    if (!history && new Set(current2.map((item) => item.content_digest)).size > 1) {
       excluded.push(...current2.map((item) => ({ memory_id: item.id, topic, reason: "temporal_conflict_abstain" })));
     } else selected.push(...history ? current2 : current2.slice(0, 1));
   }
@@ -241944,22 +241497,22 @@ var ContextReadGuard = class {
     ) SELECT r.kind,r.id,MAX(r.version) version FROM records r JOIN wanted w ON w.kind=r.kind AND w.id=r.id GROUP BY r.kind,r.id`).all(JSON.stringify(scopes), JSON.stringify(scopes), JSON.stringify(sourceIds)) : store.database.prepare(`SELECT kind,id,MAX(version) version FROM records WHERE kind IN (${KINDS4.map(() => "?").join(",")}) GROUP BY kind,id`).all(...KINDS4);
     for (const row of rows4) this.initial.set(`${row.kind}:${row.id}`, Number(row.version));
   }
-  track(kind4, id22, expectedVersion) {
-    const key2 = `${kind4}:${id22}`, version3 = this.initial.get(key2) ?? 0;
-    if (expectedVersion !== void 0 && expectedVersion !== version3 || (this.store.find(kind4, id22, void 0, false)?.version ?? 0) !== version3) throw new ContextAccessChangedError();
-    this.tracked.set(key2, { kind: kind4, id: id22, version: version3 });
+  track(kind4, id23, expectedVersion) {
+    const key2 = `${kind4}:${id23}`, version3 = this.initial.get(key2) ?? 0;
+    if (expectedVersion !== void 0 && expectedVersion !== version3 || (this.store.find(kind4, id23, void 0, false)?.version ?? 0) !== version3) throw new ContextAccessChangedError();
+    this.tracked.set(key2, { kind: kind4, id: id23, version: version3 });
   }
   contribution(member, item) {
     const kind4 = member === "memory" ? "memory_ledger" : member === "knowledge" ? "knowledge_claim" : "experience_procedure";
-    const id22 = item.memory_id ?? item.claim_id ?? item.procedure_id;
-    if (typeof id22 !== "string") return;
-    this.track(kind4, id22);
-    const record = this.store.find(kind4, id22, void 0, false);
+    const id23 = item.memory_id ?? item.claim_id ?? item.procedure_id;
+    if (typeof id23 !== "string") return;
+    this.track(kind4, id23);
+    const record = this.store.find(kind4, id23, void 0, false);
     if (!record) return;
     const sourceId = item.source_id ?? record.source_id;
     if (typeof sourceId === "string") this.track("knowledge_source", sourceId);
     if (typeof record.document_id === "string") this.track("knowledge_document", record.document_id);
-    if (member === "experience") this.track("experience_release", id22);
+    if (member === "experience") this.track("experience_release", id23);
   }
   refs() {
     return [...this.tracked.values()].sort((a, b) => `${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`));
@@ -241970,7 +241523,7 @@ var ContextReadGuard = class {
 };
 
 // capability/craft-memory/memory-governance.ts
-var import_node_crypto93 = require("node:crypto");
+var import_node_crypto92 = require("node:crypto");
 
 // common/craft-common-base/src/retrieval-terms.ts
 function retrievalTerms(value) {
@@ -241986,14 +241539,14 @@ var CONFIDENCE = /* @__PURE__ */ new Set(["confirmed", "bounded", "unverified"])
 var POLICY_MODES = /* @__PURE__ */ new Set(["off", "propose", "governed"]);
 var POLICY_CONFIDENCE = /* @__PURE__ */ new Set(["confirmed", "bounded"]);
 function id13(prefix) {
-  return `${prefix}_${(0, import_node_crypto93.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto92.randomUUID)().replaceAll("-", "")}`;
 }
 function text9(v, name) {
   if (typeof v !== "string" || !v.trim()) throw new Error(`${name} must not be empty`);
   return v.trim();
 }
-function digest16(v) {
-  return `sha256:${(0, import_node_crypto93.createHash)("sha256").update(JSON.stringify(v)).digest("hex")}`;
+function digest15(v) {
+  return `sha256:${(0, import_node_crypto92.createHash)("sha256").update(JSON.stringify(v)).digest("hex")}`;
 }
 function noSecret2(v, name) {
   if (SECRET7.test(v)) throw new Error(`${name} must not contain credentials or secrets`);
@@ -242039,8 +241592,8 @@ var MemoryGovernanceKernel = class {
     const updatedBy = noSecret2(text9(args.updated_by ?? "operator", "updated_by"), "updated_by");
     const identity = { mode: mode2, min_confidence: minConfidence, auto_commit: mode2 === "governed" };
     const existing = this.store.find("memory_policy", policyId);
-    if (existing && existing.identity_digest === digest16(identity)) return { policy: existing, idempotent: true };
-    const payloadValue = { ...identity, updated_by: updatedBy, identity_digest: digest16(identity), status: "active" };
+    if (existing && existing.identity_digest === digest15(identity)) return { policy: existing, idempotent: true };
+    const payloadValue = { ...identity, updated_by: updatedBy, identity_digest: digest15(identity), status: "active" };
     return { policy: existing ? this.store.save("memory_policy", policyId, { ...payload2(existing), ...payloadValue, policy_revision: Number(existing.policy_revision ?? 1) + 1 }) : this.store.create("memory_policy", policyId, { ...payloadValue, policy_revision: 1 }), idempotent: false };
   }
   propose(args) {
@@ -242075,22 +241628,22 @@ var MemoryGovernanceKernel = class {
     const topic = args.topic === void 0 ? "" : text9(args.topic, "topic");
     const observedAt2 = args.observed_at === void 0 && typeof existing?.observed_at === "string" ? existing.observed_at : args.observed_at === void 0 ? (/* @__PURE__ */ new Date()).toISOString() : new Date(text9(args.observed_at, "observed_at")).toISOString();
     const effectiveFrom = args.effective_from === void 0 && typeof existing?.effective_from === "string" ? existing.effective_from : args.effective_from === void 0 ? observedAt2 : new Date(text9(args.effective_from, "effective_from")).toISOString();
-    const identity = { source_id: sourceId, kind: kind4, scope: scope3, scope_envelope: envelope, topic, content_digest: digest16(content), sensitivity: String(args.sensitivity ?? "internal"), confidence: confidence2, evidence_ids: ids6, valid_until: validUntil, observed_at: observedAt2, effective_from: effectiveFrom };
+    const identity = { source_id: sourceId, kind: kind4, scope: scope3, scope_envelope: envelope, topic, content_digest: digest15(content), sensitivity: String(args.sensitivity ?? "internal"), confidence: confidence2, evidence_ids: ids6, valid_until: validUntil, observed_at: observedAt2, effective_from: effectiveFrom };
     if (existing) {
-      if (existing.identity_digest !== digest16(identity)) throw new Error("Memory candidate idempotency conflict");
+      if (existing.identity_digest !== digest15(identity)) throw new Error("Memory candidate idempotency conflict");
       return { candidate: existing, idempotent: true };
     }
     const conflicts = topic ? this.store.listScoped("memory_candidate", [scope3], 1e4, (item) => Boolean(!["rejected", "superseded", "expired"].includes(String(item.status)) && item.scope && JSON.stringify(item.scope) === JSON.stringify(identity.scope) && item.topic === topic && item.content_digest !== identity.content_digest)) : [];
     const conflictingMemories = topic ? this.store.listScoped("memory_ledger", [scope3], 1e4, (item) => Boolean(item.status === "active" && item.topic === topic && item.scope && JSON.stringify(item.scope) === JSON.stringify(identity.scope) && item.content_digest !== identity.content_digest)) : [];
     const status2 = conflicts.length || conflictingMemories.length ? "conflict_pending" : "candidate";
-    const candidate2 = this.store.create("memory_candidate", candidateId2, { ...identity, content, status: status2, conflict_ids: conflicts.map((x) => x.id), conflicting_memory_ids: conflictingMemories.map((x) => x.id), proposed_by: String(args.proposed_by ?? "agent"), identity_digest: digest16(identity) });
+    const candidate2 = this.store.create("memory_candidate", candidateId2, { ...identity, content, status: status2, conflict_ids: conflicts.map((x) => x.id), conflicting_memory_ids: conflictingMemories.map((x) => x.id), proposed_by: String(args.proposed_by ?? "agent"), identity_digest: digest15(identity) });
     for (const conflict of conflicts) this.store.save("memory_candidate", String(conflict.id), { ...payload2(conflict), status: "conflict_pending", conflict_ids: [.../* @__PURE__ */ new Set([...conflict.conflict_ids ?? [], candidate2.id])] });
     const eligible = args.proposal_only !== true && policy.mode === "governed" && conflicts.length === 0 && conflictingMemories.length === 0 && ids6.length > 0 && ids6.every((e) => {
       const confidenceValue = String(this.store.get("evidence", e).confidence);
       return policy.min_confidence === "bounded" ? ["bounded", "confirmed"].includes(confidenceValue) : confidenceValue === "confirmed";
     });
     if (eligible) {
-      const approved = this.store.save("memory_candidate", candidateId2, { ...payload2(candidate2), status: "approved", review: { reviewer: "governed-policy", reason_digest: digest16("policy threshold"), reviewed_at: (/* @__PURE__ */ new Date()).toISOString() } });
+      const approved = this.store.save("memory_candidate", candidateId2, { ...payload2(candidate2), status: "approved", review: { reviewer: "governed-policy", reason_digest: digest15("policy threshold"), reviewed_at: (/* @__PURE__ */ new Date()).toISOString() } });
       const memory = this.remember({ candidate_id: approved.id }).memory;
       return { candidate: approved, conflicts, conflicting_memories: conflictingMemories, memory, auto_committed: true, idempotent: false, policy };
     }
@@ -242108,14 +241661,14 @@ var MemoryGovernanceKernel = class {
       if (!trusted) throw new Error("Memory candidate approval requires bounded or confirmed Evidence");
       if (candidate2.status === "conflict_pending") throw new Error("Resolve Memory conflict before approval");
     }
-    const saved = this.store.save("memory_candidate", String(candidate2.id), { ...payload2(candidate2), status: decision === "approve" ? "approved" : "rejected", review: { reviewer, reason_digest: digest16(reason), reviewed_at: (/* @__PURE__ */ new Date()).toISOString() } });
+    const saved = this.store.save("memory_candidate", String(candidate2.id), { ...payload2(candidate2), status: decision === "approve" ? "approved" : "rejected", review: { reviewer, reason_digest: digest15(reason), reviewed_at: (/* @__PURE__ */ new Date()).toISOString() } });
     return { candidate: saved };
   }
   remember(args) {
     return this.store.transaction(() => {
       const candidate2 = this.store.get("memory_candidate", text9(args.candidate_id, "candidate_id"));
       if (candidate2.status !== "approved") throw new Error("Only approved Memory candidates can enter the Ledger");
-      const memoryId = candidate2.ledger_memory_id ?? args.memory_id ?? `memory_ledger_candidate_${digest16(candidate2.id).slice(-32)}`;
+      const memoryId = candidate2.ledger_memory_id ?? args.memory_id ?? `memory_ledger_candidate_${digest15(candidate2.id).slice(-32)}`;
       if (candidate2.ledger_memory_id) {
         if (this.store.get("knowledge_source", String(candidate2.source_id)).status !== "active") throw new Error("Knowledge Source is not active");
         if (args.memory_id !== void 0 && args.memory_id !== memoryId) throw new Error("Memory candidate Ledger identity conflict");
@@ -242149,12 +241702,12 @@ var MemoryGovernanceKernel = class {
       const memory = this.ledger.get(args).memory;
       if (memory.status !== "active" || args.expected_version !== memory.version) throw new Error("Memory confirmation version conflict or inactive entry");
       const ids6 = evidenceIds(args.evidence_ids);
-      if (!ids6.some((id22) => {
-        const proof = this.store.get("evidence", id22);
+      if (!ids6.some((id23) => {
+        const proof = this.store.get("evidence", id23);
         return proof.source_type === "human" && ["bounded", "confirmed"].includes(String(proof.confidence));
       })) throw new Error("Memory confirmation requires user Evidence");
       const identity = { memory_id: memory.id, memory_version: memory.version, content_digest: memory.content_digest, evidence_ids: ids6 };
-      const confirmationId = `memory_confirmation_${digest16(identity).slice(-24)}`;
+      const confirmationId = `memory_confirmation_${digest15(identity).slice(-24)}`;
       return { confirmation: this.store.find("memory_confirmation", confirmationId) ?? this.store.create("memory_confirmation", confirmationId, identity), changes_content: false };
     });
   }
@@ -242174,7 +241727,7 @@ var MemoryGovernanceKernel = class {
     const reason = noSecret2(text9(args.reason, "reason"), "reason");
     const conflictIds = Array.isArray(candidate2.conflict_ids) ? candidate2.conflict_ids : [];
     const conflictingMemoryIds = Array.isArray(candidate2.conflicting_memory_ids) ? candidate2.conflicting_memory_ids : [];
-    const saved = this.store.save("memory_candidate", String(candidate2.id), { ...payload2(candidate2), status: "candidate", conflict_resolution: { resolution, actor: text9(args.actor, "actor"), reason_digest: digest16(reason), at: (/* @__PURE__ */ new Date()).toISOString() }, conflict_ids: [], conflicting_memory_ids: [], ...resolution === "supersede" ? { supersedes_memory_ids: conflictingMemoryIds, supersedes_candidate_ids: conflictIds } : {} });
+    const saved = this.store.save("memory_candidate", String(candidate2.id), { ...payload2(candidate2), status: "candidate", conflict_resolution: { resolution, actor: text9(args.actor, "actor"), reason_digest: digest15(reason), at: (/* @__PURE__ */ new Date()).toISOString() }, conflict_ids: [], conflicting_memory_ids: [], ...resolution === "supersede" ? { supersedes_memory_ids: conflictingMemoryIds, supersedes_candidate_ids: conflictIds } : {} });
     for (const conflictId of conflictIds) {
       const other = this.store.find("memory_candidate", String(conflictId));
       if (other) this.store.save("memory_candidate", String(other.id), { ...payload2(other), conflict_ids: (other.conflict_ids ?? []).filter((x) => x !== candidate2.id), status: "candidate" });
@@ -242193,7 +241746,7 @@ var MemoryGovernanceKernel = class {
     const summary2 = noSecret2(text9(args.summary, "summary"), "summary");
     const candidateIds = evidenceIds(args.candidate_ids);
     const candidates = candidateIds.map((candidateId2) => this.store.get("memory_candidate", candidateId2));
-    return { session_id: text9(args.session_id, "session_id"), summary_digest: digest16(summary2), candidates: candidates.map((candidate2) => ({ candidate_id: candidate2.id, status: candidate2.status })), content_free: true };
+    return { session_id: text9(args.session_id, "session_id"), summary_digest: digest15(summary2), candidates: candidates.map((candidate2) => ({ candidate_id: candidate2.id, status: candidate2.status })), content_free: true };
   }
   consolidate(args) {
     const ids6 = evidenceIds(args.candidate_ids);
@@ -242201,13 +241754,13 @@ var MemoryGovernanceKernel = class {
     const candidates = ids6.map((candidateId2) => this.store.get("memory_candidate", candidateId2));
     if (candidates.some((candidate2) => candidate2.status !== "approved")) throw new Error("Only approved candidates can be consolidated");
     const consolidationId = String(args.consolidation_id ?? id13("memory_consolidation"));
-    const identity = { candidate_ids: ids6, summary_digest: digest16(noSecret2(text9(args.summary, "summary"), "summary")) };
+    const identity = { candidate_ids: ids6, summary_digest: digest15(noSecret2(text9(args.summary, "summary"), "summary")) };
     const existing = this.store.find("memory_consolidation", consolidationId);
     if (existing) {
-      if (existing.identity_digest !== digest16(identity)) throw new Error("Memory consolidation idempotency conflict");
+      if (existing.identity_digest !== digest15(identity)) throw new Error("Memory consolidation idempotency conflict");
       return { consolidation: existing, idempotent: true };
     }
-    return { consolidation: this.store.create("memory_consolidation", consolidationId, { ...identity, identity_digest: digest16(identity), status: "candidate", ledger_memory_id: null, content_free: true }), idempotent: false };
+    return { consolidation: this.store.create("memory_consolidation", consolidationId, { ...identity, identity_digest: digest15(identity), status: "candidate", ledger_memory_id: null, content_free: true }), idempotent: false };
   }
 };
 
@@ -242311,7 +241864,7 @@ function hybridMemoryScores(candidates, options = { vectorEligible: false }) {
   for (const [index, candidate2] of byVector.entries()) {
     scores.set(candidate2.id, (scores.get(candidate2.id) ?? 0) + 1 / (k + index + 1));
   }
-  return [...scores].map(([id22, score]) => ({ id: id22, score: Number(score.toFixed(8)), retrieval_mode: "vector+keyword" })).sort((left, right) => right.score - left.score || left.id.localeCompare(right.id));
+  return [...scores].map(([id23, score]) => ({ id: id23, score: Number(score.toFixed(8)), retrieval_mode: "vector+keyword" })).sort((left, right) => right.score - left.score || left.id.localeCompare(right.id));
 }
 function memoryUsageEvidence(input) {
   const memoryIds = Array.isArray(input.memory_ids) ? input.memory_ids.map((item) => text(item, "memory_id")) : [];
@@ -242355,13 +241908,13 @@ var MemoryContribution = class {
     const access4 = { principal_id: request2.principal_id, principal_ids: request2.principal_ids, tenant_id: request2.tenant_id, purpose: request2.cognitive_purpose };
     const guard = new ContextReadGuard(this.store, void 0, scopes, sourceIds);
     const sources = /* @__PURE__ */ new Map();
-    const sourceOf = (id22) => {
-      if (!sources.has(id22)) {
-        const source = this.store.find("knowledge_source", id22, void 0, false);
+    const sourceOf = (id23) => {
+      if (!sources.has(id23)) {
+        const source = this.store.find("knowledge_source", id23, void 0, false);
         if (sources.size >= 10001) return source;
-        sources.set(id22, source);
+        sources.set(id23, source);
       }
-      return sources.get(id22);
+      return sources.get(id23);
     };
     for (const sourceId of sourceIds) {
       guard.track("knowledge_source", sourceId);
@@ -242377,7 +241930,9 @@ var MemoryContribution = class {
       return (request2.history_view === true || item.status === "active") && source?.status === "active" && source.trust !== "untrusted" && sourceAllows(source, access4) && scopeAllows(envelope, access4) && (item.kind !== "working" || request2.include_working_notes === true || item.working_note !== true || requestedIds.includes(String(item.id))) && (request2.allow_restricted === true || item.sensitivity !== "restricted") && (selectedSourceIds === null || selectedSourceIds.has(String(item.source_id)));
     };
     const records2 = this.records(request2, readable, scopes);
-    const candidates = records2.map((memory) => ({ memory, body: this.content(memory) }));
+    const temporalParts = scopes.map((scope3) => temporalMemorySelect(records2.filter((memory) => canonicalJson(memory.scope) === canonicalJson(scope3)), validAt2, request2.history_view === true));
+    const temporal = { selected: temporalParts.flatMap((part) => part.selected), excluded: temporalParts.flatMap((part) => part.excluded) };
+    const candidates = temporal.selected.map((memory) => ({ memory, body: this.content(memory) }));
     const scopeRank = new Map(scopes.map((scope3, index) => [canonicalJson(scope3), index]));
     const preferred = /* @__PURE__ */ new Map();
     const topicOf = (memory) => typeof memory.topic === "string" && memory.topic ? memory.topic : `entry:${memory.id}`;
@@ -242386,8 +241941,7 @@ var MemoryContribution = class {
       preferred.set(topic, Math.min(preferred.get(topic) ?? Number.MAX_SAFE_INTEGER, rank));
     }
     const scoped = candidates.filter(({ memory }) => request2.history_view === true || scopeRank.get(canonicalJson(memory.scope)) === preferred.get(topicOf(memory)));
-    const temporal = temporalMemorySelect(scoped.map((item) => item.memory), validAt2, request2.history_view === true);
-    const available2 = scoped.filter((item) => temporal.selected.some((memory) => memory.id === item.memory.id && memory.version === item.memory.version));
+    const available2 = scoped;
     for (const item of available2) {
       guard.track("memory_ledger", String(item.memory.id));
       guard.track("knowledge_source", String(item.memory.source_id));
@@ -242398,9 +241952,15 @@ var MemoryContribution = class {
       guard.assertCurrent();
     };
     const feedback = this.store.list("context_feedback", 1e4, (item) => item.outcome === "helpful" && item.evidence_verified === true, false);
+    const usages = /* @__PURE__ */ new Map();
+    for (const item of feedback) {
+      const references = Array.isArray(item.memory_refs) ? item.memory_refs : [];
+      const used = new Set(references.filter((ref2) => ref2 && typeof ref2.memory_id === "string" && typeof ref2.content_digest === "string").map((ref2) => canonicalJson([ref2.memory_id, ref2.content_digest])));
+      for (const key2 of used) usages.set(key2, (usages.get(key2) ?? 0) + 1);
+    }
     const items2 = available2.map(({ memory, body: body3 }) => {
       const confirmedAt = latestMemoryConfirmation(this.store, memory, now3.toISOString());
-      const usage2 = feedback.filter((item) => item.memory_refs.some((ref2) => ref2.memory_id === memory.id && ref2.content_digest === memory.content_digest)).length;
+      const usage2 = usages.get(canonicalJson([memory.id, memory.content_digest])) ?? 0;
       const weight = memoryDecayWeight({ confirmed_at: confirmedAt ?? memory.observed_at ?? memory.updated_at, now: now3.toISOString(), accesses: usage2, trust: sourceOf(String(memory.source_id)).trust === "verified" ? "verified" : "bounded" });
       return {
         memory_id: memory.id,
@@ -242426,7 +241986,7 @@ var MemoryContribution = class {
       const scores = new Map(ranking.hits.map((hit) => [hit.id, hit.score]));
       const ranked = items2.filter((item) => required5(item) || scores.has(`${item.memory_id}@${item.memory_version}`)).sort((a, b) => Number(required5(b)) - Number(required5(a)) || (scores.get(`${b.memory_id}@${b.memory_version}`) ?? 0) - (scores.get(`${a.memory_id}@${a.memory_version}`) ?? 0) || b.ranking_weight - a.ranking_weight || String(a.memory_id).localeCompare(String(b.memory_id)));
       matchingCount = ranked.length;
-      for (const id22 of requestedIds) if (!ranked.some((item) => item.memory_id === id22)) throw new Error("Required Memory is unavailable in this Context");
+      for (const id23 of requestedIds) if (!ranked.some((item) => item.memory_id === id23)) throw new Error("Required Memory is unavailable in this Context");
       for (const ref2 of requiredRefs.filter((ref3) => ref3.member === "memory")) if (!ranked.some((item) => contextAssetMatches(ref2, contextAssetRef("memory", item, item.scope)))) throw new Error("Required Context reference is unavailable");
       selected = ranked.filter((item) => budget.reserve(1, String(item.content).length, required5(item), "Required Memory or Context reference exceeds Context budget"));
     } else if (items2.length > request2.max_items || items2.reduce((n, item) => n + JSON.stringify(item).length, 0) > request2.max_chars) throw new Error("Memory candidate budget exceeded; narrow scope or source selection");
@@ -242438,7 +241998,7 @@ var MemoryContribution = class {
         receipt_id: `memory_contribution_${stableDigest(selected).slice(-24)}`,
         omitted_count: matchingCount - selected.length,
         read_refs: guard.refs(),
-        diagnostics: { eligible_memory_count: candidates.length, after_scope_precedence_count: scoped.length, after_temporal_policy_count: available2.length, temporal_excluded: temporal.excluded }
+        diagnostics: { eligible_memory_count: records2.length, after_scope_precedence_count: scoped.length, after_temporal_policy_count: candidates.length, temporal_excluded: temporal.excluded }
       };
     });
   }
@@ -242461,6 +242021,127 @@ var MemoryContribution = class {
   }
 };
 
+// common/craft-common-base/src/embedding-retrieval.ts
+var import_node_sqlite2 = require("node:sqlite");
+function cosine2(left, right) {
+  const dot = left.reduce((sum, value, index) => sum + value * right[index], 0);
+  const norm = (values3) => Math.sqrt(values3.reduce((sum, value) => sum + value * value, 0));
+  const leftNorm = norm(left), rightNorm = norm(right);
+  return leftNorm && rightNorm ? dot / (leftNorm * rightNorm) : 0;
+}
+function embeddingRows(value, expected) {
+  const data = value && typeof value === "object" ? value.data : void 0;
+  if (!Array.isArray(data) || data.length !== expected) throw new Error("invalid_embedding_response");
+  const result = [], indices = /* @__PURE__ */ new Set();
+  data.forEach((item, position) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) throw new Error("invalid_embedding_response");
+    const row = item, index = row.index === void 0 ? position : row.index;
+    if (typeof index !== "number" || !Number.isSafeInteger(index) || index < 0 || index >= expected || indices.has(index)) throw new Error("invalid_embedding_response");
+    const vector = row.embedding;
+    if (!Array.isArray(vector) || !vector.length || vector.length > 8192 || vector.some((n) => typeof n !== "number" || !Number.isFinite(n)) || !Number.isFinite(vector.reduce((sum, n) => sum + n * n, 0))) throw new Error("invalid_embedding_response");
+    indices.add(index);
+    result[index] = vector;
+  });
+  return result;
+}
+var OpenAiCompatibleEmbeddingRetrievalPort = class _OpenAiCompatibleEmbeddingRetrievalPort {
+  /** Process-local cache pinned to endpoint, configured model identifier and content.
+   * A mutable provider model alias is not an attested model revision. */
+  static embeddings = /* @__PURE__ */ new Map();
+  endpoint;
+  model;
+  credentialEnv;
+  cachePath;
+  revision;
+  beforeRequest;
+  constructor(configuration, cachePath, beforeRequest) {
+    this.cachePath = cachePath;
+    this.beforeRequest = beforeRequest;
+    this.revision = typeof configuration.model_revision === "string" ? configuration.model_revision : "unversioned";
+    this.endpoint = typeof configuration.endpoint === "string" ? configuration.endpoint : "";
+    this.model = typeof configuration.model === "string" ? configuration.model : "";
+    this.credentialEnv = typeof configuration.credential_env === "string" ? configuration.credential_env : "";
+  }
+  async search(query, documents) {
+    const started = Date.now();
+    const key2 = this.credentialEnv ? process.env[this.credentialEnv] : void 0;
+    if (!this.endpoint || !this.model || !key2) return { hits: [], execution: { requested: "vector", used: "keyword", provider: this.endpoint ? "openai-compatible" : null, model: this.model || null, latency_ms: Date.now() - started, cost_summary: null, unavailable_reason: "embedding_provider_unavailable" } };
+    const input = [query, ...documents.map((item) => item.body)];
+    if (input.length > 10001 || input.reduce((n, body3) => n + body3.length, 0) > 8e6 || input.some((body3) => body3.length > 32e3))
+      return { hits: [], execution: { requested: "vector", used: "keyword", provider: "openai-compatible", model: this.model, latency_ms: Date.now() - started, cost_summary: null, unavailable_reason: "embedding_input_budget_exceeded" } };
+    const cacheKeys = input.map((value) => stableDigest({ endpoint: this.endpoint, model: this.model, revision: this.revision, value }));
+    const inputsByKey = new Map(cacheKeys.map((cacheKey, index) => [cacheKey, input[index]]));
+    const cache = new Map(_OpenAiCompatibleEmbeddingRetrievalPort.embeddings);
+    let database;
+    let unavailableReason = "embedding_request_failed";
+    let result;
+    try {
+      if (this.cachePath) {
+        database = new import_node_sqlite2.DatabaseSync(this.cachePath);
+        database.exec("PRAGMA busy_timeout=5000; CREATE TABLE IF NOT EXISTS embeddings (key TEXT PRIMARY KEY, vector TEXT NOT NULL, touched INTEGER NOT NULL)");
+        for (const cacheKey of new Set(cacheKeys)) {
+          const row = database.prepare("SELECT vector FROM embeddings WHERE key=?").get(cacheKey);
+          if (row) cache.set(cacheKey, embeddingRows({ data: [{ embedding: JSON.parse(String(row.vector)) }] }, 1)[0]);
+        }
+      }
+      const missing = [...new Set(cacheKeys.filter((cacheKey) => !cache.has(cacheKey)))];
+      let usage2;
+      let usageComplete = true;
+      const pending = /* @__PURE__ */ new Map();
+      const deadline = AbortSignal.timeout(6e4);
+      for (let offset = 0; offset < missing.length; ) {
+        const batch = [];
+        let chars = 0;
+        while (offset < missing.length && batch.length < 32) {
+          const cacheKey = missing[offset], value = inputsByKey.get(cacheKey);
+          if (batch.length && chars + value.length > 32e3) break;
+          batch.push(cacheKey);
+          chars += value.length;
+          offset++;
+        }
+        const inputs = batch.map((cacheKey) => inputsByKey.get(cacheKey));
+        unavailableReason = "embedding_request_failed";
+        this.beforeRequest?.();
+        const response = await fetch(this.endpoint, { method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${key2}` }, body: JSON.stringify({ model: this.model, input: inputs }), signal: AbortSignal.any([deadline, AbortSignal.timeout(1e4)]) });
+        if (!response.ok) {
+          unavailableReason = `http_${response.status}`;
+          throw new Error(unavailableReason);
+        }
+        unavailableReason = "invalid_embedding_response";
+        const body3 = await response.json();
+        const vectors2 = embeddingRows(body3, batch.length);
+        batch.forEach((cacheKey, index) => pending.set(cacheKey, vectors2[index]));
+        const units = body3.usage?.total_tokens;
+        if (typeof units !== "number" || !Number.isSafeInteger(units) || units < 0) usageComplete = false;
+        else usage2 = { batches: Number(usage2?.batches ?? 0) + 1, total_tokens: Number(usage2?.total_tokens ?? 0) + units };
+      }
+      const vectors = cacheKeys.map((cacheKey) => pending.get(cacheKey) ?? cache.get(cacheKey));
+      if (new Set(vectors.map((vector) => vector.length)).size !== 1) throw new Error("invalid_embedding_response");
+      this.beforeRequest?.();
+      if (database) {
+        database.exec("BEGIN IMMEDIATE");
+        try {
+          for (const [cacheKey, vector] of pending) database.prepare("INSERT OR REPLACE INTO embeddings VALUES(?,?,?)").run(cacheKey, JSON.stringify(vector), Date.now());
+          database.exec("DELETE FROM embeddings WHERE key IN (SELECT key FROM embeddings ORDER BY touched DESC,key LIMIT -1 OFFSET 10000); COMMIT");
+        } catch (error) {
+          database.exec("ROLLBACK");
+          throw error;
+        }
+      }
+      for (const [cacheKey, vector] of pending) _OpenAiCompatibleEmbeddingRetrievalPort.embeddings.set(cacheKey, vector);
+      while (_OpenAiCompatibleEmbeddingRetrievalPort.embeddings.size > 4096) _OpenAiCompatibleEmbeddingRetrievalPort.embeddings.delete(_OpenAiCompatibleEmbeddingRetrievalPort.embeddings.keys().next().value);
+      const queryVector = vectors[0];
+      const hits = documents.map((document3, index) => ({ id: document3.id, score: cosine2(queryVector, vectors[index + 1]), reason: "vector_cosine" })).filter((item) => item.score > 0).sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+      result = { hits, execution: { requested: "vector", used: "vector", provider: "openai-compatible", model: this.model, latency_ms: Date.now() - started, cost_summary: { usage_digest: usage2 ? stableDigest(usage2) : null, billable_units: usageComplete ? Number(usage2?.total_tokens ?? 0) : null }, unavailable_reason: null } };
+    } catch {
+      result = { hits: [], execution: { requested: "vector", used: "keyword", provider: "openai-compatible", model: this.model, latency_ms: Date.now() - started, cost_summary: null, unavailable_reason: unavailableReason } };
+    } finally {
+      if (database) database.close();
+    }
+    return result;
+  }
+};
+
 // core/retrieval-evaluation.ts
 async function runRetrievalEvaluation(adapter, value) {
   const dataset = object(value, "dataset");
@@ -242473,7 +242154,7 @@ async function runRetrievalEvaluation(adapter, value) {
   const cases = dataset.cases.map((raw) => {
     const item = object(raw, "case"), scope3 = text(item.scope, "case.scope");
     const query = text(item.query, "case.query");
-    if (!Array.isArray(item.expected_ids) || new Set(item.expected_ids).size !== item.expected_ids.length || item.expected_ids.some((id22) => typeof id22 !== "string" || !docs.some((doc) => doc.id === id22 && doc.scope === scope3))) throw new Error("Expected retrieval IDs must exist in the case scope");
+    if (!Array.isArray(item.expected_ids) || new Set(item.expected_ids).size !== item.expected_ids.length || item.expected_ids.some((id23) => typeof id23 !== "string" || !docs.some((doc) => doc.id === id23 && doc.scope === scope3))) throw new Error("Expected retrieval IDs must exist in the case scope");
     const limit3 = Number(item.top_k ?? 5);
     if (!Number.isSafeInteger(limit3) || limit3 < 1 || limit3 > 100) throw new Error("Retrieval top_k must be in 1..100");
     return { query, scope: scope3, expected_ids: item.expected_ids, limit: limit3 };
@@ -242487,7 +242168,7 @@ async function runRetrievalEvaluation(adapter, value) {
     const result = await port.search(item.query, corpus);
     const hits = adapter.strategy === "hybrid" && result.execution.used === "vector" ? fuseRankings([result.hits, (await keyword.search(item.query, corpus)).hits]) : result.hits;
     const ids6 = hits.slice(0, item.limit).map((hit) => hit.id);
-    const correct = ids6.filter((id22) => item.expected_ids.includes(id22));
+    const correct = ids6.filter((id23) => item.expected_ids.includes(id23));
     const noAnswer = item.expected_ids.length === 0;
     const price = configuration.cost_per_million_input_units;
     const units = result.execution.cost_summary?.billable_units;
@@ -242506,7 +242187,7 @@ async function runRetrievalEvaluation(adapter, value) {
       false_positive_count: ids6.length - correct.length,
       no_answer_false_positive_count: noAnswer ? ids6.length : 0,
       reciprocal_rank: correct.length ? 1 / (ids6.indexOf(correct[0]) + 1) : 0,
-      cross_project_leak_count: ids6.filter((id22) => !corpus.some((doc) => doc.id === id22)).length,
+      cross_project_leak_count: ids6.filter((id23) => !corpus.some((doc) => doc.id === id23)).length,
       latency_ms: result.execution.latency_ms,
       execution: result.execution
     });
@@ -242537,8 +242218,8 @@ async function runRetrievalEvaluation(adapter, value) {
 }
 
 // core/context-resolution.ts
-var import_node_path32 = require("node:path");
-var import_node_crypto95 = require("node:crypto");
+var import_node_path31 = require("node:path");
+var import_node_crypto94 = require("node:crypto");
 
 // common/craft-common-base/src/capability-protocol.ts
 var CONTEXT_MEMBERS = ["history", "knowledge", "memory", "experience", "state"];
@@ -242669,12 +242350,12 @@ async function runPhase(phase, context, hooks) {
 }
 
 // core/scope-identity.ts
-var import_node_crypto94 = require("node:crypto");
+var import_node_crypto93 = require("node:crypto");
 var import_node_child_process6 = require("node:child_process");
-var import_node_fs23 = require("node:fs");
-var import_node_path31 = require("node:path");
+var import_node_fs22 = require("node:fs");
+var import_node_path30 = require("node:path");
 function hash(value) {
-  return (0, import_node_crypto94.createHash)("sha256").update(value).digest("hex").slice(0, 24);
+  return (0, import_node_crypto93.createHash)("sha256").update(value).digest("hex").slice(0, 24);
 }
 function normalizeRemote(value) {
   const trimmed = value.trim().replace(/\.git$/u, "");
@@ -242683,10 +242364,10 @@ function normalizeRemote(value) {
   return (ssh ? `${ssh[1]}/${ssh[2]}` : url2 ? `${url2[1]}/${url2[2]}` : trimmed).toLowerCase();
 }
 function projectIdentityFromRoot(root, userNamedId) {
-  const localPath = (0, import_node_path31.resolve)(root);
+  const localPath = (0, import_node_path30.resolve)(root);
   let canonicalPath = localPath;
   try {
-    canonicalPath = (0, import_node_fs23.realpathSync)(localPath);
+    canonicalPath = (0, import_node_fs22.realpathSync)(localPath);
   } catch {
   }
   let remote = null;
@@ -242726,15 +242407,15 @@ var ScopeIdentityKernel = class {
     const aliasKind = String(args.alias_kind ?? "");
     const alias = String(args.alias ?? "").trim();
     if (scopeKind !== "project" || !scopeId || !alias || !(/* @__PURE__ */ new Set(["path", "legacy", "git_remote", "user_named"])).has(aliasKind)) throw new Error("Scope Alias is invalid");
-    const id22 = `scope_alias_${hash(canonicalJson({ scopeKind, scopeId, aliasKind, alias }))}`;
+    const id23 = `scope_alias_${hash(canonicalJson({ scopeKind, scopeId, aliasKind, alias }))}`;
     const identity = { scope: { kind: scopeKind, id: scopeId }, alias_kind: aliasKind, alias, alias_digest: stableDigest(alias) };
     return this.store.transaction(() => {
-      const existing = this.store.find("scope_alias", id22);
+      const existing = this.store.find("scope_alias", id23);
       if (existing) {
         if (existing.identity_digest !== stableDigest(identity)) throw new Error("Scope Alias idempotency conflict");
         return { alias: existing, idempotent: true };
       }
-      return { alias: this.store.create("scope_alias", id22, { ...identity, identity_digest: stableDigest(identity), status: "active" }), idempotent: false };
+      return { alias: this.store.create("scope_alias", id23, { ...identity, identity_digest: stableDigest(identity), status: "active" }), idempotent: false };
     });
   }
   /** Bind known historical scope ids without destroying their source records. */
@@ -242756,7 +242437,7 @@ var ScopeIdentityKernel = class {
       if (project) {
         const candidates = this.store.list("scope_alias", 1e4, (item) => item.status === "active" && String(item.alias) === project.id);
         const direct = this.store.find("project_identity", project.id);
-        const canonical2 = direct ? direct.canonical_scope : candidates[0]?.scope;
+        const canonical2 = direct ? direct.canonical_scope : candidates[0]?.scope ?? project;
         if (canonical2) {
           attempted.push(canonical2);
           aliases.push(...candidates);
@@ -242858,7 +242539,7 @@ var ContextResolutionKernel = class {
     if (!STRATEGIES.has(strategy)) throw new Error("Retrieval strategy is unsupported");
     const config = object(args.configuration ?? {}, "configuration");
     noSecretValue(config, "configuration");
-    const adapterId = String(args.adapter_id ?? `retrieval_adapter_${(0, import_node_crypto95.randomUUID)().replaceAll("-", "")}`);
+    const adapterId = String(args.adapter_id ?? `retrieval_adapter_${(0, import_node_crypto94.randomUUID)().replaceAll("-", "")}`);
     const identity = { strategy, provider_fingerprint: args.provider_fingerprint === void 0 ? null : text(args.provider_fingerprint, "provider_fingerprint"), configuration: config, configuration_digest: stableDigest(config) };
     if ((strategy === "vector" || strategy === "hybrid") && identity.provider_fingerprint === null) throw new Error("Vector Retrieval Adapter requires provider_fingerprint");
     const existing = this.store.find("retrieval_adapter", adapterId);
@@ -242882,7 +242563,7 @@ var ContextResolutionKernel = class {
     const report = await runRetrievalEvaluation(adapter, args.dataset);
     const current2 = this.store.get("retrieval_adapter", String(adapter.id));
     if (current2.version !== adapter.version) throw new Error("Retrieval adapter changed during evaluation");
-    const run = this.store.create("retrieval_evaluation_run", `retrieval_run_${(0, import_node_crypto95.randomUUID)()}`, report);
+    const run = this.store.create("retrieval_evaluation_run", `retrieval_run_${(0, import_node_crypto94.randomUUID)()}`, report);
     return this.retrievalEvaluate({ ...args, metrics: report.metrics, run_id: run.id });
   }
   retrievalEvaluate(args) {
@@ -242903,7 +242584,7 @@ var ContextResolutionKernel = class {
     const run = args.run_id === void 0 ? null : this.store.get("retrieval_evaluation_run", text(args.run_id, "run_id"));
     const verified = run?.provenance === "runtime_executed" && run.adapter_identity_digest === adapter.identity_digest && stableDigest(run.metrics) === stableDigest(metrics) && run.execution_complete === true;
     const eligible = adapter.strategy === "keyword" || verified && recall >= minimumRecall && leakage === 0 && latency <= maxLatency && (negativeCases === 0 || noAnswerFalsePositives === 0) && (args.max_cost_usd === void 0 || metrics.cost_usd !== null && cost <= maxCost);
-    const evaluationId = String(args.evaluation_id ?? `retrieval_evaluation_${(0, import_node_crypto95.randomUUID)().replaceAll("-", "")}`);
+    const evaluationId = String(args.evaluation_id ?? `retrieval_evaluation_${(0, import_node_crypto94.randomUUID)().replaceAll("-", "")}`);
     const identity = { run_id: run?.id ?? null, provenance: verified ? "runtime_executed" : "caller_reported", adapter_id: adapter.id, adapter_version: adapter.version, metrics, minimum_recall: minimumRecall, max_latency_ms: maxLatency, max_cost_usd: maxCost };
     const existing = this.store.find("retrieval_evaluation", evaluationId);
     const identityDigest = stableDigest(identity);
@@ -242948,7 +242629,7 @@ var ContextResolutionKernel = class {
     const historical = args.history_view === true || args.as_of !== void 0 || args.known_at !== void 0;
     if (args.as_of !== void 0 && !Number.isFinite(Date.parse(text(args.as_of, "as_of")))) throw new Error("as_of must be an ISO timestamp");
     const recheck = () => guard.assertCurrent();
-    const port = (requestedStrategy === "vector" || requestedStrategy === "hybrid") && adapter ? new OpenAiCompatibleEmbeddingRetrievalPort(adapter.configuration ?? {}, (0, import_node_path32.join)(this.store.paths.root, "retrieval-embeddings.sqlite"), recheck) : new KeywordRetrievalPort();
+    const port = (requestedStrategy === "vector" || requestedStrategy === "hybrid") && adapter ? new OpenAiCompatibleEmbeddingRetrievalPort(adapter.configuration ?? {}, (0, import_node_path31.join)(this.store.paths.root, "retrieval-embeddings.sqlite"), recheck) : new KeywordRetrievalPort();
     const recalled = [];
     let memoryPart;
     const contributorFailures = [];
@@ -243137,7 +242818,7 @@ var ContextResolutionKernel = class {
         if (existing.identity_digest !== identityDigest) throw new Error("Context Resolution Receipt idempotency conflict");
         return { receipt: existing, items: items2, contributions, idempotent: true };
       }
-      return { receipt: this.store.create("context_resolution_receipt", receiptId, { ...identity, retrieval_execution: retrieval.execution, scope_aliases: scopeResolution.matched_aliases.map((alias) => ({ id: alias.id, alias_kind: alias.alias_kind, alias_digest: alias.alias_digest })), excluded_scopes: [...scopeResolution.excluded_scopes, ...memoryDiagnostics.temporal_excluded], identity_digest: identityDigest, omitted_count: candidatesRanked.length - items2.length, explanation: { eligible_memory_count: memoryDiagnostics.eligible_memory_count, after_scope_precedence_count: memoryDiagnostics.after_scope_precedence_count, after_temporal_policy_count: memoryDiagnostics.after_temporal_policy_count, matching_memory_count: candidatesRanked.length, selected_memory_count: items2.length, budget_omitted_count: candidatesRanked.length - items2.length, selection: "scope_then_policy_then_shared_bm25_or_hybrid_then_required_and_budget" }, content_free: true }), items: items2, contributions, idempotent: false };
+      return { receipt: this.store.create("context_resolution_receipt", receiptId, { ...identity, retrieval_execution: retrieval.execution, scope_aliases: scopeResolution.matched_aliases.map((alias) => ({ id: alias.id, alias_kind: alias.alias_kind, alias_digest: alias.alias_digest })), excluded_scopes: [...scopeResolution.excluded_scopes, ...memoryDiagnostics.temporal_excluded], identity_digest: identityDigest, omitted_count: candidatesRanked.length - items2.length, explanation: { eligible_memory_count: memoryDiagnostics.eligible_memory_count, after_scope_precedence_count: memoryDiagnostics.after_scope_precedence_count, after_temporal_policy_count: memoryDiagnostics.after_temporal_policy_count, matching_memory_count: candidatesRanked.length, selected_memory_count: items2.length, budget_omitted_count: candidatesRanked.length - items2.length, selection: "policy_per_scope_then_scope_precedence_then_shared_bm25_or_hybrid_then_required_and_budget" }, content_free: true }), items: items2, contributions, idempotent: false };
     });
   }
   feedback(args) {
@@ -243148,9 +242829,9 @@ var ContextResolutionKernel = class {
     const members3 = this.members(args.members);
     if (members3 && (!Array.isArray(receipt.members) || receipt.members.some((member) => !members3.has(member)))) throw new Error("Feedback receipt belongs to another component");
     const evidenceIds2 = sortedUniqueList(args.evidence_ids, "evidence_ids");
-    evidenceIds2.forEach((id23) => this.store.get("evidence", id23));
-    const evidenceVerified = evidenceIds2.some((id23) => {
-      const evidence2 = this.store.get("evidence", id23), meta = evidence2.metadata;
+    evidenceIds2.forEach((id24) => this.store.get("evidence", id24));
+    const evidenceVerified = evidenceIds2.some((id24) => {
+      const evidence2 = this.store.get("evidence", id24), meta = evidence2.metadata;
       return evidence2.source_type === "program" && evidence2.confidence === "confirmed" && meta?.context_receipt_id === receipt.id && meta?.verdict === "passed";
     });
     const availableRefs = Array.isArray(receipt.asset_refs) ? receipt.asset_refs : [
@@ -243172,15 +242853,15 @@ var ContextResolutionKernel = class {
       return [key2, count3];
     }));
     const identity = { token_measurement: tokenMeasurement, token_provenance: "host_reported", asset_refs: refs6, usage_stage: usageStage, evidence_verified: evidenceVerified, memory_refs: refs6.filter((ref2) => ref2.member === "memory").map((ref2) => ({ memory_id: ref2.id, memory_version: ref2.version, content_digest: ref2.digest })), receipt_id: receipt.id, receipt_digest: receipt.identity_digest, scope: receipt.scope, outcome: outcome2, evidence_ids: evidenceIds2, provenance: "host_reported", changes_source_status: false };
-    const id22 = String(args.feedback_id ?? `context_feedback_${stableDigest(identity).slice(-24)}`);
-    const existing = this.store.find("context_feedback", id22);
+    const id23 = String(args.feedback_id ?? `context_feedback_${stableDigest(identity).slice(-24)}`);
+    const existing = this.store.find("context_feedback", id23);
     if (existing) {
       if (existing.identity_digest !== stableDigest(identity)) throw new Error("Context feedback idempotency conflict");
       return { feedback: existing, idempotent: true };
     }
     return this.store.transaction(() => {
-      const feedback = this.store.create("context_feedback", id22, { ...identity, identity_digest: stableDigest(identity) });
-      const corrections = ["incorrect", "stale"].includes(outcome2) ? refs6.filter((ref2) => !["history", "state"].includes(String(ref2.member))).map((ref2) => this.store.create("context_correction_task", `${id22}:${ref2.member}:${ref2.id}@${ref2.version}`, { feedback_id: id22, asset_ref: ref2, outcome: outcome2, status: "pending_review", changes_source_status: false })) : [];
+      const feedback = this.store.create("context_feedback", id23, { ...identity, identity_digest: stableDigest(identity) });
+      const corrections = ["incorrect", "stale"].includes(outcome2) ? refs6.filter((ref2) => !["history", "state"].includes(String(ref2.member))).map((ref2) => this.store.create("context_correction_task", `${id23}:${ref2.member}:${ref2.id}@${ref2.version}`, { feedback_id: id23, asset_ref: ref2, outcome: outcome2, status: "pending_review", changes_source_status: false })) : [];
       return { feedback, corrections, idempotent: false };
     });
   }
@@ -243208,11 +242889,11 @@ var ContextResolutionKernel = class {
     return health;
   }
   recordRetrievalHealth(adapter, execution, now3) {
-    const id22 = `retrieval_adapter_health_${String(adapter.id)}`;
-    const prior = this.store.find("retrieval_adapter_health", id22);
+    const id23 = `retrieval_adapter_health_${String(adapter.id)}`;
+    const prior = this.store.find("retrieval_adapter_health", id23);
     if (execution.used === "vector" || execution.used === "hybrid") {
-      if (prior) this.store.save("retrieval_adapter_health", id22, { ...payload(prior), status: "ready", consecutive_transient_failures: 0, open_until: null, last_error: null, updated_at: now3.toISOString() });
-      else this.store.create("retrieval_adapter_health", id22, { adapter_id: adapter.id, adapter_version: adapter.version, status: "ready", consecutive_transient_failures: 0, open_until: null, last_error: null, updated_at: now3.toISOString() });
+      if (prior) this.store.save("retrieval_adapter_health", id23, { ...payload(prior), status: "ready", consecutive_transient_failures: 0, open_until: null, last_error: null, updated_at: now3.toISOString() });
+      else this.store.create("retrieval_adapter_health", id23, { adapter_id: adapter.id, adapter_version: adapter.version, status: "ready", consecutive_transient_failures: 0, open_until: null, last_error: null, updated_at: now3.toISOString() });
       return;
     }
     const reason = execution.unavailable_reason ?? "embedding_request_failed";
@@ -243227,8 +242908,8 @@ var ContextResolutionKernel = class {
       last_error: reason,
       updated_at: now3.toISOString()
     };
-    if (prior) this.store.save("retrieval_adapter_health", id22, { ...payload(prior), ...next });
-    else this.store.create("retrieval_adapter_health", id22, next);
+    if (prior) this.store.save("retrieval_adapter_health", id23, { ...payload(prior), ...next });
+    else this.store.create("retrieval_adapter_health", id23, next);
   }
 };
 function reciprocalRankFuse(vector, keyword) {
@@ -243236,11 +242917,11 @@ function reciprocalRankFuse(vector, keyword) {
   const add3 = (items2) => items2.forEach((item, index) => scores.set(item.id, (scores.get(item.id) ?? 0) + 1 / (60 + index + 1)));
   add3(vector);
   add3(keyword);
-  return [...scores.entries()].map(([id22, score]) => ({ id: id22, score, reason: "hybrid_rrf" })).sort((left, right) => right.score - left.score || left.id.localeCompare(right.id));
+  return [...scores.entries()].map(([id23, score]) => ({ id: id23, score, reason: "hybrid_rrf" })).sort((left, right) => right.score - left.score || left.id.localeCompare(right.id));
 }
 
 // core/maintenance-scheduler.ts
-var import_node_crypto96 = require("node:crypto");
+var import_node_crypto95 = require("node:crypto");
 var MaintenanceScheduler = class {
   store;
   maintenance;
@@ -243254,7 +242935,7 @@ var MaintenanceScheduler = class {
     if (stage !== "light" && (args.idle !== true || args.budget_available !== true || args.model_available !== true)) {
       return { status: "skipped", reason: "idle_budget_or_model_unavailable", stage };
     }
-    const leaseId = String(args.lease_id ?? `maintenance_lease_${(0, import_node_crypto96.randomUUID)().replaceAll("-", "")}`);
+    const leaseId = String(args.lease_id ?? `maintenance_lease_${(0, import_node_crypto95.randomUUID)().replaceAll("-", "")}`);
     const identity = { stage, scope: args.scope ?? null, cursor: args.cursor ?? null };
     const existing = this.store.find("maintenance_schedule_receipt", leaseId);
     if (existing) {
@@ -243275,16 +242956,16 @@ var ContextProjectionKernel = class {
   }
   /** Persist one session's segments, replacing whatever the session held before. */
   save(sessionId, segments) {
-    const id22 = `context_session_${sessionId}`;
+    const id23 = `context_session_${sessionId}`;
     const payload10 = {
       session_id: sessionId,
       segments: segments.map((segment2, ordinal) => ({ ...segment2, tokens: estimateTokens(segment2.content), ordinal })),
       segment_count: segments.length,
       segment_digest: digestJson(segments.map((segment2) => ({ id: segment2.id, content: segment2.content })))
     };
-    const found = this.store.find("context_session", id22);
-    if (found) this.store.save("context_session", id22, payload10);
-    else this.store.create("context_session", id22, payload10);
+    const found = this.store.find("context_session", id23);
+    if (found) this.store.save("context_session", id23, payload10);
+    else this.store.create("context_session", id23, payload10);
   }
   /** The stored segments of one session, in their original order. */
   load(sessionId) {
@@ -243312,14 +242993,14 @@ var ContextProjectionKernel = class {
     });
   }
   record(sessionId, maxTokens, outcome2, segments) {
-    const id22 = `context_projection_${sessionId}`;
+    const id23 = `context_projection_${sessionId}`;
     const identity = { session_id: sessionId, max_tokens: maxTokens, kept: [...outcome2.kept], omitted: [...outcome2.elided], tokens: outcome2.tokens, complete: outcome2.complete, segment_count: segments.length };
     const identityDigest = digestJson(identity);
-    const found = this.store.find("context_projection", id22);
+    const found = this.store.find("context_projection", id23);
     if (found?.identity_digest === identityDigest) return;
     const payload10 = { ...identity, identity_digest: identityDigest, content_free: true };
-    if (found) this.store.save("context_projection", id22, payload10);
-    else this.store.create("context_projection", id22, payload10);
+    if (found) this.store.save("context_projection", id23, payload10);
+    else this.store.create("context_projection", id23, payload10);
   }
   /**
    * Project one session into a budget, and remember both the segments and the result.
@@ -243490,7 +243171,7 @@ var StateViewKernel = class {
 };
 
 // core/work-runtime-mode.ts
-var import_node_crypto97 = require("node:crypto");
+var import_node_crypto96 = require("node:crypto");
 var MODES2 = /* @__PURE__ */ new Set(["console", "agent"]);
 function strings25(value, name) {
   if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
@@ -243532,7 +243213,7 @@ var WorkRuntimeModeKernel = class {
     const activation = args.activation_profile_id === void 0 ? null : this.store.get("activation_profile", text(args.activation_profile_id, "activation_profile_id"));
     if (activation && activation.task_id !== task.id) throw new Error("Activation Profile belongs to another Task");
     const context = args.context_receipt_id === void 0 ? null : this.store.get("context_resolution_receipt", text(args.context_receipt_id, "context_receipt_id"));
-    const planId = String(args.plan_id ?? `work_runtime_plan_${(0, import_node_crypto97.randomUUID)().replaceAll("-", "")}`);
+    const planId = String(args.plan_id ?? `work_runtime_plan_${(0, import_node_crypto96.randomUUID)().replaceAll("-", "")}`);
     const identity = { task_id: task.id, task_version: task.version, mode_profile_id: profile.id, mode_profile_version: profile.version, host, model, activation_profile_id: activation?.id ?? null, activation_profile_version: activation?.version ?? null, context_receipt_id: context?.id ?? null, context_receipt_version: context?.version ?? null };
     const existing = this.store.find("work_runtime_plan", planId);
     const identityDigest = digestJson(identity);
@@ -243548,7 +243229,7 @@ var WorkRuntimeModeKernel = class {
 };
 
 // core/turn-cognitive-runtime.ts
-var import_node_crypto98 = require("node:crypto");
+var import_node_crypto97 = require("node:crypto");
 var SCOPE_KINDS2 = /* @__PURE__ */ new Set(["user", "project", "workspace", "task"]);
 var INTENTS = /* @__PURE__ */ new Set(["conversation", "knowledge", "memory", "experience", "capability", "task", "execution", "learning"]);
 var SIGNALS2 = /* @__PURE__ */ new Set(["needs_context", "needs_memory", "needs_experience", "needs_capability", "needs_workflow", "needs_execution", "durable_value", "sensitive"]);
@@ -243618,7 +243299,7 @@ var TurnCognitiveRuntime = class {
     };
     if (!(/* @__PURE__ */ new Set(["none", "candidate"])).has(identity.memory_capture)) throw new Error("memory_capture is unsupported");
     if (!(/* @__PURE__ */ new Set(["none", "observe"])).has(identity.evaluation_capture)) throw new Error("evaluation_capture is unsupported");
-    const policyId = String(args.policy_id ?? `turn_policy_${(0, import_node_crypto98.randomUUID)().replaceAll("-", "")}`);
+    const policyId = String(args.policy_id ?? `turn_policy_${(0, import_node_crypto97.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("turn_policy", policyId);
     const identityDigest = stableDigest(identity);
     if (existing) {
@@ -243649,7 +243330,7 @@ var TurnCognitiveRuntime = class {
       signals: optionalStrings3(args.signals, "signals", SIGNALS2),
       memory_candidate: candidate(args)
     };
-    const proposalId = String(args.proposal_id ?? `turn_proposal_${(0, import_node_crypto98.randomUUID)().replaceAll("-", "")}`);
+    const proposalId = String(args.proposal_id ?? `turn_proposal_${(0, import_node_crypto97.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("turn_proposal", proposalId);
     const identityDigest = stableDigest(identity);
     if (existing) {
@@ -243665,7 +243346,7 @@ var TurnCognitiveRuntime = class {
     if (!(/* @__PURE__ */ new Set(["manual", "event_hook"])).has(delivery)) throw new Error("Turn Host Adapter delivery is unsupported");
     const identity = { host, delivery, supports_turn_hook: args.supports_turn_hook === true, proposal_contract: text10(args.proposal_contract ?? "turn-proposal/v1", "proposal_contract") };
     if (delivery === "event_hook" && identity.supports_turn_hook !== true) throw new Error("event_hook requires supports_turn_hook");
-    const adapterId = String(args.adapter_id ?? `turn_host_adapter_${(0, import_node_crypto98.randomUUID)().replaceAll("-", "")}`);
+    const adapterId = String(args.adapter_id ?? `turn_host_adapter_${(0, import_node_crypto97.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("turn_host_adapter", adapterId);
     const identityDigest = stableDigest(identity);
     if (existing) {
@@ -243701,7 +243382,7 @@ var TurnCognitiveRuntime = class {
       semantic_owner: proposal.semantic_owner,
       selected_refs: { host_adapter_id: proposal.host_adapter_id, work_runtime_mode_id: proposal.work_runtime_mode_id }
     };
-    const receiptId = String(args.receipt_id ?? `turn_receipt_${(0, import_node_crypto98.randomUUID)().replaceAll("-", "")}`);
+    const receiptId = String(args.receipt_id ?? `turn_receipt_${(0, import_node_crypto97.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("turn_receipt", receiptId);
     const receiptDigest = stableDigest(receiptIdentity2);
     if (existing) {
@@ -243753,7 +243434,7 @@ var TurnCognitiveRuntime = class {
     if (proposal.memory_candidate !== void 0) throw new Error("Turn Evaluation Case proposal must be content-free");
     const expected = object(args.expected_actions, "expected_actions");
     const identity = { policy_id: policy.id, policy_version: policy.version, proposal, expected_actions: expected };
-    const caseId = String(args.case_id ?? `turn_evaluation_case_${(0, import_node_crypto98.randomUUID)().replaceAll("-", "")}`);
+    const caseId = String(args.case_id ?? `turn_evaluation_case_${(0, import_node_crypto97.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("turn_evaluation_case", caseId);
     const identityDigest = stableDigest(identity);
     if (existing) {
@@ -243770,7 +243451,7 @@ var TurnCognitiveRuntime = class {
     const passed = results.filter((item) => item.passed).length;
     const metrics = { cases: results.length, passed, decision_accuracy: passed / results.length, false_positive_count: results.reduce((sum, item) => sum + item.false_positive_count, 0), scope_rejection_count: results.filter((item) => item.scope_rejected).length };
     const identity = { case_refs: cases.map((item) => ({ id: item.id, version: item.version })), metrics, verdict: passed === results.length ? "eligible" : "rejected" };
-    const evaluationId = String(args.evaluation_id ?? `turn_evaluation_${(0, import_node_crypto98.randomUUID)().replaceAll("-", "")}`);
+    const evaluationId = String(args.evaluation_id ?? `turn_evaluation_${(0, import_node_crypto97.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("turn_evaluation", evaluationId);
     const identityDigest = stableDigest(identity);
     if (existing) {
@@ -243832,7 +243513,7 @@ var TurnCognitiveRuntime = class {
 };
 
 // core/continual-harness.ts
-var import_node_crypto99 = require("node:crypto");
+var import_node_crypto98 = require("node:crypto");
 var BINDING_KINDS = /* @__PURE__ */ new Set(["prompt_note", "memory_ledger", "capability", "workflow", "expert_profile", "harness_topology", "work_runtime_plan", "context_resolution_receipt", "activation_profile"]);
 var SOURCE_KINDS2 = /* @__PURE__ */ new Set(["trial", "outcome", "acceptance_gate", "verified_work_loop", "trace", "work_session"]);
 var CHANGE_KINDS = /* @__PURE__ */ new Set(["prompt_note", "memory", "skill", "workflow", "subagent_spec"]);
@@ -243855,15 +243536,15 @@ function reference2(store, raw, name, allowed) {
   const input = object(raw, name);
   const kind4 = text11(input.kind, `${name}.kind`);
   if (!allowed.has(kind4)) throw new Error(`${name}.kind is unsupported`);
-  const id22 = text11(input.id, `${name}.id`);
+  const id23 = text11(input.id, `${name}.id`);
   const version3 = input.version === void 0 ? void 0 : Number(input.version);
   if (version3 !== void 0 && (!Number.isInteger(version3) || version3 < 1)) throw new Error(`${name}.version must be a positive integer`);
-  const record = store.get(kind4, id22, version3);
+  const record = store.get(kind4, id23, version3);
   return { kind: kind4, id: record.id, version: record.version };
 }
 function evidence(store, value) {
   const ids6 = strings27(value, "evidence_ids");
-  for (const id22 of ids6) if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(store.get("evidence", id22).confidence))) throw new Error("Refinement Evidence must be confirmed or bounded");
+  for (const id23 of ids6) if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(store.get("evidence", id23).confidence))) throw new Error("Refinement Evidence must be confirmed or bounded");
   return ids6;
 }
 var ContinualHarnessKernel = class {
@@ -243903,7 +243584,7 @@ var ContinualHarnessKernel = class {
     for (const source of sourceRefs) this.assertTaskSource(task.id, source);
     const sessionId = local ? text11(args.session_id, "session_id") : null;
     const identity = { task_id: task.id, task_version: task.version, view_id: view.id, view_version: view.version, session_id: sessionId, source_refs: sourceRefs, evidence_ids: evidenceIds2, hypothesis: text11(args.hypothesis, "hypothesis"), changes, design_axes: axes2.sort(), risk: local ? "low" : "governed" };
-    const refinementId = String(args.refinement_id ?? `harness_refinement_${(0, import_node_crypto99.randomUUID)().replaceAll("-", "")}`);
+    const refinementId = String(args.refinement_id ?? `harness_refinement_${(0, import_node_crypto98.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = stableDigest(identity);
     const existing = this.store.find("harness_refinement", refinementId);
     if (existing) {
@@ -243940,7 +243621,7 @@ var ContinualHarnessKernel = class {
     if (refinement.lifecycle !== "signoff_ready") throw new Error("Refinement is not ready for Signoff");
     const signoff = this.store.get("signoff", text11(args.signoff_id, "signoff_id"));
     if (signoff.decision !== "passed" || signoff.subject_type !== "harness_refinement" || signoff.subject_id !== refinement.id || Number(signoff.subject_version) !== Number(refinement.version)) throw new Error("Refinement requires Signoff for its exact version");
-    const canaryId = String(args.canary_id ?? `harness_refinement_canary_${(0, import_node_crypto99.randomUUID)().replaceAll("-", "")}`);
+    const canaryId = String(args.canary_id ?? `harness_refinement_canary_${(0, import_node_crypto98.randomUUID)().replaceAll("-", "")}`);
     const canary = this.store.create("harness_refinement_canary", canaryId, { refinement_id: refinement.id, refinement_version: refinement.version, baseline_snapshot: refinement.before_snapshot, candidate_snapshot: refinement.after_snapshot, status: "running" });
     const saved = this.store.save("harness_refinement", String(refinement.id), { ...payload(refinement), lifecycle: "canary_running", signoff_id: signoff.id, canary_id: canary.id });
     return { refinement: saved, canary };
@@ -244019,7 +243700,7 @@ var ContinualHarnessKernel = class {
 };
 
 // core/stateful-compute.ts
-var import_node_crypto100 = require("node:crypto");
+var import_node_crypto99 = require("node:crypto");
 var HOST_KINDS2 = /* @__PURE__ */ new Set(["repl", "notebook", "agent_host", "custom"]);
 var CONFIDENCE3 = /* @__PURE__ */ new Set(["confirmed", "bounded", "unverified"]);
 var SECRET10 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
@@ -244055,7 +243736,7 @@ var StatefulComputeKernel = class {
       if (profile.status !== "verified" || profile.isolation !== "verified" || profile.network !== "deny") throw new Error("Generated-code Host conformance is not verified and network-denied");
     }
     const identity = { kind: kind4, label: text12(args.label, "label"), trust, generated_code: generatedCode, conformance_id: conformanceId, capabilities: strings28(args.capabilities, "capabilities"), execution_authority: false };
-    const hostId = String(args.host_id ?? `stateful_compute_host_${(0, import_node_crypto100.randomUUID)().replaceAll("-", "")}`);
+    const hostId = String(args.host_id ?? `stateful_compute_host_${(0, import_node_crypto99.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = digestJson(identity);
     const existing = this.store.find("stateful_compute_host", hostId);
     if (existing) {
@@ -244073,7 +243754,7 @@ var StatefulComputeKernel = class {
     const environmentFingerprint = text12(args.environment_fingerprint, "environment_fingerprint");
     const identity = { task_id: task.id, task_version: task.version, host_id: host.id, host_version: host.version, context_receipt_id: context.id, context_receipt_version: context.version, environment_fingerprint: environmentFingerprint, workspace_snapshot_ref: text12(args.workspace_snapshot_ref, "workspace_snapshot_ref"), budget_ref: text12(args.budget_ref, "budget_ref"), allowed_effect: text12(args.allowed_effect ?? "read_only", "allowed_effect") };
     if (identity.allowed_effect !== "read_only" && !host.conformance_id) throw new Error("Stateful compute writes require a verified conformance profile");
-    const sessionId = String(args.session_id ?? `stateful_compute_session_${(0, import_node_crypto100.randomUUID)().replaceAll("-", "")}`);
+    const sessionId = String(args.session_id ?? `stateful_compute_session_${(0, import_node_crypto99.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = digestJson(identity);
     const existing = this.store.find("stateful_compute_session", sessionId);
     if (existing) {
@@ -244086,7 +243767,7 @@ var StatefulComputeKernel = class {
     const session = this.store.get("stateful_compute_session", text12(args.session_id, "session_id"));
     if (Number(args.expected_revision) !== Number(session.state_revision)) throw new Error("Stateful compute Session revision changed; re-observation is required");
     const action = { operation: text12(args.operation, "operation"), input_refs: strings28(args.input_refs, "input_refs"), expected_revision: session.state_revision, environment_fingerprint: session.environment_fingerprint };
-    const dispatchId = String(args.dispatch_id ?? `stateful_compute_dispatch_${(0, import_node_crypto100.randomUUID)().replaceAll("-", "")}`);
+    const dispatchId = String(args.dispatch_id ?? `stateful_compute_dispatch_${(0, import_node_crypto99.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("stateful_compute_dispatch", dispatchId);
     const actionDigest2 = digestJson(action);
     if (existing) {
@@ -244117,7 +243798,7 @@ var StatefulComputeKernel = class {
     const session = this.store.get("stateful_compute_session", text12(args.session_id, "session_id"));
     if (!(/* @__PURE__ */ new Set(["prepared", "running", "paused"])).has(String(session.status))) throw new Error("Stateful compute Session cannot delegate work");
     const identity = { parent_session_id: session.id, task_id: session.task_id, objective: text12(args.objective, "objective"), role: text12(args.role ?? "diagnostic_research", "role"), context_refs: strings28(args.context_refs, "context_refs"), budget_ref: session.budget_ref, allocation: object(args.allocation ?? {}, "allocation"), effect: "read_only", result_schema: object(args.result_schema, "result_schema"), async: true };
-    const callId = String(args.call_id ?? `subagent_call_${(0, import_node_crypto100.randomUUID)().replaceAll("-", "")}`);
+    const callId = String(args.call_id ?? `subagent_call_${(0, import_node_crypto99.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = digestJson(identity);
     const existing = this.store.find("subagent_function_call", callId);
     if (existing) {
@@ -244132,7 +243813,7 @@ var StatefulComputeKernel = class {
     const call = this.store.get("subagent_function_call", text12(args.call_id, "call_id"));
     if (call.status !== "issued") throw new Error("Sub-agent call is not awaiting a result");
     const evidenceIds2 = strings28(args.evidence_ids, "evidence_ids", true);
-    for (const id22 of evidenceIds2) if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(this.store.get("evidence", id22).confidence))) throw new Error("Sub-agent Evidence must be confirmed or bounded");
+    for (const id23 of evidenceIds2) if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(this.store.get("evidence", id23).confidence))) throw new Error("Sub-agent Evidence must be confirmed or bounded");
     const confidence2 = text12(args.confidence, "confidence");
     if (!CONFIDENCE3.has(confidence2)) throw new Error("Sub-agent result confidence is unsupported");
     const result = { hypotheses: strings28(args.hypotheses, "hypotheses", true), counterexamples: strings28(args.counterexamples, "counterexamples", true), evidence_ids: evidenceIds2, confidence: confidence2, next_action: text12(args.next_action, "next_action"), output_refs: strings28(args.output_refs, "output_refs") };
@@ -244153,7 +243834,7 @@ var StatefulComputeKernel = class {
 };
 
 // core/uncertainty-policy.ts
-var import_node_crypto101 = require("node:crypto");
+var import_node_crypto100 = require("node:crypto");
 var SCOPES = ["core", "global", "project", "task", "case"];
 var MODES3 = /* @__PURE__ */ new Set(["observe_only", "supervised", "bounded_autonomous", "autonomous", "locked"]);
 var ACTIONS2 = /* @__PURE__ */ new Set(["collecting", "human_required", "abstained", "unchanged", "rejected", "blocked"]);
@@ -244205,7 +243886,7 @@ var UncertaintyPolicyKernel = class {
   resolve(args) {
     const ids6 = strings29(args.policy_ids, "policy_ids");
     if (!ids6.length) throw new Error("policy_ids must include a Core Safety Floor");
-    const policies = ids6.map((id22) => this.store.get("uncertainty_policy", id22)).sort((a, b) => Number(a.rank) - Number(b.rank));
+    const policies = ids6.map((id23) => this.store.get("uncertainty_policy", id23)).sort((a, b) => Number(a.rank) - Number(b.rank));
     if (policies[0]?.scope !== "core" || new Set(policies.map((item) => item.scope)).size !== policies.length) throw new Error("Uncertainty Policy chain must start with one Core Safety Floor and contain unique scopes");
     for (let index = 1; index < policies.length; index += 1) if (Number(policies[index].rank) <= Number(policies[index - 1].rank)) throw new Error("Uncertainty Policy chain scope order is invalid");
     const effective = Object.assign({}, ...policies.map((item) => payload(item)));
@@ -244240,9 +243921,9 @@ var UncertaintyPolicyKernel = class {
     if (!(/* @__PURE__ */ new Set(["accepted", "rejected", "blocked", "unchanged"])).has(decision)) throw new Error("Adjudication decision is unsupported");
     const evidenceIds2 = strings29(args.evidence_ids, "evidence_ids");
     if (!evidenceIds2.length) throw new Error("Adjudication requires Evidence");
-    for (const id22 of evidenceIds2) if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(this.store.get("evidence", id22).confidence))) throw new Error("Adjudication Evidence must be confirmed or bounded");
+    for (const id23 of evidenceIds2) if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(this.store.get("evidence", id23).confidence))) throw new Error("Adjudication Evidence must be confirmed or bounded");
     const identity = { resolution_id: resolution.id, resolution_version: resolution.version, decision, actor: text(args.actor, "actor"), reason: text(args.reason, "reason"), scope: text(args.scope, "scope"), valid_until: text(args.valid_until, "valid_until"), evidence_ids: evidenceIds2 };
-    const adjudicationId = String(args.adjudication_id ?? `adjudication_${(0, import_node_crypto101.randomUUID)().replaceAll("-", "")}`);
+    const adjudicationId = String(args.adjudication_id ?? `adjudication_${(0, import_node_crypto100.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = digestJson(identity);
     const existing = this.store.find("adjudication", adjudicationId);
     if (existing) {
@@ -244622,7 +244303,7 @@ function instant13(value, name) {
   if (Number.isNaN(Date.parse(result))) throw new Error(`${name} must be an ISO timestamp`);
   return result;
 }
-function digest17(value, name) {
+function digest16(value, name) {
   const result = text(value, name);
   if (!DIGEST.test(result)) throw new Error(`${name} must be a sha256 digest`);
   return result;
@@ -244678,7 +244359,7 @@ var AuthorizationKernel = class {
     const effectId = identifier4(args.effect_id, "effect_id");
     const actor = identifier4(args.actor, "actor");
     const authorizedAt = instant13(args.authorized_at, "authorized_at");
-    const boundDigest = args.receipt_digest === void 0 ? effectDigest(args.effect) : digest17(args.receipt_digest, "receipt_digest");
+    const boundDigest = args.receipt_digest === void 0 ? effectDigest(args.effect) : digest16(args.receipt_digest, "receipt_digest");
     const level = riskLevel2(args.risk_level);
     const identityDigest = stableDigest({ effect_id: effectId, actor, receipt_digest: boundDigest, risk_level: level });
     const authorizationId = args.authorization_id === void 0 ? `authorization_${identityDigest.slice("sha256:".length, "sha256:".length + 24)}` : identifier4(args.authorization_id, "authorization_id");
@@ -246614,16 +246295,16 @@ var ObjectModelKernel = class {
   create(args) {
     const kind4 = text(args.kind, "kind");
     const definition2 = this.store.get("object_kind_definition", kind4);
-    const id22 = identifier13(args.id, "id");
+    const id23 = identifier13(args.id, "id");
     const origin = text(args.origin, "origin");
     if (origin !== "event" && origin !== "human") throw new Error("origin must be event or human");
     const state4 = stateName(args.state ?? String(definition2.initial_state), "state");
     const known = definition2.states.some((entry2) => entry2.name === state4);
     if (!known) throw new Error(`state is not declared for this kind: ${state4}`);
-    const existing = this.store.find("craft_object", id22);
+    const existing = this.store.find("craft_object", id23);
     if (existing) throw new Error("Craft object already exists");
-    const record = this.store.create("craft_object", id22, {
-      id: id22,
+    const record = this.store.create("craft_object", id23, {
+      id: id23,
       kind: kind4,
       state: state4,
       origin,
@@ -246639,8 +246320,8 @@ var ObjectModelKernel = class {
       state_revision: 0,
       created_at: text(args.created_at, "created_at")
     });
-    this.store.appendEvent(`object:${id22}`, "object_created", {
-      id: id22,
+    this.store.appendEvent(`object:${id23}`, "object_created", {
+      id: id23,
       kind: kind4,
       state: state4,
       origin,
@@ -247298,7 +246979,7 @@ var SubscriptionDriftKernel = class {
   register(args) {
     const subscriptionId = identifier16(args.subscription_id, "subscription_id");
     const structure = structureFields(args.structure);
-    const fingerprint4 = stableDigest(structure);
+    const fingerprint5 = stableDigest(structure);
     const now3 = text(args.now, "now");
     if (Number.isNaN(Date.parse(now3))) throw new Error("now must be an ISO timestamp");
     const dormantDays = args.dormant_after_days === void 0 ? DEFAULT_DORMANT_DAYS : Number(args.dormant_after_days);
@@ -247307,7 +246988,7 @@ var SubscriptionDriftKernel = class {
     const record = {
       subscription_id: subscriptionId,
       structure,
-      upstream_fingerprint: fingerprint4,
+      upstream_fingerprint: fingerprint5,
       dormant_after_days: dormantDays,
       state: "active",
       suspended_reason: null,
@@ -247328,10 +247009,10 @@ var SubscriptionDriftKernel = class {
   checkDrift(args) {
     const subscription = this.#subscription(identifier16(args.subscription_id, "subscription_id"));
     const structure = structureFields(args.structure);
-    const fingerprint4 = stableDigest(structure);
+    const fingerprint5 = stableDigest(structure);
     const authorized = subscription.structure;
     const changed = [.../* @__PURE__ */ new Set([...Object.keys(authorized), ...Object.keys(structure)])].filter((field) => authorized[field] !== structure[field]).sort();
-    if (fingerprint4 === String(subscription.upstream_fingerprint)) {
+    if (fingerprint5 === String(subscription.upstream_fingerprint)) {
       return { subscription, drifted: false, changed_fields: [] };
     }
     if (subscription.state === "active") {
@@ -247718,14 +247399,14 @@ var AdjudicationQueueKernel = class {
     if (authorizations.length !== ids6.length) {
       throw new Error(`a batch is one action, not one signature: ${ids6.length} effect(s) require ${ids6.length} authorization record(s), received ${authorizations.length}`);
     }
-    const items2 = ids6.map((id22) => this.store.get("adjudication_item", id22));
+    const items2 = ids6.map((id23) => this.store.get("adjudication_item", id23));
     for (const item of items2) {
       if (item.status !== "open") throw new Error(`Adjudication item is not open: ${item.id}`);
     }
     const keys = new Set(items2.map((item) => String(item.batch_key)));
     if (keys.size !== 1) throw new Error("a batch must contain items of the same kind and decision");
     const covered = new Set(authorizations.map((entry2) => entry2.item_id));
-    for (const id22 of ids6) if (!covered.has(id22)) throw new Error(`authorization is missing for effect: ${id22}`);
+    for (const id23 of ids6) if (!covered.has(id23)) throw new Error(`authorization is missing for effect: ${id23}`);
     const decidedAt = instant17(args.decided_at, "decided_at");
     const records2 = [];
     for (const item of items2) {
@@ -248034,12 +247715,12 @@ var ReleaseQualificationKernel = class {
     if (!evidenceIds2.length) throw new Error("Release Qualification result requires Evidence");
     if (new Set(evidenceIds2).size !== evidenceIds2.length) throw new Error("Release Qualification Evidence must be distinct");
     const expected = trialIdentity(slot, qualification, pilot, { ...args, primary_value: finite5(args.primary_value, "primary_value"), guardrails });
-    for (const id22 of evidenceIds2) {
-      const evidence2 = this.store.get("evidence", id22);
+    for (const id23 of evidenceIds2) {
+      const evidence2 = this.store.get("evidence", id23);
       if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(evidence2.confidence))) throw new Error("Release Qualification Evidence must be confirmed or bounded");
       if (digestJson(evidence2.metadata?.release_qualification ?? null) !== digestJson(expected)) throw new Error("Release Qualification Evidence is not bound to this Trial result");
     }
-    if (this.store.list("release_qualification_slot", 20, (item) => item.qualification_id === qualification.id && item.id !== slot.id && item.status === "completed" && item.evidence_ids.some((id22) => evidenceIds2.includes(id22))).length) throw new Error("Release Qualification Evidence was used by another Trial");
+    if (this.store.list("release_qualification_slot", 20, (item) => item.qualification_id === qualification.id && item.id !== slot.id && item.status === "completed" && item.evidence_ids.some((id23) => evidenceIds2.includes(id23))).length) throw new Error("Release Qualification Evidence was used by another Trial");
     return { slot: this.store.save("release_qualification_slot", String(slot.id), { ...payload(slot), status: "completed", mechanism_passed: args.mechanism_passed === true, primary_value: finite5(args.primary_value, "primary_value"), guardrails, evidence_ids: evidenceIds2, environment_fingerprint: text(args.environment_fingerprint, "environment_fingerprint"), budget_fingerprint: text(args.budget_fingerprint, "budget_fingerprint") }), idempotent: false };
   }
   evaluate(args) {
@@ -248049,8 +247730,8 @@ var ReleaseQualificationKernel = class {
     const slots = this.store.list("release_qualification_slot", 20, (item) => item.qualification_id === qualification.id);
     if (slots.length !== 10 || slots.some((item) => item.status !== "completed")) return { qualification, conclusion: "inconclusive", idempotent: true };
     const evidenceIds2 = slots.flatMap((slot) => Array.isArray(slot.evidence_ids) ? slot.evidence_ids : []);
-    const evidenceBound = pilot.version === qualification.pilot_version && evidenceIds2.length >= slots.length && new Set(evidenceIds2).size === evidenceIds2.length && slots.every((slot) => Array.isArray(slot.evidence_ids) && slot.evidence_ids.length > 0 && slot.evidence_ids.every((id22) => {
-      const evidence2 = this.store.find("evidence", id22);
+    const evidenceBound = pilot.version === qualification.pilot_version && evidenceIds2.length >= slots.length && new Set(evidenceIds2).size === evidenceIds2.length && slots.every((slot) => Array.isArray(slot.evidence_ids) && slot.evidence_ids.length > 0 && slot.evidence_ids.every((id23) => {
+      const evidence2 = this.store.find("evidence", id23);
       return !!evidence2 && digestJson(evidence2.metadata?.release_qualification ?? null) === digestJson(trialIdentity(slot, qualification, pilot, slot));
     }));
     const comparable = evidenceBound && slots.every((item) => item.environment_fingerprint === qualification.environment_fingerprint && item.budget_fingerprint === qualification.budget_fingerprint);
@@ -248222,7 +247903,7 @@ var VerificationPlane = class {
 };
 
 // core/trust-profile.ts
-var import_node_crypto102 = require("node:crypto");
+var import_node_crypto101 = require("node:crypto");
 function integer21(value, name, fallback2, minimum = 0) {
   const number7 = value === void 0 ? fallback2 : Number(value);
   if (!Number.isInteger(number7) || number7 < minimum) throw new Error(`${name} must be an integer >= ${minimum}`);
@@ -248241,7 +247922,7 @@ var TrustProfileKernel = class {
     this.store = store;
   }
   record(args) {
-    const profileId = String(args.profile_id ?? `trust_${(0, import_node_crypto102.randomUUID)().replaceAll("-", "")}`);
+    const profileId = String(args.profile_id ?? `trust_${(0, import_node_crypto101.randomUUID)().replaceAll("-", "")}`);
     const scope3 = this.scope(args.scope);
     const passed = integer21(args.passed, "passed", 0);
     const failed = integer21(args.failed, "failed", 0);
@@ -248332,14 +248013,14 @@ var TrustProfileKernel = class {
 };
 
 // core/web-operation.ts
-var import_node_crypto103 = require("node:crypto");
+var import_node_crypto102 = require("node:crypto");
 function integer22(value, name, fallback2, minimum, maximum) {
   const number7 = value === void 0 ? fallback2 : Number(value);
   if (!Number.isInteger(number7) || number7 < minimum || number7 > maximum) throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
   return number7;
 }
-function digest18(value) {
-  return `sha256:${(0, import_node_crypto103.createHash)("sha256").update(typeof value === "string" ? value : JSON.stringify(value)).digest("hex")}`;
+function digest17(value) {
+  return `sha256:${(0, import_node_crypto102.createHash)("sha256").update(typeof value === "string" ? value : JSON.stringify(value)).digest("hex")}`;
 }
 function list8(value, name) {
   if (value === void 0) return [];
@@ -248386,16 +248067,16 @@ var WebOperationKernel = class {
       ok: response.ok,
       content_type: response.headers.get("content-type"),
       body: body3,
-      body_digest: digest18(raw),
+      body_digest: digest17(raw),
       bytes: raw.length,
       truncated,
       observed_at: (/* @__PURE__ */ new Date()).toISOString(),
       raw_content_stored: false
     };
-    const id22 = String(args.operation_id ?? `web_${(0, import_node_crypto103.randomUUID)().replaceAll("-", "")}`);
-    const existing = this.store.find("web_operation", id22);
+    const id23 = String(args.operation_id ?? `web_${(0, import_node_crypto102.randomUUID)().replaceAll("-", "")}`);
+    const existing = this.store.find("web_operation", id23);
     if (existing) return { operation: existing, observation: { ...observation, body: "" }, idempotent: true };
-    const operation2 = this.store.create("web_operation", id22, {
+    const operation2 = this.store.create("web_operation", id23, {
       kind: "fetch",
       method,
       url: target.toString(),
@@ -248416,7 +248097,7 @@ var WebOperationKernel = class {
     const operation2 = text(args.operation ?? "navigate", "operation");
     if (!["navigate", "click", "fill", "submit"].includes(operation2)) throw new Error("unsupported browser operation");
     const effect3 = operation2 === "navigate" ? "read_only" : "external_write";
-    const id22 = String(args.operation_id ?? `browser_${(0, import_node_crypto103.randomUUID)().replaceAll("-", "")}`);
+    const id23 = String(args.operation_id ?? `browser_${(0, import_node_crypto102.randomUUID)().replaceAll("-", "")}`);
     const contract = {
       kind: "browser",
       operation: operation2,
@@ -248430,13 +248111,13 @@ var WebOperationKernel = class {
       adapter_required: true,
       execution_authority: false
     };
-    const contractDigest = digest18(contract);
-    const existing = this.store.find("web_operation", id22);
+    const contractDigest = digest17(contract);
+    const existing = this.store.find("web_operation", id23);
     if (existing) {
       if (existing.contract_digest !== contractDigest) throw new Error("browser operation idempotency conflict");
       return { operation: existing, idempotent: true };
     }
-    return { operation: this.store.create("web_operation", id22, { ...contract, contract_digest: contractDigest, status: "prepared" }), idempotent: false };
+    return { operation: this.store.create("web_operation", id23, { ...contract, contract_digest: contractDigest, status: "prepared" }), idempotent: false };
   }
   complete(args) {
     const operation2 = this.store.get("web_operation", text(args.operation_id, "operation_id"));
@@ -248554,7 +248235,7 @@ function rows(value, name) {
   if (!Array.isArray(value) || !value.length || value.length > 100) throw new Error(`${name} requires 1..100 entries`);
   const result = value.map((item) => object(item, name));
   const ids6 = result.map((item) => text(item.id, `${name}.id`));
-  if (new Set(ids6).size !== ids6.length || ids6.some((id22) => !/^[a-zA-Z0-9_-]+$/u.test(id22))) throw new Error(`${name} ids must be unique identifiers`);
+  if (new Set(ids6).size !== ids6.length || ids6.some((id23) => !/^[a-zA-Z0-9_-]+$/u.test(id23))) throw new Error(`${name} ids must be unique identifiers`);
   return result;
 }
 function names(value, name) {
@@ -248612,14 +248293,14 @@ function validateGraphControl(raw, rawNodes, rawEdges) {
     text(scenario.title, "subscenario.title");
     const entry2 = entries2.find((x) => x.id === scenario.entry_id), exit = exits.find((x) => x.id === scenario.exit_id);
     const allowedNodes = names(scenario.allowed_nodes, "allowed_nodes"), allowedEdges = names(scenario.allowed_edges, "allowed_edges");
-    if (!entry2 || !exit || !allowedNodes.includes(String(entry2.node_id)) || !allowedNodes.includes(String(exit.node_id)) || allowedNodes.some((id22) => !nodeIds.has(id22))) throw new Error("Subscenario entry/exit/nodes are invalid");
-    const selected = allowedEdges.map((id22) => edges.find((e) => e.id === id22));
+    if (!entry2 || !exit || !allowedNodes.includes(String(entry2.node_id)) || !allowedNodes.includes(String(exit.node_id)) || allowedNodes.some((id23) => !nodeIds.has(id23))) throw new Error("Subscenario entry/exit/nodes are invalid");
+    const selected = allowedEdges.map((id23) => edges.find((e) => e.id === id23));
     if (selected.some((e) => !e || !allowedNodes.includes(String(e.from)) || !allowedNodes.includes(String(e.to)))) throw new Error("Subscenario edges escape allowed nodes");
     const reachable = /* @__PURE__ */ new Set([String(entry2.node_id)]);
     for (let i = 0; i < nodes.length; i++) for (const edge of selected) if (reachable.has(String(edge.from))) reachable.add(String(edge.to));
-    if (!reachable.has(String(exit.node_id)) || allowedNodes.some((id22) => !reachable.has(id22))) throw new Error("Subscenario contains unreachable nodes or exit");
+    if (!reachable.has(String(exit.node_id)) || allowedNodes.some((id23) => !reachable.has(id23))) throw new Error("Subscenario contains unreachable nodes or exit");
     const effects = names(scenario.allowed_effects, "allowed_effects");
-    if (allowedNodes.some((id22) => !effects.includes(String(nodes.find((n) => n.id === id22).side_effect)))) throw new Error("Subscenario effect denied");
+    if (allowedNodes.some((id23) => !effects.includes(String(nodes.find((n) => n.id === id23).side_effect)))) throw new Error("Subscenario effect denied");
     bound(scenario.max_transitions, "max_transitions", 500);
     bound(scenario.max_visits, "max_visits", 100);
     object(scenario.parameters ?? {}, "parameters");
@@ -248667,10 +248348,10 @@ function effect(value) {
   return result;
 }
 function stepId(value) {
-  const id22 = text13(value, "step.id");
-  if (id22.includes("/")) throw new Error("step.id must not contain path separators");
-  if (id22 === "$exit") throw new Error("step.id $exit is reserved for exit acceptance");
-  return id22;
+  const id23 = text13(value, "step.id");
+  if (id23.includes("/")) throw new Error("step.id must not contain path separators");
+  if (id23 === "$exit") throw new Error("step.id $exit is reserved for exit acceptance");
+  return id23;
 }
 function unique2(items2, name) {
   names2(items2.map((item) => item.id), name, 1);
@@ -248725,9 +248406,9 @@ function validateProcedureComposition(kind4, raw, rawSteps) {
       for (const rawGroup of groups) {
         const group = names2(rawGroup, "parallel group", 2);
         if (group.length > 8) throw new Error("Parallel group exceeds 8 steps");
-        const positions = group.map((id22) => route.step_ids.indexOf(id22)).sort((a, b) => a - b);
+        const positions = group.map((id23) => route.step_ids.indexOf(id23)).sort((a, b) => a - b);
         if (positions[0] < 0 || positions.some((at, index) => at !== positions[0] + index)) throw new Error("Parallel group must be consecutive route steps");
-        const members3 = group.map((id22) => steps.find((step) => step.id === id22));
+        const members3 = group.map((id23) => steps.find((step) => step.id === id23));
         const outputs = new Set(members3.flatMap((step) => step.provides));
         for (const step of members3) {
           if (grouped.has(String(step.id)) || step.type === "procedure_call" || step.side_effect !== "read_only" || step.requires.some((input) => outputs.has(input))) throw new Error("Parallel steps must be independent read-only instructions");
@@ -248735,11 +248416,11 @@ function validateProcedureComposition(kind4, raw, rawSteps) {
         }
       }
       const available2 = new Set(inputs);
-      for (const id22 of names2(route.step_ids, "route.step_ids", 1)) {
-        const step = steps.find((item) => item.id === id22);
-        if (!step) throw new Error(`Unknown step: ${id22}`);
-        usedSteps.add(id22);
-        for (const need of step.requires) if (!available2.has(need)) throw new Error(`Route ${entry2.id}/${exitId} is missing input ${need} before ${id22}`);
+      for (const id23 of names2(route.step_ids, "route.step_ids", 1)) {
+        const step = steps.find((item) => item.id === id23);
+        if (!step) throw new Error(`Unknown step: ${id23}`);
+        usedSteps.add(id23);
+        for (const need of step.requires) if (!available2.has(need)) throw new Error(`Route ${entry2.id}/${exitId} is missing input ${need} before ${id23}`);
         for (const output of step.provides) {
           if (available2.has(output)) throw new Error(`Route output overwrites existing artifact: ${output}`);
           available2.add(output);
@@ -248772,12 +248453,12 @@ var ProcedurePlanner = class {
     const definitions = new ProcedureDefinitionStore(this.store.paths);
     let count3 = 0;
     const compile = (selection, inputs, ancestors, budgets, path2) => {
-      const id22 = text13(selection.procedure_id, "procedure_id"), pinned = version(selection.procedure_version);
-      if (ancestors.includes(id22)) throw new Error("Recursive Procedure Call is forbidden");
+      const id23 = text13(selection.procedure_id, "procedure_id"), pinned = version(selection.procedure_version);
+      if (ancestors.includes(id23)) throw new Error("Recursive Procedure Call is forbidden");
       if (ancestors.length >= 8) throw new Error("Procedure Call depth exceeds 8");
-      const procedure = selectedProcedure(this.store, id22, args.release_channel);
-      if (!procedure || procedure.version !== pinned || args.release_channel !== "test" && (procedure.routeable !== true || procedure.lifecycle !== "routeable")) throw new Error(`Procedure unavailable, revoked, or version drifted: ${id22}`);
-      if (procedure.scope !== scope3 || !scopeAllows(scopeEnvelope(procedure.scope_envelope, scopeFromKey(scope3)), access4)) throw new Error(`Procedure scope or audience denied: ${id22}`);
+      const procedure = selectedProcedure(this.store, id23, args.release_channel);
+      if (!procedure || procedure.version !== pinned || args.release_channel !== "test" && (procedure.routeable !== true || procedure.lifecycle !== "routeable")) throw new Error(`Procedure unavailable, revoked, or version drifted: ${id23}`);
+      if (procedure.scope !== scope3 || !scopeAllows(scopeEnvelope(procedure.scope_envelope, scopeFromKey(scope3)), access4)) throw new Error(`Procedure scope or audience denied: ${id23}`);
       if (!procedureDefinitionRef(procedure.definition_ref)) throw new Error("Procedure has no checked definition");
       const definition2 = definitions.read(procedure.definition_ref);
       if (selection.definition_digest !== void 0 && selection.definition_digest !== procedure.definition_ref.digest) throw new Error("Procedure Call definition digest drifted");
@@ -248803,13 +248484,13 @@ var ProcedurePlanner = class {
           if (step.type !== "procedure_call") return step;
           const childInputs = Object.fromEntries(Object.entries(bindings(raw.input_bindings, "input_bindings")).map(([key2, artifact]) => [key2, { parent_artifact: artifact }]));
           if (stableDigest(Object.values(raw.input_bindings).sort()) !== stableDigest([...raw.requires].sort()) || stableDigest(Object.keys(raw.output_bindings).sort()) !== stableDigest([...raw.provides].sort())) throw new Error("Graph Call bindings must match requires/provides");
-          const child = compile(raw, childInputs, [...ancestors, id22], [...budgets, declared2, /* @__PURE__ */ new Set(["read_only", String(raw.side_effect)])], `${path2}/${raw.id}`);
+          const child = compile(raw, childInputs, [...ancestors, id23], [...budgets, declared2, /* @__PURE__ */ new Set(["read_only", String(raw.side_effect)])], `${path2}/${raw.id}`);
           if (child.graph) throw new Error("Graph calls currently require a Workflow subprocedure");
           if (Object.values(raw.output_bindings).some((key2) => !child.exit.required_outputs.includes(String(key2)))) throw new Error("Graph Call output is not public");
           return { ...step, child_plan: child };
         });
         return {
-          procedure_id: id22,
+          procedure_id: id23,
           procedure_version: pinned,
           scope: scope3,
           definition_digest: procedure.definition_ref.digest,
@@ -248850,14 +248531,14 @@ var ProcedurePlanner = class {
         if (nextBudgets.some((budget) => !budget.has(sideEffect))) throw new Error(`Procedure effect denied: ${sideEffect}`);
         if (step.type !== "procedure_call") return { ...step, plan_step_id: `${path2}/${stepId2}` };
         const childInputs = Object.fromEntries(Object.entries(bindings(step.input_bindings, "input_bindings")).map(([key2, artifact]) => [key2, { parent_artifact: artifact }]));
-        const child = compile(step, childInputs, [...ancestors, id22], [...nextBudgets, /* @__PURE__ */ new Set(["read_only", sideEffect])], `${path2}/${stepId2}`);
+        const child = compile(step, childInputs, [...ancestors, id23], [...nextBudgets, /* @__PURE__ */ new Set(["read_only", sideEffect])], `${path2}/${stepId2}`);
         if (child.graph) throw new Error("Workflow calls currently require a Workflow subprocedure");
         const outputs = child.exit.required_outputs;
         for (const output of Object.values(bindings(step.output_bindings, "output_bindings"))) if (!outputs.includes(output)) throw new Error(`Procedure Call references undeclared child output: ${output}`);
         return { ...step, plan_step_id: `${path2}/${stepId2}`, child_plan: child };
       });
       return {
-        procedure_id: id22,
+        procedure_id: id23,
         procedure_version: pinned,
         scope: scope3,
         failure_disposition: definition2.failure_disposition,
@@ -248877,7 +248558,7 @@ var ProcedurePlanner = class {
 };
 
 // core/durable-action-loop.ts
-var import_node_crypto104 = require("node:crypto");
+var import_node_crypto103 = require("node:crypto");
 var ACTION_KINDS = /* @__PURE__ */ new Set(["observe", "execute", "verify", "wait", "clarify"]);
 var EFFECTS15 = /* @__PURE__ */ new Set(["read_only", "local_write"]);
 var OUTCOMES = /* @__PURE__ */ new Set(["succeeded", "failed", "waiting", "blocked"]);
@@ -248964,7 +248645,7 @@ var DurableActionLoopKernel = class {
       expected_snapshot_version: loop.latest_snapshot_version,
       expected_snapshot_digest: loop.latest_snapshot_digest
     };
-    const actionId = String(args.action_id ?? `durable_action_${(0, import_node_crypto104.randomUUID)().replaceAll("-", "")}`);
+    const actionId = String(args.action_id ?? `durable_action_${(0, import_node_crypto103.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("durable_action", actionId);
     const identityDigest = stableDigest(identity);
     if (existing) {
@@ -249039,24 +248720,24 @@ var DurableActionLoopKernel = class {
   }
   item(value, index) {
     const input = object(value, `work_items[${index}]`);
-    const id22 = text14(input.id, `work_items[${index}].id`);
+    const id23 = text14(input.id, `work_items[${index}].id`);
     const depends = input.depends_on === void 0 ? [] : input.depends_on;
     if (!Array.isArray(depends)) throw new Error(`work_items[${index}].depends_on must be an array`);
     const dependsOn = depends.map((item) => text14(item, `work_items[${index}].depends_on`));
-    if (new Set(dependsOn).size !== dependsOn.length || dependsOn.includes(id22)) throw new Error("Work item dependencies must be unique and cannot reference itself");
-    return { id: id22, effect: input.effect ?? "local_write", depends_on: dependsOn.sort(), acceptance_digest: text14(input.acceptance_digest, `work_items[${index}].acceptance_digest`) };
+    if (new Set(dependsOn).size !== dependsOn.length || dependsOn.includes(id23)) throw new Error("Work item dependencies must be unique and cannot reference itself");
+    return { id: id23, effect: input.effect ?? "local_write", depends_on: dependsOn.sort(), acceptance_digest: text14(input.acceptance_digest, `work_items[${index}].acceptance_digest`) };
   }
   hasCycle(items2) {
     const graph = new Map(items2.map((item) => [item.id, item.depends_on]));
     const visited = /* @__PURE__ */ new Set();
     const stack = /* @__PURE__ */ new Set();
-    const visit = (id22) => {
-      if (stack.has(id22)) return true;
-      if (visited.has(id22)) return false;
-      visited.add(id22);
-      stack.add(id22);
-      const cyclic = graph.get(id22).some(visit);
-      stack.delete(id22);
+    const visit = (id23) => {
+      if (stack.has(id23)) return true;
+      if (visited.has(id23)) return false;
+      visited.add(id23);
+      stack.add(id23);
+      const cyclic = graph.get(id23).some(visit);
+      stack.delete(id23);
       return cyclic;
     };
     return [...graph.keys()].some(visit);
@@ -249081,11 +248762,11 @@ var DurableActionLoopKernel = class {
     const input = object(value, name);
     const kind4 = text14(input.kind, `${name}.kind`);
     if (!RECEIPT_KINDS2.has(kind4) && kind4 !== "acceptance_gate") throw new Error(`${name}.kind is unsupported`);
-    const id22 = text14(input.id, `${name}.id`);
+    const id23 = text14(input.id, `${name}.id`);
     const version3 = Number(input.version);
     if (!Number.isInteger(version3) || version3 < 1) throw new Error(`${name}.version must be a positive integer`);
-    this.store.get(kind4, id22, version3);
-    return { kind: kind4, id: id22, version: version3 };
+    this.store.get(kind4, id23, version3);
+    return { kind: kind4, id: id23, version: version3 };
   }
 };
 
@@ -249100,10 +248781,10 @@ function lowerInvocationPlan(plan, inputKeys, rootPath = "root", includeExit = t
     const entryPaths = [...ancestors, path2];
     nodes.push({ ...node, path: path2, input_keys: inputKeys2 });
     const available2 = Object.assign(/* @__PURE__ */ Object.create(null), inputKeys2);
-    const append = (id22, kind4, inputs, outputs2, instruction, effect3, acceptance) => {
-      const identity = { id: id22, node_path: path2, entry_paths: entryPaths, kind: kind4, input_keys: inputs, output_keys: outputs2, instruction, effect: effect3, acceptance_ref: acceptance };
+    const append = (id23, kind4, inputs, outputs2, instruction, effect3, acceptance) => {
+      const identity = { id: id23, node_path: path2, entry_paths: entryPaths, kind: kind4, input_keys: inputs, output_keys: outputs2, instruction, effect: effect3, acceptance_ref: acceptance };
       items2.push({ ...identity, depends_on: previous, acceptance_digest: stableDigest(identity) });
-      previous = [id22];
+      previous = [id23];
     };
     const groups = node.parallel_groups;
     const pendingGroups = /* @__PURE__ */ new Map();
@@ -249188,9 +248869,9 @@ var GraphInvocationProgress = class {
   transition(run, args, validateCurrent) {
     if (!run.graph) throw new Error("Invocation has no runtime Graph");
     const graph = run.graph, state4 = object(run.graph_state, "graph_state"), scenario = graph.scenario;
-    const id22 = `${run.id}:${text(args.transition_id, "transition_id")}`;
+    const id23 = `${run.id}:${text(args.transition_id, "transition_id")}`;
     const requestDigest = stableDigest({ ...args, expected_version: null });
-    const previous = this.store.find("procedure_graph_transition", id22);
+    const previous = this.store.find("procedure_graph_transition", id23);
     if (previous) {
       if (previous.request_digest !== requestDigest) throw new Error("Graph transition idempotency conflict");
       return { invocation: run, transition: previous, idempotent: true, host_execution_authority: false };
@@ -249225,9 +248906,9 @@ var GraphInvocationProgress = class {
         for (const key2 of Object.values(record.output_keys)) invalid.add(String(key2));
         for (const key2 of record.item_keys) {
           const item = this.store.get("durable_work_item", `${loop.id}:${key2}`);
-          this.store.save("durable_work_item", String(item.id), { ...payload(item), status: "superseded", superseded_by_transition: id22 });
+          this.store.save("durable_work_item", String(item.id), { ...payload(item), status: "superseded", superseded_by_transition: id23 });
         }
-        record.invalidated_by = id22;
+        record.invalidated_by = id23;
       }
     }
     const root = run.nodes.find((node) => node.path === "root");
@@ -249253,7 +248934,7 @@ var GraphInvocationProgress = class {
     traversals[String(edge.id)] = Number(traversals[String(edge.id)] ?? 0) + 1;
     visits[String(edge.to)] = Number(visits[String(edge.to)] ?? 0) + 1;
     const nextState = { ...state4, active_node: ending ? null : edge.to, round, bindings: bindings2, visits, traversals, transitions: Number(state4.transitions) + 1, segments };
-    const transition = this.store.create("procedure_graph_transition", id22, { invocation_id: run.id, request_digest: requestDigest, edge_id: edge.id, from: edge.from, to: edge.to, rework, invalidated_artifact_keys: [...invalid], receipt_id: receipt.id, evidence_id: proof.id, previous_state_digest: stableDigest(state4), state_digest: stableDigest(nextState), round });
+    const transition = this.store.create("procedure_graph_transition", id23, { invocation_id: run.id, request_digest: requestDigest, edge_id: edge.id, from: edge.from, to: edge.to, rework, invalidated_artifact_keys: [...invalid], receipt_id: receipt.id, evidence_id: proof.id, previous_state_digest: stableDigest(state4), state_digest: stableDigest(nextState), round });
     const updated = this.store.save("procedure_invocation", String(run.id), {
       ...payload(run),
       graph_state: nextState,
@@ -249285,11 +248966,11 @@ var ProcedureInvocationKernel = class {
   }
   bind(args) {
     return this.store.transaction(() => {
-      const id22 = text(args.invocation_id, "invocation_id");
+      const id23 = text(args.invocation_id, "invocation_id");
       const request2 = { ...args };
       delete request2.expected_version;
       const requestDigest = stableDigest(request2);
-      const existing = this.store.find("procedure_invocation", id22);
+      const existing = this.store.find("procedure_invocation", id23);
       if (existing) {
         this.access(existing, args);
         if (existing.request_digest !== requestDigest) throw new Error("Invocation idempotency conflict");
@@ -249314,12 +248995,12 @@ var ProcedureInvocationKernel = class {
       const { nodes, items: items2 } = prepared;
       if (items2.length > maxDispatches) throw new Error("Dispatch budget is smaller than the selected route");
       const snapshot = this.store.get("state_snapshot", String(work.latest_snapshot_id));
-      const loop = this.durable.create({ action_loop_id: `procedure:${id22}`, work_loop_id: work.id, work_items: items2, max_parallel: graph || nodes.some((node) => node.parallel_groups.length > 0) ? 8 : 1 }).loop;
+      const loop = this.durable.create({ action_loop_id: `procedure:${id23}`, work_loop_id: work.id, work_items: items2, max_parallel: graph || nodes.some((node) => node.parallel_groups.length > 0) ? 8 : 1 }).loop;
       if (graph) {
         const marker2 = this.store.get("durable_work_item", `${loop.id}:root/$exit`);
         this.store.save("durable_work_item", String(marker2.id), { ...payload(marker2), status: "dormant" });
       }
-      const invocation = this.store.create("procedure_invocation", id22, {
+      const invocation = this.store.create("procedure_invocation", id23, {
         ...graph ? { graph: plan.graph, graph_state: graphPrepared.graph_state, subscenario_id: graph.scenario.id, scenario_id: graph.control.scenario_id, scenario_digest: stableDigest(graph.scenario) } : {},
         request_digest: requestDigest,
         work_loop_id: work.id,
@@ -249445,9 +249126,9 @@ var ProcedureInvocationKernel = class {
       const evidenceIds2 = uniqueList(args.acceptance_evidence_ids, "acceptance_evidence_ids");
       if (!evidenceIds2.length) throw new Error("Acceptance Evidence is required");
       let metrics = null;
-      for (const id22 of evidenceIds2) {
-        const evidence2 = this.store.get("evidence", id22), meta = object(evidence2.metadata, "acceptance metadata");
-        if (evidence2.source_type !== "program" || evidence2.confidence !== "confirmed" || !observation.evidence_ids.includes(id22) || meta.dispatch_digest !== dispatch.dispatch_digest || meta.acceptance_digest !== item.acceptance_digest || meta.output_digest !== stableDigest(outputs) || meta.state_after_digest !== snapshot.snapshot_digest || meta.status !== observation.verdict) throw new Error("Acceptance Evidence does not match exact dispatch/output/state");
+      for (const id23 of evidenceIds2) {
+        const evidence2 = this.store.get("evidence", id23), meta = object(evidence2.metadata, "acceptance metadata");
+        if (evidence2.source_type !== "program" || evidence2.confidence !== "confirmed" || !observation.evidence_ids.includes(id23) || meta.dispatch_digest !== dispatch.dispatch_digest || meta.acceptance_digest !== item.acceptance_digest || meta.output_digest !== stableDigest(outputs) || meta.state_after_digest !== snapshot.snapshot_digest || meta.status !== observation.verdict) throw new Error("Acceptance Evidence does not match exact dispatch/output/state");
         if (meta.metrics !== void 0) {
           const measured = object(meta.metrics, "measured metrics");
           if (["cost_units", "latency_ms", "retry_count"].some((key2) => typeof measured[key2] !== "number" || !Number.isFinite(measured[key2]) || Number(measured[key2]) < 0) || !Number.isSafeInteger(measured.retry_count)) throw new Error("Metrics must be finite non-negative measurements");
@@ -249590,8 +249271,8 @@ var ProcedureInvocationKernel = class {
   evaluate(args) {
     const baselineIds = uniqueList(args.baseline_ids, "baseline_ids"), candidateIds = uniqueList(args.candidate_ids, "candidate_ids");
     if (baselineIds.length < 3 || baselineIds.length > 100 || baselineIds.length !== candidateIds.length || (/* @__PURE__ */ new Set([...baselineIds, ...candidateIds])).size !== baselineIds.length * 2) throw new Error("Evaluation requires 3..100 independent paired trials");
-    const pairs = baselineIds.map((id22, index) => {
-      const baseline = this.load({ ...args, invocation_id: id22 }), candidate2 = this.load({ ...args, invocation_id: candidateIds[index] });
+    const pairs = baselineIds.map((id23, index) => {
+      const baseline = this.load({ ...args, invocation_id: id23 }), candidate2 = this.load({ ...args, invocation_id: candidateIds[index] });
       const key2 = (run) => [run.scope, run.scenario_id ?? null, run.subscenario_id ?? null, run.entry_id, run.exit_id, run.input_digest, run.initial_snapshot_digest, run.host_id, run.model_fingerprint, run.budget_fingerprint];
       if (stableDigest(key2(baseline)) !== stableDigest(key2(candidate2))) throw new Error("Paired trial context differs");
       const outcome2 = (run) => {
@@ -249733,7 +249414,7 @@ ${context}
         if (Number.isNaN(validUntil)) throw new Error("knowledge_claim.valid_until must be an ISO timestamp");
         if (validUntil <= now3) throw new Error("Knowledge Claim has expired");
       }
-      const evidenceIds2 = array6(claim.evidence_ids, "knowledge_claim.evidence_ids").map((id22) => text(id22, "knowledge_claim.evidence_id"));
+      const evidenceIds2 = array6(claim.evidence_ids, "knowledge_claim.evidence_ids").map((id23) => text(id23, "knowledge_claim.evidence_id"));
       if (!evidenceIds2.length) throw new Error("Knowledge Claim requires Evidence");
       evidenceIds2.forEach((evidenceId) => this.store.get("evidence", evidenceId));
       return { claim_id: String(claim.id), claim_version: Number(claim.version), content: text(claim.content, "knowledge_claim.content"), evidence_ids: evidenceIds2 };
@@ -249759,7 +249440,7 @@ Evidence: ${claim.evidence_ids.join(", ")}
 };
 
 // capability/craft-knowledge/knowledge-relation.ts
-var import_node_crypto105 = require("node:crypto");
+var import_node_crypto104 = require("node:crypto");
 var RELATION_KINDS = /* @__PURE__ */ new Set(["derives_from", "supersedes", "contradicts", "supports", "refines", "references"]);
 var ENDPOINT_KINDS = /* @__PURE__ */ new Set(["knowledge_claim", "memory_ledger", "knowledge_document", "knowledge_chunk", "evidence", "capability", "wiki_page"]);
 var CONFIDENCES = /* @__PURE__ */ new Set(["confirmed", "bounded", "unverified"]);
@@ -249797,7 +249478,7 @@ function liveAt(record, at) {
   if (Date.parse(String(record.valid_from)) > at) return false;
   return record.valid_to === null || Date.parse(String(record.valid_to)) > at;
 }
-var NODE_KEY = (kind4, id22, version3) => `${kind4}:${id22}@${version3 ?? "latest"}`;
+var NODE_KEY = (kind4, id23, version3) => `${kind4}:${id23}@${version3 ?? "latest"}`;
 var KnowledgeRelationKernel = class {
   store;
   constructor(store) {
@@ -249821,7 +249502,7 @@ var KnowledgeRelationKernel = class {
     if (confidence2 === "confirmed" && !evidenceIds2.length) throw new Error("Confirmed Knowledge Relation requires Evidence");
     const validFrom = instant19(args.valid_from ?? (/* @__PURE__ */ new Date()).toISOString(), "valid_from");
     const identity = { source, target, relation, evidence_ids: evidenceIds2, confidence: confidence2 };
-    const relationId = String(args.relation_id ?? `knowledge_relation_${(0, import_node_crypto105.randomUUID)().replaceAll("-", "")}`);
+    const relationId = String(args.relation_id ?? `knowledge_relation_${(0, import_node_crypto104.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("knowledge_relation", relationId);
     if (existing) {
       if (existing.identity_digest !== stableDigest(identity)) throw new Error("Knowledge Relation idempotency conflict");
@@ -249906,18 +249587,18 @@ var KnowledgeRelationKernel = class {
   edges(args) {
     const node = args.node;
     const kind4 = String(node.kind);
-    const id22 = String(node.id);
+    const id23 = String(node.id);
     const direction = args.direction === "inverse" ? "inverse" : args.direction === "forward" ? "forward" : "both";
     const relation = args.relation === void 0 || args.relation === null ? null : text(args.relation, "relation");
     if (relation !== null && !RELATION_KINDS.has(relation)) throw new Error("Knowledge relation is unsupported");
     const at = args.as_of === void 0 || args.as_of === null ? Date.now() : Date.parse(instant19(args.as_of, "as_of"));
     const limit3 = args.limit === void 0 ? 50 : integer24(args.limit, "limit", 1, 1e3);
-    const matched = this.store.list("knowledge_relation", 1e4, (item) => liveAt(item, at) && (relation === null || item.relation === relation) && (item.source.kind === kind4 && item.source.id === id22 || item.target.kind === kind4 && item.target.id === id22)).sort((left, right) => String(left.id).localeCompare(String(right.id)));
+    const matched = this.store.list("knowledge_relation", 1e4, (item) => liveAt(item, at) && (relation === null || item.relation === relation) && (item.source.kind === kind4 && item.source.id === id23 || item.target.kind === kind4 && item.target.id === id23)).sort((left, right) => String(left.id).localeCompare(String(right.id)));
     const resolved = [];
     for (const record of matched) {
       const source = record.source;
       const target = record.target;
-      const forward = source.kind === kind4 && source.id === id22;
+      const forward = source.kind === kind4 && source.id === id23;
       if (direction === "forward" && !forward) continue;
       if (direction === "inverse" && forward) continue;
       const other = forward ? target : source;
@@ -249996,11 +249677,11 @@ var KnowledgeWorkbenchKernel = class {
 };
 
 // capability/craft-knowledge/local-candidate-import.ts
-var import_node_crypto106 = require("node:crypto");
+var import_node_crypto105 = require("node:crypto");
 var import_promises16 = require("node:fs/promises");
-var import_node_path33 = require("node:path");
-function digest19(value) {
-  return `sha256:${(0, import_node_crypto106.createHash)("sha256").update(value).digest("hex")}`;
+var import_node_path32 = require("node:path");
+function digest18(value) {
+  return `sha256:${(0, import_node_crypto105.createHash)("sha256").update(value).digest("hex")}`;
 }
 var LocalCandidateImportKernel = class {
   store;
@@ -250011,17 +249692,17 @@ var LocalCandidateImportKernel = class {
     const packageRecord = this.store.get("wiki_candidate_publication_package", text(args.package_id, "package_id"));
     if (packageRecord.status !== "prepared" || packageRecord.manual_import_required !== true || packageRecord.execution_authority !== false) throw new Error("Only a prepared non-executable manual package can be imported");
     if (args.confirmed !== true) throw new Error("Local package import requires explicit confirmed: true");
-    const root = (0, import_node_path33.resolve)(text(args.target_root, "target_root"));
+    const root = (0, import_node_path32.resolve)(text(args.target_root, "target_root"));
     const requested = text(args.relative_path, "relative_path");
-    const target = (0, import_node_path33.resolve)(root, requested);
-    const pathRelative = (0, import_node_path33.relative)(root, target);
+    const target = (0, import_node_path32.resolve)(root, requested);
+    const pathRelative = (0, import_node_path32.relative)(root, target);
     if (!pathRelative || pathRelative.startsWith("..") || pathRelative.includes(":") || !pathRelative.endsWith(".md")) throw new Error("Local package import path must be a descendant Markdown file");
     const content = String(packageRecord.content);
-    const importId = String(args.import_id ?? `wiki_candidate_local_import_${(0, import_node_crypto106.randomUUID)().replaceAll("-", "")}`);
-    const identity = { package_id: packageRecord.id, package_version: packageRecord.version, target_root: root, relative_path: pathRelative, content_digest: digest19(content), reviewer: text(args.reviewer, "reviewer") };
+    const importId = String(args.import_id ?? `wiki_candidate_local_import_${(0, import_node_crypto105.randomUUID)().replaceAll("-", "")}`);
+    const identity = { package_id: packageRecord.id, package_version: packageRecord.version, target_root: root, relative_path: pathRelative, content_digest: digest18(content), reviewer: text(args.reviewer, "reviewer") };
     const existing = this.store.find("wiki_candidate_local_import", importId);
     if (existing) {
-      if (existing.identity_digest !== digest19(JSON.stringify(identity))) throw new Error("Local package import idempotency conflict");
+      if (existing.identity_digest !== digest18(JSON.stringify(identity))) throw new Error("Local package import idempotency conflict");
       return { import: existing, idempotent: true };
     }
     try {
@@ -250030,9 +249711,9 @@ var LocalCandidateImportKernel = class {
     } catch (error) {
       if (!(error instanceof Error) || error.code !== "ENOENT") throw error;
     }
-    await (0, import_promises16.mkdir)((0, import_node_path33.resolve)(root, pathRelative, ".."), { recursive: true });
+    await (0, import_promises16.mkdir)((0, import_node_path32.resolve)(root, pathRelative, ".."), { recursive: true });
     await (0, import_promises16.writeFile)(target, content, { encoding: "utf8", flag: "wx", mode: 384 });
-    const imported = this.store.create("wiki_candidate_local_import", importId, { ...identity, identity_digest: digest19(JSON.stringify(identity)), target_uri: target, enabled: false, execution_authority: false, status: "imported" });
+    const imported = this.store.create("wiki_candidate_local_import", importId, { ...identity, identity_digest: digest18(JSON.stringify(identity)), target_uri: target, enabled: false, execution_authority: false, status: "imported" });
     return { import: imported, idempotent: false };
   }
   get(args) {
@@ -250051,18 +249732,18 @@ var KNOWLEDGE_CONTEXT_SOURCE = `${KNOWLEDGE_CONTEXT_NAMESPACE}|${SHARED_CONTEXT}
 var KNOWLEDGE_COMPONENT = new RegExp(`^(?:${KNOWLEDGE_COMPONENT_SOURCE})`);
 
 // capability/craft-knowledge/project-knowledge.ts
-var import_node_crypto107 = require("node:crypto");
-var import_node_fs24 = require("node:fs");
-var import_node_path34 = require("node:path");
-function digest20(value) {
-  return `sha256:${(0, import_node_crypto107.createHash)("sha256").update(String(value)).digest("hex")}`;
+var import_node_crypto106 = require("node:crypto");
+var import_node_fs23 = require("node:fs");
+var import_node_path33 = require("node:path");
+function digest19(value) {
+  return `sha256:${(0, import_node_crypto106.createHash)("sha256").update(String(value)).digest("hex")}`;
 }
 function recordDigest2(value) {
-  return `sha256:${(0, import_node_crypto107.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto106.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function safeChild(root, path2) {
-  const target = (0, import_node_path34.resolve)(root, path2);
-  if ((0, import_node_path34.relative)(root, target).startsWith("..")) throw new Error("Project Knowledge path escapes the trusted project root");
+  const target = (0, import_node_path33.resolve)(root, path2);
+  if ((0, import_node_path33.relative)(root, target).startsWith("..")) throw new Error("Project Knowledge path escapes the trusted project root");
   return target;
 }
 function noSecret4(value) {
@@ -250071,22 +249752,22 @@ function noSecret4(value) {
 var ProjectKnowledgeKernel = class {
   store;
   lstat;
-  constructor(store, lstat = import_node_fs24.lstatSync) {
+  constructor(store, lstat = import_node_fs23.lstatSync) {
     this.store = store;
     this.lstat = lstat;
   }
   discover(args) {
     if (args.trusted !== true) throw new Error("Project Knowledge discovery requires trusted=true");
-    const projectRoot = (0, import_node_path34.resolve)(text(args.project_root, "project_root"));
+    const projectRoot = (0, import_node_path33.resolve)(text(args.project_root, "project_root"));
     const memoriesRoot = safeChild(projectRoot, ".serena/memories");
-    const children = (0, import_node_fs24.existsSync)(memoriesRoot) ? (0, import_node_fs24.readdirSync)(memoriesRoot, { withFileTypes: true }) : [];
+    const children = (0, import_node_fs23.existsSync)(memoriesRoot) ? (0, import_node_fs23.readdirSync)(memoriesRoot, { withFileTypes: true }) : [];
     if (children.some((entry2) => entry2.isSymbolicLink())) throw new Error("Project Knowledge does not follow symbolic links");
     const entries2 = children.filter((entry2) => entry2.isFile() && entry2.name.endsWith(".md")).sort((a, b) => a.name.localeCompare(b.name)).map((entry2) => {
       const path2 = safeChild(memoriesRoot, entry2.name);
       const stat4 = this.lstat(path2);
       if (stat4.isSymbolicLink()) throw new Error("Project Knowledge does not follow symbolic links");
-      const content = (0, import_node_fs24.readFileSync)(path2, "utf8");
-      return { memory_id: `serena:${entry2.name.slice(0, -3)}`, path: `.serena/memories/${entry2.name}`, name: entry2.name.slice(0, -3), digest: digest20(content), size_bytes: stat4.size };
+      const content = (0, import_node_fs23.readFileSync)(path2, "utf8");
+      return { memory_id: `serena:${entry2.name.slice(0, -3)}`, path: `.serena/memories/${entry2.name}`, name: entry2.name.slice(0, -3), digest: digest19(content), size_bytes: stat4.size };
     });
     const identity = { project_root: projectRoot, provider: "serena_project_memory", descriptors: entries2 };
     const discoveryId = String(args.discovery_id ?? `project_knowledge_${recordDigest2(identity).slice(-16)}`);
@@ -250113,8 +249794,8 @@ var ProjectKnowledgeKernel = class {
       const path2 = safeChild(root, entry2.path);
       const stat4 = this.lstat(path2);
       if (stat4.isSymbolicLink()) throw new Error("Project Knowledge does not follow symbolic links");
-      const content = (0, import_node_fs24.readFileSync)(path2, "utf8");
-      if (digest20(content) !== entry2.digest) throw new Error("Project Knowledge memory changed since discovery");
+      const content = (0, import_node_fs23.readFileSync)(path2, "utf8");
+      if (digest19(content) !== entry2.digest) throw new Error("Project Knowledge memory changed since discovery");
       noSecret4(content);
       used += content.length;
       if (used > maxChars) throw new Error("Project Knowledge exceeds max_chars");
@@ -250149,9 +249830,9 @@ var ProjectKnowledgeKernel = class {
 };
 
 // capability/craft-knowledge/wiki-candidate-governance.ts
-var import_node_crypto108 = require("node:crypto");
+var import_node_crypto107 = require("node:crypto");
 function id14(prefix) {
-  return `${prefix}_${(0, import_node_crypto108.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto107.randomUUID)().replaceAll("-", "")}`;
 }
 function integer25(value, name, minimum = 1) {
   const result = Number(value);
@@ -250321,7 +250002,7 @@ var KnowledgeContribution = class {
     if (projectAliases.length > 1e4) throw new Error("Knowledge candidate budget exceeded; narrow project aliases");
     const eligible = this.store.listScoped("knowledge_claim", [...request2.scope_stack ?? [{ kind: request2.scope_kind, id: request2.scope_id }], ...projectAliases.map((alias) => recordScope(alias))], 10001, (claim) => {
       const applicability = recordScope(claim.scope);
-      if (claim.status !== "reviewed" && !(includeCandidates && claim.status === "candidate") || !scopeMatches(claim.scope, request2, projectAliases) || !scopeAllows(scopeEnvelope(claim.scope_envelope, applicability), access3(request2)) || !validAt(claim.valid_until, now3)) return false;
+      if (claim.status !== "reviewed" && !(includeCandidates && claim.status === "candidate") || !scopeMatches(claim.scope, request2, projectAliases) || !scopeAllows(scopeEnvelope(claim.scope_envelope, applicability), access3(request2)) || claim.sensitivity === "restricted" && request2.allow_restricted !== true || !validAt(claim.valid_until, now3)) return false;
       const sourceId = typeof claim.source_id === "string" ? claim.source_id : null;
       if (!sourceId) return false;
       const source = sourceFor(sourceId);
@@ -250430,7 +250111,7 @@ var knowledgeCapability = {
 };
 
 // capability/craft-memory/memory-ledger.ts
-var import_node_crypto109 = require("node:crypto");
+var import_node_crypto108 = require("node:crypto");
 var MEMORY_KINDS3 = /* @__PURE__ */ new Set(["working", "episodic", "preference", "procedural"]);
 var MEMORY_STATUS2 = /* @__PURE__ */ new Set(["active", "superseded", "revoked", "expired"]);
 var SENSITIVITIES = /* @__PURE__ */ new Set(["public", "internal", "restricted"]);
@@ -250462,7 +250143,7 @@ var MemoryLedgerKernel = class {
     const confidence2 = text(args.confidence ?? "bounded", "confidence");
     if (!CONFIDENCES2.has(confidence2)) throw new Error("Memory confidence is unsupported");
     if ((kind4 === "procedural" || confidence2 === "confirmed") && !evidenceIds2.length) throw new Error("Procedural or confirmed Memory requires Evidence");
-    const memoryId = String(args.memory_id ?? `memory_ledger_${(0, import_node_crypto109.randomUUID)().replaceAll("-", "")}`);
+    const memoryId = String(args.memory_id ?? `memory_ledger_${(0, import_node_crypto108.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("memory_ledger", memoryId);
     const explicitValidUntil = args.valid_until === void 0 && existing ? typeof existing.valid_until === "string" ? existing.valid_until : null : date(args.valid_until, "valid_until");
     const validUntil = explicitValidUntil ?? (kind4 === "working" ? new Date(Date.now() + 24 * 60 * 60 * 1e3).toISOString() : kind4 === "episodic" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1e3).toISOString() : null);
@@ -250704,7 +250385,7 @@ var ExperienceContribution = class {
 };
 
 // capability/craft-experience/evaluation-model-profile.ts
-var import_node_crypto110 = require("node:crypto");
+var import_node_crypto109 = require("node:crypto");
 
 // common/craft-common-base/src/model-compat.ts
 var ORDER = ["frontier", "standard", "small"];
@@ -250777,7 +250458,7 @@ var EvaluationModelProfileKernel = class {
       purposes: strings31(args.purposes, "purposes", ["evaluation", "workflow_evolution"]),
       network_execution_enabled: bool(args.network_execution_enabled, "network_execution_enabled", false)
     };
-    const profileId = String(args.profile_id ?? `evaluation_model_profile_${(0, import_node_crypto110.randomUUID)().replaceAll("-", "")}`);
+    const profileId = String(args.profile_id ?? `evaluation_model_profile_${(0, import_node_crypto109.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("evaluation_model_profile", profileId);
     const identityDigest = stableDigest(identity);
     if (existing) {
@@ -250842,7 +250523,7 @@ var EvaluationModelProfileKernel = class {
 };
 
 // capability/craft-experience/experience-ledger.ts
-var import_node_crypto111 = require("node:crypto");
+var import_node_crypto110 = require("node:crypto");
 var OBSERVATION_KINDS = /* @__PURE__ */ new Set(["success", "failure", "correction"]);
 var PATTERN_KINDS = /* @__PURE__ */ new Set(["success_strategy", "failure_pattern"]);
 var AXES = /* @__PURE__ */ new Set(["context", "tools", "generation", "orchestration", "memory", "output"]);
@@ -250879,7 +250560,7 @@ var ExperienceLedgerKernel = class {
   compile(args) {
     const scenarioKey = text16(args.scenario_key, "scenario_key");
     const ids6 = this.ids(args.observation_ids, "observation_ids", 2);
-    const observations = ids6.map((id22) => this.store.get("experience_observation", id22)).sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    const observations = ids6.map((id23) => this.store.get("experience_observation", id23)).sort((a, b) => String(a.id).localeCompare(String(b.id)));
     if (observations.some((item) => item.scenario_key !== scenarioKey || item.status !== "recorded")) throw new Error("Experience observations do not match the scenario");
     const scopes = new Set(observations.map((item) => stableDigest(item.scope ?? null)));
     if (scopes.size !== 1) throw new Error("Experience observations do not share one scope");
@@ -250898,12 +250579,12 @@ var ExperienceLedgerKernel = class {
     return { pattern: this.store.create("experience_pattern", patternId, { ...identity, identity_digest: identityDigest, status: "diagnostic_only", execution_visible: false }), idempotent: false };
   }
   propose(args) {
-    const patterns = this.ids(args.pattern_ids, "pattern_ids", 1).map((id22) => this.store.get("experience_pattern", id22));
+    const patterns = this.ids(args.pattern_ids, "pattern_ids", 1).map((id23) => this.store.get("experience_pattern", id23));
     const subject = this.reference(args.subject_ref, "subject_ref", SUBJECT_KINDS2);
     const axes2 = this.ids(args.design_axes, "design_axes", 1);
     if (axes2.length > 2 || axes2.some((axis) => !AXES.has(axis))) throw new Error("Experience intervention may change at most two design axes");
     const identity = { pattern_refs: patterns.map((item) => ({ id: item.id, version: item.version })), subject, design_axes: axes2, diff_digest: stableDigest(text16(args.diff_summary, "diff_summary")), hypothesis_digest: stableDigest(text16(args.hypothesis, "hypothesis")), lifecycle: "draft", execution_visible: false };
-    const interventionId = String(args.intervention_id ?? `experience_intervention_${(0, import_node_crypto111.randomUUID)().replaceAll("-", "")}`);
+    const interventionId = String(args.intervention_id ?? `experience_intervention_${(0, import_node_crypto110.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("experience_intervention", interventionId);
     const identityDigest = stableDigest(identity);
     if (existing) {
@@ -250943,11 +250624,11 @@ var ExperienceLedgerKernel = class {
     const input = object(value, name);
     const kind4 = text16(input.kind, `${name}.kind`);
     if (!allowed.has(kind4)) throw new Error(`${name}.kind is unsupported`);
-    const id22 = text16(input.id, `${name}.id`);
+    const id23 = text16(input.id, `${name}.id`);
     const version3 = Number(input.version);
     if (!Number.isInteger(version3) || version3 < 1) throw new Error(`${name}.version must be a positive integer`);
-    this.store.get(kind4, id22, version3);
-    return { kind: kind4, id: id22, version: version3 };
+    this.store.get(kind4, id23, version3);
+    return { kind: kind4, id: id23, version: version3 };
   }
   ids(value, name, minimum) {
     if (!Array.isArray(value) || value.length < minimum) throw new Error(`${name} must contain at least ${minimum} values`);
@@ -250957,14 +250638,14 @@ var ExperienceLedgerKernel = class {
   }
   evidenceIds(value) {
     const ids6 = this.ids(value, "evidence_ids", 1);
-    for (const id22 of ids6) if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(this.store.get("evidence", id22).confidence))) throw new Error("Experience Evidence must be confirmed or bounded");
+    for (const id23 of ids6) if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(this.store.get("evidence", id23).confidence))) throw new Error("Experience Evidence must be confirmed or bounded");
     return ids6;
   }
 };
 
 // capability/craft-experience/procedure-projection.ts
-var import_node_fs25 = require("node:fs");
-var import_node_path35 = require("node:path");
+var import_node_fs24 = require("node:fs");
+var import_node_path34 = require("node:path");
 var STAGES = ["shadow", "held_out", "signoff", "canary"];
 var KINDS7 = /* @__PURE__ */ new Set(["workflow", "graph", "prompt"]);
 function text17(value, name) {
@@ -251028,19 +250709,19 @@ var ProcedureStore = class {
       title: text17(args.title ?? proposal.name, "title"),
       description: text17(args.description ?? proposal.description, "description")
     };
-    const id22 = String(args.procedure_id ?? `experience_procedure_${stableDigest(identity).slice(-20)}`);
-    const existing = this.store.find("experience_procedure", id22);
+    const id23 = String(args.procedure_id ?? `experience_procedure_${stableDigest(identity).slice(-20)}`);
+    const existing = this.store.find("experience_procedure", id23);
     const identityDigest = stableDigest(identity);
     if (existing) {
       if (existing.identity_digest !== identityDigest) throw new Error("Experience Procedure idempotency conflict");
       return { procedure: existing, idempotent: true };
     }
     const body3 = this.markdown(identity);
-    const definition2 = procedureKind === "prompt" ? null : this.definition(id22, procedureKind, identity, proposal);
+    const definition2 = procedureKind === "prompt" ? null : this.definition(id23, procedureKind, identity, proposal);
     const definitionRef = definition2 ? this.definitions.write(definition2, String(identity.title)) : null;
     const ref2 = this.store.contentStore.writeSync({
       kind: "experience",
-      record_id: id22,
+      record_id: id23,
       version: 1,
       scope: String(identity.scope),
       status: "candidate",
@@ -251065,7 +250746,7 @@ var ProcedureStore = class {
         revoked_by: ""
       }
     });
-    return { procedure: this.store.create("experience_procedure", id22, { ...identity, lifecycle: "candidate", content_ref: ref2, content_digest: ref2.digest, definition_ref: definitionRef, definition_digest: definitionRef?.digest ?? null, identity_digest: identityDigest, routeable: false, publication_allowed: false }), idempotent: false };
+    return { procedure: this.store.create("experience_procedure", id23, { ...identity, lifecycle: "candidate", content_ref: ref2, content_digest: ref2.digest, definition_ref: definitionRef, definition_digest: definitionRef?.digest ?? null, identity_digest: identityDigest, routeable: false, publication_allowed: false }), idempotent: false };
   }
   /** Persist one independently evidenced promotion gate. Gates are ordered and append-only. */
   gate(args) {
@@ -251075,7 +250756,7 @@ var ProcedureStore = class {
       const active = activeProcedure(this.store, text17(args.procedure_id, "procedure_id"));
       if (!active || args.expected_version !== active.version) throw new Error("Current release version conflict or unavailable");
       const evidenceIds2 = strings32(args.evidence_ids, "evidence_ids", 1);
-      evidenceIds2.forEach((id22) => this.assertEvidence(id22));
+      evidenceIds2.forEach((id23) => this.assertEvidence(id23));
       preserveProcedureRelease(this.store, active);
       const release = this.store.get("experience_release", String(active.id));
       this.store.save("experience_release", String(active.id), { ...payload(release), status: "revoked", evidence_ids: evidenceIds2 });
@@ -251097,8 +250778,8 @@ var ProcedureStore = class {
     const passed = args.passed === true;
     const identity = { procedure_id: procedure.id, procedure_version: procedure.version, stage, evidence_ids: evidenceIds2, passed, verdict: text17(args.verdict ?? (passed ? "passed" : "failed"), "verdict") };
     const requestDigest = stableDigest({ ...identity, procedure_version: null, asset_digest: procedure.identity_digest });
-    const id22 = String(args.gate_id ?? `experience_procedure_gate_${requestDigest.slice(-20)}`);
-    const existing = this.store.find("experience_procedure_gate", id22);
+    const id23 = String(args.gate_id ?? `experience_procedure_gate_${requestDigest.slice(-20)}`);
+    const existing = this.store.find("experience_procedure_gate", id23);
     if (existing) {
       const matches3 = existing.request_digest === void 0 ? existing.identity_digest === stableDigest({ ...identity, procedure_version: existing.procedure_version }) && this.store.get("experience_procedure", String(procedure.id), Number(existing.procedure_version)).identity_digest === procedure.identity_digest : existing.request_digest === requestDigest;
       if (!matches3) throw new Error("Experience Procedure gate idempotency conflict");
@@ -251108,14 +250789,14 @@ var ProcedureStore = class {
     if (!STAGES.slice(0, expected).every((prior) => completed.includes(prior))) throw new Error("Experience Procedure gate order is invalid");
     if (passed && Array.isArray(procedure.entrypoints)) {
       for (const entry2 of procedure.entrypoints) for (const route of entry2.routes) {
-        const covered = evidenceIds2.some((id23) => {
-          const metadata = this.store.get("evidence", id23).metadata;
+        const covered = evidenceIds2.some((id24) => {
+          const metadata = this.store.get("evidence", id24).metadata;
           return metadata?.procedure_definition_digest === procedure.definition_digest && metadata?.entry_id === entry2.id && metadata?.exit_id === route.exit_id && (route.subscenario_id === void 0 || metadata?.subscenario_id === route.subscenario_id) && metadata?.stage === stage && metadata?.status === "passed";
         });
         if (!covered) throw new Error(`Composition gate requires route Evidence: ${entry2.id}/${route.exit_id}/${stage}`);
       }
     }
-    const gate = this.store.create("experience_procedure_gate", id22, { ...identity, identity_digest: stableDigest(identity), request_digest: requestDigest });
+    const gate = this.store.create("experience_procedure_gate", id23, { ...identity, identity_digest: stableDigest(identity), request_digest: requestDigest });
     const next = passed ? [...STAGES.slice(0, expected), stage] : [];
     const lifecycle = !passed ? stage === "canary" ? "rolled_back" : "rejected" : stage === "canary" ? "routeable" : "candidate";
     const saved = this.store.save("experience_procedure", String(procedure.id), { ...payload(procedure), completed_gates: next, lifecycle, routeable: lifecycle === "routeable", rollback_gate_id: lifecycle === "rolled_back" ? gate.id : null });
@@ -251127,8 +250808,8 @@ var ProcedureStore = class {
     return new ProcedurePlanner(this.store).plan(args);
   }
   get(args) {
-    const id22 = text17(args.procedure_id, "procedure_id");
-    const procedure = args.release_channel === void 0 ? this.store.get("experience_procedure", id22, args.version === void 0 ? void 0 : Number(args.version)) : selectedProcedure(this.store, id22, args.release_channel);
+    const id23 = text17(args.procedure_id, "procedure_id");
+    const procedure = args.release_channel === void 0 ? this.store.get("experience_procedure", id23, args.version === void 0 ? void 0 : Number(args.version)) : selectedProcedure(this.store, id23, args.release_channel);
     if (!procedure) throw new Error("Procedure release unavailable");
     return { procedure };
   }
@@ -251162,22 +250843,22 @@ ${source}`;
       if (existing.procedure_id !== procedure.id || existing.procedure_version !== procedure.version || existing.content_digest !== contentDigest) throw new Error("Experience Skill export idempotency conflict");
       return { export: existing, idempotent: true };
     }
-    const root = (0, import_node_path35.resolve)(this.store.paths.experienceDir);
-    if ((0, import_node_fs25.lstatSync)(root).isSymbolicLink()) throw new Error("Experience export root must not be a symbolic link");
-    const skills = (0, import_node_path35.join)(root, "skills");
-    (0, import_node_fs25.mkdirSync)(skills, { recursive: true, mode: 448 });
-    if ((0, import_node_fs25.lstatSync)(skills).isSymbolicLink()) throw new Error("Experience skills directory must not be a symbolic link");
-    const directory = (0, import_node_path35.join)(skills, stableDigest(exportId).slice(7));
-    (0, import_node_fs25.mkdirSync)(directory, { mode: 448 });
-    const path2 = (0, import_node_path35.join)(directory, "SKILL.md");
-    const definitionPath = definition2 ? (0, import_node_path35.join)(directory, "PROCEDURE.json") : null;
+    const root = (0, import_node_path34.resolve)(this.store.paths.experienceDir);
+    if ((0, import_node_fs24.lstatSync)(root).isSymbolicLink()) throw new Error("Experience export root must not be a symbolic link");
+    const skills = (0, import_node_path34.join)(root, "skills");
+    (0, import_node_fs24.mkdirSync)(skills, { recursive: true, mode: 448 });
+    if ((0, import_node_fs24.lstatSync)(skills).isSymbolicLink()) throw new Error("Experience skills directory must not be a symbolic link");
+    const directory = (0, import_node_path34.join)(skills, stableDigest(exportId).slice(7));
+    (0, import_node_fs24.mkdirSync)(directory, { mode: 448 });
+    const path2 = (0, import_node_path34.join)(directory, "SKILL.md");
+    const definitionPath = definition2 ? (0, import_node_path34.join)(directory, "PROCEDURE.json") : null;
     try {
-      (0, import_node_fs25.writeFileSync)(path2, markdown, { encoding: "utf8", mode: 384, flag: "wx" });
-      if (definitionPath) (0, import_node_fs25.writeFileSync)(definitionPath, `${JSON.stringify(definition2, null, 2)}
+      (0, import_node_fs24.writeFileSync)(path2, markdown, { encoding: "utf8", mode: 384, flag: "wx" });
+      if (definitionPath) (0, import_node_fs24.writeFileSync)(definitionPath, `${JSON.stringify(definition2, null, 2)}
 `, { encoding: "utf8", mode: 384, flag: "wx" });
       return { export: this.store.create("experience_skill_export", exportId, { procedure_id: procedure.id, procedure_version: procedure.version, path: path2, definition_path: definitionPath, content_digest: contentDigest, enabled: false, status: "draft" }), idempotent: false };
     } catch (error) {
-      (0, import_node_fs25.rmSync)(directory, { recursive: true, force: true });
+      (0, import_node_fs24.rmSync)(directory, { recursive: true, force: true });
       throw error;
     }
   }
@@ -251192,12 +250873,12 @@ ${source}`;
     if (kind4 === "graph") return "graphs";
     return "prompts";
   }
-  definition(id22, kind4, identity, proposal) {
+  definition(id23, kind4, identity, proposal) {
     const graph = proposal.graph;
     const definition2 = kind4 === "workflow" ? { inputs: proposal.inputs ?? [], steps: proposal.steps ?? [], ...proposal.composition === void 0 ? {} : { composition: proposal.composition } } : { inputs: proposal.inputs ?? [], nodes: graph?.nodes ?? [], edges: graph?.edges ?? [], outputs: graph?.outputs ?? {}, checkpoint_policy: graph?.checkpoint_policy ?? { mode: "step" }, ...graph?.graph_control === void 0 ? {} : { graph_control: graph.graph_control } };
     return {
       schema_version: "craft.procedure.v1",
-      procedure_id: id22,
+      procedure_id: id23,
       procedure_version: 1,
       kind: kind4,
       scope: String(identity.scope),
@@ -251275,8 +250956,8 @@ ${String(value.description)}${contracts}`;
       }
     });
   }
-  assertEvidence(id22) {
-    const evidence2 = this.store.get("evidence", id22);
+  assertEvidence(id23) {
+    const evidence2 = this.store.get("evidence", id23);
     if (!["bounded", "confirmed"].includes(String(evidence2.confidence))) throw new Error("Experience Procedure requires bounded or confirmed Evidence");
   }
 };
@@ -251346,7 +251027,7 @@ var WorkflowEvolutionKernel = class {
   propose(args) {
     const scenarioKey = text18(args.scenario_key, "scenario_key");
     const selectedIds = args.observation_ids === void 0 ? null : strings33(args.observation_ids, "observation_ids", 2);
-    const observations = (selectedIds === null ? this.store.list("workflow_evolution_observation", 1e4, (item) => item.scenario_key === scenarioKey && item.lifecycle === "accepted") : selectedIds.map((id22) => this.store.get("workflow_evolution_observation", id22))).sort((left, right) => String(left.id).localeCompare(String(right.id)));
+    const observations = (selectedIds === null ? this.store.list("workflow_evolution_observation", 1e4, (item) => item.scenario_key === scenarioKey && item.lifecycle === "accepted") : selectedIds.map((id23) => this.store.get("workflow_evolution_observation", id23))).sort((left, right) => String(left.id).localeCompare(String(right.id)));
     if (observations.length < 2) throw new Error("Workflow Evolution requires at least two observations");
     if (observations.some((item) => item.scenario_key !== scenarioKey || item.lifecycle !== "accepted")) throw new Error("Workflow Evolution observations do not match the scenario");
     if (new Set(observations.map((item) => stableDigest(item.scenario_signature ?? { digest: stableDigest(String(item.scenario_key)), source: "legacy_scenario_key" }))).size !== 1) throw new Error("Workflow Evolution observations do not share a Scenario Signature");
@@ -251417,8 +251098,8 @@ var WorkflowEvolutionKernel = class {
     const scenario = args.scenario_key === void 0 ? null : text18(args.scenario_key, "scenario_key");
     return { observations: this.store.list("workflow_evolution_observation", Number(args.limit ?? 100), (item) => scenario === null || item.scenario_key === scenario) };
   }
-  assertEvidence(id22) {
-    const evidence2 = this.store.get("evidence", id22);
+  assertEvidence(id23) {
+    const evidence2 = this.store.get("evidence", id23);
     if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(evidence2.confidence))) throw new Error("Workflow Evolution Evidence must be confirmed or bounded");
   }
 };
@@ -251517,7 +251198,7 @@ function codeContextCandidates(index, query, limit3 = 100) {
 
 // capability/craft-codebase/typescript-analysis.ts
 var import_typescript = __toESM(require_typescript(), 1);
-var import_node_path36 = require("node:path");
+var import_node_path35 = require("node:path");
 var parsed = /* @__PURE__ */ new Map();
 function createCheckpointCompilerHost(files5) {
   if (files5.length > 2e3 || files5.reduce((size, file) => size + file.content.length, 0) > 2e7) throw new Error("TypeScript checkpoint exceeds analysis budget");
@@ -251557,17 +251238,17 @@ function analyzeTypeScript(files5) {
   const options = { allowJs: true, checkJs: true, noLib: true, noResolve: false, target: import_typescript.default.ScriptTarget.Latest, module: import_typescript.default.ModuleKind.NodeNext, moduleResolution: import_typescript.default.ModuleResolutionKind.NodeNext };
   const program = import_typescript.default.createProgram([...sources.keys()], options, host), checker = program.getTypeChecker();
   const nodes = [], edges = [], declarations = /* @__PURE__ */ new Map(), fileNodes = /* @__PURE__ */ new Map();
-  const id22 = (value) => `ts_${stableDigest(value).slice(-24)}`;
+  const id23 = (value) => `ts_${stableDigest(value).slice(-24)}`;
   const span2 = (node) => ({ start_offset: node.getStart(), end_offset: node.getEnd() });
   for (const source of program.getSourceFiles()) {
     const file = sources.get(source.fileName);
-    const fileId = id22([file.path, "file"]);
+    const fileId = id23([file.path, "file"]);
     fileNodes.set(source.fileName, fileId);
     nodes.push({ id: fileId, kind: "file", path: file.path, name: file.path, source_digest: file.digest, language: file.language, span: { start_offset: 0, end_offset: 0 } });
     const visit = (node) => {
       if (import_typescript.default.isFunctionDeclaration(node) || import_typescript.default.isMethodDeclaration(node) || import_typescript.default.isClassDeclaration(node) || import_typescript.default.isInterfaceDeclaration(node) || import_typescript.default.isTypeAliasDeclaration(node) || import_typescript.default.isEnumDeclaration(node) || import_typescript.default.isVariableDeclaration(node) || import_typescript.default.isParameter(node)) {
         if (node.name) {
-          const nodeId2 = id22([file.path, node.name.getStart(), node.name.getText()]);
+          const nodeId2 = id23([file.path, node.name.getStart(), node.name.getText()]);
           declarations.set(node, nodeId2);
           nodes.push({ id: nodeId2, kind: "symbol", path: file.path, name: node.name.getText(), source_digest: file.digest, language: file.language, span: span2(node.name) });
         }
@@ -251585,7 +251266,7 @@ function analyzeTypeScript(files5) {
       const current2 = declarations.get(node) ?? owner;
       if ((import_typescript.default.isImportDeclaration(node) || import_typescript.default.isExportDeclaration(node)) && node.moduleSpecifier && import_typescript.default.isStringLiteral(node.moduleSpecifier)) {
         const resolved = import_typescript.default.resolveModuleName(node.moduleSpecifier.text, source.fileName, options, host).resolvedModule;
-        const target = resolved && fileNodes.get(import_node_path36.posix.normalize(resolved.resolvedFileName));
+        const target = resolved && fileNodes.get(import_node_path35.posix.normalize(resolved.resolvedFileName));
         if (target) add3("imports", fileNodes.get(source.fileName), target, node.moduleSpecifier);
         else unresolved++;
       }
@@ -251617,9 +251298,9 @@ function analyzeTypeScript(files5) {
 }
 
 // capability/craft-codebase/codebase-index.ts
-var import_node_crypto112 = require("node:crypto");
-var import_node_fs26 = require("node:fs");
-var import_node_path37 = require("node:path");
+var import_node_crypto111 = require("node:crypto");
+var import_node_fs25 = require("node:fs");
+var import_node_path36 = require("node:path");
 var ANALYZER = "builtin-regex-static-v1";
 var SOURCE_EXTENSIONS = /* @__PURE__ */ new Set(["ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"]);
 var MAX_RESULTS = 100;
@@ -251637,12 +251318,12 @@ function bounded2(value, name, fallback2, maximum = MAX_RESULTS) {
   if (!Number.isInteger(result) || result < 1 || result > maximum) throw new Error(`${name} must be an integer between 1 and ${maximum}`);
   return result;
 }
-function digest21(content) {
-  return (0, import_node_crypto112.createHash)("sha256").update(content).digest("hex");
+function digest20(content) {
+  return (0, import_node_crypto111.createHash)("sha256").update(content).digest("hex");
 }
 function safeChild2(root, path2) {
-  if (!path2 || (0, import_node_path37.isAbsolute)(path2) || path2.split(/[\\/]+/u).includes("..")) throw new Error("Codebase snapshot path is unsafe");
-  return (0, import_node_path37.resolve)(root, path2);
+  if (!path2 || (0, import_node_path36.isAbsolute)(path2) || path2.split(/[\\/]+/u).includes("..")) throw new Error("Codebase snapshot path is unsafe");
+  return (0, import_node_path36.resolve)(root, path2);
 }
 function extension(path2) {
   return path2.slice(path2.lastIndexOf(".") + 1).toLowerCase();
@@ -251907,7 +251588,7 @@ var CodebaseIndexKernel = class {
       frontier = [...next];
     }
     const nodes = new Map(index.nodes.map((node) => [node.id, node]));
-    const impacted = [...seen].map((id22) => nodes.get(id22)).filter((node) => node !== void 0).sort((left, right) => left.id.localeCompare(right.id));
+    const impacted = [...seen].map((id23) => nodes.get(id23)).filter((node) => node !== void 0).sort((left, right) => left.id.localeCompare(right.id));
     return this.receipt("impact_query", index, workspace, { seed_node_id: seed.id, max_depth: depth, returned_node_ids: impacted.map((node) => node.id), returned_edge_ids: selected.map((edge) => edge.id), truncated: selected.length >= limit3 }, { candidate_only: true, seed, nodes: impacted, edges: selected });
   }
   contextSlice(args) {
@@ -251915,7 +251596,7 @@ var CodebaseIndexKernel = class {
     const limit3 = bounded2(args.limit, "limit", 20);
     const requested = Array.isArray(args.node_ids) ? args.node_ids.map((item) => text19(item, "node_ids")) : [];
     if (!requested.length || new Set(requested).size !== requested.length) throw new Error("node_ids must contain unique node ids");
-    const nodes = requested.map((id22) => this.node(index, id22)).slice(0, limit3).map((node) => ({ node_id: node.id, path: node.path, span: node.span, source_digest: node.source_digest, kind: node.kind, name: node.name }));
+    const nodes = requested.map((id23) => this.node(index, id23)).slice(0, limit3).map((node) => ({ node_id: node.id, path: node.path, span: node.span, source_digest: node.source_digest, kind: node.kind, name: node.name }));
     return this.receipt("context_slice", index, workspace, { requested_node_ids: requested, returned_node_ids: nodes.map((node) => node.node_id), omitted_count: requested.length - nodes.length }, { references: nodes, content_included: false });
   }
   activation(args) {
@@ -251928,10 +251609,10 @@ var CodebaseIndexKernel = class {
   }
   repositoryConfigurationDigest(workspace) {
     const path2 = safeChild2(String(workspace.root_path), ".craft-codebase.json");
-    const stat4 = (0, import_node_fs26.lstatSync)(path2, { throwIfNoEntry: false });
+    const stat4 = (0, import_node_fs25.lstatSync)(path2, { throwIfNoEntry: false });
     if (!stat4) return null;
     if (!stat4.isFile() || stat4.isSymbolicLink()) throw new Error("Repository config must be a regular file");
-    return digest21((0, import_node_fs26.readFileSync)(path2, "utf8"));
+    return digest20((0, import_node_fs25.readFileSync)(path2, "utf8"));
   }
   readyIndex(args) {
     const index = this.store.get("codebase_index", identifier20(args.index_id, "index_id"));
@@ -251949,10 +251630,10 @@ var CodebaseIndexKernel = class {
   sourceFile(root, entry2) {
     const path2 = text19(entry2.path, "workspace_checkpoint.entries.path");
     const file = safeChild2(root, path2);
-    const stat4 = (0, import_node_fs26.lstatSync)(file);
+    const stat4 = (0, import_node_fs25.lstatSync)(file);
     if (stat4.isSymbolicLink() || !stat4.isFile()) throw new Error("Codebase snapshots support regular files only");
-    const content = (0, import_node_fs26.readFileSync)(file, "utf8");
-    if (digest21(content) !== entry2.digest) throw new Error("Codebase snapshot file changed since checkpoint");
+    const content = (0, import_node_fs25.readFileSync)(file, "utf8");
+    if (digest20(content) !== entry2.digest) throw new Error("Codebase snapshot file changed since checkpoint");
     return { path: path2, digest: String(entry2.digest), content, language: language(path2) };
   }
   graph(indexId, files5) {
@@ -252004,13 +251685,13 @@ var CodebaseIndexKernel = class {
   }
   resolveImport(path2, specifier, files5) {
     if (!specifier.startsWith(".")) return void 0;
-    const base = (0, import_node_path37.resolve)("/", path2, "..");
-    const raw = (0, import_node_path37.relative)("/", (0, import_node_path37.resolve)(base, specifier)).replaceAll("\\", "/");
+    const base = (0, import_node_path36.resolve)("/", path2, "..");
+    const raw = (0, import_node_path36.relative)("/", (0, import_node_path36.resolve)(base, specifier)).replaceAll("\\", "/");
     const candidates = [raw, ...["ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"].map((ext) => `${raw}.${ext}`), ...["ts", "tsx", "js", "jsx"].map((ext) => `${raw}/index.${ext}`)];
     return candidates.map((candidate2) => files5.get(candidate2)).find((node) => node !== void 0);
   }
-  node(index, id22) {
-    const node = index.nodes.find((candidate2) => candidate2.id === id22);
+  node(index, id23) {
+    const node = index.nodes.find((candidate2) => candidate2.id === id23);
     if (!node) throw new Error("Codebase node is not in index");
     return node;
   }
@@ -252059,7 +251740,7 @@ function ownerOfTool(toolName) {
 }
 
 // core/hook-plane.ts
-var import_node_crypto113 = require("node:crypto");
+var import_node_crypto112 = require("node:crypto");
 var HookPlane = class _HookPlane {
   hooks;
   /** One record per phase run, in order. Bounded by the number of phases per turn. */
@@ -252094,7 +251775,7 @@ var HookPlane = class _HookPlane {
    * keep it while refusing to keep the conversation.
    */
   static inputDigest(toolName, args) {
-    return `sha256:${(0, import_node_crypto113.createHash)("sha256").update(JSON.stringify({ tool: toolName, args })).digest("hex")}`;
+    return `sha256:${(0, import_node_crypto112.createHash)("sha256").update(JSON.stringify({ tool: toolName, args })).digest("hex")}`;
   }
   /**
    * The context a tool call can honestly supply.
@@ -252117,20 +251798,20 @@ var HookPlane = class _HookPlane {
 };
 
 // core/legacy-knowledge-migration.ts
-var import_node_crypto114 = require("node:crypto");
+var import_node_crypto113 = require("node:crypto");
 var import_promises17 = require("node:fs/promises");
-var import_node_path38 = require("node:path");
+var import_node_path37 = require("node:path");
 var CATEGORIES = /* @__PURE__ */ new Set(["projects", "domains", "troubleshooting", "decisions", "workflows"]);
 var TYPES3 = /* @__PURE__ */ new Map([["domain_rule", "fact"], ["technical_decision", "decision"], ["workflow", "rule"], ["troubleshooting", "failure_mode"], ["stable_project_fact", "fact"]]);
 var SECRET16 = /(?:password|passwd|token|secret|api[_-]?key|cookie|authorization)\s*[:=]\s*\S{8,}/i;
 var FORBIDDEN = /个人述职|述职|\bddo\b|\bokr\b|绩效|个人能力|能力成长|个人总结|周报|月报|季度总结|上半年总结|下半年计划|阶段进展|项目进展|会议纪要|会议记录|文案润色|翻译润色/i;
-var MAX_FILES3 = 1e4;
+var MAX_FILES2 = 1e4;
 var MAX_BYTES = 256 * 1024;
-function digest22(value) {
-  return `sha256:${(0, import_node_crypto114.createHash)("sha256").update(typeof value === "string" ? value : JSON.stringify(value)).digest("hex")}`;
+function digest21(value) {
+  return `sha256:${(0, import_node_crypto113.createHash)("sha256").update(typeof value === "string" ? value : JSON.stringify(value)).digest("hex")}`;
 }
 function id15(prefix) {
-  return `${prefix}_${(0, import_node_crypto114.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto113.randomUUID)().replaceAll("-", "")}`;
 }
 function text20(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
@@ -252162,7 +251843,7 @@ function tags(value) {
   return value ? value.split(",").map((item) => item.trim()).filter(Boolean) : [];
 }
 function candidateId(migrationId, entry2) {
-  return `legacy_knowledge_candidate_${(0, import_node_crypto114.createHash)("sha256").update(`${migrationId}:${entry2.rel_path}:${entry2.page_digest}`).digest("hex").slice(0, 24)}`;
+  return `legacy_knowledge_candidate_${(0, import_node_crypto113.createHash)("sha256").update(`${migrationId}:${entry2.rel_path}:${entry2.page_digest}`).digest("hex").slice(0, 24)}`;
 }
 var LegacyKnowledgeMigrationKernel = class {
   store;
@@ -252188,24 +251869,24 @@ var LegacyKnowledgeMigrationKernel = class {
     return { migration_id: migration.id, previous_digest: migration.source_digest, current_digest: next.source_digest, changed: drifted, entries: changed, tombstones, migration: saved, content_free: true };
   }
   async discover(args) {
-    const sourceRoot = await (0, import_promises17.realpath)((0, import_node_path38.resolve)(text20(args.source_root, "source_root")));
-    const pagesRoot = (0, import_node_path38.resolve)(sourceRoot, "data", "pages");
+    const sourceRoot = await (0, import_promises17.realpath)((0, import_node_path37.resolve)(text20(args.source_root, "source_root")));
+    const pagesRoot = (0, import_node_path37.resolve)(sourceRoot, "data", "pages");
     const root = await (0, import_promises17.realpath)(pagesRoot).catch(() => {
       throw new Error("source_root must contain data/pages");
     });
-    if ((0, import_node_path38.relative)(sourceRoot, root).startsWith("..")) throw new Error("data/pages escapes source_root");
+    if ((0, import_node_path37.relative)(sourceRoot, root).startsWith("..")) throw new Error("data/pages escapes source_root");
     const files5 = await this.markdownFiles(root);
     const entries2 = [];
     for (const file of files5) entries2.push(await this.entry(sourceRoot, root, file));
     const manifest = entries2.map(({ rel_path, page_digest, eligibility, reason }) => ({ rel_path, page_digest, eligibility, reason })).sort((a, b) => a.rel_path.localeCompare(b.rel_path));
-    const migrationId = String(args.migration_id ?? `legacy_knowledge_migration_${digest22({ sourceRoot, manifest }).slice(-24)}`);
-    const identity = { source_root: sourceRoot, source_digest: digest22(manifest), entries: entries2, policy: "confirmed-only; no-drafts; no-raw-body; no-sensitive-content" };
+    const migrationId = String(args.migration_id ?? `legacy_knowledge_migration_${digest21({ sourceRoot, manifest }).slice(-24)}`);
+    const identity = { source_root: sourceRoot, source_digest: digest21(manifest), entries: entries2, policy: "confirmed-only; no-drafts; no-raw-body; no-sensitive-content" };
     const existing = this.store.find("legacy_knowledge_migration", migrationId);
     if (existing) {
-      if (existing.identity_digest !== digest22(identity)) throw new Error("Legacy knowledge discovery idempotency conflict");
+      if (existing.identity_digest !== digest21(identity)) throw new Error("Legacy knowledge discovery idempotency conflict");
       return { migration: existing, idempotent: true };
     }
-    const migration = this.store.create("legacy_knowledge_migration", migrationId, { ...identity, identity_digest: digest22(identity), status: "discovered" });
+    const migration = this.store.create("legacy_knowledge_migration", migrationId, { ...identity, identity_digest: digest21(identity), status: "discovered" });
     return { migration, idempotent: false };
   }
   async importCandidates(args, sourceId, create) {
@@ -252236,7 +251917,7 @@ var LegacyKnowledgeMigrationKernel = class {
         candidates.push({ ...existing, idempotent: true });
         continue;
       }
-      const duplicate = this.store.list("legacy_knowledge_migration_candidate", MAX_FILES3, (item) => item.canonical_key === this.canonicalKey(entry2) && item.status !== "retracted")[0];
+      const duplicate = this.store.list("legacy_knowledge_migration_candidate", MAX_FILES2, (item) => item.canonical_key === this.canonicalKey(entry2) && item.status !== "retracted")[0];
       if (duplicate) {
         candidates.push(this.store.create("legacy_knowledge_migration_candidate", candidate_id, { migration_id: migration.id, source_id: sourceId, source_locator: entry2.rel_path, source_digest: entry2.page_digest, canonical_key: this.canonicalKey(entry2), title: entry2.title, summary: entry2.summary, category: entry2.category, knowledge_type: entry2.knowledge_type, scope: entry2.scope, project: entry2.project, tags: entry2.tags, status: "duplicate", duplicate_of: duplicate.id, evidence_id: null, claim_id: null, memory_id: null, wiki_page_id: null, import_authority: false }));
         continue;
@@ -252268,7 +251949,7 @@ var LegacyKnowledgeMigrationKernel = class {
     );
     const candidates = this.store.list(
       "legacy_knowledge_migration_candidate",
-      MAX_FILES3,
+      MAX_FILES2,
       (candidate2) => candidate2.migration_id === migration.id && (requested === null || requested.has(String(candidate2.id)))
     );
     const rebound = [];
@@ -252359,8 +252040,8 @@ var LegacyKnowledgeMigrationKernel = class {
         failures.push({ candidate_id: candidate2.id, code: "source_unavailable_or_drifted" });
         continue;
       }
-      const reviewIdentity = { candidate_id: candidate2.id, claim_id: candidate2.claim_id, source_digest: candidate2.source_digest, decision: assessment.decision, reviewer, model_ref: modelRef, reason_digest: digest22(assessment.reason), policy: "bounded_model_source_review_v1" };
-      const reviewId = `knowledge_model_review_${digest22(reviewIdentity).slice(-24)}`;
+      const reviewIdentity = { candidate_id: candidate2.id, claim_id: candidate2.claim_id, source_digest: candidate2.source_digest, decision: assessment.decision, reviewer, model_ref: modelRef, reason_digest: digest21(assessment.reason), policy: "bounded_model_source_review_v1" };
+      const reviewId = `knowledge_model_review_${digest21(reviewIdentity).slice(-24)}`;
       const prior = this.store.find("knowledge_model_review", reviewId);
       const review = prior ?? this.store.create("knowledge_model_review", reviewId, { ...reviewIdentity, automated: true, reviewed_at: (/* @__PURE__ */ new Date()).toISOString(), content_free: true });
       if (assessment.decision !== "supported") {
@@ -252411,7 +252092,7 @@ var LegacyKnowledgeMigrationKernel = class {
         content_digest: contentRef.digest,
         evidence_ids: evidenceIds2,
         status: "reviewed",
-        review: { reviewer, model_ref: modelRef, review_id: review.id, reason_digest: digest22(assessment.reason), reviewed_at: (/* @__PURE__ */ new Date()).toISOString(), automated: true, confidence: "bounded" }
+        review: { reviewer, model_ref: modelRef, review_id: review.id, reason_digest: digest21(assessment.reason), reviewed_at: (/* @__PURE__ */ new Date()).toISOString(), automated: true, confidence: "bounded" }
       });
       this.store.save("legacy_knowledge_migration_candidate", String(candidate2.id), { ...payload6(candidate2), model_review_id: review.id, reviewed_claim_version: saved.version });
       reviewed.push({ candidate_id: candidate2.id, claim_id: saved.id, claim_version: saved.version, review_id: review.id, evidence_id: evidence2.id, idempotent: false });
@@ -252438,11 +252119,11 @@ var LegacyKnowledgeMigrationKernel = class {
   }
   completeRetraction(candidateId2, reason) {
     const candidate2 = this.store.get("legacy_knowledge_migration_candidate", candidateId2);
-    return this.store.save("legacy_knowledge_migration_candidate", candidateId2, { ...payload6(candidate2), status: "retracted", retracted_at: (/* @__PURE__ */ new Date()).toISOString(), retraction_reason_digest: digest22(reason), import_authority: false });
+    return this.store.save("legacy_knowledge_migration_candidate", candidateId2, { ...payload6(candidate2), status: "retracted", retracted_at: (/* @__PURE__ */ new Date()).toISOString(), retraction_reason_digest: digest21(reason), import_authority: false });
   }
   failureReport(args) {
     const migrationId = text20(args.migration_id, "migration_id");
-    return { reports: this.store.list("legacy_knowledge_migration_report", MAX_FILES3, (item) => item.migration_id === migrationId) };
+    return { reports: this.store.list("legacy_knowledge_migration_report", MAX_FILES2, (item) => item.migration_id === migrationId) };
   }
   recordFailure(migrationId, stage, sourceLocator, code) {
     return this.report(migrationId, stage, [this.failure(migrationId, stage, sourceLocator, code)]);
@@ -252451,12 +252132,12 @@ var LegacyKnowledgeMigrationKernel = class {
     const result = [];
     const walk3 = async (directory) => {
       for (const item of await (0, import_promises17.readdir)(directory, { withFileTypes: true })) {
-        const target = (0, import_node_path38.resolve)(directory, item.name);
+        const target = (0, import_node_path37.resolve)(directory, item.name);
         if (item.isSymbolicLink()) continue;
         if (item.isDirectory()) await walk3(target);
         else if (item.isFile() && item.name.endsWith(".md")) {
           result.push(target);
-          if (result.length > MAX_FILES3) throw new Error("legacy knowledge file limit exceeded");
+          if (result.length > MAX_FILES2) throw new Error("legacy knowledge file limit exceeded");
         }
       }
     };
@@ -252465,13 +252146,13 @@ var LegacyKnowledgeMigrationKernel = class {
   }
   async entry(sourceRoot, pagesRoot, file) {
     const info = await (0, import_promises17.stat)(file);
-    const rel_path = (0, import_node_path38.relative)(sourceRoot, file).split("\\").join("/");
-    if (info.size > MAX_BYTES) return this.excluded(rel_path, digest22(`${file}:${info.size}`), "file_too_large");
+    const rel_path = (0, import_node_path37.relative)(sourceRoot, file).split("\\").join("/");
+    if (info.size > MAX_BYTES) return this.excluded(rel_path, digest21(`${file}:${info.size}`), "file_too_large");
     const content = await (0, import_promises17.readFile)(file, "utf8");
-    const page_digest = digest22(content);
+    const page_digest = digest21(content);
     const { metadata, body: body3 } = frontmatter(content);
-    const title = metadata.title || heading(body3, (0, import_node_path38.relative)(pagesRoot, file));
-    const category = metadata.category ?? (0, import_node_path38.relative)(pagesRoot, file).split("/")[0];
+    const title = metadata.title || heading(body3, (0, import_node_path37.relative)(pagesRoot, file));
+    const category = metadata.category ?? (0, import_node_path37.relative)(pagesRoot, file).split("/")[0];
     const knowledge_type = metadata.knowledge_type ?? "";
     if (metadata.status !== "confirmed") return this.excluded(rel_path, page_digest, "not_confirmed", title, category, knowledge_type);
     if (!CATEGORIES.has(category) || !TYPES3.has(knowledge_type)) return this.excluded(rel_path, page_digest, "unsupported_metadata", title, category, knowledge_type);
@@ -252485,32 +252166,32 @@ ${summary2}`)) return this.excluded(rel_path, page_digest, "sensitive_or_disallo
     return { rel_path, page_digest, title, summary: summary2, eligibility: "eligible", reason: null, category, knowledge_type, scope: metadata.scope ?? "project", project: metadata.project ?? null, tags: tags(metadata.tags), evidence_type };
   }
   async sourceState(sourceRoot, entry2) {
-    const target = (0, import_node_path38.resolve)(sourceRoot, entry2.rel_path);
-    const relativePath3 = (0, import_node_path38.relative)(sourceRoot, target);
+    const target = (0, import_node_path37.resolve)(sourceRoot, entry2.rel_path);
+    const relativePath3 = (0, import_node_path37.relative)(sourceRoot, target);
     if (!relativePath3 || relativePath3.startsWith("..")) return "invalid_source_locator";
     try {
       const resolved = await (0, import_promises17.realpath)(target);
-      if ((0, import_node_path38.relative)(sourceRoot, resolved).startsWith("..")) return "source_path_escape";
+      if ((0, import_node_path37.relative)(sourceRoot, resolved).startsWith("..")) return "source_path_escape";
       const info = await (0, import_promises17.stat)(resolved);
       if (!info.isFile() || info.size > MAX_BYTES) return "source_unavailable";
       const content = await (0, import_promises17.readFile)(resolved, "utf8");
       if (!safe2(content)) return "source_sensitive_or_disallowed";
-      return digest22(content) === entry2.page_digest ? "current" : "source_digest_drift";
+      return digest21(content) === entry2.page_digest ? "current" : "source_digest_drift";
     } catch {
       return "source_unavailable";
     }
   }
   async readSourcePage(sourceRoot, entry2) {
-    const target = (0, import_node_path38.resolve)(sourceRoot, entry2.rel_path);
-    const relativePath3 = (0, import_node_path38.relative)(sourceRoot, target);
+    const target = (0, import_node_path37.resolve)(sourceRoot, entry2.rel_path);
+    const relativePath3 = (0, import_node_path37.relative)(sourceRoot, target);
     if (!relativePath3 || relativePath3.startsWith("..")) return null;
     try {
       const resolved = await (0, import_promises17.realpath)(target);
-      if ((0, import_node_path38.relative)(sourceRoot, resolved).startsWith("..")) return null;
+      if ((0, import_node_path37.relative)(sourceRoot, resolved).startsWith("..")) return null;
       const info = await (0, import_promises17.stat)(resolved);
       if (!info.isFile() || info.size > MAX_BYTES) return null;
       const content = await (0, import_promises17.readFile)(resolved, "utf8");
-      if (!safe2(content) || digest22(content) !== entry2.page_digest) return null;
+      if (!safe2(content) || digest21(content) !== entry2.page_digest) return null;
       const parsed2 = frontmatter(content);
       if (parsed2.metadata.status !== "confirmed" || !parsed2.metadata.evidence_ref || !parsed2.body.trim()) return null;
       return parsed2;
@@ -252522,10 +252203,10 @@ ${summary2}`)) return this.excluded(rel_path, page_digest, "sensitive_or_disallo
     return { rel_path, page_digest, title, summary: "", eligibility: "excluded", reason, category, knowledge_type, scope: "project", project: null, tags: [], evidence_type: null };
   }
   canonicalKey(entry2) {
-    return digest22({ title: entry2.title.toLowerCase(), category: entry2.category, project: entry2.project ?? "", knowledge_type: entry2.knowledge_type, content_digest: entry2.page_digest });
+    return digest21({ title: entry2.title.toLowerCase(), category: entry2.category, project: entry2.project ?? "", knowledge_type: entry2.knowledge_type, content_digest: entry2.page_digest });
   }
   failure(migration_id, stage, source_locator, code) {
-    return { migration_id, stage, source_locator, code: safe2(code) ? code : "redacted_failure", failure_digest: digest22(code) };
+    return { migration_id, stage, source_locator, code: safe2(code) ? code : "redacted_failure", failure_digest: digest21(code) };
   }
   report(migrationId, stage, failures) {
     const reportId = id15("legacy_knowledge_migration_report");
@@ -252535,9 +252216,9 @@ ${summary2}`)) return this.excluded(rel_path, page_digest, "sensitive_or_disallo
 };
 
 // core/workflow-dag.ts
-var import_node_crypto115 = require("node:crypto");
-var import_node_fs27 = require("node:fs");
-var import_node_path39 = require("node:path");
+var import_node_crypto114 = require("node:crypto");
+var import_node_fs26 = require("node:fs");
+var import_node_path38 = require("node:path");
 var NODE_TYPES = /* @__PURE__ */ new Set(["action", "condition", "parallel", "human_gate", "retry", "compensation", "subworkflow"]);
 var EDGE_KINDS = /* @__PURE__ */ new Set(["success", "failure", "condition", "retry", "compensation", "human_resume"]);
 var JOIN_POLICIES = /* @__PURE__ */ new Set(["all", "any", "quorum", "partial"]);
@@ -252545,14 +252226,14 @@ var EFFECTS16 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_w
 var LIFECYCLE = /* @__PURE__ */ new Set(["draft", "candidate", "verified", "canary", "routable", "deprecated", "rolled_back"]);
 var SECRET17 = /(?:api[_-]?key|authorization|cookie|password|passwd|secret|token)\s*[:=]\s*[^\s]{6,}/iu;
 function id16(prefix) {
-  return `${prefix}_${(0, import_node_crypto115.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto114.randomUUID)().replaceAll("-", "")}`;
 }
 function text21(v, name) {
   if (typeof v !== "string" || !v.trim()) throw new Error(`${name} must not be empty`);
   return v.trim();
 }
-function digest23(v) {
-  return `sha256:${(0, import_node_crypto115.createHash)("sha256").update(JSON.stringify(v)).digest("hex")}`;
+function digest22(v) {
+  return `sha256:${(0, import_node_crypto114.createHash)("sha256").update(JSON.stringify(v)).digest("hex")}`;
 }
 function payload7(r) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...p } = r;
@@ -252658,18 +252339,18 @@ var WorkflowDagKernel = class {
     if (SECRET17.test(JSON.stringify({ graph, derived_from: args.derived_from ?? null })) || SECRET17.test(String(args.name)) || SECRET17.test(String(args.description ?? ""))) throw new Error("Workflow definition must not contain credentials or secrets");
     const derivedFrom = args.derived_from === void 0 ? null : args.derived_from;
     if (derivedFrom !== null && (typeof derivedFrom !== "object" || Array.isArray(derivedFrom))) throw new Error("derived_from must be an object");
-    const identity = { workflow_id: workflowId, name: text21(args.name, "name"), description: String(args.description ?? ""), graph, graph_digest: digest23(graph), derived_from: derivedFrom };
+    const identity = { workflow_id: workflowId, name: text21(args.name, "name"), description: String(args.description ?? ""), graph, graph_digest: digest22(graph), derived_from: derivedFrom };
     const existing = this.store.find("workflow_dag", workflowId);
     if (existing) {
-      if (existing.identity_digest !== digest23(identity)) throw new Error("Workflow DAG idempotency conflict");
+      if (existing.identity_digest !== digest22(identity)) throw new Error("Workflow DAG idempotency conflict");
       return { workflow: existing, idempotent: true };
     }
-    (0, import_node_fs27.mkdirSync)((0, import_node_path39.join)(this.store.paths.root, "workflows"), { recursive: true });
-    const filePath = (0, import_node_path39.join)(this.store.paths.root, "workflows", `${workflowId}.workflow.json`);
+    (0, import_node_fs26.mkdirSync)((0, import_node_path38.join)(this.store.paths.root, "workflows"), { recursive: true });
+    const filePath = (0, import_node_path38.join)(this.store.paths.root, "workflows", `${workflowId}.workflow.json`);
     const document3 = { workflow_id: workflowId, name: identity.name, description: identity.description, ...graph, graph_digest: identity.graph_digest, derived_from: derivedFrom };
-    (0, import_node_fs27.writeFileSync)(filePath, `${JSON.stringify(document3, null, 2)}
+    (0, import_node_fs26.writeFileSync)(filePath, `${JSON.stringify(document3, null, 2)}
 `, { encoding: "utf8", mode: 384 });
-    const workflow = this.store.create("workflow_dag", workflowId, { ...identity, file_path: filePath, file_digest: digest23(document3), identity_digest: digest23(identity), lifecycle, automation_authority: false });
+    const workflow = this.store.create("workflow_dag", workflowId, { ...identity, file_path: filePath, file_digest: digest22(document3), identity_digest: digest22(identity), lifecycle, automation_authority: false });
     return { workflow, idempotent: false };
   }
   get(args) {
@@ -252687,12 +252368,12 @@ var WorkflowDagKernel = class {
     }
     if (target === "routable" && args.canary_receipt === void 0) throw new Error("Workflow routable transition requires canary_receipt");
     const reason = text21(args.reason, "reason");
-    return { workflow: this.store.save("workflow_dag", String(workflow.id), { ...payload7(workflow), lifecycle: target, transition_reason_digest: digest23(reason), evaluation_run_id: args.evaluation_run_id ?? null, canary_receipt: args.canary_receipt ?? null, automation_authority: false }) };
+    return { workflow: this.store.save("workflow_dag", String(workflow.id), { ...payload7(workflow), lifecycle: target, transition_reason_digest: digest22(reason), evaluation_run_id: args.evaluation_run_id ?? null, canary_receipt: args.canary_receipt ?? null, automation_authority: false }) };
   }
   checkpoint(args) {
     const runId = text21(args.run_id, "run_id");
     const workflow = this.store.get("workflow_dag", text21(args.workflow_id, "workflow_id"));
-    const state4 = { completed: args.completed ?? [], pending: args.pending ?? [], active: args.active ?? [], state_digest: text21(args.state_digest ?? digest23({ completed: args.completed ?? [], pending: args.pending ?? [], active: args.active ?? [] }), "state_digest") };
+    const state4 = { completed: args.completed ?? [], pending: args.pending ?? [], active: args.active ?? [], state_digest: text21(args.state_digest ?? digest22({ completed: args.completed ?? [], pending: args.pending ?? [], active: args.active ?? [] }), "state_digest") };
     const checkpointId = String(args.checkpoint_id ?? id16("workflow_checkpoint"));
     const cp = this.store.create("workflow_checkpoint", checkpointId, { run_id: runId, workflow_id: workflow.id, workflow_version: workflow.version, graph_digest: workflow.graph_digest, ...state4, workspace_snapshot: args.workspace_snapshot ?? null, budget_fingerprint: args.budget_fingerprint ?? null, environment_fingerprint: args.environment_fingerprint ?? null, pending_decision: args.pending_decision ?? null, resume_action: String(args.resume_action ?? "resume") });
     return { checkpoint: cp };
@@ -252705,7 +252386,7 @@ var WorkflowDagKernel = class {
   }
   cancel(args) {
     const runId = text21(args.run_id, "run_id");
-    return { run: this.store.save("workflow_dag_run", runId, { run_id: runId, status: "cancelled", reason_digest: digest23(text21(args.reason, "reason")) }) };
+    return { run: this.store.save("workflow_dag_run", runId, { run_id: runId, status: "cancelled", reason_digest: digest22(text21(args.reason, "reason")) }) };
   }
   replan(args) {
     const cp = this.store.get("workflow_checkpoint", text21(args.checkpoint_id, "checkpoint_id"));
@@ -252714,7 +252395,7 @@ var WorkflowDagKernel = class {
   export(args) {
     const workflow = this.store.get("workflow_dag", text21(args.workflow_id, "workflow_id"), args.version === void 0 ? void 0 : Number(args.version));
     const document3 = { workflow_id: workflow.id, name: workflow.name, description: workflow.description, ...workflow.graph, graph_digest: workflow.graph_digest, derived_from: workflow.derived_from ?? null };
-    const fileDrift = workflow.file_path ? digest23(JSON.parse((0, import_node_fs27.readFileSync)(String(workflow.file_path), "utf8"))) !== workflow.file_digest : false;
+    const fileDrift = workflow.file_path ? digest22(JSON.parse((0, import_node_fs26.readFileSync)(String(workflow.file_path), "utf8"))) !== workflow.file_digest : false;
     return { workflow_id: workflow.id, version: workflow.version, graph_digest: workflow.graph_digest, file_drift: fileDrift, document: document3 };
   }
   import(args) {
@@ -252725,14 +252406,14 @@ var WorkflowDagKernel = class {
 };
 
 // core/task-state.ts
-var import_node_crypto116 = require("node:crypto");
+var import_node_crypto115 = require("node:crypto");
 var STATES = /* @__PURE__ */ new Set(["prepared", "awaiting_approval", "running", "paused", "awaiting_acceptance", "ready_for_delivery", "completed", "failed", "cancelled", "needs_replan", "blocked"]);
 function text22(v, name) {
   if (typeof v !== "string" || !v.trim()) throw new Error(`${name} must not be empty`);
   return v.trim();
 }
-function digest24(v) {
-  return `sha256:${(0, import_node_crypto116.createHash)("sha256").update(JSON.stringify(v)).digest("hex")}`;
+function digest23(v) {
+  return `sha256:${(0, import_node_crypto115.createHash)("sha256").update(JSON.stringify(v)).digest("hex")}`;
 }
 var TaskStateKernel = class {
   store;
@@ -252752,8 +252433,8 @@ var TaskStateKernel = class {
     const evidenceIds2 = Array.isArray(args.evidence_ids) ? args.evidence_ids.map((x) => text22(x, "evidence_ids")) : [];
     evidenceIds2.forEach((e) => this.store.get("evidence", e));
     const revision2 = expected + 1;
-    const event = this.store.appendEvent(`task:${taskId3}`, "task_state_changed", { task_id: taskId3, state: state4, state_revision: revision2, actor, reason_digest: digest24(reason), evidence_ids: evidenceIds2 });
-    const projection = this.store.save("task_state_projection", taskId3, { task_id: taskId3, state: state4, state_revision: revision2, last_event_sequence: event.sequence, actor, reason_digest: digest24(reason), evidence_ids: evidenceIds2 });
+    const event = this.store.appendEvent(`task:${taskId3}`, "task_state_changed", { task_id: taskId3, state: state4, state_revision: revision2, actor, reason_digest: digest23(reason), evidence_ids: evidenceIds2 });
+    const projection = this.store.save("task_state_projection", taskId3, { task_id: taskId3, state: state4, state_revision: revision2, last_event_sequence: event.sequence, actor, reason_digest: digest23(reason), evidence_ids: evidenceIds2 });
     return { event, projection };
   }
   get(args) {
@@ -252774,15 +252455,15 @@ var TaskStateKernel = class {
 };
 
 // core/mcp-tasks.ts
-var import_node_crypto117 = require("node:crypto");
+var import_node_crypto116 = require("node:crypto");
 var STATES2 = /* @__PURE__ */ new Set(["working", "input_required", "completed", "failed", "cancelled", "expired"]);
 var TERMINAL6 = /* @__PURE__ */ new Set(["completed", "failed", "cancelled", "expired"]);
 function text23(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function digest25(value) {
-  return `sha256:${(0, import_node_crypto117.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+function digest24(value) {
+  return `sha256:${(0, import_node_crypto116.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload8(record) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record;
@@ -252801,13 +252482,13 @@ var McpTaskKernel = class {
   create(args) {
     const requestId = text23(args.request_id, "request_id");
     const operation2 = text23(args.operation, "operation");
-    const inputDigest = text23(args.input_digest ?? digest25(args.input ?? null), "input_digest");
+    const inputDigest = text23(args.input_digest ?? digest24(args.input ?? null), "input_digest");
     const owner = args.owner === void 0 || args.owner === null ? null : text23(args.owner, "owner");
     const ttl = args.ttl_seconds === void 0 ? 86400 : Number(args.ttl_seconds);
     if (!Number.isInteger(ttl) || ttl < 1 || ttl > 2592e3) throw new Error("ttl_seconds must be an integer between 1 and 2592000");
     const pollInterval = args.poll_interval_ms === void 0 ? 1e3 : Number(args.poll_interval_ms);
     if (!Number.isInteger(pollInterval) || pollInterval < 100 || pollInterval > 864e5) throw new Error("poll_interval_ms must be an integer between 100 and 86400000");
-    const taskId3 = args.task_id === void 0 ? `mcp_task_${digest25({ requestId, operation: operation2, inputDigest }).slice(-20)}` : text23(args.task_id, "task_id");
+    const taskId3 = args.task_id === void 0 ? `mcp_task_${digest24({ requestId, operation: operation2, inputDigest }).slice(-20)}` : text23(args.task_id, "task_id");
     const now3 = (/* @__PURE__ */ new Date()).toISOString();
     const existing = this.store.find("mcp_task", taskId3);
     if (existing) {
@@ -252861,14 +252542,14 @@ var McpTaskKernel = class {
 };
 
 // core/runtime-proof.ts
-var import_node_crypto118 = require("node:crypto");
+var import_node_crypto117 = require("node:crypto");
 var REQUIRED_CHECKS = ["workspace_boundary", "network_boundary", "credential_boundary", "process_cleanup", "resource_limits", "cancel_observed"];
 function text24(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function digest26(value) {
-  return `sha256:${(0, import_node_crypto118.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+function digest25(value) {
+  return `sha256:${(0, import_node_crypto117.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var RuntimeProofKernel = class {
   store;
@@ -252877,14 +252558,14 @@ var RuntimeProofKernel = class {
   }
   manifest(args) {
     const runtimeId = text24(args.runtime_id, "runtime_id");
-    const definition2 = { runtime_id: runtimeId, platform: text24(args.platform, "platform"), adapter_id: text24(args.adapter_id, "adapter_id"), workspace_digest: text24(args.workspace_digest, "workspace_digest"), network: text24(args.network ?? "deny", "network"), credential_mode: text24(args.credential_mode ?? "broker_required", "credential_mode"), process_mode: text24(args.process_mode ?? "bounded", "process_mode"), resources_digest: digest26(args.resources ?? {}) };
+    const definition2 = { runtime_id: runtimeId, platform: text24(args.platform, "platform"), adapter_id: text24(args.adapter_id, "adapter_id"), workspace_digest: text24(args.workspace_digest, "workspace_digest"), network: text24(args.network ?? "deny", "network"), credential_mode: text24(args.credential_mode ?? "broker_required", "credential_mode"), process_mode: text24(args.process_mode ?? "bounded", "process_mode"), resources_digest: digest25(args.resources ?? {}) };
     const manifestId = String(args.manifest_id ?? `runtime_manifest_${runtimeId}`);
     const existing = this.store.find("runtime_manifest", manifestId);
     if (existing) {
-      if (existing.definition_digest !== digest26(definition2)) throw new Error("Runtime manifest idempotency conflict");
+      if (existing.definition_digest !== digest25(definition2)) throw new Error("Runtime manifest idempotency conflict");
       return { manifest: existing, idempotent: true };
     }
-    return { manifest: this.store.create("runtime_manifest", manifestId, { ...definition2, definition_digest: digest26(definition2), status: "declared" }), idempotent: false };
+    return { manifest: this.store.create("runtime_manifest", manifestId, { ...definition2, definition_digest: digest25(definition2), status: "declared" }), idempotent: false };
   }
   probe(args) {
     const manifest = this.store.get("runtime_manifest", text24(args.manifest_id, "manifest_id"));
@@ -252893,10 +252574,10 @@ var RuntimeProofKernel = class {
     const probeId = String(args.probe_id ?? `runtime_probe_${manifest.id}`);
     const existing = this.store.find("runtime_probe", probeId);
     if (existing) {
-      if (existing.observation_digest !== digest26(observed)) throw new Error("Runtime probe idempotency conflict");
+      if (existing.observation_digest !== digest25(observed)) throw new Error("Runtime probe idempotency conflict");
       return { probe: existing, idempotent: true };
     }
-    return { probe: this.store.create("runtime_probe", probeId, { ...observed, observed_at: (/* @__PURE__ */ new Date()).toISOString(), observation_digest: digest26(observed) }), idempotent: false };
+    return { probe: this.store.create("runtime_probe", probeId, { ...observed, observed_at: (/* @__PURE__ */ new Date()).toISOString(), observation_digest: digest25(observed) }), idempotent: false };
   }
   conformance(args) {
     const manifest = this.store.get("runtime_manifest", text24(args.manifest_id, "manifest_id"));
@@ -252904,45 +252585,45 @@ var RuntimeProofKernel = class {
     const failed = REQUIRED_CHECKS.filter((key2) => checks[key2] !== true);
     const platform2 = String(manifest.platform);
     const status2 = failed.length || platform2 === "win32" && manifest.adapter_id === "none" ? "blocked" : "verified";
-    const record = { manifest_id: manifest.id, platform: platform2, checks: Object.fromEntries(REQUIRED_CHECKS.map((key2) => [key2, checks[key2] === true])), failed, status: status2, verifier: text24(args.verifier, "verifier"), conformance_digest: digest26({ manifest_id: manifest.id, checks, verifier: args.verifier }) };
-    const id22 = String(args.conformance_id ?? `runtime_conformance_${manifest.id}`);
-    const existing = this.store.find("runtime_conformance", id22);
+    const record = { manifest_id: manifest.id, platform: platform2, checks: Object.fromEntries(REQUIRED_CHECKS.map((key2) => [key2, checks[key2] === true])), failed, status: status2, verifier: text24(args.verifier, "verifier"), conformance_digest: digest25({ manifest_id: manifest.id, checks, verifier: args.verifier }) };
+    const id23 = String(args.conformance_id ?? `runtime_conformance_${manifest.id}`);
+    const existing = this.store.find("runtime_conformance", id23);
     if (existing) {
       if (existing.conformance_digest !== record.conformance_digest) throw new Error("Runtime conformance idempotency conflict");
       return { conformance: existing, idempotent: true };
     }
-    return { conformance: this.store.create("runtime_conformance", id22, record), idempotent: false };
+    return { conformance: this.store.create("runtime_conformance", id23, record), idempotent: false };
   }
   attest(args) {
     const conformance = this.store.get("runtime_conformance", text24(args.conformance_id, "conformance_id"));
     if (conformance.status !== "verified") throw new Error("Runtime conformance is not verified");
     const runId = text24(args.run_id, "run_id");
     const identity = { run_id: runId, conformance_id: conformance.id, environment_digest: text24(args.environment_digest, "environment_digest"), profile_version: text24(args.profile_version, "profile_version"), expires_at: text24(args.expires_at, "expires_at") };
-    const id22 = String(args.attestation_id ?? `runtime_attestation_${runId}`);
-    const existing = this.store.find("runtime_attestation", id22);
+    const id23 = String(args.attestation_id ?? `runtime_attestation_${runId}`);
+    const existing = this.store.find("runtime_attestation", id23);
     if (existing) {
-      if (existing.attestation_digest !== digest26(identity)) throw new Error("Runtime attestation idempotency conflict");
+      if (existing.attestation_digest !== digest25(identity)) throw new Error("Runtime attestation idempotency conflict");
       return { attestation: existing, idempotent: true };
     }
-    return { attestation: this.store.create("runtime_attestation", id22, { ...identity, attestation_digest: digest26(identity), evidence_ids: Array.isArray(args.evidence_ids) ? args.evidence_ids : [] }), idempotent: false };
+    return { attestation: this.store.create("runtime_attestation", id23, { ...identity, attestation_digest: digest25(identity), evidence_ids: Array.isArray(args.evidence_ids) ? args.evidence_ids : [] }), idempotent: false };
   }
   rehydrate(args) {
     const checkpoint = text24(args.checkpoint_id, "checkpoint_id");
     const expected = text24(args.expected_environment_digest, "expected_environment_digest");
     const current2 = text24(args.current_environment_digest, "current_environment_digest");
     const status2 = expected === current2 ? "ready" : "needs_replan";
-    return { checkpoint_id: checkpoint, status: status2, rehydrate_digest: digest26({ checkpoint, expected, current: current2 }) };
+    return { checkpoint_id: checkpoint, status: status2, rehydrate_digest: digest25({ checkpoint, expected, current: current2 }) };
   }
 };
 
 // core/content-migration.ts
-var import_node_crypto119 = require("node:crypto");
-var import_node_fs28 = require("node:fs");
-var import_node_path40 = require("node:path");
+var import_node_crypto118 = require("node:crypto");
+var import_node_fs27 = require("node:fs");
+var import_node_path39 = require("node:path");
 var INLINE_KINDS = /* @__PURE__ */ new Set(["knowledge_claim", "memory_ledger", "episodic_memory", "semantic_memory"]);
 var WIKI_KINDS = /* @__PURE__ */ new Set(["wiki_page"]);
-function digest27(value) {
-  return `sha256:${(0, import_node_crypto119.createHash)("sha256").update(value, "utf8").digest("hex")}`;
+function digest26(value) {
+  return `sha256:${(0, import_node_crypto118.createHash)("sha256").update(value, "utf8").digest("hex")}`;
 }
 function legacyBody(raw) {
   const lines = raw.split(/\r?\n/u);
@@ -253040,7 +252721,7 @@ var ContentMigrationKernel = class {
     const migrationId = String(args.migration_id ?? "").trim();
     if (!migrationId) throw new Error("migration_id must not be empty");
     const migration = this.store.get("legacy_knowledge_migration", migrationId);
-    const sourceRoot = (0, import_node_fs28.realpathSync)((0, import_node_path40.resolve)(String(args.source_root ?? migration.source_root)));
+    const sourceRoot = (0, import_node_fs27.realpathSync)((0, import_node_path39.resolve)(String(args.source_root ?? migration.source_root)));
     const migrationRows = this.store.rawRecords("legacy_knowledge_migration_candidate").filter((row) => row.payload.migration_id === migrationId && row.payload.status === "candidate" && typeof row.payload.claim_id === "string" && String(row.payload.claim_id).trim());
     const latestClaims = /* @__PURE__ */ new Map();
     for (const row of this.store.rawRecords("knowledge_claim")) {
@@ -253055,20 +252736,20 @@ var ContentMigrationKernel = class {
       const claim = latestClaims.get(claimId);
       if (!claim || !contentReference(claim.payload.content_ref)) throw new Error(`Legacy source rehydrate claim reference is missing: ${claimId}`);
       if (!locator2) throw new Error(`Legacy source locator is missing: ${candidate2.id}`);
-      const sourcePath = (0, import_node_path40.resolve)(sourceRoot, locator2);
-      const relativePath3 = (0, import_node_path40.relative)(sourceRoot, sourcePath);
+      const sourcePath = (0, import_node_path39.resolve)(sourceRoot, locator2);
+      const relativePath3 = (0, import_node_path39.relative)(sourceRoot, sourcePath);
       if (!relativePath3 || relativePath3.startsWith("..")) throw new Error(`Legacy source locator escapes source root: ${locator2}`);
-      const resolvedPath = (0, import_node_fs28.realpathSync)(sourcePath);
-      const resolvedRelative = (0, import_node_path40.relative)(sourceRoot, resolvedPath);
+      const resolvedPath = (0, import_node_fs27.realpathSync)(sourcePath);
+      const resolvedRelative = (0, import_node_path39.relative)(sourceRoot, resolvedPath);
       if (!resolvedRelative || resolvedRelative.startsWith("..")) throw new Error(`Legacy source path escapes source root: ${locator2}`);
-      const raw = (0, import_node_fs28.readFileSync)(resolvedPath, "utf8");
+      const raw = (0, import_node_fs27.readFileSync)(resolvedPath, "utf8");
       const sourceDigest = String(candidate2.payload.source_digest ?? "");
-      if (!sourceDigest || digest27(raw) !== sourceDigest) throw new Error(`Legacy source digest drifted: ${locator2}`);
+      if (!sourceDigest || digest26(raw) !== sourceDigest) throw new Error(`Legacy source digest drifted: ${locator2}`);
       const body3 = legacyBody(raw);
       const ref2 = claim.payload.content_ref;
       const title = this.titleFor(candidate2, body3, claim);
       const namedPath = this.store.contentStore.namedPathFor("knowledge", claim.id, claim.version, title);
-      if (digest27(body3) === ref2.digest && (0, import_node_path40.resolve)(ref2.path) === (0, import_node_path40.resolve)(namedPath)) records2.push({ candidate_id: candidate2.id, claim_id: claimId, source_locator: locator2, action: "skip" });
+      if (digest26(body3) === ref2.digest && (0, import_node_path39.resolve)(ref2.path) === (0, import_node_path39.resolve)(namedPath)) records2.push({ candidate_id: candidate2.id, claim_id: claimId, source_locator: locator2, action: "skip" });
       else {
         pending.push({ row: claim, body: body3, ref: ref2, candidateId: candidate2.id, locator: locator2, title });
         records2.push({ candidate_id: candidate2.id, claim_id: claimId, source_locator: locator2, action: "migrate" });
@@ -253120,7 +252801,7 @@ var ContentMigrationKernel = class {
       try {
         return this.store.contentStore.readUncheckedSync(path2).body;
       } catch (error) {
-        if (error instanceof Error && /frontmatter/iu.test(error.message)) return (0, import_node_fs28.readFileSync)(path2, "utf8");
+        if (error instanceof Error && /frontmatter/iu.test(error.message)) return (0, import_node_fs27.readFileSync)(path2, "utf8");
         throw error;
       }
     }
@@ -253144,15 +252825,15 @@ var ContentMigrationKernel = class {
 };
 
 // core/trace-review.ts
-var import_node_crypto120 = require("node:crypto");
+var import_node_crypto119 = require("node:crypto");
 var REVIEW_STATUSES = /* @__PURE__ */ new Set(["passed", "needs_attention", "inconclusive"]);
 var ROOT_CAUSES = /* @__PURE__ */ new Set(["none", "host", "tool", "policy", "environment", "state_drift", "model", "unknown"]);
 function text25(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function digest28(value) {
-  return `sha256:${(0, import_node_crypto120.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+function digest27(value) {
+  return `sha256:${(0, import_node_crypto119.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function refs5(value, name) {
   if (value === void 0) return [];
@@ -253179,7 +252860,7 @@ var TraceReviewKernel = class {
       capability: trace.capability_fingerprint ?? null,
       policy: trace.policy_fingerprint ?? null
     };
-    const reviewId = String(args.review_id ?? `trace_review_${trace.id}_${digest28({ status: status2, cause, versions }).slice(-16)}`);
+    const reviewId = String(args.review_id ?? `trace_review_${trace.id}_${digest27({ status: status2, cause, versions }).slice(-16)}`);
     const identity = {
       trace_id: trace.id,
       trace_version: trace.version,
@@ -253189,9 +252870,9 @@ var TraceReviewKernel = class {
       event_count: events.length,
       versions,
       evidence_ids: refs5(args.evidence_ids, "evidence_ids"),
-      summary_digest: digest28(text25(args.summary ?? `Trace review ${status2}`, "summary"))
+      summary_digest: digest27(text25(args.summary ?? `Trace review ${status2}`, "summary"))
     };
-    const identityDigest = digest28(identity);
+    const identityDigest = digest27(identity);
     const existing = this.store.find("trace_review", reviewId);
     if (existing) {
       if (existing.identity_digest !== identityDigest) throw new Error("Trace review idempotency conflict");
@@ -253216,15 +252897,15 @@ var TraceReviewKernel = class {
 };
 
 // core/memory-maintenance.ts
-var import_node_crypto121 = require("node:crypto");
+var import_node_crypto120 = require("node:crypto");
 var STAGES2 = /* @__PURE__ */ new Set(["light", "review", "deep"]);
 var SECRET18 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]/iu;
 function text26(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function digest29(value) {
-  return `sha256:${(0, import_node_crypto121.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+function digest28(value) {
+  return `sha256:${(0, import_node_crypto120.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var MemoryMaintenanceKernel = class {
   store;
@@ -253243,10 +252924,10 @@ var MemoryMaintenanceKernel = class {
     const identity = { memory_id: memoryId, memory_kind: ledger ? "memory_ledger" : "episodic_memory", kind: kind4, value };
     const existing = this.store.find("memory_usage_signal", signalId);
     if (existing) {
-      if (existing.identity_digest !== digest29(identity)) throw new Error("Memory usage signal idempotency conflict");
+      if (existing.identity_digest !== digest28(identity)) throw new Error("Memory usage signal idempotency conflict");
       return { signal: existing, idempotent: true };
     }
-    return { signal: this.store.create("memory_usage_signal", signalId, { ...identity, identity_digest: digest29(identity) }), idempotent: false };
+    return { signal: this.store.create("memory_usage_signal", signalId, { ...identity, identity_digest: digest28(identity) }), idempotent: false };
   }
   run(args = {}) {
     const stage = text26(args.stage ?? "light", "stage");
@@ -253284,11 +252965,11 @@ var MemoryMaintenanceKernel = class {
         if (!related.length) findings2.push({ kind: "orphaned_semantic", memory_id: memory.id });
       }
     }
-    const maintenanceId = String(args.maintenance_id ?? `memory_maintenance_${(0, import_node_crypto121.randomUUID)().replaceAll("-", "")}`);
-    const identity = { scope: scope3, stage, now: now3, memory_kind: candidateKind, memory_ids: candidates.map((item) => item.id).sort(), semantic_ids: semantic.map((item) => item.id).sort(), finding_digest: digest29(findings2), confirmation_digest: digest29(confirmations) };
+    const maintenanceId = String(args.maintenance_id ?? `memory_maintenance_${(0, import_node_crypto120.randomUUID)().replaceAll("-", "")}`);
+    const identity = { scope: scope3, stage, now: now3, memory_kind: candidateKind, memory_ids: candidates.map((item) => item.id).sort(), semantic_ids: semantic.map((item) => item.id).sort(), finding_digest: digest28(findings2), confirmation_digest: digest28(confirmations) };
     const existing = this.store.find("memory_maintenance_run", maintenanceId);
     if (existing) {
-      if (existing.identity_digest !== digest29(identity)) throw new Error("Memory maintenance idempotency conflict");
+      if (existing.identity_digest !== digest28(identity)) throw new Error("Memory maintenance idempotency conflict");
       return { run: existing, findings: findings2, confirmations, idempotent: true };
     }
     const proposal = stage === "deep" && findings2.length > 0 ? this.store.create("memory_maintenance_candidate", `${maintenanceId}:candidate`, {
@@ -253301,12 +252982,12 @@ var MemoryMaintenanceKernel = class {
         requires_review: item.kind !== "expired_active"
       })),
       scope: scope3,
-      finding_digest: digest29(findings2),
+      finding_digest: digest28(findings2),
       status: "candidate",
       publication_allowed: false,
       raw_content_stored: false
     }) : null;
-    const run = this.store.create("memory_maintenance_run", maintenanceId, { ...identity, identity_digest: digest29(identity), finding_count: findings2.length, candidate_id: proposal?.id ?? null, status: "completed", raw_content_stored: false });
+    const run = this.store.create("memory_maintenance_run", maintenanceId, { ...identity, identity_digest: digest28(identity), finding_count: findings2.length, candidate_id: proposal?.id ?? null, status: "completed", raw_content_stored: false });
     return { run, findings: findings2, confirmations, candidate: proposal, idempotent: false };
   }
   get(args) {
@@ -253331,29 +253012,29 @@ var MemoryMaintenanceKernel = class {
       const identity = { trace_id: trace.id, trace_version: trace.version, status: trace.status, model_fingerprint: trace.model_fingerprint ?? null, environment_fingerprint: trace.environment_fingerprint ?? null };
       const existing2 = this.store.find("learning_observation", observationId);
       if (existing2) return existing2;
-      return this.store.create("learning_observation", observationId, { ...identity, source_digest: digest29(identity), content_free: true, lifecycle: "diagnostic_only" });
+      return this.store.create("learning_observation", observationId, { ...identity, source_digest: digest28(identity), content_free: true, lifecycle: "diagnostic_only" });
     });
     const nextCursor = cursor + batch.length;
     const cycleIdentity = { cursor, limit: limit3, trace_ids: batch.map((trace) => trace.id), observation_ids: observations.map((item) => item.id) };
-    const cycleId = String(args.cycle_id ?? `memory_learning_cycle_${digest29(cycleIdentity).slice(-16)}`);
+    const cycleId = String(args.cycle_id ?? `memory_learning_cycle_${digest28(cycleIdentity).slice(-16)}`);
     const existing = this.store.find("memory_learning_cycle", cycleId);
     if (existing) {
-      if (existing.identity_digest !== digest29(cycleIdentity)) throw new Error("Memory learning cycle idempotency conflict");
+      if (existing.identity_digest !== digest28(cycleIdentity)) throw new Error("Memory learning cycle idempotency conflict");
       return { cycle: existing, observations, next_cursor: nextCursor, exhausted: nextCursor >= traces.length, idempotent: true };
     }
-    const cycle = this.store.create("memory_learning_cycle", cycleId, { ...cycleIdentity, identity_digest: digest29(cycleIdentity), status: "completed", exhausted: nextCursor >= traces.length, raw_content_stored: false });
+    const cycle = this.store.create("memory_learning_cycle", cycleId, { ...cycleIdentity, identity_digest: digest28(cycleIdentity), status: "completed", exhausted: nextCursor >= traces.length, raw_content_stored: false });
     return { cycle, observations, next_cursor: nextCursor, exhausted: nextCursor >= traces.length, idempotent: false };
   }
 };
 
 // core/runtime-model-probe.ts
-var import_node_crypto122 = require("node:crypto");
+var import_node_crypto121 = require("node:crypto");
 function text27(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
-function digest30(value) {
-  return `sha256:${(0, import_node_crypto122.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+function digest29(value) {
+  return `sha256:${(0, import_node_crypto121.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var RuntimeModelProbeKernel = class {
   store;
@@ -253373,7 +253054,7 @@ var RuntimeModelProbeKernel = class {
     if (!provider) throw new Error("Model provider is not declared");
     const model = provider.models.standard ?? provider.models.frontier ?? provider.models.small;
     if (!model) throw new Error("Model provider has no usable model");
-    const probeId = String(args.probe_id ?? `model_probe_${provider.provider}_${digest30({ provider: provider.provider, model }).slice(-16)}`);
+    const probeId = String(args.probe_id ?? `model_probe_${provider.provider}_${digest29({ provider: provider.provider, model }).slice(-16)}`);
     const existing = this.store.find("runtime_model_probe", probeId);
     if (existing && args.refresh !== true) return { probe: existing, idempotent: true };
     const configured = credentialStatus(provider).configured;
@@ -253389,7 +253070,7 @@ var RuntimeModelProbeKernel = class {
         reason = error instanceof Error ? error.message.replace(/\s+/gu, " ").slice(0, 240) : "model_probe_failed";
       }
     }
-    const record = { provider: provider.provider, model, configured, status: status2, reason, checked_at: (/* @__PURE__ */ new Date()).toISOString(), raw_content_stored: false, probe_digest: digest30({ provider: provider.provider, model, status: status2, reason }) };
+    const record = { provider: provider.provider, model, configured, status: status2, reason, checked_at: (/* @__PURE__ */ new Date()).toISOString(), raw_content_stored: false, probe_digest: digest29({ provider: provider.provider, model, status: status2, reason }) };
     if (existing) return { probe: this.store.save("runtime_model_probe", probeId, record), idempotent: false };
     return { probe: this.store.create("runtime_model_probe", probeId, record), idempotent: false };
   }
@@ -253399,7 +253080,7 @@ function configuredReason(provider) {
 }
 
 // core/runtime-execution-attempt.ts
-var import_node_crypto123 = require("node:crypto");
+var import_node_crypto122 = require("node:crypto");
 var RUNTIME_ATTEMPT_STATUSES = [
   "prepared",
   "dispatched",
@@ -253417,7 +253098,7 @@ var EFFECTS17 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_w
 var SECRET19 = /(?:api[_-]?key|authorization|bearer|cookie|password|passwd|secret|token)\s*[:=]/iu;
 var TERMINAL7 = /* @__PURE__ */ new Set(["accepted", "failed", "blocked", "cancelled"]);
 function id17(value, name, prefix) {
-  const result = value === void 0 || value === null ? `${prefix}_${(0, import_node_crypto123.randomUUID)().replaceAll("-", "")}` : text(value, name);
+  const result = value === void 0 || value === null ? `${prefix}_${(0, import_node_crypto122.randomUUID)().replaceAll("-", "")}` : text(value, name);
   if (!/^[a-zA-Z0-9_-]+$/u.test(result)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result;
 }
@@ -253633,7 +253314,7 @@ var ContextWorkingSetKernel = class {
     };
     const codeFirst = args.prefer_codebase === true || codeRequired.length > 0;
     const memoryIds = Array.isArray(args.memory_ids) ? args.memory_ids : [];
-    const mandatoryRetrievalCount = (/* @__PURE__ */ new Set([...retrievalRequired.map((ref2) => `${ref2.member}:${ref2.id}`), ...memoryIds.map((id22) => `memory:${id22}`)])).size;
+    const mandatoryRetrievalCount = (/* @__PURE__ */ new Set([...retrievalRequired.map((ref2) => `${ref2.member}:${ref2.id}`), ...memoryIds.map((id23) => `memory:${id23}`)])).size;
     if (retrievalMembers.length === 0 && mandatoryRetrievalCount > 0) throw new Error("Required Context reference is excluded by members");
     if (args.empty_budget === true && codeRequired.length > 0) throw new ContextBudgetError("Required Codebase reference exceeds Context budget");
     if (codeFirst && args.empty_budget !== true) selectCode(Math.max(codeRequired.length, Math.min(Math.ceil(maxItems / 3), Math.max(0, maxItems - hostRefs.length - mandatoryRetrievalCount))));
@@ -253731,12 +253412,12 @@ var ContextWorkingSetKernel = class {
 };
 
 // core/graph-compiler.ts
-var import_node_crypto124 = require("node:crypto");
-function digest31(value) {
-  return `sha256:${(0, import_node_crypto124.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+var import_node_crypto123 = require("node:crypto");
+function digest30(value) {
+  return `sha256:${(0, import_node_crypto123.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function id18(value) {
-  return value === void 0 ? `plan_${(0, import_node_crypto124.randomUUID)().replaceAll("-", "")}` : String(value);
+  return value === void 0 ? `plan_${(0, import_node_crypto123.randomUUID)().replaceAll("-", "")}` : String(value);
 }
 var GraphCompilerKernel = class {
   validator;
@@ -253753,7 +253434,7 @@ var GraphCompilerKernel = class {
     const effects = [...new Set(nodes.map((node) => String(node.side_effect)))].sort();
     const plan = {
       plan_id: id18(args.plan_id),
-      graph_digest: digest31(validated),
+      graph_digest: digest30(validated),
       steps: nodes.map((node) => ({ id: node.id, title: node.title ?? node.id, objective: node.objective ?? node.action ?? node.type, depends_on: node.depends_on, side_effect: node.side_effect, bounded_retry: node.type === "retry" ? Number(node.max_attempts) : null })),
       dependencies: edges,
       analysis: { node_count: nodes.length, edge_count: edges.length, retry_count: retries, compensation_count: compensations, human_gate_count: humanGates, effects, cycle_policy: "bounded_only" },
@@ -253765,12 +253446,12 @@ var GraphCompilerKernel = class {
 };
 
 // core/capability-intake.ts
-var import_node_crypto125 = require("node:crypto");
+var import_node_crypto124 = require("node:crypto");
 var CAPABILITY_INTAKE_STATES = ["discovered", "scanned", "conformance_passed", "approved", "active", "degraded", "revoked", "retired"];
 var EFFECTS18 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_write", "destructive"]);
 var SECRET20 = /(?:api[_-]?key|authorization|bearer|cookie|password|passwd|secret|token)\s*[:=]/iu;
 function id19(value) {
-  return value === void 0 ? `capability_intake_${(0, import_node_crypto125.randomUUID)().replaceAll("-", "")}` : text(value, "capability_id");
+  return value === void 0 ? `capability_intake_${(0, import_node_crypto124.randomUUID)().replaceAll("-", "")}` : text(value, "capability_id");
 }
 function state3(value) {
   const result = text(value, "state");
@@ -253844,10 +253525,10 @@ var CapabilityIntakeKernel = class {
 };
 
 // core/workbench-command.ts
-var import_node_crypto126 = require("node:crypto");
+var import_node_crypto125 = require("node:crypto");
 var WORKBENCH_COMMANDS = ["goal_update", "context_set", "acceptance_set", "approve", "reject", "pause", "resume", "cancel", "replan", "effect_unknown_confirm", "checkpoint_restore"];
 function id20(value) {
-  return value === void 0 ? `command_${(0, import_node_crypto126.randomUUID)().replaceAll("-", "")}` : text(value, "command_id");
+  return value === void 0 ? `command_${(0, import_node_crypto125.randomUUID)().replaceAll("-", "")}` : text(value, "command_id");
 }
 function commandName(value) {
   const result = text(value, "command");
@@ -253901,7 +253582,7 @@ var WorkbenchCommandKernel = class {
 };
 
 // core/activation-proof.ts
-var import_node_crypto127 = require("node:crypto");
+var import_node_crypto126 = require("node:crypto");
 var COMPONENTS = /* @__PURE__ */ new Set(["knowledge", "memory", "experience"]);
 var HOSTS2 = /* @__PURE__ */ new Set(["codex", "claude"]);
 function text28(value, name) {
@@ -253937,7 +253618,7 @@ var ActivationProofKernel = class {
       mcp_reachable: args.mcp_reachable === true,
       content_free: true
     };
-    const receiptId = String(args.receipt_id ?? `activation_proof_${(0, import_node_crypto127.randomUUID)().replaceAll("-", "")}`);
+    const receiptId = String(args.receipt_id ?? `activation_proof_${(0, import_node_crypto126.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("activation_proof_receipt", receiptId);
     const identityDigest = stableDigest(identity);
     if (existing) {
@@ -254016,8 +253697,8 @@ var ComponentHistoryMigrationKernel = class {
     }
     for (const item of assess.filter((entry2) => entry2.complete)) {
       const claim = item.claim;
-      const id22 = `knowledge_semantic_review_link_${stableDigest({ claim: claim.id, version: claim.version, revision: item.source_revision_id, fragment: item.fragment_id, evidence: item.evidence_ids }).slice(-20)}`;
-      if (!this.store.find("knowledge_semantic_review_link", id22)) this.store.create("knowledge_semantic_review_link", id22, { claim_id: claim.id, claim_version: claim.version, source_revision_id: item.source_revision_id, fragment_id: item.fragment_id, evidence_ids: item.evidence_ids, semantic_review_bound: true, migrated: true, content_free: true });
+      const id23 = `knowledge_semantic_review_link_${stableDigest({ claim: claim.id, version: claim.version, revision: item.source_revision_id, fragment: item.fragment_id, evidence: item.evidence_ids }).slice(-20)}`;
+      if (!this.store.find("knowledge_semantic_review_link", id23)) this.store.create("knowledge_semantic_review_link", id23, { claim_id: claim.id, claim_version: claim.version, source_revision_id: item.source_revision_id, fragment_id: item.fragment_id, evidence_ids: item.evidence_ids, semantic_review_bound: true, migrated: true, content_free: true });
     }
     return { mode: "applied", reviewed: reviewed.length, revalidation_required: changed.map((item) => item.id), current: assess.length - changed.length, writes: changed.length };
   }
@@ -254026,8 +253707,8 @@ var ComponentHistoryMigrationKernel = class {
     const legacy = this.store.list("workflow_evolution_observation", 1e4);
     const plan = legacy.map((item) => {
       const evidenceIds2 = Array.isArray(item.evidence_ids) ? item.evidence_ids.map(String) : [];
-      const trustedEvidence = evidenceIds2.length > 0 && evidenceIds2.every((id22) => {
-        const evidence2 = this.store.find("evidence", id22);
+      const trustedEvidence = evidenceIds2.length > 0 && evidenceIds2.every((id23) => {
+        const evidence2 = this.store.find("evidence", id23);
         return evidence2 !== null && ["confirmed", "bounded"].includes(String(evidence2.confidence));
       });
       return { legacy: item, evidence_ids: evidenceIds2, trusted_evidence: trustedEvidence, target_id: `experience_observation_migrated_${stableDigest({ id: item.id, version: item.version }).slice(-20)}` };
@@ -254881,8 +254562,8 @@ var INTERNET_PRODUCT_ENGINEERING = {
     ]
   }
 };
-function experienceGraphTemplate(id22) {
-  if (id22 !== "internet-product-engineering") throw new Error("Unknown Experience graph template");
+function experienceGraphTemplate(id23) {
+  if (id23 !== "internet-product-engineering") throw new Error("Unknown Experience graph template");
   return structuredClone(INTERNET_PRODUCT_ENGINEERING);
 }
 
@@ -254901,12 +254582,12 @@ function validateExperienceConfiguration(args) {
     const nodes = new Set((kind4 === "graph" ? definition2.nodes : definition2.steps).map((n) => n.id));
     const ids6 = /* @__PURE__ */ new Set();
     definition2.relations.forEach((raw2, index) => {
-      const name = `definition.relations[${index}]`, relation = object(raw2, name), id22 = text(relation.id, `${name}.id`);
-      if (ids6.has(id22)) throw new Error(`${name}.id must be unique`);
-      ids6.add(id22);
+      const name = `definition.relations[${index}]`, relation = object(raw2, name), id23 = text(relation.id, `${name}.id`);
+      if (ids6.has(id23)) throw new Error(`${name}.id must be unique`);
+      ids6.add(id23);
       if (!["depends_on", "supports", "contradicts"].includes(String(relation.kind))) throw new Error(`${name}.kind must be a non-executable relation type`);
       if (!nodes.has(relation.from) || !nodes.has(relation.to)) throw new Error(`${name}.from/to must reference declared nodes`);
-      if (!Array.isArray(relation.evidence_ids) || relation.evidence_ids.length > 100 || relation.evidence_ids.some((id23) => typeof id23 !== "string" || !id23.trim())) throw new Error(`${name}.evidence_ids requires bounded evidence references`);
+      if (!Array.isArray(relation.evidence_ids) || relation.evidence_ids.length > 100 || relation.evidence_ids.some((id24) => typeof id24 !== "string" || !id24.trim())) throw new Error(`${name}.evidence_ids requires bounded evidence references`);
     });
   }
   return { definition: definition2, kind: kind4, contract };
@@ -254918,8 +254599,8 @@ var ProcedureConfiguration = class {
   }
   save(args) {
     const result = this.store.transaction(() => {
-      const id22 = text(args.procedure_id, "procedure_id"), scope3 = text(args.scope, "scope"), title = text(args.title, "title");
-      const scopeRef2 = scopeFromKey(scope3), current2 = this.store.find("experience_procedure", id22);
+      const id23 = text(args.procedure_id, "procedure_id"), scope3 = text(args.scope, "scope"), title = text(args.title, "title");
+      const scopeRef2 = scopeFromKey(scope3), current2 = this.store.find("experience_procedure", id23);
       if (current2 && (current2.scope !== scope3 || !scopeAllows(scopeEnvelope(current2.scope_envelope, scopeRef2), scopeAccess(args)))) throw new Error("Procedure configuration scope or audience denied");
       const { definition: definition2, kind: kind4, contract } = validateExperienceConfiguration(args);
       const effects = [...new Set((kind4 === "graph" ? definition2.nodes : definition2.steps).map((n) => String(n.side_effect)))];
@@ -254928,20 +254609,20 @@ var ProcedureConfiguration = class {
       if (current2?.configuration_digest === digest35) return { procedure: current2, idempotent: true };
       if (current2 && args.expected_version !== current2.version || !current2 && args.expected_version !== void 0) throw new Error("Procedure configuration version conflict");
       const contentVersion = Number(current2?.content_version ?? current2?.definition_ref?.procedure_version ?? 0) + 1;
-      const design = this.store.save("procedure_configuration", id22, { scope: scope3, title, definition_digest: stableDigest(definition2), author: "user", status: "draft" });
+      const design = this.store.save("procedure_configuration", id23, { scope: scope3, title, definition_digest: stableDigest(definition2), author: "user", status: "draft" });
       const envelope = scopeEnvelope(current2?.scope_envelope ?? args.scope_envelope, scopeRef2);
       if (!scopeAllows(envelope, scopeAccess(args))) throw new Error("Procedure configuration audience denied");
       const ref2 = new ProcedureDefinitionStore(this.store.paths).write(
         {
           schema_version: "craft.procedure.v1",
-          procedure_id: id22,
+          procedure_id: id23,
           procedure_version: contentVersion,
           kind: kind4,
           scope: scope3,
           trigger: title,
           preconditions: [],
           allowed_effects: effects,
-          acceptance_ref: `configuration:${id22}`,
+          acceptance_ref: `configuration:${id23}`,
           failure_disposition: "checkpoint_and_handoff",
           scenario_signature: signature,
           evidence_ids: [],
@@ -254975,7 +254656,7 @@ var ProcedureConfiguration = class {
         preconditions: [],
         trigger: title,
         failure_disposition: "checkpoint_and_handoff",
-        acceptance_ref: `configuration:${id22}`,
+        acceptance_ref: `configuration:${id23}`,
         evidence_ids: [],
         completed_gates: [],
         lifecycle: "candidate",
@@ -254986,7 +254667,7 @@ var ProcedureConfiguration = class {
         source_configuration_version: design.version
       };
       preserveProcedureRelease(this.store, current2);
-      const procedure = current2 ? this.store.updateIfVersion("experience_procedure", id22, Number(args.expected_version), data) : this.store.create("experience_procedure", id22, data);
+      const procedure = current2 ? this.store.updateIfVersion("experience_procedure", id23, Number(args.expected_version), data) : this.store.create("experience_procedure", id23, data);
       return { procedure, idempotent: false, execution_authorized: false };
     });
     return { ...result, ...syncGraphVersionManifest(this.store, String(result.procedure.id)) };
@@ -255007,9 +254688,9 @@ function matchGraphRoutes(definition2, query, inputKeys = []) {
 }
 
 // capability/craft-experience/graph-assets.ts
-var import_node_fs29 = require("node:fs");
-var import_node_crypto128 = require("node:crypto");
-var import_node_path41 = require("node:path");
+var import_node_fs28 = require("node:fs");
+var import_node_crypto127 = require("node:crypto");
+var import_node_path40 = require("node:path");
 var rows2 = (value) => Array.isArray(value) ? value : [];
 var templateId = "internet-product-engineering";
 var schema = { $schema: "https://json-schema.org/draft/2020-12/schema", type: "object", required: ["title", "procedure_kind", "definition"], properties: {
@@ -255047,21 +254728,21 @@ var ExperienceGraphAssets = class {
   authorize(record, args) {
     if (!this.allowed(record, args)) throw new Error("Experience graph scope or audience denied");
   }
-  path(id22, create = false) {
-    const path2 = checkedExperiencePath(this.store.paths, (0, import_node_path41.join)(experienceGraphDirectory(this.store.paths, id22), "draft.json"));
-    const previous = (0, import_node_path41.join)(experienceGraphDirectory(this.store.paths, id22, true), "draft.json");
-    const selected = !(0, import_node_fs29.existsSync)(path2) && (0, import_node_fs29.existsSync)(checkedExperiencePath(this.store.paths, previous)) ? previous : path2;
+  path(id23, create = false) {
+    const path2 = checkedExperiencePath(this.store.paths, (0, import_node_path40.join)(experienceGraphDirectory(this.store.paths, id23), "draft.json"));
+    const previous = (0, import_node_path40.join)(experienceGraphDirectory(this.store.paths, id23, true), "draft.json");
+    const selected = !(0, import_node_fs28.existsSync)(path2) && (0, import_node_fs28.existsSync)(checkedExperiencePath(this.store.paths, previous)) ? previous : path2;
     return checkedExperiencePath(this.store.paths, selected, create);
   }
-  draft(id22, args) {
-    const current2 = this.store.find("experience_procedure", id22);
+  draft(id23, args) {
+    const current2 = this.store.find("experience_procedure", id23);
     if (current2) this.authorize(current2, args);
-    const path2 = this.path(id22);
-    if ((0, import_node_fs29.statSync)(path2).size > 1e6) throw new Error("Graph draft exceeds 1000000 bytes");
-    const draft = object(JSON.parse((0, import_node_fs29.readFileSync)(path2, "utf8")), "draft");
-    if (draft.schema_version !== "craft.experience.graph-draft.v1" || draft.graph_id !== id22) throw new Error("Graph draft metadata drifted");
+    const path2 = this.path(id23);
+    if ((0, import_node_fs28.statSync)(path2).size > 1e6) throw new Error("Graph draft exceeds 1000000 bytes");
+    const draft = object(JSON.parse((0, import_node_fs28.readFileSync)(path2, "utf8")), "draft");
+    if (draft.schema_version !== "craft.experience.graph-draft.v1" || draft.graph_id !== id23) throw new Error("Graph draft metadata drifted");
     this.authorize(draft, args);
-    return { draft, path: path2, draft_digest: stableDigest(draft), ...syncGraphVersionManifest(this.store, id22), execution_authorized: false };
+    return { draft, path: path2, draft_digest: stableDigest(draft), ...syncGraphVersionManifest(this.store, id23), execution_authorized: false };
   }
   current(args) {
     const current2 = this.store.get("experience_procedure", text(args.graph_id, "graph_id"));
@@ -255084,11 +254765,11 @@ var ExperienceGraphAssets = class {
     const fields2 = [.../* @__PURE__ */ new Set([...Object.keys(prior), ...Object.keys(definition2)])].sort().filter((key2) => stableDigest(prior[key2] ?? null) !== stableDigest(definition2[key2] ?? null));
     const changed = (key2) => {
       const before = rows2(prior[key2]), after = rows2(definition2[key2]);
-      return [...new Set([...before, ...after].map((row) => String(row.id)))].sort().filter((id22) => stableDigest(before.find((row) => row.id === id22) ?? null) !== stableDigest(after.find((row) => row.id === id22) ?? null));
+      return [...new Set([...before, ...after].map((row) => String(row.id)))].sort().filter((id23) => stableDigest(before.find((row) => row.id === id23) ?? null) !== stableDigest(after.find((row) => row.id === id23) ?? null));
     };
     const nodes = changed(kind4 === "graph" ? "nodes" : "steps"), edges = changed("edges");
     const scenarios = [...rows2(prior.graph_control?.subscenarios), ...rows2(definition2.graph_control?.subscenarios)];
-    const affected = [...new Set(scenarios.filter((s) => fields2.some((key2) => !["nodes", "edges"].includes(key2)) || s.allowed_nodes.some((id22) => nodes.includes(id22)) || s.allowed_edges.some((id22) => edges.includes(id22))).map((s) => s.id))];
+    const affected = [...new Set(scenarios.filter((s) => fields2.some((key2) => !["nodes", "edges"].includes(key2)) || s.allowed_nodes.some((id23) => nodes.includes(id23)) || s.allowed_edges.some((id23) => edges.includes(id23))).map((s) => s.id))];
     const metadataChanged = current2 !== null && (current2.title !== config.title || current2.procedure_kind !== kind4);
     return {
       valid: true,
@@ -255136,7 +254817,7 @@ var ExperienceGraphAssets = class {
           eligible_version: activeProcedure(this.store, String(p.id))?.version ?? null,
           definition_ref: p.definition_ref,
           draft_path: this.path(String(p.id)),
-          draft_exists: (0, import_node_fs29.existsSync)(this.path(String(p.id))),
+          draft_exists: (0, import_node_fs28.existsSync)(this.path(String(p.id))),
           provenance: p.provenance ?? "learned",
           template_id: p.template_id ?? null,
           ...syncGraphVersionManifest(this.store, String(p.id))
@@ -255146,42 +254827,42 @@ var ExperienceGraphAssets = class {
         execution_authorized: false
       };
     }
-    const id22 = text(args.graph_id, "graph_id");
-    if (action === "draft") return this.draft(id22, args);
+    const id23 = text(args.graph_id, "graph_id");
+    if (action === "draft") return this.draft(id23, args);
     if (action === "diff") {
-      const current3 = this.store.find("experience_procedure", id22) ? this.current(args) : null;
+      const current3 = this.store.find("experience_procedure", id23) ? this.current(args) : null;
       text(args.scope, "scope");
-      const configuration = args.configuration !== void 0 || args.json !== void 0 ? this.input(args) : this.draft(id22, args).draft;
+      const configuration = args.configuration !== void 0 || args.json !== void 0 ? this.input(args) : this.draft(id23, args).draft;
       return this.preview(current3, configuration);
     }
     const current2 = this.current(args);
     if (action === "match") {
-      const selected2 = selectedProcedure(this.store, id22, args.release_channel);
+      const selected2 = selectedProcedure(this.store, id23, args.release_channel);
       if (!selected2 || !procedureDefinitionRef(selected2.definition_ref)) throw new Error("Graph release unavailable");
       this.authorize(selected2, args);
       if (args.input_keys !== void 0 && (!Array.isArray(args.input_keys) || args.input_keys.some((key2) => typeof key2 !== "string"))) throw new Error("input_keys must be strings");
       return { ...matchGraphRoutes(this.definitions.read(selected2.definition_ref).definition, text(args.query, "query"), args.input_keys), procedure_version: selected2.version, definition_digest: selected2.definition_digest };
     }
     if (action !== "read") throw new Error("Unknown Experience graph inspection action");
-    const selected = args.version === void 0 ? current2 : this.store.get("experience_procedure", id22, Number(args.version));
+    const selected = args.version === void 0 ? current2 : this.store.get("experience_procedure", id23, Number(args.version));
     this.authorize(selected, args);
     if (!procedureDefinitionRef(selected.definition_ref)) throw new Error("Graph requires a checked JSON definition");
-    return { graph: selected, definition: this.definitions.read(selected.definition_ref), historical: selected.version !== current2.version, ...syncGraphVersionManifest(this.store, id22), execution_authorized: false };
+    return { graph: selected, definition: this.definitions.read(selected.definition_ref), historical: selected.version !== current2.version, ...syncGraphVersionManifest(this.store, id23), execution_authorized: false };
   }
   edit(args) {
     const result = this.store.transaction(() => {
-      const action = text(args.action, "action"), id22 = text(args.graph_id, "graph_id"), scope3 = text(args.scope, "scope");
-      const current2 = this.store.find("experience_procedure", id22);
+      const action = text(args.action, "action"), id23 = text(args.graph_id, "graph_id"), scope3 = text(args.scope, "scope");
+      const current2 = this.store.find("experience_procedure", id23);
       if (current2) this.authorize(current2, args);
       if (action === "migrate") {
         if (!current2) throw new Error("Unknown Experience graph");
         if (args.expected_version !== current2.version) throw new Error("Graph migration version conflict");
-        const records2 = this.store.history("experience_procedure", id22, Number(args.before_version ?? Number.MAX_SAFE_INTEGER), 101);
+        const records2 = this.store.history("experience_procedure", id23, Number(args.before_version ?? Number.MAX_SAFE_INTEGER), 101);
         const selected = records2.slice(0, 100);
         selected.forEach((record) => this.authorize(record, args));
         const refs6 = selected.filter((r) => procedureDefinitionRef(r.definition_ref)).map((r) => this.definitions.migrate(r.definition_ref));
         return {
-          graph_id: id22,
+          graph_id: id23,
           migrated_refs: refs6,
           legacy_files_preserved: true,
           has_more: records2.length > 100,
@@ -255190,7 +254871,7 @@ var ExperienceGraphAssets = class {
         };
       }
       if (action === "submit") {
-        const read = this.draft(id22, args), draft2 = read.draft;
+        const read = this.draft(id23, args), draft2 = read.draft;
         if (args.expected_draft_digest !== read.draft_digest) throw new Error("Graph draft digest conflict; inspect the current draft");
         if (current2 && draft2.base_record_version === current2.version && draft2.base_definition_digest !== current2.definition_digest) throw new Error("Graph draft base definition digest conflict");
         const result2 = new ProcedureConfiguration(this.store).save({
@@ -255198,16 +254879,16 @@ var ExperienceGraphAssets = class {
           ...scopeAccess(args),
           principal_ids: args.principal_ids,
           cognitive_purpose: args.cognitive_purpose,
-          procedure_id: id22,
+          procedure_id: id23,
           scope: scope3,
           expected_version: draft2.base_record_version ?? void 0
         });
-        return { ...result2, graph_id: id22, draft_digest: read.draft_digest, execution_authorized: false };
+        return { ...result2, graph_id: id23, draft_digest: read.draft_digest, execution_authorized: false };
       }
       if (action !== "save") throw new Error("Unknown Experience graph editing action");
       if (current2 ? args.expected_version !== current2.version : args.expected_version !== void 0) throw new Error("Graph draft base version conflict");
-      const path2 = this.path(id22, true);
-      if ((0, import_node_fs29.existsSync)(path2) ? args.expected_draft_digest !== this.draft(id22, args).draft_digest : args.expected_draft_digest !== void 0) throw new Error("Graph draft digest conflict; inspect the current draft");
+      const path2 = this.path(id23, true);
+      if ((0, import_node_fs28.existsSync)(path2) ? args.expected_draft_digest !== this.draft(id23, args).draft_digest : args.expected_draft_digest !== void 0) throw new Error("Graph draft digest conflict; inspect the current draft");
       if (args.template_id !== void 0 && (args.json !== void 0 || args.configuration !== void 0)) throw new Error("Choose template or configuration, not both");
       const config = args.template_id === void 0 ? this.input(args) : { title: "\u4E92\u8054\u7F51\u4EA7\u7814", procedure_kind: "graph", definition: experienceGraphTemplate(text(args.template_id, "template_id")) };
       const checked = validateExperienceConfiguration(config), title = text(config.title, "title");
@@ -255216,7 +254897,7 @@ var ExperienceGraphAssets = class {
       if (!scopeAllows(envelope, scopeAccess(args))) throw new Error("Experience graph audience denied");
       const draft = {
         schema_version: "craft.experience.graph-draft.v1",
-        graph_id: id22,
+        graph_id: id23,
         scope: scope3,
         scope_envelope: envelope,
         title,
@@ -255228,17 +254909,17 @@ var ExperienceGraphAssets = class {
         base_definition_digest: current2?.definition_digest ?? null
       };
       const preview = this.preview(current2, draft);
-      const temporary = `${path2}.${process.pid}.${(0, import_node_crypto128.randomUUID)()}.tmp`;
+      const temporary = `${path2}.${process.pid}.${(0, import_node_crypto127.randomUUID)()}.tmp`;
       try {
-        (0, import_node_fs29.writeFileSync)(temporary, `${JSON.stringify(draft, null, 2)}
+        (0, import_node_fs28.writeFileSync)(temporary, `${JSON.stringify(draft, null, 2)}
 `, { encoding: "utf8", mode: 384, flag: "wx" });
-        (0, import_node_fs29.renameSync)(temporary, path2);
+        (0, import_node_fs28.renameSync)(temporary, path2);
       } finally {
-        if ((0, import_node_fs29.existsSync)(temporary)) (0, import_node_fs29.unlinkSync)(temporary);
+        if ((0, import_node_fs28.existsSync)(temporary)) (0, import_node_fs28.unlinkSync)(temporary);
       }
       const digest35 = stableDigest(draft);
-      this.store.save("experience_graph_draft", id22, { scope: scope3, scope_envelope: envelope, title, scenario_id: scenarioId, path: path2, draft_digest: digest35 });
-      return { graph_id: id22, path: path2, draft_digest: digest35, preview, execution_authorized: false };
+      this.store.save("experience_graph_draft", id23, { scope: scope3, scope_envelope: envelope, title, scenario_id: scenarioId, path: path2, draft_digest: digest35 });
+      return { graph_id: id23, path: path2, draft_digest: digest35, preview, execution_authorized: false };
     });
     return { ...result, ...syncGraphVersionManifest(this.store, String(args.graph_id)) };
   }
@@ -255341,7 +255022,7 @@ var ComponentAssets = class {
       details.provenance = { source_id: source.id, source_version: source.version, document_id: current2.document_id ?? null, document_digest: current2.document_digest ?? null, fragment_id: current2.fragment_id ?? null, evidence_ids: current2.evidence_ids ?? [] };
     }
     if (member === "memory") {
-      const proofs = Array.isArray(current2.evidence_ids) ? current2.evidence_ids.map((id22) => this.store.get("evidence", String(id22))) : [];
+      const proofs = Array.isArray(current2.evidence_ids) ? current2.evidence_ids.map((id23) => this.store.get("evidence", String(id23))) : [];
       details.authorship = proofs.some((p) => p.metadata?.user_authored === true) ? "explicit_user_statement" : current2.proposed_by ?? "unknown";
       details.replacement_id = current2.replacement_id ?? null;
       details.effective_from = current2.effective_from ?? null;
@@ -255387,7 +255068,7 @@ var ComponentAssets = class {
         if (source.status !== "active" || source.trust === "untrusted") throw new Error("Restoration cannot bypass source revocation");
       }
       const requestId = text(args.request_id, "request_id"), identity = { member, asset_id: current2.id, version: previous.version, reason_digest: stableDigest(reason), scope_kind: args.scope_kind, scope_id: args.scope_id };
-      const id22 = `asset_restore_${stableDigest([member, requestId]).slice(-24)}`, existing = this.store.find("asset_restoration", id22);
+      const id23 = `asset_restore_${stableDigest([member, requestId]).slice(-24)}`, existing = this.store.find("asset_restoration", id23);
       if (existing) {
         if (existing.request_digest !== stableDigest(identity)) throw new Error("Restoration request conflict");
         return { restoration: existing, idempotent: true };
@@ -255412,7 +255093,7 @@ var ComponentAssets = class {
         restored = this.store.save(kind4, String(restored.id), { ...payload(restored), source_revision_id: previous.source_revision_id, document_id: previous.document_id, document_digest: previous.document_digest, fragment_id: previous.fragment_id, revalidation_required: true });
         result = { ...result, claim: restored };
       }
-      const record = this.store.create("asset_restoration", id22, { ...identity, request_digest: stableDigest(identity), restored_id: restored.id, restored_kind: member === "memory" ? "memory_candidate" : kind4, execution_authorized: false, activation: member === "codebase" ? "rebuilt_current_checkpoint" : "governed_candidate" });
+      const record = this.store.create("asset_restoration", id23, { ...identity, request_digest: stableDigest(identity), restored_id: restored.id, restored_kind: member === "memory" ? "memory_candidate" : kind4, execution_authorized: false, activation: member === "codebase" ? "rebuilt_current_checkpoint" : "governed_candidate" });
       return { restoration: record, result, idempotent: false };
     });
   }
@@ -255428,12 +255109,12 @@ var ContextUsageWorkbench = class {
   retire(args, transition) {
     const member = text(args.member, "member");
     if (member !== "knowledge" && member !== "memory") throw new Error("Only Knowledge and Memory can be retired here");
-    const id22 = text(args.id, "id"), scope3 = { kind: text(args.scope_kind, "scope_kind"), id: text(args.scope_id, "scope_id") };
+    const id23 = text(args.id, "id"), scope3 = { kind: text(args.scope_kind, "scope_kind"), id: text(args.scope_id, "scope_id") };
     return this.store.transaction(() => {
-      const current2 = this.store.get(member === "knowledge" ? "knowledge_claim" : "memory_ledger", id22);
+      const current2 = this.store.get(member === "knowledge" ? "knowledge_claim" : "memory_ledger", id23);
       const currentScope = typeof current2.scope === "string" ? current2.scope : `${current2.scope.kind}:${current2.scope.id}`;
       if (currentScope !== `${scope3.kind}:${scope3.id}` || current2.sensitivity === "restricted" || current2.version !== args.expected_version) throw new Error("Context scope or version changed; reload before retiring");
-      return transition(member, id22, Number(current2.version));
+      return transition(member, id23, Number(current2.version));
     });
   }
   get(args) {
@@ -255484,7 +255165,7 @@ var ContextUsageWorkbench = class {
 };
 
 // core/application/coordinators/workflow-design.ts
-var import_node_crypto129 = require("node:crypto");
+var import_node_crypto128 = require("node:crypto");
 var DESIGN_QUESTIONS = [
   ["example", "\u6700\u8FD1\u4E00\u6B21\uFF0C\u4F60\u600E\u6837\u5B8C\u6210\u8FD9\u4EF6\u91CD\u590D\u5DE5\u4F5C\uFF1F"],
   ["trigger", "\u4EC0\u4E48\u60C5\u51B5\u89E6\u53D1\uFF1F\u91CD\u590D\u89E6\u53D1\u600E\u6837\u8BC6\u522B\uFF1F"],
@@ -255509,13 +255190,13 @@ var WorkflowDesignWorkbench = class {
     }
     if (!/^(project|user|task):.+$/u.test(scope3) || name.length > 200) throw new Error("Explicit design scope and bounded name required");
     if (/(?:api[_-]?key|password|secret|authorization|cookie|token)["']?\s*[:=]\s*[^\s]{6,}/iu.test(JSON.stringify({ name, answers }))) throw new Error("Design must not contain credentials");
-    const id22 = args.design_id === void 0 ? `workflow_design_${(0, import_node_crypto129.randomUUID)()}` : text(args.design_id, "design_id");
+    const id23 = args.design_id === void 0 ? `workflow_design_${(0, import_node_crypto128.randomUUID)()}` : text(args.design_id, "design_id");
     return this.store.transaction(() => {
-      const current2 = this.store.find("workflow_design", id22);
+      const current2 = this.store.find("workflow_design", id23);
       if (current2 && (current2.scope !== scope3 || args.expected_version !== current2.version)) throw new Error("Design scope or version conflict; reload before saving");
       if (!current2 && args.expected_version !== void 0) throw new Error("Design no longer exists");
       const value = { name, scope: scope3, answers, author: "user", lifecycle: "draft", execution_authorized: false, routeable: false };
-      const design = current2 ? this.store.save("workflow_design", id22, value) : this.store.create("workflow_design", id22, value);
+      const design = current2 ? this.store.save("workflow_design", id23, value) : this.store.create("workflow_design", id23, value);
       return this.describe(design);
     });
   }
@@ -255580,6 +255261,838 @@ var CognitiveWorkbenchCoordinator = class {
   saveClaim(args) {
     const evidence2 = args.evidence_ids === void 0 ? this.ports.recordEvidence({ source_type: "human", confidence: "bounded", claim: "Studio-authored candidate.", locator: "studio://knowledge" }) : null;
     return this.ports.saveClaim({ ...args, evidence_ids: args.evidence_ids ?? [evidence2?.id], scope: args.scope ?? "global" });
+  }
+};
+
+// core/application/coordinators/evaluation-runs.ts
+var import_node_crypto129 = require("node:crypto");
+
+// core/evaluation.ts
+function numericValues(records2, field) {
+  const values3 = /* @__PURE__ */ new Map();
+  for (const record of records2) {
+    const metrics = record[field];
+    for (const [name, value] of Object.entries(metrics)) {
+      if (typeof value !== "number" || !Number.isFinite(value)) continue;
+      const metric2 = values3.get(name);
+      if (metric2) metric2.push(value);
+      else values3.set(name, [value]);
+    }
+  }
+  return values3;
+}
+function summarize(records2, field, includeSum) {
+  return Object.fromEntries([...numericValues(records2, field)].sort(([left], [right]) => left.localeCompare(right)).map(([name, values3]) => {
+    const sum = values3.reduce((total, value) => total + value, 0);
+    return [name, {
+      count: values3.length,
+      mean: sum / values3.length,
+      min: Math.min(...values3),
+      max: Math.max(...values3),
+      ...includeSum ? { sum } : {}
+    }];
+  }));
+}
+function aggregateEvaluation(run, trials, outcomes) {
+  const verdictCounts = {};
+  const failureTypes = {};
+  for (const outcome2 of outcomes) {
+    const verdict = String(outcome2.verdict);
+    verdictCounts[verdict] = (verdictCounts[verdict] ?? 0) + 1;
+    if (verdict !== "passed") {
+      const failureType = typeof outcome2.failure_type === "string" && outcome2.failure_type ? outcome2.failure_type : "unspecified";
+      failureTypes[failureType] = (failureTypes[failureType] ?? 0) + 1;
+    }
+  }
+  return {
+    evaluation_run_id: run.id,
+    suite_id: run.suite_id,
+    suite_version: run.suite_version,
+    split: run.split,
+    subject_type: run.subject_type,
+    subject_id: run.subject_id,
+    subject_version: run.subject_version,
+    trial_ids: trials.map((trial) => trial.id),
+    case_ids: trials.map((trial) => trial.case_id).sort(),
+    total: outcomes.length,
+    verdict_counts: verdictCounts,
+    pass_rate: outcomes.filter((outcome2) => outcome2.verdict === "passed").length / outcomes.length,
+    scores: summarize(outcomes, "scores", false),
+    costs: summarize(outcomes, "costs", true),
+    failure_types: failureTypes
+  };
+}
+function metricDeltas(baseline, candidate2) {
+  const names3 = [.../* @__PURE__ */ new Set([...Object.keys(baseline), ...Object.keys(candidate2)])].sort();
+  return Object.fromEntries(names3.map((name) => {
+    const baselineMean = baseline[name]?.mean;
+    const candidateMean = candidate2[name]?.mean;
+    return [name, {
+      baseline: baselineMean ?? null,
+      candidate: candidateMean ?? null,
+      delta: typeof baselineMean === "number" && typeof candidateMean === "number" ? candidateMean - baselineMean : null
+    }];
+  }));
+}
+function countDeltas(baseline, candidate2) {
+  const names3 = [.../* @__PURE__ */ new Set([...Object.keys(baseline), ...Object.keys(candidate2)])].sort();
+  return Object.fromEntries(names3.map((name) => {
+    const baselineCount = Number(baseline[name] ?? 0);
+    const candidateCount = Number(candidate2[name] ?? 0);
+    return [name, { baseline: baselineCount, candidate: candidateCount, delta: candidateCount - baselineCount }];
+  }));
+}
+function compareEvaluationAggregates(baseline, candidate2) {
+  const scores = metricDeltas(baseline.scores, candidate2.scores);
+  const costs = metricDeltas(baseline.costs, candidate2.costs);
+  const signals = [
+    candidate2.pass_rate - baseline.pass_rate,
+    ...Object.values(scores).map((item) => item.delta).filter((value) => typeof value === "number"),
+    ...Object.values(costs).map((item) => item.delta).filter((value) => typeof value === "number").map((value) => -value)
+  ];
+  const improved = signals.some((value) => value > 0);
+  const regressed = signals.some((value) => value < 0);
+  const assessment = improved && regressed ? "mixed" : improved ? "improved" : regressed ? "regressed" : "equivalent";
+  return {
+    pass_rate: {
+      baseline: baseline.pass_rate,
+      candidate: candidate2.pass_rate,
+      delta: candidate2.pass_rate - baseline.pass_rate
+    },
+    scores,
+    costs,
+    verdict_counts: countDeltas(baseline.verdict_counts, candidate2.verdict_counts),
+    failure_types: countDeltas(baseline.failure_types, candidate2.failure_types),
+    assessment
+  };
+}
+function pairedSignTestProbability(candidateWins, baselineWins) {
+  if (![candidateWins, baselineWins, candidateWins + baselineWins].every((value) => Number.isSafeInteger(value) && value >= 0)) {
+    throw new Error("Paired win counts must be non-negative safe integers");
+  }
+  const total = candidateWins + baselineWins;
+  if (!candidateWins) return 1;
+  let logProbability = -total * Math.LN2, logTail = Number.NEGATIVE_INFINITY;
+  for (let successes = 0; successes <= total; successes++) {
+    if (successes >= candidateWins) {
+      const larger = Math.max(logTail, logProbability), smaller = Math.min(logTail, logProbability);
+      logTail = larger + Math.log1p(Math.exp(smaller - larger));
+    }
+    if (successes < total) logProbability += Math.log(total - successes) - Math.log(successes + 1);
+  }
+  return Math.min(1, Math.exp(logTail));
+}
+
+// core/application/coordinators/evaluation-runs.ts
+var EVAL_SPLITS = /* @__PURE__ */ new Set(["search", "development", "held_out"]);
+var id21 = (prefix) => `${prefix}_${(0, import_node_crypto129.randomUUID)().replaceAll("-", "")}`;
+var fingerprint3 = (value) => stableDigest(value).slice("sha256:".length);
+function metricMean(aggregate, metric2) {
+  const summary2 = aggregate.costs[metric2];
+  return typeof summary2?.mean === "number" && Number.isFinite(summary2.mean) ? summary2.mean : null;
+}
+var EvaluationRunCoordinator = class {
+  store;
+  workflowTrialRun;
+  gradeRecord;
+  constructor(store, workflowTrialRun, gradeRecord) {
+    this.store = store;
+    this.workflowTrialRun = workflowTrialRun;
+    this.gradeRecord = gradeRecord;
+  }
+  evaluationRunRecord(args) {
+    const suite = this.store.get(
+      "evaluation_suite",
+      text(args.suite_id, "suite_id"),
+      args.suite_version === void 0 ? void 0 : finiteInteger(args.suite_version, "suite_version", 1)
+    );
+    const split = String(args.split);
+    if (!EVAL_SPLITS.has(split)) throw new Error(`Unsupported evaluation split: ${split}`);
+    const subjectType = text(args.subject_type, "subject_type");
+    const subjectId = text(args.subject_id, "subject_id");
+    const subjectVersion = finiteInteger(args.subject_version, "subject_version", 1);
+    this.store.get(subjectType, subjectId, subjectVersion);
+    const trialIds = array(args.trial_ids, "trial_ids").map((value) => text(value, "trial_id"));
+    if (!trialIds.length || new Set(trialIds).size !== trialIds.length) {
+      throw new Error("trial_ids must contain unique trials");
+    }
+    const cases = array(suite.cases ?? [], "suite cases");
+    const allowedCases = new Set(cases.filter((item) => item.split === split).map((item) => String(item.case_id)));
+    const outcomes = trialIds.map((trialId) => {
+      const trial = this.store.get("trial", trialId);
+      if (trial.subject_type !== subjectType || trial.subject_id !== subjectId || Number(trial.subject_version) !== subjectVersion) throw new Error(`Trial subject mismatch: ${trialId}`);
+      if (!trial.case_id || !allowedCases.has(String(trial.case_id))) {
+        throw new Error(`Trial case is not in the ${split} suite partition: ${trialId}`);
+      }
+      const outcome2 = this.store.find("outcome", `outcome_${trialId}`);
+      if (!outcome2) throw new Error(`Trial has no outcome: ${trialId}`);
+      return outcome2;
+    });
+    const verdict = outcomes.every((outcome2) => outcome2.verdict === "passed") ? "passed" : "failed";
+    return this.store.create("evaluation_run", String(args.run_id ?? id21("evalrun")), {
+      suite_id: suite.id,
+      suite_version: suite.version,
+      split,
+      subject_type: subjectType,
+      subject_id: subjectId,
+      subject_version: subjectVersion,
+      trial_ids: trialIds,
+      verdict,
+      metrics: object(args.metrics ?? {}, "metrics")
+    });
+  }
+  evaluationRunAggregate(args) {
+    const run = this.store.get("evaluation_run", text(args.run_id, "run_id"));
+    const trials = run.trial_ids.map((trialId) => this.store.get("trial", trialId));
+    const outcomes = trials.map((trial) => this.store.get("outcome", `outcome_${trial.id}`));
+    return aggregateEvaluation(run, trials, outcomes);
+  }
+  evaluationCompare(args) {
+    const baselineId = text(args.baseline_run_id, "baseline_run_id");
+    const candidateId2 = text(args.candidate_run_id, "candidate_run_id");
+    if (baselineId === candidateId2) throw new Error("Evaluation comparison requires two different runs");
+    const baseline = this.evaluationRunAggregate({ run_id: baselineId });
+    const candidate2 = this.evaluationRunAggregate({ run_id: candidateId2 });
+    for (const field of ["suite_id", "suite_version", "split", "subject_type"]) {
+      if (baseline[field] !== candidate2[field]) throw new Error(`Evaluation runs are not comparable: ${field} differs`);
+    }
+    if (JSON.stringify(baseline.case_ids) !== JSON.stringify(candidate2.case_ids)) {
+      throw new Error("Evaluation runs are not comparable: case_ids differ");
+    }
+    return this.store.create("evaluation_comparison", String(args.comparison_id ?? id21("comparison")), {
+      baseline_run_id: baselineId,
+      candidate_run_id: candidateId2,
+      suite_id: baseline.suite_id,
+      suite_version: baseline.suite_version,
+      split: baseline.split,
+      subject_type: baseline.subject_type,
+      case_ids: baseline.case_ids,
+      baseline,
+      candidate: candidate2,
+      comparison: compareEvaluationAggregates(baseline, candidate2)
+    });
+  }
+  evaluationRunnerRun(args) {
+    const taskId3 = text(args.task_id, "task_id");
+    this.store.get("task", taskId3);
+    const suite = this.store.get(
+      "evaluation_suite",
+      text(args.suite_id, "suite_id"),
+      args.suite_version === void 0 ? void 0 : finiteInteger(args.suite_version, "suite_version", 1)
+    );
+    const split = text(args.split, "split");
+    if (!EVAL_SPLITS.has(split)) throw new Error(`Unsupported evaluation split: ${split}`);
+    const projectRoot = text(args.project_root, "project_root");
+    const trialsPerCase = finiteInteger(args.trials_per_case, "trials_per_case", 1, 1, 20);
+    const subjects = array(args.subjects, "subjects").map((raw, index) => {
+      const subject = object(raw, `subjects[${index}]`);
+      if (text(subject.subject_type, `subjects[${index}].subject_type`) !== "workflow") {
+        throw new Error("Automatic Eval Runner currently executes only workflow subjects; Agent subjects require a Host runtime operation");
+      }
+      const subjectId = text(subject.subject_id, `subjects[${index}].subject_id`);
+      const subjectVersion = finiteInteger(subject.subject_version, `subjects[${index}].subject_version`, 1);
+      this.store.get("workflow", subjectId, subjectVersion);
+      return { label: text(subject.label, `subjects[${index}].label`), subject_id: subjectId, subject_version: subjectVersion };
+    });
+    if (subjects.length < 2 || new Set(subjects.map((subject) => subject.label)).size !== subjects.length) {
+      throw new Error("Eval Runner requires at least two uniquely labelled subjects");
+    }
+    const cases = suite.cases.filter((item) => item.split === split);
+    if (!cases.length) throw new Error(`Evaluation Suite has no ${split} cases`);
+    const runner = this.store.create("evaluation_runner", String(args.runner_id ?? id21("eval_runner")), {
+      task_id: taskId3,
+      suite_id: suite.id,
+      suite_version: suite.version,
+      split,
+      trials_per_case: trialsPerCase,
+      status: "running",
+      subjects,
+      environment_fingerprint: fingerprint3(object(args.environment ?? {}, "environment"))
+    });
+    const evaluationRuns = subjects.map((subject) => {
+      const trialIds = [];
+      for (const item of cases) for (let attempt = 1; attempt <= trialsPerCase; attempt += 1) {
+        const trial = this.workflowTrialRun({
+          trial_id: id21("trial"),
+          task_id: taskId3,
+          workflow_id: subject.subject_id,
+          version: subject.subject_version,
+          case_id: item.case_id,
+          project_root: projectRoot,
+          inputs: object(item.inputs ?? {}, "case inputs"),
+          environment: args.environment ?? {},
+          budget: args.budget ?? {}
+        });
+        trialIds.push(String(trial.trial.id));
+      }
+      return this.evaluationRunRecord({
+        suite_id: suite.id,
+        suite_version: suite.version,
+        split,
+        subject_type: "workflow",
+        subject_id: subject.subject_id,
+        subject_version: subject.subject_version,
+        trial_ids: trialIds
+      });
+    });
+    const comparisons = evaluationRuns.slice(1).map((candidate2, index) => this.evaluationCompare({
+      baseline_run_id: evaluationRuns[0].id,
+      candidate_run_id: candidate2.id,
+      comparison_id: `${runner.id}_${index + 1}`
+    }));
+    const completed = this.store.save("evaluation_runner", String(runner.id), {
+      ...payload(runner),
+      status: "completed",
+      evaluation_run_ids: evaluationRuns.map((run) => run.id),
+      comparison_ids: comparisons.map((comparison) => comparison.id)
+    });
+    return {
+      runner: completed,
+      evaluation_runs: evaluationRuns,
+      comparisons,
+      comparison: comparisons[0].comparison,
+      aggregate: {
+        baseline_trials: evaluationRuns[0].trial_ids.length,
+        candidate_trials: evaluationRuns[1].trial_ids.length,
+        cases: cases.length,
+        trials_per_case: trialsPerCase
+      }
+    };
+  }
+  evaluationProgramGrade(args) {
+    const evaluation = this.store.get("evaluation_run", text(args.evaluation_run_id, "evaluation_run_id"));
+    const grader = this.store.get(
+      "grader",
+      text(args.grader_id, "grader_id"),
+      args.grader_version === void 0 ? void 0 : finiteInteger(args.grader_version, "grader_version", 1)
+    );
+    if (grader.grader_type !== "program") throw new Error("Automatic evaluation grading requires a program grader");
+    const configuration = object(grader.configuration, "grader configuration");
+    const minimumPassRate = configuration.minimum_pass_rate === void 0 ? 1 : Number(configuration.minimum_pass_rate);
+    const maximumDuration = configuration.maximum_mean_duration_ms === void 0 ? Number.POSITIVE_INFINITY : Number(configuration.maximum_mean_duration_ms);
+    if (!Number.isFinite(minimumPassRate) || minimumPassRate < 0 || minimumPassRate > 1 || !Number.isFinite(maximumDuration) && maximumDuration !== Number.POSITIVE_INFINITY || maximumDuration < 0) {
+      throw new Error("Program grader configuration is invalid");
+    }
+    const aggregate = this.evaluationRunAggregate({ run_id: evaluation.id });
+    const duration = aggregate.costs.duration_ms;
+    const passed = Number(aggregate.pass_rate) >= minimumPassRate && (duration?.mean === void 0 || Number(duration.mean) <= maximumDuration);
+    const grades = evaluation.trial_ids.map((trialId) => {
+      const gradeId = `grade_${(0, import_node_crypto129.createHash)("sha256").update(JSON.stringify([trialId, grader.id, grader.version])).digest("hex")}`;
+      const existing = this.store.find("grade", gradeId);
+      if (existing) return existing;
+      const outcome2 = this.store.get("outcome", `outcome_${trialId}`);
+      return this.gradeRecord({
+        trial_id: trialId,
+        grader_id: grader.id,
+        grader_version: grader.version,
+        verdict: passed ? "passed" : "failed",
+        score: Number(aggregate.pass_rate),
+        summary: `Program grader evaluated evaluation run ${evaluation.id}.`,
+        evidence_ids: outcome2.evidence_ids,
+        metadata: {
+          evaluation_run_id: evaluation.id,
+          pass_rate: aggregate.pass_rate,
+          minimum_pass_rate: minimumPassRate,
+          maximum_mean_duration_ms: maximumDuration
+        }
+      });
+    });
+    return { grades, passed, aggregate };
+  }
+  evaluationPairedComparison(baselineRun, candidateRun) {
+    const indexed = (run) => {
+      const occurrences = /* @__PURE__ */ new Map();
+      return new Map(run.trial_ids.map((trialId) => {
+        const trial = this.store.get("trial", trialId);
+        const caseId = String(trial.case_id);
+        const occurrence = (occurrences.get(caseId) ?? 0) + 1;
+        occurrences.set(caseId, occurrence);
+        return [`${caseId}:${occurrence}`, this.store.get("outcome", `outcome_${trialId}`)];
+      }));
+    };
+    const baseline = indexed(baselineRun);
+    const candidate2 = indexed(candidateRun);
+    let candidateWins = 0;
+    let baselineWins = 0;
+    let ties = 0;
+    for (const [key2, baselineOutcome] of baseline) {
+      const candidateOutcome = candidate2.get(key2);
+      if (!candidateOutcome) continue;
+      const baselinePassed = baselineOutcome.verdict === "passed";
+      const candidatePassed = candidateOutcome.verdict === "passed";
+      if (candidatePassed && !baselinePassed) candidateWins += 1;
+      else if (baselinePassed && !candidatePassed) baselineWins += 1;
+      else ties += 1;
+    }
+    return {
+      matched_trials: candidateWins + baselineWins + ties,
+      candidate_wins: candidateWins,
+      baseline_wins: baselineWins,
+      ties,
+      unmatched_baseline_trials: baseline.size - (candidateWins + baselineWins + ties),
+      unmatched_candidate_trials: candidate2.size - (candidateWins + baselineWins + ties)
+    };
+  }
+  evaluationPromotionAssess(args) {
+    const comparison = this.store.get("evaluation_comparison", text(args.comparison_id, "comparison_id"));
+    const baselineRun = this.store.get("evaluation_run", String(comparison.baseline_run_id));
+    const candidateRun = this.store.get("evaluation_run", String(comparison.candidate_run_id));
+    const minTrials = finiteInteger(args.min_trials, "min_trials", 2, 1, 1e4);
+    const minimumDelta = args.min_pass_rate_delta === void 0 ? 0 : Number(args.min_pass_rate_delta);
+    const maximumCostRatio = args.max_cost_regression_ratio === void 0 ? Number.POSITIVE_INFINITY : Number(args.max_cost_regression_ratio);
+    const maximumDurationRatio = args.max_duration_regression_ratio === void 0 ? Number.POSITIVE_INFINITY : Number(args.max_duration_regression_ratio);
+    const costMetric = args.cost_metric === void 0 ? "tokens" : text(args.cost_metric, "cost_metric");
+    if (!Number.isFinite(minimumDelta) || minimumDelta < -1 || minimumDelta > 1 || !Number.isFinite(maximumCostRatio) && maximumCostRatio !== Number.POSITIVE_INFINITY || maximumCostRatio < 0 || !Number.isFinite(maximumDurationRatio) && maximumDurationRatio !== Number.POSITIVE_INFINITY || maximumDurationRatio < 0) {
+      throw new Error("Promotion thresholds are invalid");
+    }
+    const baseline = comparison.baseline;
+    const candidate2 = comparison.candidate;
+    const paired = this.evaluationPairedComparison(baselineRun, candidateRun);
+    const baselineCost = metricMean(baseline, costMetric);
+    const candidateCost = metricMean(candidate2, costMetric);
+    const baselineDuration = metricMean(baseline, "duration_ms");
+    const candidateDuration = metricMean(candidate2, "duration_ms");
+    const costRatio = baselineCost === null || candidateCost === null ? null : candidateCost / Math.max(1, baselineCost);
+    const durationRatio = baselineDuration === null || candidateDuration === null ? null : candidateDuration / Math.max(1, baselineDuration);
+    const checks = [
+      { check: "held_out", passed: comparison.split === "held_out" },
+      { check: "minimum_trials", passed: Number(baseline.total) >= minTrials && Number(candidate2.total) >= minTrials },
+      { check: "pass_rate", passed: Number(candidate2.pass_rate) - Number(baseline.pass_rate) >= minimumDelta },
+      { check: "cost_regression", passed: maximumCostRatio === Number.POSITIVE_INFINITY || costRatio !== null && costRatio <= maximumCostRatio },
+      { check: "duration_regression", passed: maximumDurationRatio === Number.POSITIVE_INFINITY || durationRatio !== null && durationRatio <= maximumDurationRatio },
+      { check: "paired_cases", passed: Number(paired.matched_trials) >= minTrials && paired.unmatched_baseline_trials === 0 && paired.unmatched_candidate_trials === 0 }
+    ];
+    const eligible = checks.every((check2) => check2.passed);
+    const promotion = this.store.create("evaluation_promotion", String(args.promotion_id ?? id21("promotion")), {
+      comparison_id: comparison.id,
+      baseline_run_id: baselineRun.id,
+      candidate_run_id: candidateRun.id,
+      eligible,
+      checks,
+      paired,
+      thresholds: {
+        min_trials: minTrials,
+        min_pass_rate_delta: minimumDelta,
+        cost_metric: costMetric,
+        max_cost_regression_ratio: maximumCostRatio,
+        max_duration_regression_ratio: maximumDurationRatio
+      }
+    });
+    return { eligible, promotion, comparison: {
+      ...comparison,
+      paired,
+      cost_metric: costMetric,
+      cost_regression_ratio: costRatio,
+      duration_regression_ratio: durationRatio
+    } };
+  }
+  evaluationReliabilityAssess(args) {
+    const comparison = this.store.get("evaluation_comparison", text(args.comparison_id, "comparison_id"));
+    const baselineRun = this.store.get("evaluation_run", String(comparison.baseline_run_id));
+    const candidateRun = this.store.get("evaluation_run", String(comparison.candidate_run_id));
+    const minTrials = finiteInteger(args.min_trials, "min_trials", 20, 2, 1e4);
+    const maxBudgetRatio = Number(args.max_budget_ratio ?? 1);
+    if (!Number.isFinite(maxBudgetRatio) || maxBudgetRatio < 0) throw new Error("max_budget_ratio must be non-negative");
+    const paired = this.evaluationPairedComparison(baselineRun, candidateRun);
+    const baselineTrials = baselineRun.trial_ids.map((trialId) => this.store.get("trial", trialId));
+    const candidateTrials = candidateRun.trial_ids.map((trialId) => this.store.get("trial", trialId));
+    const baselineEnvironment = object(baselineTrials[0].environment, "baseline environment");
+    const environmentsMatch = [...baselineTrials, ...candidateTrials].every((trial) => fingerprint3(object(trial.environment, "trial environment")) === fingerprint3(baselineEnvironment));
+    const budgetsMatch = [...baselineTrials, ...candidateTrials].every((trial) => {
+      const baselineBudget = object(baselineTrials[0].budget, "baseline budget");
+      const ratio2 = Number(Object.entries(object(trial.budget, "trial budget")).every(([key2, value]) => Number(value) <= Number(baselineBudget[key2]) * maxBudgetRatio));
+      return ratio2 === 1;
+    });
+    const pValue = pairedSignTestProbability(Number(paired.candidate_wins), Number(paired.baseline_wins));
+    const completePairs = paired.unmatched_baseline_trials === 0 && paired.unmatched_candidate_trials === 0;
+    const status2 = Number(paired.matched_trials) < minTrials || !completePairs || !environmentsMatch || !budgetsMatch ? "inconclusive" : pValue <= 0.05 && Number(paired.candidate_wins) > Number(paired.baseline_wins) ? "eligible" : "rejected";
+    const assessment = this.store.create("evaluation_reliability", String(args.assessment_id ?? id21("reliability")), { comparison_id: comparison.id, status: status2, min_trials: minTrials, max_budget_ratio: maxBudgetRatio, paired, p_value: pValue, environments_match: environmentsMatch, budgets_match: budgetsMatch });
+    return { status: status2, assessment };
+  }
+};
+
+// core/knowledge-index.ts
+var import_node_crypto130 = require("node:crypto");
+var import_node_fs29 = require("node:fs");
+var import_node_path41 = require("node:path");
+var import_node_sqlite3 = require("node:sqlite");
+var MAX_FILES3 = 2e3;
+var DEFAULT_CHUNK_CHARS = 4e3;
+var SEARCH_CANDIDATES = 200;
+var KNOWLEDGE_SCOPES = ["user", "project", "task"];
+function digest31(value) {
+  return `sha256:${(0, import_node_crypto130.createHash)("sha256").update(value).digest("hex")}`;
+}
+function walk2(current2, found, limit3) {
+  for (const entry2 of (0, import_node_fs29.readdirSync)(current2, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    const absolute = (0, import_node_path41.join)(current2, entry2.name);
+    if ((0, import_node_fs29.lstatSync)(absolute).isSymbolicLink()) continue;
+    if (entry2.isDirectory()) {
+      walk2(absolute, found, limit3);
+      continue;
+    }
+    if (!entry2.name.endsWith(".md")) continue;
+    found.push(absolute);
+    if (found.length > limit3) throw new Error(`Knowledge base exceeds ${limit3} files`);
+  }
+}
+function scanKnowledgeBase(root, options = {}) {
+  const base = (0, import_node_path41.resolve)(root);
+  if (!(0, import_node_fs29.existsSync)(base)) throw new Error("Knowledge base root does not exist");
+  const limit3 = options.limit ?? MAX_FILES3;
+  if (!Number.isInteger(limit3) || limit3 < 1) throw new Error("Knowledge base limit must be a positive integer");
+  const found = [];
+  walk2(base, found, limit3);
+  return found.map((absolute) => {
+    const content = (0, import_node_fs29.readFileSync)(absolute, "utf8");
+    return {
+      path: (0, import_node_path41.relative)(base, absolute).replaceAll("\\", "/"),
+      digest: digest31(content),
+      size_bytes: Buffer.byteLength(content),
+      chunks: chunkMarkdown(content).length
+    };
+  });
+}
+function chunkMarkdown(content, options = {}) {
+  const maxChars = options.maxChars ?? DEFAULT_CHUNK_CHARS;
+  if (!Number.isInteger(maxChars) || maxChars < 1) throw new Error("Knowledge chunk maxChars must be a positive integer");
+  const sections = [];
+  let current2 = { heading: null, body: [] };
+  for (const line2 of content.split(/\r?\n/u)) {
+    const heading2 = /^#{1,6}\s+(.*)$/u.exec(line2);
+    if (heading2) {
+      sections.push(current2);
+      current2 = { heading: heading2[1].trim(), body: [] };
+    } else current2.body.push(line2);
+  }
+  sections.push(current2);
+  const chunks = sections.map((section) => ({ heading: section.heading, body: section.body.join("\n").trim() })).filter((chunk) => chunk.heading !== null || chunk.body.length > 0);
+  return chunks.flatMap((chunk) => {
+    if (chunk.body.length <= maxChars) return [chunk];
+    const parts = [];
+    for (let index = 0; index < chunk.body.length; index += maxChars) {
+      parts.push({ heading: chunk.heading, body: chunk.body.slice(index, index + maxChars) });
+    }
+    return parts;
+  });
+}
+function diffKnowledgeBase(previous, current2) {
+  const before = new Map(previous.map((item) => [item.path, item]));
+  const after = new Set(current2.map((item) => item.path));
+  return {
+    added: current2.filter((item) => !before.has(item.path)),
+    changed: current2.filter((item) => {
+      const prior = before.get(item.path);
+      return prior !== void 0 && prior.digest !== item.digest;
+    }),
+    removed: previous.filter((item) => !after.has(item.path))
+  };
+}
+function knowledgeQueryTokens(query) {
+  const tokens = text(query, "query").match(/[\p{L}\p{N}_]+/gu) ?? [];
+  if (!tokens.length) throw new Error("Knowledge search requires at least one word token");
+  return tokens;
+}
+function locateSnippet(body3, tokens, width = 200) {
+  const haystack = body3.toLowerCase();
+  const at = tokens.map((token) => haystack.indexOf(token.toLowerCase())).filter((index) => index >= 0).sort((a, b) => a - b)[0];
+  if (at === void 0) return body3.slice(0, width);
+  const start2 = Math.max(0, at - Math.floor(width / 2));
+  return body3.slice(start2, start2 + width).trim();
+}
+var KnowledgeIndex = class {
+  file;
+  db;
+  constructor(file) {
+    this.file = (0, import_node_path41.resolve)(file);
+    (0, import_node_fs29.mkdirSync)((0, import_node_path41.dirname)(this.file), { recursive: true });
+    this.db = new import_node_sqlite3.DatabaseSync(this.file);
+    this.db.exec("PRAGMA journal_mode=WAL;");
+    this.db.exec("PRAGMA busy_timeout=15000;");
+    this.db.exec([
+      "CREATE TABLE IF NOT EXISTS knowledge_document(path TEXT PRIMARY KEY, digest TEXT NOT NULL, size_bytes INTEGER NOT NULL, chunks INTEGER NOT NULL);",
+      "CREATE TABLE IF NOT EXISTS knowledge_chunk(path TEXT NOT NULL, ordinal INTEGER NOT NULL, heading TEXT, body TEXT NOT NULL, PRIMARY KEY(path, ordinal));",
+      "CREATE TABLE IF NOT EXISTS knowledge_scope(path TEXT PRIMARY KEY, scope TEXT NOT NULL, expires_at TEXT, updated_at TEXT NOT NULL);"
+    ].join("\n"));
+  }
+  /**
+   * Declare scope and, optionally, an expiry. Omitting `ttl_days` means the
+   * document never expires on its own — which is the right default for durable
+   * project knowledge and the wrong one for a task-scoped note.
+   */
+  setScope(entries2, now3 = Date.now()) {
+    if (!Array.isArray(entries2)) throw new Error("Knowledge scope entries must be an array");
+    const instant20 = new Date(now3).toISOString();
+    return entries2.map((entry2, index) => {
+      if (!entry2 || typeof entry2 !== "object") throw new Error(`Knowledge scope entry ${index} must be an object`);
+      const path2 = text(entry2.path, `scope path at index ${index}`);
+      const scope3 = text(entry2.scope, `scope at index ${index}`);
+      if (!KNOWLEDGE_SCOPES.includes(scope3)) throw new Error(`Unsupported knowledge scope: ${scope3}`);
+      let expiresAt = null;
+      if (entry2.ttl_days !== void 0 && entry2.ttl_days !== null) {
+        const days = Number(entry2.ttl_days);
+        if (!Number.isInteger(days) || days < 1 || days > 3650) {
+          throw new Error(`Knowledge scope ttl_days at index ${index} must be an integer between 1 and 3650`);
+        }
+        expiresAt = new Date(now3 + days * 864e5).toISOString();
+      }
+      this.db.prepare("INSERT INTO knowledge_scope(path, scope, expires_at, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(path) DO UPDATE SET scope = excluded.scope, expires_at = excluded.expires_at, updated_at = excluded.updated_at").run(path2, scope3, expiresAt, instant20);
+      return { path: path2, scope: scope3, expires_at: expiresAt, updated_at: instant20 };
+    });
+  }
+  /** Scope rows, optionally narrowed to one scope. Sorted so two calls read the same. */
+  scopeCatalog(scope3) {
+    if (scope3 !== void 0 && !KNOWLEDGE_SCOPES.includes(scope3)) throw new Error(`Unsupported knowledge scope: ${scope3}`);
+    const rows4 = scope3 === void 0 ? this.db.prepare("SELECT path, scope, expires_at, updated_at FROM knowledge_scope ORDER BY path").all() : this.db.prepare("SELECT path, scope, expires_at, updated_at FROM knowledge_scope WHERE scope = ? ORDER BY path").all(scope3);
+    return rows4.map((row) => ({
+      path: String(row.path),
+      scope: String(row.scope),
+      expires_at: row.expires_at === null || row.expires_at === void 0 ? null : String(row.expires_at),
+      updated_at: String(row.updated_at)
+    }));
+  }
+  /** Entries whose expiry has passed. A document with no expiry is never listed here. */
+  expired(now3 = Date.now()) {
+    const instant20 = new Date(now3).toISOString();
+    return this.db.prepare("SELECT path, scope, expires_at, updated_at FROM knowledge_scope WHERE expires_at IS NOT NULL AND expires_at <= ? ORDER BY path").all(instant20).map((row) => ({
+      path: String(row.path),
+      scope: String(row.scope),
+      expires_at: String(row.expires_at),
+      updated_at: String(row.updated_at)
+    }));
+  }
+  /**
+   * Drop expired documents from the projection and forget their scope rows.
+   *
+   * This removes only the rebuildable projection and scope metadata; Markdown
+   * files are untouched, so "forgetting" is never destructive to the source.
+   *
+   * The deletes run without an explicit transaction on purpose. Forgetting is
+   * idempotent — re-running it after a crash simply finishes the job — so a
+   * rollback branch here would be unreachable code that still has to be
+   * measured, while adding no recovery the caller does not already have.
+   */
+  forgetExpired(now3 = Date.now()) {
+    const stale = this.expired(now3);
+    for (const entry2 of stale) {
+      this.db.prepare("DELETE FROM knowledge_chunk WHERE path = ?").run(entry2.path);
+      this.db.prepare("DELETE FROM knowledge_document WHERE path = ?").run(entry2.path);
+      this.db.prepare("DELETE FROM knowledge_scope WHERE path = ?").run(entry2.path);
+    }
+    return { forgotten: stale.map((entry2) => entry2.path) };
+  }
+  /** Apply a plan by re-reading the Markdown. The files win over the projection, always. */
+  apply(plan, root) {
+    const base = (0, import_node_path41.resolve)(root);
+    const upserts = [...plan.added, ...plan.changed];
+    this.db.exec("BEGIN");
+    try {
+      for (const document3 of upserts) {
+        const content = (0, import_node_fs29.readFileSync)((0, import_node_path41.join)(base, document3.path), "utf8");
+        const chunks = chunkMarkdown(content);
+        this.db.prepare("DELETE FROM knowledge_chunk WHERE path = ?").run(document3.path);
+        this.db.prepare("DELETE FROM knowledge_document WHERE path = ?").run(document3.path);
+        this.db.prepare("INSERT INTO knowledge_document(path, digest, size_bytes, chunks) VALUES (?, ?, ?, ?)").run(document3.path, document3.digest, document3.size_bytes, chunks.length);
+        const insertChunk = this.db.prepare("INSERT INTO knowledge_chunk(path, ordinal, heading, body) VALUES (?, ?, ?, ?)");
+        for (const [ordinal, chunk] of chunks.entries()) {
+          insertChunk.run(document3.path, ordinal, chunk.heading, chunk.body);
+        }
+      }
+      for (const document3 of plan.removed) {
+        this.db.prepare("DELETE FROM knowledge_chunk WHERE path = ?").run(document3.path);
+        this.db.prepare("DELETE FROM knowledge_document WHERE path = ?").run(document3.path);
+      }
+      this.db.exec("COMMIT");
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+    return this.status();
+  }
+  /** The projected catalog, so a caller can diff it against the Markdown tree. */
+  catalog() {
+    return this.db.prepare("SELECT path, digest, size_bytes, chunks FROM knowledge_document ORDER BY path").all().map((row) => ({ path: String(row.path), digest: String(row.digest), size_bytes: Number(row.size_bytes), chunks: Number(row.chunks) }));
+  }
+  /**
+   * Portable hybrid search. SQL narrows to chunks containing every query token
+   * (a cheap, FTS5-free candidate fetch); BM25 then orders those candidates by
+   * term rarity so an identifier-dense chunk outranks one that merely shares a
+   * common word. The row order is a stable tie-break, so results are
+   * reproducible across SQLite builds.
+   */
+  search(query, options = {}) {
+    const limit3 = options.limit ?? 10;
+    if (!Number.isInteger(limit3) || limit3 < 1 || limit3 > 100) throw new Error("Knowledge search limit must be an integer between 1 and 100");
+    const tokens = knowledgeQueryTokens(query);
+    const clause = tokens.map(() => "body LIKE ?").join(" AND ");
+    const rows4 = this.db.prepare(`SELECT path, ordinal, heading, body FROM knowledge_chunk WHERE ${clause} ORDER BY path, ordinal LIMIT ?`).all(...tokens.map((token) => `%${token}%`), SEARCH_CANDIDATES).map((row) => ({ path: String(row.path), heading: row.heading === null ? null : String(row.heading), body: String(row.body) }));
+    if (!rows4.length) return [];
+    const index = new Bm25Index();
+    rows4.forEach((row, ordinal) => index.add(String(ordinal), `${row.heading ?? ""}
+${row.body}`));
+    const scored = new Map(index.score(query).map((entry2) => [entry2.id, entry2.score]));
+    const ranked = rows4.map((row, ordinal) => ({ row, ordinal, score: scored.get(String(ordinal)) ?? 0 }));
+    const positive4 = ranked.filter((entry2) => entry2.score > 0);
+    return (positive4.length ? positive4 : ranked).sort((left, right) => right.score - left.score || left.row.path.localeCompare(right.row.path) || left.ordinal - right.ordinal).slice(0, limit3).map((entry2, rank) => ({ path: entry2.row.path, heading: entry2.row.heading, snippet: locateSnippet(entry2.row.body, tokens), rank }));
+  }
+  status() {
+    const documents = Number(this.db.prepare("SELECT COUNT(*) AS count FROM knowledge_document").get().count);
+    const chunks = Number(this.db.prepare("SELECT COUNT(*) AS count FROM knowledge_chunk").get().count);
+    return { documents, chunks, file: this.file };
+  }
+  close() {
+    this.db.close();
+  }
+};
+
+// core/application/coordinators/cognitive-search.ts
+var CognitiveSearchCoordinator = class {
+  store;
+  contextResolution;
+  knowledgeRelations;
+  constructor(store, contextResolution, knowledgeRelations) {
+    this.store = store;
+    this.contextResolution = contextResolution;
+    this.knowledgeRelations = knowledgeRelations;
+  }
+  knowledgeIndex() {
+    return new KnowledgeIndex(this.store.paths.knowledgeIndex ?? `${this.store.paths.root}/knowledge-index.sqlite`);
+  }
+  knowledgeIndexSync(args) {
+    const root = text(args.project_root, "project_root");
+    const index = this.knowledgeIndex();
+    try {
+      const current2 = scanKnowledgeBase(root, { limit: args.limit === void 0 ? void 0 : finiteInteger(args.limit, "limit", 1, 1, 2e3) });
+      const previous = index.catalog();
+      const plan = diffKnowledgeBase(previous, current2);
+      const result = index.apply(plan, root);
+      return { ...result, plan: { added: plan.added.length, changed: plan.changed.length, removed: plan.removed.length } };
+    } finally {
+      index.close();
+    }
+  }
+  knowledgeSearch(args) {
+    const query = text(args.query, "query");
+    const scope3 = args.scope === void 0 ? null : text(args.scope, "scope");
+    const includeCandidates = args.include_candidates !== false;
+    const terms3 = [...new Set(query.toLowerCase().match(/[\p{L}\p{N}_-]+/gu) ?? [])];
+    const governed = this.store.list("knowledge_claim", 1e4).flatMap((claim) => {
+      if (claim.sensitivity === "restricted" && args.allow_restricted !== true) return [];
+      if (claim.status !== "reviewed" && (!includeCandidates || claim.status !== "candidate")) return [];
+      if (scope3 !== null && claim.scope !== "global" && claim.scope !== scope3) return [];
+      if (claim.valid_until !== void 0 && claim.valid_until !== null && (typeof claim.valid_until !== "string" || !Number.isFinite(Date.parse(claim.valid_until)) || Date.parse(claim.valid_until) < Date.now())) return [];
+      if (claim.content_ref && !contentReference(claim.content_ref)) throw new Error("Knowledge content reference is invalid");
+      const content = contentReference(claim.content_ref) ? this.store.contentStore.readCompatSync(claim.content_ref).body : String(claim.content ?? "");
+      const score = terms3.reduce((total, term) => total + Number(`${content} ${Array.isArray(claim.tags) ? claim.tags.join(" ") : ""}`.toLowerCase().includes(term)), 0);
+      return score > 0 ? [{
+        kind: "governed_claim",
+        claim_id: claim.id,
+        claim_version: claim.version,
+        status: claim.status,
+        scope: claim.scope,
+        content,
+        content_digest: claim.content_digest,
+        evidence_ids: claim.evidence_ids,
+        score,
+        relations: this.relationSummary(`claim:${String(claim.id)}`)
+      }] : [];
+    });
+    const index = this.knowledgeIndex();
+    try {
+      const limit3 = args.limit === void 0 ? 20 : finiteInteger(args.limit, "limit", 1, 1, 100);
+      const indexed = index.search(query, { limit: limit3 }).map((hit) => ({ ...hit, kind: "indexed_document", score: hit.rank, relations: this.relationSummary(hit.path) }));
+      const hits = [...governed, ...indexed].sort((left, right) => Number(right.score) - Number(left.score) || JSON.stringify(left).localeCompare(JSON.stringify(right))).slice(0, limit3);
+      return { hits, queried_governed_claims: true, include_candidates: includeCandidates };
+    } finally {
+      index.close();
+    }
+  }
+  /**
+   * Read memories for the current turn.
+   *
+   * This is the read half of the wiring gap: `memory_ledger` could be written
+   * from the loop but never read, so an agent could record a lesson and never
+   * benefit from it. It delegates to the governed resolver so every read still
+   * produces a content-free receipt with per-memory reasons and an explicit
+   * omitted count — the agent gains memory access without gaining a way around
+   * the budget or the provenance trail.
+   */
+  async memorySearch(args) {
+    if (args.scope_kind === void 0 || args.scope_id === void 0) {
+      return {
+        memories: [],
+        count: 0,
+        omitted_count: 0,
+        receipt_id: null,
+        content_free_receipt: true,
+        skipped: true,
+        reason: "scope_unavailable"
+      };
+    }
+    const resolution = await this.contextResolution.resolve({
+      query: text(args.query, "query"),
+      scope_kind: args.scope_kind,
+      scope_id: text(args.scope_id, "scope_id"),
+      max_items: args.max_items ?? 8,
+      max_chars: args.max_chars ?? 4e3
+    });
+    const items2 = resolution.items ?? [];
+    const receipt = resolution.receipt;
+    return {
+      memories: items2.map((item) => ({
+        memory_id: item.memory_id,
+        memory_version: item.memory_version,
+        content: item.content,
+        sensitivity: item.sensitivity,
+        reason: item.reason
+      })),
+      count: items2.length,
+      omitted_count: receipt?.omitted_count ?? 0,
+      receipt_id: receipt?.id ?? null,
+      content_free_receipt: true
+    };
+  }
+  /** One-hop relation summary for a knowledge document, so a loop can decide whether to descend. */
+  relationSummary(path2) {
+    const { relations } = this.knowledgeRelations.neighbors({ kind: "knowledge_document", id: path2 });
+    return relations.map((edge) => ({
+      relation_id: edge.relation_id,
+      relation: edge.relation,
+      direction: edge.direction,
+      other: edge.direction === "forward" ? edge.target : edge.source,
+      confidence: edge.confidence
+    }));
+  }
+  /** Declare where a knowledge document belongs and, optionally, when it stops being trustworthy. */
+  knowledgeScopeSet(args) {
+    const entries2 = array(args.entries, "entries").map((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) throw new Error("knowledge scope entries must be objects");
+      return object(item, "knowledge scope entry");
+    });
+    const index = this.knowledgeIndex();
+    try {
+      return { entries: index.setScope(entries2) };
+    } finally {
+      index.close();
+    }
+  }
+  knowledgeScopeList(args) {
+    const index = this.knowledgeIndex();
+    try {
+      const scope3 = args.scope === void 0 ? void 0 : String(args.scope);
+      return { entries: index.scopeCatalog(scope3), expired: index.expired() };
+    } finally {
+      index.close();
+    }
+  }
+  /** Forget expired documents from the rebuildable projection. Markdown files are never touched. */
+  knowledgeScopeForget() {
+    const index = this.knowledgeIndex();
+    try {
+      return index.forgetExpired();
+    } finally {
+      index.close();
+    }
   }
 };
 
@@ -255695,11 +256208,11 @@ function workbenchWorkflowInput(args) {
 }
 
 // core/data-space.ts
-var import_node_crypto130 = require("node:crypto");
+var import_node_crypto131 = require("node:crypto");
 var import_node_path42 = require("node:path");
 function dataSpaceId(dataRoot2) {
   const normalized = (0, import_node_path42.resolve)(dataRoot2);
-  return `sha256:${(0, import_node_crypto130.createHash)("sha256").update(JSON.stringify({ data_root: normalized })).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto131.createHash)("sha256").update(JSON.stringify({ data_root: normalized })).digest("hex")}`;
 }
 
 // core/mcp/context-tools.ts
@@ -256884,8 +257397,8 @@ async function executeSubagent(input) {
     }
   });
   const dispatch = prepared.dispatch ?? {};
-  const id22 = String(dispatch.id ?? dispatchId);
-  const executed = await input.execute({ dispatch_id: id22, prompt: objective });
+  const id23 = String(dispatch.id ?? dispatchId);
+  const executed = await input.execute({ dispatch_id: id23, prompt: objective });
   const receipt = executed.receipt ?? {};
   const loop = receipt.loop ?? {};
   const summary2 = (value) => value == null ? null : String(value);
@@ -256895,8 +257408,8 @@ async function executeSubagent(input) {
     depth: input.plan.limits.depth,
     // The child's own session key: this is what makes the report the *only* thing
     // the parent can see of the child's reasoning.
-    session_id: `session_${id22}`,
-    dispatch_id: id22,
+    session_id: `session_${id23}`,
+    dispatch_id: id23,
     steps: Number(loop.steps ?? 0),
     tokens_used: Number(loop.tokens_used ?? 0),
     final_message: summary2(receipt.final_message),
@@ -256908,7 +257421,7 @@ async function executeSubagent(input) {
 }
 
 // core/generic-adapter-runtime.ts
-var import_node_crypto131 = require("node:crypto");
+var import_node_crypto132 = require("node:crypto");
 var import_promises18 = require("node:fs/promises");
 var import_node_child_process7 = require("node:child_process");
 var import_node_process = require("node:process");
@@ -256917,7 +257430,7 @@ var ADAPTER_KINDS = /* @__PURE__ */ new Set(["command", "mcp", "openapi", "brows
 var EFFECTS19 = /* @__PURE__ */ new Set(["read", "read_only", "local_write", "external_write", "destructive"]);
 var ACTIVE_PLATFORMS = /* @__PURE__ */ new Set(["win32", "darwin", "linux", "freebsd", "any"]);
 var now2 = () => (/* @__PURE__ */ new Date()).toISOString();
-var digest32 = (value) => `sha256:${(0, import_node_crypto131.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+var digest32 = (value) => `sha256:${(0, import_node_crypto132.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 function required4(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -257024,13 +257537,13 @@ var V01226Runtime = class {
   }
   commandPlan(input) {
     const request2 = this.validateCommand(input);
-    const id22 = `command_${(0, import_node_crypto131.randomUUID)().replaceAll("-", "")}`;
-    const plan = this.store.create("command_plan", id22, { request: request2, request_digest: digest32(request2), status: "planned", created_at: now2() });
+    const id23 = `command_${(0, import_node_crypto132.randomUUID)().replaceAll("-", "")}`;
+    const plan = this.store.create("command_plan", id23, { request: request2, request_digest: digest32(request2), status: "planned", created_at: now2() });
     return { plan, receipt_contract: "craft.command.receipt" };
   }
   async commandRun(input) {
     const request2 = this.validateCommand(input);
-    const runId = input.run_id ?? `command_run_${(0, import_node_crypto131.randomUUID)().replaceAll("-", "")}`;
+    const runId = input.run_id ?? `command_run_${(0, import_node_crypto132.randomUUID)().replaceAll("-", "")}`;
     const run = this.store.create("command_run", runId, { request: request2, request_digest: digest32(request2), status: "running", started_at: now2() });
     const command2 = request2.argv[0];
     const args = request2.argv.slice(1);
@@ -257070,20 +257583,20 @@ var V01226Runtime = class {
     return this.store.get("command_run", required4(runId, "run_id"));
   }
   commandCancel(runId) {
-    const id22 = required4(runId, "run_id");
-    const process2 = this.activeProcesses.get(id22);
+    const id23 = required4(runId, "run_id");
+    const process2 = this.activeProcesses.get(id23);
     if (!process2) {
-      const saved = this.store.find("command_run", id22);
-      if (!saved) throw new Error(`Unknown command_run: ${id22}`);
-      if (saved.status === "running") return { run: this.store.save("command_run", id22, { ...saved, cancel_requested: true, cancel_requested_at: now2() }), requested: false, cross_process: true };
+      const saved = this.store.find("command_run", id23);
+      if (!saved) throw new Error(`Unknown command_run: ${id23}`);
+      if (saved.status === "running") return { run: this.store.save("command_run", id23, { ...saved, cancel_requested: true, cancel_requested_at: now2() }), requested: false, cross_process: true };
       return { run: saved, idempotent: true };
     }
     process2.kill();
-    return { run: this.store.get("command_run", id22), requested: true };
+    return { run: this.store.get("command_run", id23), requested: true };
   }
   async commandRetry(runId) {
     const run = this.commandObserve(runId);
-    return this.commandRun({ ...run.request, run_id: `retry_${(0, import_node_crypto131.randomUUID)().replaceAll("-", "")}` });
+    return this.commandRun({ ...run.request, run_id: `retry_${(0, import_node_crypto132.randomUUID)().replaceAll("-", "")}` });
   }
   validateCommand(input) {
     const argv = list10(input.argv, "argv", 1);
@@ -257094,11 +257607,11 @@ var V01226Runtime = class {
     return { ...input, argv, effect: effect3, timeout_ms: integer27(input.timeout_ms, "timeout_ms", 12e4, 100, 36e5), output_limit: integer27(input.output_limit, "output_limit", 65536, 256, 1e7), ...input.cwd === void 0 ? {} : { cwd: required4(input.cwd, "cwd") } };
   }
   contextManifestSave(input) {
-    const id22 = required4(input.manifest_id ?? `context_${(0, import_node_crypto131.randomUUID)().replaceAll("-", "")}`, "manifest_id");
-    const manifest = { ...input, manifest_id: id22, knowledge_refs: list10(input.knowledge_refs ?? [], "knowledge_refs"), capability_refs: list10(input.capability_refs ?? [], "capability_refs"), workflow_refs: list10(input.workflow_refs ?? [], "workflow_refs"), excluded_refs: list10(input.excluded_refs ?? [], "excluded_refs"), manifest_digest: digest32(input), created_at: now2() };
-    const existing = this.store.find("context_manifest", id22);
+    const id23 = required4(input.manifest_id ?? `context_${(0, import_node_crypto132.randomUUID)().replaceAll("-", "")}`, "manifest_id");
+    const manifest = { ...input, manifest_id: id23, knowledge_refs: list10(input.knowledge_refs ?? [], "knowledge_refs"), capability_refs: list10(input.capability_refs ?? [], "capability_refs"), workflow_refs: list10(input.workflow_refs ?? [], "workflow_refs"), excluded_refs: list10(input.excluded_refs ?? [], "excluded_refs"), manifest_digest: digest32(input), created_at: now2() };
+    const existing = this.store.find("context_manifest", id23);
     if (existing) return { manifest: existing, idempotent: true };
-    return { manifest: this.store.create("context_manifest", id22, manifest), idempotent: false };
+    return { manifest: this.store.create("context_manifest", id23, manifest), idempotent: false };
   }
   capabilityProject(input) {
     const requiredCapabilities = input.required ?? [];
@@ -257123,10 +257636,10 @@ var V01226Runtime = class {
     return { selected, excluded, spent_tokens: spent, rationale: "required capabilities first, then token budget" };
   }
   durableStart(input) {
-    const id22 = required4(input.run_id ?? `durable_${(0, import_node_crypto131.randomUUID)().replaceAll("-", "")}`, "run_id");
-    const existing = this.store.find("durable_run", id22);
+    const id23 = required4(input.run_id ?? `durable_${(0, import_node_crypto132.randomUUID)().replaceAll("-", "")}`, "run_id");
+    const existing = this.store.find("durable_run", id23);
     if (existing) return { run: existing, idempotent: true };
-    return { run: this.store.create("durable_run", id22, { ...input, run_id: id22, status: "queued", attempts: 0, lease_until: null, created_at: now2() }), idempotent: false };
+    return { run: this.store.create("durable_run", id23, { ...input, run_id: id23, status: "queued", attempts: 0, lease_until: null, created_at: now2() }), idempotent: false };
   }
   durableTick(owner = "local", leaseSeconds = 30) {
     const queued = this.store.list("durable_run", 1, (record) => ["queued", "running"].includes(String(record.status)) && (!record.lease_until || String(record.lease_until) < now2()));
@@ -257150,8 +257663,8 @@ var V01226Runtime = class {
     if (!passed && !failed) throw new Error("passed or failed is required");
     const rate = passed / (passed + failed);
     const autonomy = rate >= 0.99 && passed >= 20 ? "automatic" : rate >= 0.9 ? "assisted" : "manual";
-    const id22 = `trust_${digest32(input).slice(7, 23)}`;
-    return { profile: this.store.save("trust_curve", id22, { scope: required4(input.scope, "scope"), passed, failed, reliability: rate, autonomy, evidence_refs: input.evidence_refs ?? [], updated_at: now2() }) };
+    const id23 = `trust_${digest32(input).slice(7, 23)}`;
+    return { profile: this.store.save("trust_curve", id23, { scope: required4(input.scope, "scope"), passed, failed, reliability: rate, autonomy, evidence_refs: input.evidence_refs ?? [], updated_at: now2() }) };
   }
   modelRoute(input) {
     const objective = input.objective ?? "quality";
@@ -257172,15 +257685,15 @@ var V01226Runtime = class {
     return { status: passed ? "passed" : "blocked", passed, missing_artifacts: missingArtifacts, missing_evidence: missingEvidence, gate: "delivery" };
   }
   projectBundle(input) {
-    const bundle = { schema_version: 1, bundle_id: `bundle_${(0, import_node_crypto131.randomUUID)().replaceAll("-", "")}`, exported_at: now2(), project: input.project, tasks: input.tasks ?? [], sessions: input.sessions ?? [], trace: input.trace ?? [], artifacts: input.artifacts ?? [] };
+    const bundle = { schema_version: 1, bundle_id: `bundle_${(0, import_node_crypto132.randomUUID)().replaceAll("-", "")}`, exported_at: now2(), project: input.project, tasks: input.tasks ?? [], sessions: input.sessions ?? [], trace: input.trace ?? [], artifacts: input.artifacts ?? [] };
     return { bundle, digest: digest32(bundle) };
   }
   handoff(input) {
-    return { manifest_type: "craft.task.handoff", schema_version: 1, handoff_id: `handoff_${(0, import_node_crypto131.randomUUID)().replaceAll("-", "")}`, context_manifest: input.context_manifest, host: input.host, task: input.task, budget: input.budget ?? {}, digest: digest32(input) };
+    return { manifest_type: "craft.task.handoff", schema_version: 1, handoff_id: `handoff_${(0, import_node_crypto132.randomUUID)().replaceAll("-", "")}`, context_manifest: input.context_manifest, host: input.host, task: input.task, budget: input.budget ?? {}, digest: digest32(input) };
   }
   evaluatorDefine(input) {
-    const id22 = required4(input.evaluator_id, "evaluator_id");
-    return { evaluator: this.store.save("domain_evaluator", id22, { evaluator_id: id22, domain: required4(input.domain, "domain"), criteria: list10(input.criteria, "criteria", 1), status: "active" }) };
+    const id23 = required4(input.evaluator_id, "evaluator_id");
+    return { evaluator: this.store.save("domain_evaluator", id23, { evaluator_id: id23, domain: required4(input.domain, "domain"), criteria: list10(input.criteria, "criteria", 1), status: "active" }) };
   }
   evaluatorRun(input) {
     const evaluator = this.store.get("domain_evaluator", required4(input.evaluator_id, "evaluator_id"));
@@ -258000,7 +258513,7 @@ var import_node_path44 = require("node:path");
 
 // capability/craft-codebase/repository-files.ts
 var import_node_child_process8 = require("node:child_process");
-var import_node_crypto132 = require("node:crypto");
+var import_node_crypto133 = require("node:crypto");
 var import_node_fs30 = require("node:fs");
 var import_node_path43 = require("node:path");
 var EXTENSIONS = /* @__PURE__ */ new Set([".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs", ".py", ".java", ".go", ".rs", ".c", ".h", ".cpp", ".cs", ".rb", ".php"]);
@@ -258042,7 +258555,8 @@ function repositoryFiles(root, _query = "") {
     const absolute = (0, import_node_path43.join)(root, path2);
     if (!(0, import_node_fs30.existsSync)(absolute)) continue;
     const stat4 = (0, import_node_fs30.lstatSync)(absolute);
-    if (!stat4.isFile() || (0, import_node_fs30.realpathSync)(absolute) !== absolute || (0, import_node_path43.isAbsolute)((0, import_node_path43.relative)(root, absolute)) || (0, import_node_path43.relative)(root, absolute).startsWith("..")) {
+    const delta = (0, import_node_path43.relative)(root, absolute);
+    if (!stat4.isFile() || (0, import_node_fs30.realpathSync)(absolute) !== absolute || (0, import_node_path43.isAbsolute)(delta) || delta === ".." || delta.startsWith(`..${import_node_path43.sep}`)) {
       omitted++;
       continue;
     }
@@ -258056,7 +258570,7 @@ function repositoryFiles(root, _query = "") {
       continue;
     }
     bytes += stat4.size;
-    files5.push({ path: path2, content, digest: (0, import_node_crypto132.createHash)("sha256").update(content).digest("hex"), language: (0, import_node_path43.extname)(path2).slice(1) });
+    files5.push({ path: path2, content, digest: (0, import_node_crypto133.createHash)("sha256").update(content).digest("hex"), language: (0, import_node_path43.extname)(path2).slice(1) });
   }
   return { root, state: "ready", files: files5, omitted };
 }
@@ -258215,7 +258729,7 @@ async function openContext(service, args) {
   codebase = { ...codebase, budget_omitted_count: budgetOmitted, query_omitted_count: queryOmitted, budget_rebalanced: budgetRebalanced };
   const assetRefs = context.asset_refs;
   const packIdentity = { scope: scope3, asset_refs: assetRefs, context_receipt_id: receipt?.id ?? null, working_set_id: context.working_set.id, task_kind: taskKind, partial: reasons.length > 0, partial_reasons: reasons, codebase: { status: codebase.status, reason: codebase.reason ?? null, index_id: codebase.index_id ?? null, checkpoint_id: codebase.checkpoint_id ?? null, omitted_files: codebase.omitted_files ?? 0, budget_omitted_count: budgetOmitted, query_omitted_count: queryOmitted, references }, max_items: maxItems, max_chars: maxChars, total_items: items2, total_used_chars: chars };
-  const id22 = `context_pack_${stableDigest(packIdentity).slice(-24)}`;
+  const id23 = `context_pack_${stableDigest(packIdentity).slice(-24)}`;
   const alreadyEmitted = service.contextWorkingSets.emittedRefs({ ...args, scope_kind: scope3.kind, scope_id: scope3.id }, assetRefs);
   const novel = (member, item) => !alreadyEmitted.some((ref2) => contextAssetMatches(ref2, contextAssetRef(member, item, scope3)));
   const injectionItems = context.items.filter((item) => novel("memory", item));
@@ -258226,7 +258740,7 @@ async function openContext(service, args) {
   return service.store.transaction(() => {
     assertContextReadCurrent(service.store, receipt);
     if (projection) service.codebase.assertContextProjectionCurrent(projection, references);
-    const packReceipt = service.store.find("context_pack_receipt", id22) ?? service.store.create("context_pack_receipt", id22, { ...packIdentity, identity_digest: stableDigest(packIdentity), content_free: true });
+    const packReceipt = service.store.find("context_pack_receipt", id23) ?? service.store.create("context_pack_receipt", id23, { ...packIdentity, identity_digest: stableDigest(packIdentity), content_free: true });
     return { ...context, items: injectionItems, contributions: injectionContributions, already_emitted_refs: alreadyEmitted, hook_reused: alreadyEmitted.length > 0, asset_refs: assetRefs, injection_measurement: { measurement_scope: "material_projection_excludes_protocol_envelope_and_host_history_bodies", serialized_chars: injection.length, estimated_tokens: estimatedTokens, tokenizer: "cjk_char_latin_four_char_estimate", exact: false, host_measured_tokens: null }, partial: reasons.length > 0, codebase: { ...codebase, references }, pack_receipt: packReceipt, host_execution_authority: false };
   });
 }
@@ -258499,7 +259013,7 @@ function installKernelDelegateMethods(serviceClass) {
 }
 
 // core/application/coordinators/work-control.ts
-var import_node_crypto133 = require("node:crypto");
+var import_node_crypto134 = require("node:crypto");
 var MODES4 = /* @__PURE__ */ new Set(["turn", "goal", "plan", "execute", "verify", "learn"]);
 function modeOf(value) {
   const mode2 = value === void 0 ? "goal" : value;
@@ -258509,7 +259023,7 @@ function modeOf(value) {
   return mode2;
 }
 function digest33(value) {
-  return (0, import_node_crypto133.createHash)("sha256").update(JSON.stringify(value)).digest("hex").slice(0, 20);
+  return (0, import_node_crypto134.createHash)("sha256").update(JSON.stringify(value)).digest("hex").slice(0, 20);
 }
 var WorkControl = class {
   store;
@@ -258790,7 +259304,7 @@ var TASK_STATUS = /* @__PURE__ */ new Set(["active", "paused", "completed", "can
 var TASK_PERMISSION_MODES = /* @__PURE__ */ new Set(["human_approval", "assisted_approval", "full_access"]);
 var VERSIONED_LIFECYCLE = /* @__PURE__ */ new Set(["draft", "candidate", "verified", "deprecated"]);
 var TRIAL_VERDICTS = /* @__PURE__ */ new Set(["passed", "failed", "blocked", "cancelled"]);
-var EVAL_SPLITS = /* @__PURE__ */ new Set(["search", "development", "held_out"]);
+var EVAL_SPLITS2 = /* @__PURE__ */ new Set(["search", "development", "held_out"]);
 var HARNESS_DIMENSIONS = /* @__PURE__ */ new Set(["context", "tools", "generation", "orchestration", "memory", "output"]);
 var GRADER_TYPES = /* @__PURE__ */ new Set(["program", "model", "human", "operational"]);
 var GRADE_VERDICTS = /* @__PURE__ */ new Set(["passed", "failed", "inconclusive"]);
@@ -258799,22 +259313,15 @@ var ACCEPTANCE_METHODS = /* @__PURE__ */ new Set(["program", "model", "human", "
 var ACCEPTANCE_RESULTS = /* @__PURE__ */ new Set(["passed", "failed", "blocked"]);
 var DOMAIN_FIELD_TYPES = /* @__PURE__ */ new Set(["text", "path", "integer", "boolean", "choice"]);
 var KNOWLEDGE_RELATIONS = /* @__PURE__ */ new Set(["supports", "contradicts", "supersedes", "applies_to", "depends_on"]);
-function id21(prefix) {
-  return `${prefix}_${(0, import_node_crypto134.randomUUID)().replaceAll("-", "")}`;
+function id22(prefix) {
+  return `${prefix}_${(0, import_node_crypto135.randomUUID)().replaceAll("-", "")}`;
 }
 function valueDigest2(value) {
-  return `sha256:${(0, import_node_crypto134.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto135.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function document2(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value;
-}
-function finiteInteger3(value, name, fallback2, minimum = 1, maximum = Number.MAX_SAFE_INTEGER) {
-  const number7 = value === void 0 ? fallback2 : Number(value);
-  if (!Number.isFinite(number7) || !Number.isInteger(number7) || number7 < minimum || number7 > maximum) {
-    throw new Error(`${name} must be an integer between ${minimum} and ${maximum}`);
-  }
-  return number7;
 }
 function optionalBoolean3(value, name) {
   if (value === void 0) return void 0;
@@ -258833,17 +259340,8 @@ function optionalScore(value, name) {
   if (!Number.isFinite(score) || score < 0 || score > 1) throw new Error(`${name} must be between 0 and 1`);
   return score;
 }
-function array8(value, name) {
-  if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
-  return value;
-}
-function recordPayload10(record) {
-  const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...payload10 } = record;
-  if (payload10.content_ref !== void 0) delete payload10.content;
-  return payload10;
-}
 function uniqueTextArray4(value, name, minimum = 1) {
-  const values3 = array8(value, name).map((item) => text(item, name));
+  const values3 = array(value, name).map((item) => text(item, name));
   if (values3.length < minimum || new Set(values3).size !== values3.length) {
     throw new Error(`${name} must contain at least ${minimum} unique values`);
   }
@@ -258851,7 +259349,7 @@ function uniqueTextArray4(value, name, minimum = 1) {
 }
 function optionalTextArray3(value, name, fallback2 = []) {
   if (value === void 0) return fallback2;
-  const values3 = array8(value, name).map((item) => text(item, name));
+  const values3 = array(value, name).map((item) => text(item, name));
   if (new Set(values3).size !== values3.length) throw new Error(`${name} must contain unique values`);
   return values3;
 }
@@ -258907,7 +259405,7 @@ function receiptRequirements(value, name) {
   const normalized = {};
   for (const [stage, kinds] of Object.entries(requirements)) {
     if (!Object.hasOwn(DEFAULT_RECEIPT_REQUIREMENTS, stage)) throw new Error(`Unsupported receipt stage: ${stage}`);
-    const values3 = array8(kinds, `${name}.${stage}`).map((kind4) => text(kind4, `${name}.${stage}`));
+    const values3 = array(kinds, `${name}.${stage}`).map((kind4) => text(kind4, `${name}.${stage}`));
     if (values3.some((kind4) => !ROUTE_RECEIPT_KINDS.has(kind4)) || new Set(values3).size !== values3.length) {
       throw new Error(`${name}.${stage} must contain supported unique receipt kinds`);
     }
@@ -258919,8 +259417,8 @@ function assertNoSecret5(value, name) {
   if (SECRET_ASSIGNMENT4.test(value)) throw new Error(`${name} must not contain sensitive assignments`);
   return value;
 }
-function fingerprint3(value) {
-  return (0, import_node_crypto134.createHash)("sha256").update(canonicalJson(value)).digest("hex");
+function fingerprint4(value) {
+  return (0, import_node_crypto135.createHash)("sha256").update(canonicalJson(value)).digest("hex");
 }
 function runtimeAuthorization(runId, operation2) {
   const kind4 = String(operation2.kind);
@@ -258935,7 +259433,7 @@ function runtimeAuthorization(runId, operation2) {
   return {
     autonomy_action: action,
     authorization_target: target,
-    request_digest: `sha256:${fingerprint3({
+    request_digest: `sha256:${fingerprint4({
       operation_id: operation2.operation_id,
       kind: kind4,
       effect: effect3,
@@ -258958,16 +259456,7 @@ function validIsoTime3(value, name) {
   if (Number.isNaN(parsed2)) throw new Error(`${name} must be an ISO timestamp`);
   return parsed2;
 }
-function metricMean(aggregate, metric2) {
-  const summary2 = aggregate.costs[metric2];
-  return typeof summary2?.mean === "number" && Number.isFinite(summary2.mean) ? summary2.mean : null;
-}
-function binomial(n, k) {
-  let value = 1;
-  for (let index = 1; index <= k; index += 1) value = value * (n - k + index) / index;
-  return value;
-}
-function validateModelInput(args, id22) {
+function validateModelInput(args, id23) {
   const name = text(args.name, "name");
   const protocol = args.protocol === "anthropic" || args.protocol === "openai-compatible" ? args.protocol : "openai-compatible";
   const baseUrl = text(args.baseUrl, "baseUrl").replace(/\/+$/, "");
@@ -258976,13 +259465,15 @@ function validateModelInput(args, id22) {
   const supportsTools = args.supportsTools === true;
   if (!/^https?:\/\//.test(baseUrl)) throw new Error("baseUrl must start with http:// or https://");
   if (!/^[A-Z_][A-Z0-9_]*$/i.test(apiKeyEnv)) throw new Error("apiKeyEnv must be a valid environment variable name");
-  return { id: id22, name, protocol, baseUrl, model, apiKeyEnv, supportsTools };
+  return { id: id23, name, protocol, baseUrl, model, apiKeyEnv, supportsTools };
 }
 var CraftService = class _CraftService extends ServiceFoundation {
   workControl;
   forgeDispatch;
   cognitiveWorkbench;
   cognitiveWrites;
+  cognitiveSearch;
+  evaluationRuns;
   constructor(store, semanticProvider, isolatedAdapter, dockerSandbox, egressBroker, hostOwnerId, hostProfiles, modelProviders, modelTransport, traceArchiveBackends) {
     super(
       store,
@@ -259003,7 +259494,9 @@ var CraftService = class _CraftService extends ServiceFoundation {
       resume: (args) => this.verifiedWorkLoopResumeInternal(args),
       get: (args) => this.verifiedWorkLoopGetInternal(args)
     });
+    this.evaluationRuns = new EvaluationRunCoordinator(store, (args) => this.workflowTrialRun(args), (args) => this.gradeRecord(args));
     this.forgeDispatch = new ForgeDispatchCoordinator(store);
+    this.cognitiveSearch = new CognitiveSearchCoordinator(store, this.contextResolution, this.knowledgeRelations);
     this.cognitiveWrites = new CognitiveWriteCoordinator(
       store,
       this.knowledgeSources,
@@ -259055,7 +259548,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     return new ContextUsageWorkbench(this.store).get(args);
   }
   workbenchContextRetire(args) {
-    return new ContextUsageWorkbench(this.store).retire(args, (member, id22, version3) => member === "memory" ? this.memoryLedgerTransition({ memory_id: id22, expected_version: version3, status: "revoked", reason: "Retired from scoped usage view" }) : this.knowledgeClaimReview({ claim_id: id22, status: "expired", reviewer: "studio-user", reason: "Retired from scoped usage view" }));
+    return new ContextUsageWorkbench(this.store).retire(args, (member, id23, version3) => member === "memory" ? this.memoryLedgerTransition({ memory_id: id23, expected_version: version3, status: "revoked", reason: "Retired from scoped usage view" }) : this.knowledgeClaimReview({ claim_id: id23, status: "expired", reviewer: "studio-user", reason: "Retired from scoped usage view" }));
   }
   workbenchWorkflowDesignSave(args) {
     return new WorkflowDesignWorkbench(this.store).save(args);
@@ -259643,7 +260136,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
       text(args.path, "path"),
       label,
       optionalBoolean3(args.scan, "scan") ?? true,
-      args.priority === void 0 ? 0 : finiteInteger3(args.priority, "priority", 0, -1e3, 1e3)
+      args.priority === void 0 ? 0 : finiteInteger(args.priority, "priority", 0, -1e3, 1e3)
     );
   }
   sourceList() {
@@ -259657,7 +260150,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
       text(args.source_id, "source_id"),
       optionalBoolean3(args.enabled, "enabled"),
       args.label === void 0 ? void 0 : text(args.label, "label"),
-      args.priority === void 0 ? void 0 : finiteInteger3(args.priority, "priority", 0, -1e3, 1e3)
+      args.priority === void 0 ? void 0 : finiteInteger(args.priority, "priority", 0, -1e3, 1e3)
     );
   }
   sourceRemove(args) {
@@ -259668,7 +260161,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
   }
   async capabilitySearch(args) {
     return {
-      capabilities: await this.catalog.searchHybrid(text(args.query, "query"), finiteInteger3(args.limit, "limit", 6, 1, 20)),
+      capabilities: await this.catalog.searchHybrid(text(args.query, "query"), finiteInteger(args.limit, "limit", 6, 1, 20)),
       semantic_search: this.catalog.semanticStatus()
     };
   }
@@ -260428,7 +260921,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const evidenceIds2 = optionalTextArray3(args.evidence_ids, "evidence_ids");
     for (const artifactId of artifactIds) this.store.get("artifact", artifactId);
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
-    return this.store.create("context_capsule", String(args.capsule_id ?? id21("capsule")), { task_id: task.id, expert_id: profile.id, expert_version: profile.version, artifact_ids: artifactIds, evidence_ids: evidenceIds2, input_boundary: assertNoSecret5(text(args.input_boundary, "input_boundary"), "input_boundary") });
+    return this.store.create("context_capsule", String(args.capsule_id ?? id22("capsule")), { task_id: task.id, expert_id: profile.id, expert_version: profile.version, artifact_ids: artifactIds, evidence_ids: evidenceIds2, input_boundary: assertNoSecret5(text(args.input_boundary, "input_boundary"), "input_boundary") });
   }
   expertSubagentCreate(args) {
     const run = this.store.get("runtime_run", text(args.run_id, "run_id"));
@@ -260437,7 +260930,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const capsule = this.store.get("context_capsule", text(args.capsule_id, "capsule_id"));
     if (parent.run_id !== run.id || capsule.task_id !== run.task_id || capsule.expert_id !== expert.id) throw new Error("Expert Sub-agent inputs are incompatible");
     if (this.runtimeOperations(String(run.id)).filter((operation3) => operation3.parent_operation_id === parent.id).length >= Number(expert.max_subagents)) throw new Error("Expert may create at most 5 Sub-agent Runs");
-    const operationId = String(args.operation_id ?? id21("subagent"));
+    const operationId = String(args.operation_id ?? id22("subagent"));
     const operation2 = {
       operation_id: operationId,
       kind: "agent",
@@ -260511,7 +261004,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
       execute: (input) => driver.execute(input)
     });
     const saved = this.store.save("runtime_operation", String(operation2.id), {
-      ...recordPayload10(operation2),
+      ...payload(operation2),
       status: report.status === "completed" ? "completed" : "failed",
       subagent_report: report,
       subagent_report_digest: report.receipt_digest,
@@ -260524,7 +261017,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const projectId2 = text(args.project_id, "project_id");
     const enforcement = String(args.enforcement ?? "required");
     if (!(/* @__PURE__ */ new Set(["required", "advisory"])).has(enforcement)) throw new Error(`Unsupported policy enforcement: ${enforcement}`);
-    const policyId = String(args.policy_id ?? `project_policy_${(0, import_node_crypto134.createHash)("sha256").update(projectId2).digest("hex").slice(0, 24)}`);
+    const policyId = String(args.policy_id ?? `project_policy_${(0, import_node_crypto135.createHash)("sha256").update(projectId2).digest("hex").slice(0, 24)}`);
     return this.saveVersioned("project_policy", "policy", {
       ...args,
       policy_id: policyId,
@@ -260558,9 +261051,9 @@ var CraftService = class _CraftService extends ServiceFoundation {
       ...args,
       allowed_effects: allowedEffects,
       require_approval_for: approvalEffects,
-      max_concurrency: finiteInteger3(args.max_concurrency, "max_concurrency", 1, 1, 32),
-      max_attempts: finiteInteger3(args.max_attempts, "max_attempts", 1, 1, 10),
-      lease_ttl_seconds: finiteInteger3(args.lease_ttl_seconds, "lease_ttl_seconds", 300, 1, 3600),
+      max_concurrency: finiteInteger(args.max_concurrency, "max_concurrency", 1, 1, 32),
+      max_attempts: finiteInteger(args.max_attempts, "max_attempts", 1, 1, 10),
+      lease_ttl_seconds: finiteInteger(args.lease_ttl_seconds, "lease_ttl_seconds", 300, 1, 3600),
       trusted_hosts: optionalTextArray3(args.trusted_hosts, "trusted_hosts"),
       command_allowlist: optionalTextArray3(args.command_allowlist, "command_allowlist"),
       path_allowlist: optionalTextArray3(args.path_allowlist, "path_allowlist", ["."]),
@@ -260571,7 +261064,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     return this.store.get(
       "runtime_policy",
       text(args.policy_id, "policy_id"),
-      args.policy_version === void 0 ? void 0 : finiteInteger3(args.policy_version, "policy_version", 1)
+      args.policy_version === void 0 ? void 0 : finiteInteger(args.policy_version, "policy_version", 1)
     );
   }
   runtimeAdapterSave(args) {
@@ -260593,7 +261086,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
       allowed_kinds: allowedKinds,
       allowed_effects: allowedEffects,
       execution_environment: environment,
-      max_concurrency: finiteInteger3(args.max_concurrency, "max_concurrency", 1, 1, 32),
+      max_concurrency: finiteInteger(args.max_concurrency, "max_concurrency", 1, 1, 32),
       supports_pause_resume: optionalBoolean3(args.supports_pause_resume, "supports_pause_resume") ?? false,
       supports_evidence_receipts: optionalBoolean3(args.supports_evidence_receipts, "supports_evidence_receipts") ?? false
     }, ["name", "host"]);
@@ -260605,9 +261098,9 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const adapter = this.store.get(
       "runtime_adapter",
       text(args.runtime_adapter_id, "runtime_adapter_id"),
-      args.runtime_adapter_version === void 0 ? void 0 : finiteInteger3(args.runtime_adapter_version, "runtime_adapter_version", 1)
+      args.runtime_adapter_version === void 0 ? void 0 : finiteInteger(args.runtime_adapter_version, "runtime_adapter_version", 1)
     );
-    const capacity = finiteInteger3(args.capacity, "capacity", Number(adapter.max_concurrency), 1, Number(adapter.max_concurrency));
+    const capacity = finiteInteger(args.capacity, "capacity", Number(adapter.max_concurrency), 1, Number(adapter.max_concurrency));
     const dispatch = this.runtimeDispatch({
       run_id: text(args.run_id, "run_id"),
       claimed_by: this.runtimeAdapterOwner(adapter),
@@ -260624,7 +261117,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const adapter = this.store.get(
       "runtime_adapter",
       text(args.runtime_adapter_id, "runtime_adapter_id"),
-      args.runtime_adapter_version === void 0 ? void 0 : finiteInteger3(args.runtime_adapter_version, "runtime_adapter_version", 1)
+      args.runtime_adapter_version === void 0 ? void 0 : finiteInteger(args.runtime_adapter_version, "runtime_adapter_version", 1)
     );
     const operation2 = this.store.get("runtime_operation", text(args.operation_id, "operation_id"));
     if (!adapter.allowed_kinds.includes(String(operation2.kind)) || !adapter.allowed_effects.includes(String(operation2.effect))) {
@@ -260659,8 +261152,8 @@ var CraftService = class _CraftService extends ServiceFoundation {
       summary: summary2,
       costs: args.costs ?? {},
       retryable: optionalBoolean3(args.retryable, "retryable") ?? false,
-      artifact_ids: [...array8(args.artifact_ids ?? [], "artifact_ids").map((value) => text(value, "artifact_id")), artifact.id],
-      evidence_ids: [...array8(args.evidence_ids ?? [], "evidence_ids").map((value) => text(value, "evidence_id")), evidence2.id],
+      artifact_ids: [...array(args.artifact_ids ?? [], "artifact_ids").map((value) => text(value, "artifact_id")), artifact.id],
+      evidence_ids: [...array(args.evidence_ids ?? [], "evidence_ids").map((value) => text(value, "evidence_id")), evidence2.id],
       idempotency_key: args.idempotency_key ?? `adapter:${adapter.id}:${operation2.id}:${operation2.attempts}`
     });
     return { adapter, artifact, evidence: evidence2, ...submitted };
@@ -260723,9 +261216,9 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const task = this.store.get("task", text(args.task_id, "task_id"));
     const policy = this.runtimePolicy(args);
     const environment = object(args.environment, "environment");
-    const requested = array8(args.operations, "operations");
+    const requested = array(args.operations, "operations");
     if (!requested.length) throw new Error("operations must not be empty");
-    const runId = String(args.run_id ?? id21("runtime_run"));
+    const runId = String(args.run_id ?? id22("runtime_run"));
     const operationIds = /* @__PURE__ */ new Set();
     const operations2 = requested.map((raw, index) => {
       const input = object(raw, `operations[${index}]`);
@@ -260771,8 +261264,8 @@ var CraftService = class _CraftService extends ServiceFoundation {
       trial_id: args.trial_id ?? null,
       policy_id: policy.id,
       policy_version: policy.version,
-      policy_fingerprint: fingerprint3(recordPayload10(policy)),
-      environment_fingerprint: fingerprint3(environment),
+      policy_fingerprint: fingerprint4(payload(policy)),
+      environment_fingerprint: fingerprint4(environment),
       status: "running",
       resource_ledger: {},
       budget: policy.budget,
@@ -260796,7 +261289,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     if (run.status !== "running") return { run, operations: [], paused: run.status };
     const policy = this.runtimePolicy({ policy_id: run.policy_id, policy_version: run.policy_version });
     const claimedBy = text(args.claimed_by, "claimed_by");
-    const capacity = finiteInteger3(args.capacity, "capacity", Number(policy.max_concurrency), 1, Number(policy.max_concurrency));
+    const capacity = finiteInteger(args.capacity, "capacity", Number(policy.max_concurrency), 1, Number(policy.max_concurrency));
     const kinds = args.kinds === void 0 ? void 0 : uniqueTextArray4(args.kinds, "kinds");
     if (kinds?.some((kind4) => !RUNTIME_KINDS.has(kind4))) throw new Error("Runtime dispatch kinds must be supported");
     const effects = args.effects === void 0 ? void 0 : uniqueTextArray4(args.effects, "effects");
@@ -260818,14 +261311,14 @@ var CraftService = class _CraftService extends ServiceFoundation {
       const dependencies = Array.isArray(operation2.depends_on) ? operation2.depends_on.map(String) : operation2.parent_operation_id ? [String(operation2.parent_operation_id)] : [];
       if (dispatched.length >= Math.max(0, capacity - active) || operation2.status !== "pending" || kinds !== void 0 && !kinds.includes(String(operation2.kind)) || effects !== void 0 && !effects.includes(String(operation2.effect)) || dependencies.some((dependency) => !passed.has(dependency))) continue;
       if (policy.require_approval_for.includes(String(operation2.effect)) && operation2.approval?.decision !== "approve") {
-        const waiting = this.store.save("runtime_operation", String(operation2.id), { ...recordPayload10(operation2), status: "awaiting_approval" });
+        const waiting = this.store.save("runtime_operation", String(operation2.id), { ...payload(operation2), status: "awaiting_approval" });
         this.runtimeTrace(run, "awaiting_approval", { operation_id: waiting.id, effect: waiting.effect });
         continue;
       }
-      const leaseId = id21("runtime_lease");
+      const leaseId = id22("runtime_lease");
       const leaseExpiresAt = new Date(Date.now() + Number(policy.lease_ttl_seconds) * 1e3).toISOString();
       const leasePayload = {
-        ...recordPayload10(operation2),
+        ...payload(operation2),
         status: "leased",
         lease_id: leaseId,
         claimed_by: claimedBy,
@@ -260883,7 +261376,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const actor = text(args.actor, "actor");
     const status2 = decision === "approve" ? "pending" : "rejected";
     const saved = this.store.save("runtime_operation", String(operation2.id), {
-      ...recordPayload10(operation2),
+      ...payload(operation2),
       status: status2,
       approval: { decision, actor, at: (/* @__PURE__ */ new Date()).toISOString() }
     });
@@ -260896,12 +261389,12 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const resourceLedger = ledger ?? run.resource_ledger;
     const budget = run.budget;
     const status2 = budgetExceeded(resourceLedger, budget) ? "paused_budget" : this.runtimeRunStatus(this.runtimeOperations(String(run.id)));
-    return this.store.save("runtime_run", String(run.id), { ...recordPayload10(run), status: status2, resource_ledger: resourceLedger });
+    return this.store.save("runtime_run", String(run.id), { ...payload(run), status: status2, resource_ledger: resourceLedger });
   }
   runtimeOperationSubmit(args) {
     const operation2 = this.store.get("runtime_operation", text(args.operation_id, "operation_id"));
     const receiptKey = args.idempotency_key === void 0 ? null : text(args.idempotency_key, "idempotency_key");
-    const receipts = array8(operation2.submission_receipts, "submission_receipts");
+    const receipts = array(operation2.submission_receipts, "submission_receipts");
     if (receiptKey !== null && receipts.some((receipt) => receipt.idempotency_key === receiptKey)) {
       return this.runtimeRunGet({ run_id: operation2.run_id });
     }
@@ -260913,12 +261406,12 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const costs = args.costs === void 0 ? {} : budgetLimits(object(args.costs, "costs"));
     const run = this.store.get("runtime_run", String(operation2.run_id));
     const policy = this.runtimePolicy({ policy_id: run.policy_id, policy_version: run.policy_version });
-    const artifactIds = array8(args.artifact_ids ?? [], "artifact_ids").map((value) => text(value, "artifact_id"));
-    const evidenceIds2 = array8(args.evidence_ids ?? [], "evidence_ids").map((value) => text(value, "evidence_id"));
+    const artifactIds = array(args.artifact_ids ?? [], "artifact_ids").map((value) => text(value, "artifact_id"));
+    const evidenceIds2 = array(args.evidence_ids ?? [], "evidence_ids").map((value) => text(value, "evidence_id"));
     for (const artifactId of artifactIds) this.store.get("artifact", artifactId);
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
     const childIds = /* @__PURE__ */ new Set();
-    const children = (args.children === void 0 ? [] : array8(args.children, "children")).map((raw, index) => {
+    const children = (args.children === void 0 ? [] : array(args.children, "children")).map((raw, index) => {
       const child = object(raw, `children[${index}]`);
       const childId = text(child.operation_id, `children[${index}].operation_id`);
       if (childIds.has(childId) || this.store.find("runtime_operation", childId)) {
@@ -260938,7 +261431,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const retryable = optionalBoolean3(args.retryable, "retryable") ?? false;
     const status2 = verdict === "failed" && retryable && Number(operation2.attempts) < Number(policy.max_attempts) ? "pending" : verdict;
     const saved = this.store.save("runtime_operation", String(operation2.id), {
-      ...recordPayload10(operation2),
+      ...payload(operation2),
       status: status2,
       lease_id: null,
       lease_expires_at: null,
@@ -260980,7 +261473,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
       if (operation2.status !== "leased" || validIsoTime3(operation2.lease_expires_at, "lease_expires_at") > now3) continue;
       const exhausted = Number(operation2.attempts) >= Number(policy.max_attempts);
       this.store.save("runtime_operation", String(operation2.id), {
-        ...recordPayload10(operation2),
+        ...payload(operation2),
         status: exhausted ? "failed" : "pending",
         lease_id: null,
         lease_expires_at: null,
@@ -261012,7 +261505,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
         }
       }
       if (step.type === "command") {
-        const command2 = array8(step.command, "workflow command");
+        const command2 = array(step.command, "workflow command");
         if (!commands.includes(String(command2[0]))) throw new Error("Runtime policy does not allow workflow command");
         const env = object(step.env ?? {}, "workflow command env");
         if (Object.keys(env).some((key2) => /token|password|secret|key|cookie/iu.test(key2))) {
@@ -261105,8 +261598,8 @@ var CraftService = class _CraftService extends ServiceFoundation {
   runtimePromotionEligibility(args) {
     const run = this.store.get("runtime_run", text(args.run_id, "run_id"));
     const policy = this.runtimePolicy(args);
-    const policyMatches = run.policy_id === policy.id && Number(run.policy_version) === Number(policy.version) && run.policy_fingerprint === fingerprint3(recordPayload10(policy));
-    const environmentMatches = run.environment_fingerprint === fingerprint3(object(args.environment, "environment"));
+    const policyMatches = run.policy_id === policy.id && Number(run.policy_version) === Number(policy.version) && run.policy_fingerprint === fingerprint4(payload(policy));
+    const environmentMatches = run.environment_fingerprint === fingerprint4(object(args.environment, "environment"));
     return {
       eligible: policyMatches && environmentMatches,
       policy_matches: policyMatches,
@@ -261122,7 +261615,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const external = optionalBoolean3(args.requires_external_effect, "requires_external_effect") ?? false;
     const topology = risk === "high" || external ? "planner_executor_evaluator" : risk === "medium" ? "incremental" : "single";
     const harness = this.harnessConfigurationSave({
-      configuration_id: String(args.harness_id ?? id21("harness")),
+      configuration_id: String(args.harness_id ?? id22("harness")),
       name: `Adaptive ${risk} harness`,
       dimensions: {
         context: { checkpoint_required: risk !== "low" },
@@ -261133,7 +261626,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
         output: { independent_evaluator: topology === "planner_executor_evaluator" }
       }
     });
-    const strategy = this.store.create("adaptive_harness", String(args.strategy_id ?? id21("adaptive_harness")), {
+    const strategy = this.store.create("adaptive_harness", String(args.strategy_id ?? id22("adaptive_harness")), {
       task_id: task.id,
       risk,
       budget,
@@ -261150,9 +261643,9 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const harness = this.store.get(
       "harness_configuration",
       text(args.harness_id, "harness_id"),
-      args.harness_version === void 0 ? void 0 : finiteInteger3(args.harness_version, "harness_version", 1)
+      args.harness_version === void 0 ? void 0 : finiteInteger(args.harness_version, "harness_version", 1)
     );
-    const operations2 = array8(args.operations, "operations").map((raw, index) => {
+    const operations2 = array(args.operations, "operations").map((raw, index) => {
       const item = object(raw, `operations[${index}]`);
       const operationId = text(item.id, `operations[${index}].id`);
       const kind4 = text(item.kind, `operations[${index}].kind`);
@@ -261179,7 +261672,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     if (operations2.some((item) => item.depends_on.some((dependency) => !ids6.has(dependency)))) {
       throw new Error("Agent IR dependencies must belong to the same IR");
     }
-    return this.store.create("agent_ir", String(args.ir_id ?? id21("agent_ir")), {
+    return this.store.create("agent_ir", String(args.ir_id ?? id22("agent_ir")), {
       task_id: task.id,
       goal: text(args.goal, "goal"),
       harness_configuration_id: harness.id,
@@ -261192,9 +261685,9 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const ir = this.store.get(
       "agent_ir",
       text(args.ir_id, "ir_id"),
-      args.ir_version === void 0 ? void 0 : finiteInteger3(args.ir_version, "ir_version", 1)
+      args.ir_version === void 0 ? void 0 : finiteInteger(args.ir_version, "ir_version", 1)
     );
-    const runId = args.run_id === void 0 ? id21("runtime_run") : text(args.run_id, "run_id");
+    const runId = args.run_id === void 0 ? id22("runtime_run") : text(args.run_id, "run_id");
     const operations2 = ir.operations;
     const operationIds = new Map(operations2.map((operation2) => [String(operation2.id), `${runId}:${operation2.id}`]));
     const started = this.runtimeRunStart({
@@ -261223,7 +261716,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     if (!candidate2 || candidate2.lifecycle !== "proposal_only") {
       return { status: "rejected", reason: "Only an existing proposal-only mining candidate can enter shadow evaluation." };
     }
-    const experiment = this.store.create("experience_shadow_experiment", String(args.experiment_id ?? id21("shadow_experiment")), {
+    const experiment = this.store.create("experience_shadow_experiment", String(args.experiment_id ?? id22("shadow_experiment")), {
       task_id: task.id,
       mining_candidate_id: candidate2.id,
       mining_candidate_version: candidate2.version,
@@ -261248,7 +261741,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const suite = this.store.get(
       "evaluation_suite",
       text(args.suite_id, "suite_id"),
-      args.suite_version === void 0 ? void 0 : finiteInteger3(args.suite_version, "suite_version", 1)
+      args.suite_version === void 0 ? void 0 : finiteInteger(args.suite_version, "suite_version", 1)
     );
     if (!suite.cases.some((item) => item.split === "held_out")) {
       throw new Error("Shadow evaluation requires an Evaluation Suite with held_out cases");
@@ -261256,19 +261749,19 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const baseline = this.store.get(
       "workflow",
       text(args.baseline_workflow_id, "baseline_workflow_id"),
-      finiteInteger3(args.baseline_workflow_version, "baseline_workflow_version", 1)
+      finiteInteger(args.baseline_workflow_version, "baseline_workflow_version", 1)
     );
     const proposed = this.store.get(
       "workflow",
       text(args.candidate_workflow_id, "candidate_workflow_id"),
-      finiteInteger3(args.candidate_workflow_version, "candidate_workflow_version", 1)
+      finiteInteger(args.candidate_workflow_version, "candidate_workflow_version", 1)
     );
     this.assertShadowWorkflowReadOnly(baseline);
     this.assertShadowWorkflowReadOnly(proposed);
     const policy = this.store.get(
       "signoff_policy",
       text(args.signoff_policy_id, "signoff_policy_id"),
-      finiteInteger3(args.signoff_policy_version, "signoff_policy_version", 1)
+      finiteInteger(args.signoff_policy_version, "signoff_policy_version", 1)
     );
     const runner = this.evaluationRunnerRun({
       task_id: experiment.task_id,
@@ -261294,7 +261787,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
       max_duration_regression_ratio: args.max_duration_regression_ratio
     });
     const status2 = promotion.eligible ? "signoff_ready" : "rejected";
-    const shadowEvaluation = this.store.create("experience_shadow_evaluation", String(args.shadow_evaluation_id ?? id21("shadow_evaluation")), {
+    const shadowEvaluation = this.store.create("experience_shadow_evaluation", String(args.shadow_evaluation_id ?? id22("shadow_evaluation")), {
       experiment_id: experiment.id,
       experiment_version: experiment.version,
       mining_candidate_id: candidate2.id,
@@ -261314,7 +261807,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
       next_action: status2 === "signoff_ready" ? "Run the named Signoff Policy with independent Grades; publication remains disabled." : "Revise the proposal and create a new shadow experiment; publication remains disabled."
     });
     const updated = this.store.save("experience_shadow_experiment", String(experiment.id), {
-      ...recordPayload10(experiment),
+      ...payload(experiment),
       status: status2,
       shadow_evaluation_id: shadowEvaluation.id,
       promotion_id: promotion.promotion.id
@@ -261344,7 +261837,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const adapter = this.store.get(
       "host_adapter",
       text(args.host_adapter_id, "host_adapter_id"),
-      args.host_adapter_version === void 0 ? void 0 : finiteInteger3(args.host_adapter_version, "host_adapter_version", 1)
+      args.host_adapter_version === void 0 ? void 0 : finiteInteger(args.host_adapter_version, "host_adapter_version", 1)
     );
     const route = this.store.get("route", text(args.route_id, "route_id"));
     const action = this.routeNextAction(route);
@@ -261352,7 +261845,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     if (!HOST_OPERATIONS.has(operation2) || !adapter.allowed_operations.includes(operation2)) {
       throw new Error(`Host adapter cannot dispatch route action: ${operation2}`);
     }
-    const dispatch = this.store.create("host_dispatch", String(args.dispatch_id ?? id21("host_dispatch")), {
+    const dispatch = this.store.create("host_dispatch", String(args.dispatch_id ?? id22("host_dispatch")), {
       host_adapter_id: adapter.id,
       host_adapter_version: adapter.version,
       route_id: route.id,
@@ -261373,7 +261866,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const status2 = text(args.status, "status");
     if (!(/* @__PURE__ */ new Set(["completed", "failed", "cancelled"])).has(status2)) throw new Error(`Unsupported host dispatch status: ${status2}`);
     const summary2 = assertNoSecret5(text(args.summary, "summary"), "summary");
-    const updated = this.store.save("host_dispatch", String(dispatch.id), { ...recordPayload10(dispatch), status: status2, summary: summary2 });
+    const updated = this.store.save("host_dispatch", String(dispatch.id), { ...payload(dispatch), status: status2, summary: summary2 });
     const route = this.store.get("route", String(dispatch.route_id));
     if (route.trial_id) this.trialTraceAppend({
       trial_id: String(route.trial_id),
@@ -261395,7 +261888,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
     if (!ROUTE_RECEIPT_STATUS.has(status2)) throw new Error(`Unsupported route receipt status: ${status2}`);
     const command2 = assertNoSecret5(text(args.command, "command"), "command");
     const summary2 = assertNoSecret5(text(args.summary, "summary"), "summary");
-    const receiptId = String(args.receipt_id ?? id21("receipt"));
+    const receiptId = String(args.receipt_id ?? id22("receipt"));
     const artifact = this.artifactRegister({
       artifact_id: `artifact_${receiptId}`,
       kind: "route_receipt",
@@ -261440,13 +261933,13 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const capabilities = selectedCapabilities ?? this.catalog.search(goal, 6);
     const developmentPlan = workflow === null ? { stages: SAFE_INCREMENTAL_STAGES.map((stage) => ({ ...stage })) } : null;
     const strategyCapabilities = developmentPlan === null ? [] : capabilities.slice(0, 3).map((capability) => String(capability.id));
-    const strategyId = strategyCapabilities.length ? `route_strategy_${(0, import_node_crypto134.createHash)("sha256").update(JSON.stringify({ mode: "safe_incremental_development", capability_ids: strategyCapabilities })).digest("hex").slice(0, 24)}` : null;
+    const strategyId = strategyCapabilities.length ? `route_strategy_${(0, import_node_crypto135.createHash)("sha256").update(JSON.stringify({ mode: "safe_incremental_development", capability_ids: strategyCapabilities })).digest("hex").slice(0, 24)}` : null;
     const strategy = strategyId === null ? null : this.store.find("route_strategy", strategyId) ?? this.store.create(
       "route_strategy",
       strategyId,
       { mode: "safe_incremental_development", capability_ids: strategyCapabilities }
     );
-    let route = this.store.create("route", id21("route"), {
+    let route = this.store.create("route", id22("route"), {
       task_id: task.id,
       goal,
       mode: mode2,
@@ -261479,7 +261972,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
         source: "craft",
         data: { route_id: route.id, mode: mode2, strategy_id: strategy?.id ?? null }
       });
-      route = this.store.save("route", String(route.id), { ...recordPayload10(route), trial_id: trial.id });
+      route = this.store.save("route", String(route.id), { ...payload(route), trial_id: trial.id });
     }
     return {
       route_id: route.id,
@@ -261556,13 +262049,13 @@ ${task.goal}`.toLowerCase();
       return workflow2.lifecycle !== "deprecated" && derived?.route_strategy_id === strategyId && Number(derived.route_strategy_version) === strategyVersion;
     });
     if (duplicate.length) throw new Error("A non-deprecated Workflow draft already exists for this route strategy");
-    const stepsInput = array8(args.steps, "steps");
+    const stepsInput = array(args.steps, "steps");
     if (!stepsInput.length) throw new Error("Workflow proposals require at least one step");
     const workflow = this.workflowSave({
       workflow_id: args.workflow_id,
       name: text(args.name, "name"),
       description: args.description === void 0 ? "Evidence-backed draft derived from safe routes." : document2(args.description, "description"),
-      inputs: array8(args.inputs ?? [], "inputs"),
+      inputs: array(args.inputs ?? [], "inputs"),
       steps: normalizeSteps(stepsInput),
       derived_from: {
         route_id: route.id,
@@ -261585,29 +262078,29 @@ ${task.goal}`.toLowerCase();
     if (ROUTE_TERMINAL.has(String(route.status))) throw new Error("Route is already terminal");
     if (route.workflow_id) throw new Error("Verified Workflow routes must use craft_default_route_execute");
     const developmentPlan = object(route.development_plan, "route development_plan");
-    const stages = array8(developmentPlan.stages, "route development_plan stages");
-    const states = array8(route.stage_state, "route stage_state");
+    const stages = array(developmentPlan.stages, "route development_plan stages");
+    const states = array(route.stage_state, "route stage_state");
     const index = states.findIndex((state4) => state4.status !== "completed");
     if (index < 0 || !stages[index]) throw new Error("Route has no pending stage");
     const stageId = text(args.stage_id, "stage_id");
     const summary2 = text(args.summary, "summary");
     if (stageId !== stages[index].id) throw new Error(`Route next required stage is ${stages[index].id}`);
-    const receiptIds = array8(args.receipt_ids ?? [], "receipt_ids").map((value) => text(value, "receipt_id"));
+    const receiptIds = array(args.receipt_ids ?? [], "receipt_ids").map((value) => text(value, "receipt_id"));
     if (new Set(receiptIds).size !== receiptIds.length) throw new Error("receipt_ids must be unique");
     const receipts = receiptIds.map((receiptId) => this.store.get("route_receipt", receiptId));
     if (receipts.some((receipt) => receipt.route_id !== route.id || receipt.stage_id !== stageId)) {
       throw new Error("Route receipts must belong to the current route stage");
     }
-    const requiredKinds = array8(route.receipt_requirements?.[stageId] ?? [], "receipt requirements").map((kind4) => String(kind4));
+    const requiredKinds = array(route.receipt_requirements?.[stageId] ?? [], "receipt requirements").map((kind4) => String(kind4));
     if (route.policy_enforcement === "required" && requiredKinds.some((kind4) => !receipts.some((receipt) => receipt.kind === kind4 && receipt.status === "passed"))) {
       throw new Error(`Route stage requires required receipts: ${requiredKinds.join(", ")}`);
     }
     const artifactIds = [.../* @__PURE__ */ new Set([
-      ...array8(args.artifact_ids ?? [], "artifact_ids").map((value) => text(value, "artifact_id")),
+      ...array(args.artifact_ids ?? [], "artifact_ids").map((value) => text(value, "artifact_id")),
       ...receipts.map((receipt) => String(receipt.artifact_id))
     ])];
     const evidenceIds2 = [.../* @__PURE__ */ new Set([
-      ...array8(args.evidence_ids ?? [], "evidence_ids").map((value) => text(value, "evidence_id")),
+      ...array(args.evidence_ids ?? [], "evidence_ids").map((value) => text(value, "evidence_id")),
       ...receipts.map((receipt) => String(receipt.evidence_id))
     ])];
     for (const artifactId of artifactIds) this.store.get("artifact", artifactId);
@@ -261646,7 +262139,7 @@ ${task.goal}`.toLowerCase();
       source: "host_reported"
     });
     const updated = this.store.save("route", String(route.id), {
-      ...recordPayload10(route),
+      ...payload(route),
       stage_state: updatedStates,
       status: verdict === void 0 ? "awaiting_host" : verdict === "passed" ? "completed" : verdict
     });
@@ -261669,8 +262162,8 @@ ${task.goal}`.toLowerCase();
       workflow_version: route.workflow_version
     };
     const plan = object(route.development_plan, "route development_plan");
-    const stages = array8(plan.stages, "route development plan stages");
-    const states = array8(route.stage_state, "route stage_state");
+    const stages = array(plan.stages, "route development plan stages");
+    const states = array(route.stage_state, "route stage_state");
     const index = states.findIndex((state4) => state4.status !== "completed");
     if (index < 0 || !stages[index]) return { kind: "complete_route", route_id: route.id };
     return {
@@ -261694,7 +262187,7 @@ ${task.goal}`.toLowerCase();
       version: route.workflow_version
     });
     const completed = this.store.save("route", String(route.id), {
-      ...recordPayload10(route),
+      ...payload(route),
       status: "completed",
       workflow_run_id: result.workflow_run?.id ?? null,
       trial_id: result.trial.id
@@ -261746,7 +262239,7 @@ ${task.goal}`.toLowerCase();
   }
   taskOpen(args) {
     if (args.task_id) return this.taskPack(String(args.task_id));
-    const taskId3 = id21("task");
+    const taskId3 = id22("task");
     const modelId = args.model_id === void 0 ? null : text(args.model_id, "model_id");
     const permissionMode = String(args.permission_mode ?? "human_approval");
     if (!TASK_PERMISSION_MODES.has(permissionMode)) throw new Error("Task permission mode is unsupported");
@@ -261771,7 +262264,7 @@ ${task.goal}`.toLowerCase();
     const settings = loadSettingsSync(this.store.paths);
     const model = settings.models.find((item) => item.id === modelId);
     if (!model) throw new Error("The task model is no longer configured. Choose another model in Settings.");
-    const user = this.store.create("task_message", id21("task_message"), { task_id: taskId3, role: "user", content, model_id: modelId, source: "studio" });
+    const user = this.store.create("task_message", id22("task_message"), { task_id: taskId3, role: "user", content, model_id: modelId, source: "studio" });
     this.store.appendEvent(`task:${taskId3}`, "task.message.user", { message_id: user.id, model_id: modelId });
     const history = this.store.list("task_message", 100, (item) => item.task_id === taskId3).sort((left, right) => String(left.created_at).localeCompare(String(right.created_at)));
     const system = [
@@ -261789,7 +262282,7 @@ ${task.goal}`.toLowerCase();
           content: String(item.content)
         })))
       }));
-      const assistant = this.store.create("task_message", id21("task_message"), { task_id: taskId3, role: "assistant", content: result.text, model_id: modelId, provider_model: result.model, usage: result.usage, source: "model" });
+      const assistant = this.store.create("task_message", id22("task_message"), { task_id: taskId3, role: "assistant", content: result.text, model_id: modelId, provider_model: result.model, usage: result.usage, source: "model" });
       this.store.appendEvent(`task:${taskId3}`, "task.message.assistant", { message_id: assistant.id, model_id: modelId });
       return { user, assistant };
     } catch (error) {
@@ -261820,11 +262313,11 @@ ${task.goal}`.toLowerCase();
     const task = this.store.get("task", taskId3);
     const status2 = String(args.status ?? task.status);
     if (!TASK_STATUS.has(status2)) throw new Error(`Unsupported task status: ${status2}`);
-    const checkpointId = id21("checkpoint");
-    const completed = array8(args.completed ?? [], "completed");
-    const pending = array8(args.pending ?? [], "pending");
-    const decisions = array8(args.decisions ?? [], "decisions");
-    const artifacts = array8(args.artifacts ?? [], "artifacts");
+    const checkpointId = id22("checkpoint");
+    const completed = array(args.completed ?? [], "completed");
+    const pending = array(args.pending ?? [], "pending");
+    const decisions = array(args.decisions ?? [], "decisions");
+    const artifacts = array(args.artifacts ?? [], "artifacts");
     this.store.saveBatch([{ kind: "checkpoint", id: checkpointId, payload: {
       task_id: taskId3,
       summary: text(args.summary, "summary"),
@@ -261963,7 +262456,7 @@ ${task.goal}`.toLowerCase();
     const taskId3 = args.task_id === void 0 ? null : text(args.task_id, "task_id");
     const eventPayload = object(args.payload ?? {}, "payload");
     const source = String(args.source ?? "external_untrusted");
-    const requestFingerprint = fingerprint3({ event_key: eventKey, task_id: taskId3, source, payload: eventPayload });
+    const requestFingerprint = fingerprint4({ event_key: eventKey, task_id: taskId3, source, payload: eventPayload });
     const existing = this.store.find("external_event", eventId);
     if (existing) {
       if (existing.request_fingerprint !== requestFingerprint) throw new Error("External event idempotency conflict");
@@ -262003,7 +262496,7 @@ ${task.goal}`.toLowerCase();
     const nowText = args.now === void 0 ? (/* @__PURE__ */ new Date()).toISOString() : text(args.now, "now");
     const now3 = Date.parse(nowText);
     if (Number.isNaN(now3)) throw new Error("now must be an ISO timestamp");
-    const limit3 = finiteInteger3(args.limit, "limit", 100, 1, 1e4);
+    const limit3 = finiteInteger(args.limit, "limit", 100, 1, 1e4);
     const policyFingerprints = object(args.policy_fingerprints ?? {}, "policy_fingerprints");
     const due = this.store.list("durable_wait", 1e4, (item) => item.status === "waiting" && item.condition === "time" && Date.parse(String(item.resume_after)) <= now3).slice(0, limit3);
     const deliveries = due.map((wait) => {
@@ -262043,7 +262536,7 @@ ${task.goal}`.toLowerCase();
         budget: args.trial_budget ?? {}
       });
       const event = result.event;
-      result.event = this.store.save("fallback_event", String(event.id), { ...recordPayload10(event), trial_id: trial.id });
+      result.event = this.store.save("fallback_event", String(event.id), { ...payload(event), trial_id: trial.id });
     }
     if (trial && result.trigger_matched) this.controlTrace(trial.id, "fallback_evaluated", {
       fallback_event_id: result.event.id,
@@ -262062,7 +262555,7 @@ ${task.goal}`.toLowerCase();
     const trial = this.controlTrial(trialId, event.task_id);
     const contract = this.store.get("fallback_contract", String(event.contract_id));
     if (trial.subject_type !== contract.subject_type || trial.subject_id !== contract.subject_id || trial.subject_version !== contract.subject_version) throw new Error("Fallback trial subject does not match the contract");
-    const evidenceIds2 = array8(args.evidence_ids ?? [], "evidence_ids").map((value) => text(value, "evidence_id"));
+    const evidenceIds2 = array(args.evidence_ids ?? [], "evidence_ids").map((value) => text(value, "evidence_id"));
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
     const verdict = String(args.verdict);
     if (!TRIAL_VERDICTS.has(verdict)) throw new Error(`Unsupported trial verdict: ${verdict}`);
@@ -262099,7 +262592,7 @@ ${task.goal}`.toLowerCase();
       source: args.source ?? "fallback_host_receipt"
     });
     const saved = this.store.save("fallback_event", String(event.id), {
-      ...recordPayload10(event),
+      ...payload(event),
       trial_id: trial.id,
       status: "completed",
       outcome_id: outcome2.id,
@@ -262163,7 +262656,7 @@ ${task.goal}`.toLowerCase();
         timeout_ms: args.timeout_ms,
         output_limit: args.output_limit
       });
-      const responseDigest = fingerprint3(response);
+      const responseDigest = fingerprint4(response);
       const artifact = this.artifactRegister({
         kind: "egress_receipt",
         name: `Egress ${authorization.action}`,
@@ -262186,7 +262679,7 @@ ${task.goal}`.toLowerCase();
         locator: { authorization_id: authorization.id, execution_id: execution.id }
       });
       execution = this.store.save("egress_execution", String(execution.id), {
-        ...recordPayload10(execution),
+        ...payload(execution),
         status: "completed",
         response_digest: responseDigest,
         http_status: response.status,
@@ -262195,14 +262688,14 @@ ${task.goal}`.toLowerCase();
         evidence_id: evidence2.id
       });
       this.store.save("egress_authorization", String(authorization.id), {
-        ...recordPayload10(authorization),
+        ...payload(authorization),
         status: "consumed",
         execution_id: execution.id
       });
       return { execution, response, artifact, evidence: evidence2, idempotent: false };
     } catch (error) {
       this.store.save("egress_execution", String(execution.id), {
-        ...recordPayload10(execution),
+        ...payload(execution),
         status: "indeterminate",
         error_class: error instanceof Error ? error.name : "UnknownError"
       });
@@ -262222,7 +262715,7 @@ ${task.goal}`.toLowerCase();
     const outputName = args.output_name === void 0 ? "response.json" : text(args.output_name, "output_name");
     if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}\.json$/u.test(outputName)) throw new Error("output_name must be a safe JSON filename");
     const bindingId = text(args.binding_id, "binding_id");
-    const bindingFingerprint = fingerprint3({ ticket_id: ticket.id, authorization_id: authorization.id, output_name: outputName });
+    const bindingFingerprint = fingerprint4({ ticket_id: ticket.id, authorization_id: authorization.id, output_name: outputName });
     const existing = this.store.find("sandbox_egress_binding", bindingId);
     if (existing) {
       if (existing.binding_fingerprint !== bindingFingerprint) throw new Error("Sandbox egress binding idempotency conflict");
@@ -262251,8 +262744,8 @@ ${task.goal}`.toLowerCase();
       });
       if (!executed.response) throw new Error("Egress response is unavailable for sandbox delivery");
       const response = executed.response;
-      const ticketHash = (0, import_node_crypto134.createHash)("sha256").update(String(ticket.id)).digest("hex").slice(0, 24);
-      const bindingHash = (0, import_node_crypto134.createHash)("sha256").update(bindingId).digest("hex").slice(0, 24);
+      const ticketHash = (0, import_node_crypto135.createHash)("sha256").update(String(ticket.id)).digest("hex").slice(0, 24);
+      const bindingHash = (0, import_node_crypto135.createHash)("sha256").update(bindingId).digest("hex").slice(0, 24);
       const inbox = (0, import_node_path45.join)(this.store.paths.runtimeDir, "sandbox-inbox", ticketHash);
       await (0, import_promises19.mkdir)(inbox, { recursive: true });
       const outputPath = (0, import_node_path45.join)(inbox, `${bindingHash}-${outputName}`);
@@ -262275,7 +262768,7 @@ ${task.goal}`.toLowerCase();
         uri: (0, import_node_url5.pathToFileURL)(outputPath).toString(),
         producer_type: "egress_broker",
         producer_id: "local-https",
-        digest: fingerprint3(envelope),
+        digest: fingerprint4(envelope),
         metadata: {
           ticket_id: ticket.id,
           authorization_id: authorization.id,
@@ -262292,7 +262785,7 @@ ${task.goal}`.toLowerCase();
         locator: { ticket_id: ticket.id, binding_id: binding.id }
       });
       binding = this.store.save("sandbox_egress_binding", bindingId, {
-        ...recordPayload10(binding),
+        ...payload(binding),
         status: "completed",
         output_uri: artifact.uri,
         response_digest: envelope.response_digest,
@@ -262302,7 +262795,7 @@ ${task.goal}`.toLowerCase();
       return { binding, artifact, evidence: evidence2, idempotent: false };
     } catch (error) {
       this.store.save("sandbox_egress_binding", bindingId, {
-        ...recordPayload10(binding),
+        ...payload(binding),
         status: "indeterminate",
         error_class: error instanceof Error ? error.name : "UnknownError"
       });
@@ -262472,7 +262965,7 @@ ${task.goal}`.toLowerCase();
           purpose: `trigger:${triggerEvent.subscription_id}`
         }).reservation;
       } catch (error) {
-        this.store.save("trigger_event", String(triggerEvent.id), { ...recordPayload10(triggerEvent), status: "awaiting_budget" });
+        this.store.save("trigger_event", String(triggerEvent.id), { ...payload(triggerEvent), status: "awaiting_budget" });
         throw error;
       }
     }
@@ -262486,7 +262979,7 @@ ${task.goal}`.toLowerCase();
       observed_at: triggerEvent.timestamp
     });
     const saved = this.store.save("trigger_event", String(triggerEvent.id), {
-      ...recordPayload10(triggerEvent),
+      ...payload(triggerEvent),
       status: "delivered",
       external_event_id: delivered.event.id,
       reservation_id: reservation?.id ?? null
@@ -262500,7 +262993,7 @@ ${task.goal}`.toLowerCase();
     const policy = this.store.get(
       "speculative_policy",
       text(args.policy_id, "policy_id"),
-      finiteInteger3(args.policy_version, "policy_version", 0)
+      finiteInteger(args.policy_version, "policy_version", 0)
     );
     const event = this.store.get("trigger_event", text(args.trigger_event_id, "trigger_event_id"));
     const reservationId = `spec_${policy.id}_v${policy.version}_${event.id}`;
@@ -262523,7 +263016,7 @@ ${task.goal}`.toLowerCase();
           environment: { trigger_event_id: event.id, input_fingerprint: candidate2.input_fingerprint },
           budget: policy.estimated_resources
         });
-        candidate2 = this.store.save("speculative_candidate", String(candidate2.id), { ...recordPayload10(candidate2), trial_id: trial.id });
+        candidate2 = this.store.save("speculative_candidate", String(candidate2.id), { ...payload(candidate2), trial_id: trial.id });
         this.trialTraceAppend({
           trial_id: trial.id,
           event_type: "speculative.queued",
@@ -262785,7 +263278,7 @@ ${task.goal}`.toLowerCase();
   /** Bounded, local-only compatibility catalog for older Studio resource pages. */
   workbenchResourceCatalogView(args) {
     const kind4 = text(args.kind, "kind");
-    const limit3 = finiteInteger3(args.limit, "limit", 100, 1, 200);
+    const limit3 = finiteInteger(args.limit, "limit", 100, 1, 200);
     const taskId3 = args.task_id === void 0 ? null : text(args.task_id, "task_id");
     if (kind4 === "memory") {
       const items2 = this.store.list("memory_item", limit3, (item) => (!taskId3 || item.task_id === taskId3) && item.status !== "superseded" && item.status !== "expired");
@@ -262844,7 +263337,7 @@ ${task.goal}`.toLowerCase();
     const packageVersion = assertNoSecret5(text(manifest.version, "manifest.version"), "manifest.version");
     const description = manifest.description === void 0 ? "" : assertNoSecret5(String(manifest.description), "manifest.description");
     const encoded = assertNoSecret5(JSON.stringify(manifest), "manifest");
-    return { plugin: this.store.create("studio_plugin", String(args.plugin_id ?? id21("studio_plugin")), {
+    return { plugin: this.store.create("studio_plugin", String(args.plugin_id ?? id22("studio_plugin")), {
       name,
       package_version: packageVersion,
       description,
@@ -262862,7 +263355,7 @@ ${task.goal}`.toLowerCase();
     if (content.length > 48e3) throw new Error("Skill content must not exceed 48,000 characters");
     const name = assertNoSecret5(text(args.name, "name"), "name");
     const description = args.description === void 0 ? "" : assertNoSecret5(String(args.description), "description");
-    const skillId = String(args.skill_id ?? id21("studio_skill"));
+    const skillId = String(args.skill_id ?? id22("studio_skill"));
     const previous = this.store.find("studio_skill", skillId);
     const payload10 = { name, description, content, content_digest: valueDigest2(content), source: "user_upload", status: "active", edited_by: "studio-user" };
     return { skill: previous ? this.store.save("studio_skill", skillId, { ...payload10, previous_version: previous.version }) : this.store.create("studio_skill", skillId, payload10) };
@@ -262912,12 +263405,12 @@ ${task.goal}`.toLowerCase();
   async activationBoundPrompt(args) {
     const taskId3 = text(args.task_id, "task_id");
     const prompt = document2(args.prompt, "prompt");
-    const maxChars = finiteInteger3(args.max_chars, "max_chars", 16e3, 1, 1e5);
+    const maxChars = finiteInteger(args.max_chars, "max_chars", 16e3, 1, 1e5);
     const resolved = await this.logicalActivationResolve({ plan_id: text(args.plan_id, "plan_id"), max_chars: maxChars });
     const plan = resolved.plan;
     if (plan.task_id !== taskId3) throw new Error("Activation plan does not belong to the dispatch task");
     const capabilities = resolved.capabilities;
-    const contextDigest = fingerprint3({ capabilities: capabilities.map((capability) => ({ logical_capability_id: capability.logical_capability_id, content_digest: capability.content_digest })) });
+    const contextDigest = fingerprint4({ capabilities: capabilities.map((capability) => ({ logical_capability_id: capability.logical_capability_id, content_digest: capability.content_digest })) });
     const material = capabilities.map((capability) => `### ${String(capability.name)}
 ${String(capability.content)}`).join("\n\n");
     return {
@@ -262943,7 +263436,7 @@ ${material}
     const prepared = driver.prepare(dispatchArgs);
     const dispatch = prepared.dispatch;
     const saved = this.store.save(driver.dispatchKind, String(dispatch.id), {
-      ...recordPayload10(dispatch),
+      ...payload(dispatch),
       activation_plan_id: bound2.plan.id,
       activation_plan_version: bound2.plan.version,
       activation_context_digest: bound2.context_digest,
@@ -262968,9 +263461,9 @@ ${material}
     const prepared = this.workLaunchPrepare({ ...args, prompt: bound2.prompt });
     const launch = prepared.launch;
     const dispatch = prepared.dispatch;
-    const savedLaunch = this.store.save("work_launch", String(launch.id), { ...recordPayload10(launch), activation_plan_id: bound2.plan.id, activation_plan_version: bound2.plan.version, activation_context_digest: bound2.context_digest, activation_max_chars: bound2.max_chars, activation_resolution_id: bound2.resolution.id });
+    const savedLaunch = this.store.save("work_launch", String(launch.id), { ...payload(launch), activation_plan_id: bound2.plan.id, activation_plan_version: bound2.plan.version, activation_context_digest: bound2.context_digest, activation_max_chars: bound2.max_chars, activation_resolution_id: bound2.resolution.id });
     const driver = this.requireHostDriver(String(savedLaunch.host));
-    const savedDispatch = this.store.save(driver.dispatchKind, String(dispatch.id), { ...recordPayload10(dispatch), activation_plan_id: bound2.plan.id, activation_plan_version: bound2.plan.version, activation_context_digest: bound2.context_digest, activation_max_chars: bound2.max_chars, activation_resolution_id: bound2.resolution.id });
+    const savedDispatch = this.store.save(driver.dispatchKind, String(dispatch.id), { ...payload(dispatch), activation_plan_id: bound2.plan.id, activation_plan_version: bound2.plan.version, activation_context_digest: bound2.context_digest, activation_max_chars: bound2.max_chars, activation_resolution_id: bound2.resolution.id });
     return { ...prepared, launch: savedLaunch, dispatch: savedDispatch, resolution: bound2.resolution };
   }
   async capabilityContextWorkLaunchDecide(args) {
@@ -262984,7 +263477,7 @@ ${material}
     this.store.get("task", text(args.task_id, "task_id"));
     const binding = this.knowledgeLaunch.bind({
       bundle_id: text(args.bundle_id, "bundle_id"),
-      ...args.bundle_version === void 0 ? {} : { bundle_version: finiteInteger3(args.bundle_version, "bundle_version", 1) },
+      ...args.bundle_version === void 0 ? {} : { bundle_version: finiteInteger(args.bundle_version, "bundle_version", 1) },
       ...args.now === void 0 ? {} : { now: text(args.now, "now") }
     });
     return { binding, prompt: this.knowledgeLaunch.prompt(binding, document2(args.prompt, "prompt")) };
@@ -263071,7 +263564,7 @@ ${material}
     const task = this.store.get("task", text(args.task_id, "task_id"));
     const launch = this.store.get("work_launch", text(args.launch_id, "launch_id"));
     if (launch.task_id !== task.id) throw new Error("Acceptance plan task does not match the Work Launch");
-    const criteria = array8(args.criteria, "criteria").map((value, index) => {
+    const criteria = array(args.criteria, "criteria").map((value, index) => {
       const item = object(value, `criteria[${index}]`);
       const criterionId = text(item.id, `criteria[${index}].id`);
       const method = text(item.method, `criteria[${index}].method`);
@@ -263108,10 +263601,10 @@ ${material}
     if (evaluatorType !== criterion.method) throw new Error("Evaluator type does not match the acceptance method");
     const result = text(args.result, "result");
     if (!ACCEPTANCE_RESULTS.has(result)) throw new Error("Acceptance result is unsupported");
-    const evidenceIds2 = array8(args.evidence_ids, "evidence_ids").map((value) => text(value, "evidence_id"));
+    const evidenceIds2 = array(args.evidence_ids, "evidence_ids").map((value) => text(value, "evidence_id"));
     if (!evidenceIds2.length) throw new Error("Acceptance check requires evidence");
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
-    const checkId = String(args.check_id ?? id21("acceptance_check"));
+    const checkId = String(args.check_id ?? id22("acceptance_check"));
     const identity = { plan_id: plan.id, plan_version: plan.version, criterion_id: criterionId, evaluator_type: evaluatorType, evaluator_id: text(args.evaluator_id, "evaluator_id"), result, summary: text(args.summary, "summary"), evidence_ids: evidenceIds2 };
     const digest35 = valueDigest2(identity);
     const existing = this.store.find("acceptance_check", checkId);
@@ -263131,7 +263624,7 @@ ${material}
     if (!ACCEPTANCE_RESULTS.has(result)) throw new Error("Acceptance result is unsupported");
     const summary2 = text(args.summary, "summary");
     const reviewer = text(args.reviewer, "reviewer");
-    const reviewId = args.review_id === void 0 ? id21("human_review") : text(args.review_id, "review_id");
+    const reviewId = args.review_id === void 0 ? id22("human_review") : text(args.review_id, "review_id");
     const evidence2 = this.evidenceRecord({ evidence_id: `evidence_${reviewId}`, source_type: "human", confidence: result === "passed" ? "confirmed" : result === "failed" ? "rejected" : "bounded", claim: summary2, locator: `acceptance:${plan.id}:${criterionId}`, metadata: { reviewer, criterion_name: criterion.name } });
     const check2 = this.acceptanceCheckRecord({ check_id: `check_${reviewId}`, plan_id: plan.id, criterion_id: criterionId, evaluator_type: "human", evaluator_id: reviewer, result, summary: summary2, evidence_ids: [evidence2.id] });
     const assessed = this.acceptanceAssess({ plan_id: plan.id });
@@ -263142,7 +263635,7 @@ ${material}
     if (!ACCEPTANCE_METHODS.has(method) || method === "human") throw new Error("Automated acceptance evaluator method must be program, model, or business_signal");
     const configuration = object(args.configuration ?? {}, "configuration");
     assertNoSecret5(canonicalJson(configuration), "configuration");
-    return this.store.save("acceptance_evaluator", String(args.evaluator_id ?? id21("acceptance_evaluator")), { name: text(args.name, "name"), method, adapter_id: text(args.adapter_id, "adapter_id"), configuration, max_attempts: finiteInteger3(args.max_attempts, "max_attempts", 3, 1, 20), enabled: args.enabled === void 0 ? true : optionalBoolean3(args.enabled, "enabled") });
+    return this.store.save("acceptance_evaluator", String(args.evaluator_id ?? id22("acceptance_evaluator")), { name: text(args.name, "name"), method, adapter_id: text(args.adapter_id, "adapter_id"), configuration, max_attempts: finiteInteger(args.max_attempts, "max_attempts", 3, 1, 20), enabled: args.enabled === void 0 ? true : optionalBoolean3(args.enabled, "enabled") });
   }
   acceptanceEvaluationPrepare(args) {
     const plan = this.store.get("acceptance_plan", text(args.plan_id, "plan_id"));
@@ -263151,7 +263644,7 @@ ${material}
     const criterion = plan.criteria.find((item) => item.id === criterionId);
     if (!criterion) throw new Error("Acceptance criterion is unknown");
     if (criterion.method === "human") throw new Error("Human criteria are reviewed directly, not dispatched");
-    const evaluator = this.store.get("acceptance_evaluator", text(args.evaluator_id, "evaluator_id"), args.evaluator_version === void 0 ? void 0 : finiteInteger3(args.evaluator_version, "evaluator_version", 1));
+    const evaluator = this.store.get("acceptance_evaluator", text(args.evaluator_id, "evaluator_id"), args.evaluator_version === void 0 ? void 0 : finiteInteger(args.evaluator_version, "evaluator_version", 1));
     if (evaluator.enabled !== true) throw new Error("Acceptance evaluator is disabled");
     if (evaluator.method !== criterion.method) throw new Error("Acceptance evaluator method does not match the criterion");
     const jobId = String(args.job_id ?? `acceptance_job_${plan.id}_${criterionId}`);
@@ -263167,7 +263660,7 @@ ${material}
     return { job: this.store.create("acceptance_evaluation_job", jobId, { ...identity, request_digest: requestDigest, status: "ready", attempts: 0, lease_id: null, lease_expires_at: null }), idempotent: false };
   }
   acceptanceFileEvaluationPrepare(args) {
-    const configuration = { ...args.allowed_extensions === void 0 ? {} : { allowed_extensions: array8(args.allowed_extensions, "allowed_extensions").map((item) => text(item, "allowed_extension")) }, ...args.max_bytes === void 0 ? {} : { max_bytes: finiteInteger3(args.max_bytes, "max_bytes", 1, 1) } };
+    const configuration = { ...args.allowed_extensions === void 0 ? {} : { allowed_extensions: array(args.allowed_extensions, "allowed_extensions").map((item) => text(item, "allowed_extension")) }, ...args.max_bytes === void 0 ? {} : { max_bytes: finiteInteger(args.max_bytes, "max_bytes", 1, 1) } };
     const evaluatorId = `builtin_file_artifact_${valueDigest2(configuration).slice(0, 16)}`;
     let evaluator = this.store.find("acceptance_evaluator", evaluatorId);
     if (!evaluator) evaluator = this.acceptanceEvaluatorSave({ evaluator_id: evaluatorId, name: "Built-in file artifact validator", method: "program", adapter_id: "builtin:file-artifact", configuration, max_attempts: 3 });
@@ -263200,18 +263693,18 @@ ${material}
     return this.acceptanceEvaluationPrepare({ plan_id: args.plan_id, criterion_id: args.criterion_id, evaluator_id: evaluator.id, evaluator_version: evaluator.version, job_id: args.job_id, input: { workspace: text(args.workspace, "workspace"), relative_path: text(args.relative_path, "relative_path") } });
   }
   domainKitSave(args) {
-    const fields2 = array8(args.fields, "fields").map((value, index) => {
+    const fields2 = array(args.fields, "fields").map((value, index) => {
       const item = object(value, `fields[${index}]`);
       const type = text(item.type, `fields[${index}].type`);
       if (!DOMAIN_FIELD_TYPES.has(type)) throw new Error(`fields[${index}].type is unsupported`);
-      const options = item.options === void 0 ? [] : array8(item.options, `fields[${index}].options`).map((option2) => text(option2, `fields[${index}].option`));
+      const options = item.options === void 0 ? [] : array(item.options, `fields[${index}].options`).map((option2) => text(option2, `fields[${index}].option`));
       if (type === "choice" && !options.length) throw new Error(`fields[${index}].options must not be empty for choice`);
       if (type !== "choice" && options.length) throw new Error(`fields[${index}].options are only valid for choice`);
       return { id: text(item.id, `fields[${index}].id`), label: text(item.label, `fields[${index}].label`), type, required: item.required === void 0 ? true : optionalBoolean3(item.required, `fields[${index}].required`), options };
     });
     if (!fields2.length || new Set(fields2.map((item) => item.id)).size !== fields2.length) throw new Error("Domain Kit fields must be non-empty with unique ids");
     const fieldMap = new Map(fields2.map((item) => [item.id, item]));
-    const criteria = array8(args.criteria, "criteria").map((value, index) => {
+    const criteria = array(args.criteria, "criteria").map((value, index) => {
       const item = object(value, `criteria[${index}]`);
       const method = text(item.method, `criteria[${index}].method`);
       if (!ACCEPTANCE_METHODS.has(method)) throw new Error(`criteria[${index}].method is unsupported`);
@@ -263225,32 +263718,32 @@ ${material}
       return { id: text(item.id, `criteria[${index}].id`), name: text(item.name, `criteria[${index}].name`), method, required: item.required === void 0 ? true : optionalBoolean3(item.required, `criteria[${index}].required`), evaluator };
     });
     if (!criteria.length || new Set(criteria.map((item) => item.id)).size !== criteria.length) throw new Error("Domain Kit criteria must be non-empty with unique ids");
-    const capabilityRequirements = array8(args.capability_requirements ?? [], "capability_requirements").map((value, index) => {
+    const capabilityRequirements = array(args.capability_requirements ?? [], "capability_requirements").map((value, index) => {
       const item = object(value, `capability_requirements[${index}]`);
       const trust = text(item.required_trust ?? "trusted", `capability_requirements[${index}].required_trust`);
       const effect3 = text(item.effect, `capability_requirements[${index}].effect`);
       if (!(/* @__PURE__ */ new Set(["trusted", "verified"])).has(trust) || !SIDE_EFFECTS.has(effect3)) throw new Error("Domain Kit capability trust or effect is unsupported");
-      return { asset_id: text(item.asset_id, `capability_requirements[${index}].asset_id`), asset_version: finiteInteger3(item.asset_version, `capability_requirements[${index}].asset_version`, 1), required_trust: trust, effect: effect3 };
+      return { asset_id: text(item.asset_id, `capability_requirements[${index}].asset_id`), asset_version: finiteInteger(item.asset_version, `capability_requirements[${index}].asset_version`, 1), required_trust: trust, effect: effect3 };
     });
     if (new Set(capabilityRequirements.map((item) => item.asset_id)).size !== capabilityRequirements.length) throw new Error("Domain Kit capability requirements must be unique");
-    const objectSchemas = array8(args.object_schemas ?? [], "object_schemas").map((value, index) => {
+    const objectSchemas = array(args.object_schemas ?? [], "object_schemas").map((value, index) => {
       const item = object(value, `object_schemas[${index}]`);
       return { id: text(item.id, `object_schemas[${index}].id`), name: text(item.name, `object_schemas[${index}].name`), schema: object(item.schema, `object_schemas[${index}].schema`) };
     });
     if (new Set(objectSchemas.map((item) => item.id)).size !== objectSchemas.length) throw new Error("Domain Kit object schemas must be unique");
-    const components = array8(args.components ?? [], "components").map((value, index) => {
+    const components = array(args.components ?? [], "components").map((value, index) => {
       const item = object(value, `components[${index}]`);
       const type = text(item.type, `components[${index}].type`);
       if (!(/* @__PURE__ */ new Set(["form", "artifact_preview", "checklist", "status"])).has(type)) throw new Error("Domain Kit component type is unsupported");
       return { id: text(item.id, `components[${index}].id`), type, binds_to: text(item.binds_to, `components[${index}].binds_to`), read_only: item.read_only === void 0 ? true : optionalBoolean3(item.read_only, `components[${index}].read_only`) };
     });
     if (new Set(components.map((item) => item.id)).size !== components.length) throw new Error("Domain Kit components must be unique");
-    const actionContracts = array8(args.action_contracts ?? [], "action_contracts").map((value, index) => {
+    const actionContracts = array(args.action_contracts ?? [], "action_contracts").map((value, index) => {
       const item = object(value, `action_contracts[${index}]`);
       const effect3 = text(item.effect, `action_contracts[${index}].effect`);
       if (!SIDE_EFFECTS.has(effect3)) throw new Error("Domain Kit action effect is unsupported");
       const contractRef = item.contract_ref == null ? null : object(item.contract_ref, `action_contracts[${index}].contract_ref`);
-      return { id: text(item.id, `action_contracts[${index}].id`), effect: effect3, requires_approval: item.requires_approval === void 0 ? effect3 !== "read_only" : optionalBoolean3(item.requires_approval, `action_contracts[${index}].requires_approval`), contract_ref: contractRef ? { contract_id: text(contractRef.contract_id, `action_contracts[${index}].contract_ref.contract_id`), contract_version: finiteInteger3(contractRef.contract_version, `action_contracts[${index}].contract_ref.contract_version`, 1), asset_id: text(contractRef.asset_id, `action_contracts[${index}].contract_ref.asset_id`), asset_version: finiteInteger3(contractRef.asset_version, `action_contracts[${index}].contract_ref.asset_version`, 1) } : null };
+      return { id: text(item.id, `action_contracts[${index}].id`), effect: effect3, requires_approval: item.requires_approval === void 0 ? effect3 !== "read_only" : optionalBoolean3(item.requires_approval, `action_contracts[${index}].requires_approval`), contract_ref: contractRef ? { contract_id: text(contractRef.contract_id, `action_contracts[${index}].contract_ref.contract_id`), contract_version: finiteInteger(contractRef.contract_version, `action_contracts[${index}].contract_ref.contract_version`, 1), asset_id: text(contractRef.asset_id, `action_contracts[${index}].contract_ref.asset_id`), asset_version: finiteInteger(contractRef.asset_version, `action_contracts[${index}].contract_ref.asset_version`, 1) } : null };
     });
     if (new Set(actionContracts.map((item) => item.id)).size !== actionContracts.length) throw new Error("Domain Kit actions must be unique");
     const budgetLimits2 = object(args.budget_limits ?? {}, "budget_limits");
@@ -263259,18 +263752,18 @@ ${material}
     const evalSuiteRef = args.eval_suite_ref == null ? null : object(args.eval_suite_ref, "eval_suite_ref");
     if (evalSuiteRef) {
       text(evalSuiteRef.suite_id, "eval_suite_ref.suite_id");
-      finiteInteger3(evalSuiteRef.suite_version, "eval_suite_ref.suite_version", 1);
+      finiteInteger(evalSuiteRef.suite_version, "eval_suite_ref.suite_version", 1);
     }
-    const kitId = String(args.kit_id ?? id21("domain_kit"));
+    const kitId = String(args.kit_id ?? id22("domain_kit"));
     const definition2 = { name: text(args.name, "name"), domain: text(args.domain, "domain"), description: text(args.description, "description"), fields: fields2, criteria, capability_requirements: capabilityRequirements, object_schemas: objectSchemas, components, action_contracts: actionContracts, budget_limits: budgetLimits2, sandbox_requirements: sandboxRequirements, eval_suite_ref: evalSuiteRef, builtin: args.builtin === true };
     const definitionDigest = valueDigest2(definition2);
     return this.store.save("domain_kit", kitId, { ...definition2, definition_digest: definitionDigest });
   }
   domainKitGet(args) {
-    return this.store.get("domain_kit", text(args.kit_id, "kit_id"), args.kit_version === void 0 ? void 0 : finiteInteger3(args.kit_version, "kit_version", 1));
+    return this.store.get("domain_kit", text(args.kit_id, "kit_id"), args.kit_version === void 0 ? void 0 : finiteInteger(args.kit_version, "kit_version", 1));
   }
   domainKitList(args) {
-    return { kits: this.store.list("domain_kit", finiteInteger3(args.limit, "limit", 20, 1, 100)) };
+    return { kits: this.store.list("domain_kit", finiteInteger(args.limit, "limit", 20, 1, 100)) };
   }
   domainKitInstallBuiltins() {
     const definitions = [
@@ -263348,7 +263841,7 @@ ${material}
       if (field.type === "boolean") {
         if (typeof value !== "boolean") throw new Error(`${key2} must be boolean`);
         normalized[key2] = value;
-      } else if (field.type === "integer") normalized[key2] = finiteInteger3(value, key2, 1, 0);
+      } else if (field.type === "integer") normalized[key2] = finiteInteger(value, key2, 1, 0);
       else {
         const stringValue = text(value, key2);
         if (field.type === "choice" && !field.options.includes(stringValue)) throw new Error(`${key2} must be one of the declared choices`);
@@ -263367,7 +263860,7 @@ ${material}
       const account = this.store.get("budget_account", budgetId);
       if (account.owner_id !== launch.task_id) throw new Error("Domain Kit budget must belong to the Work Launch task");
     }
-    const sandboxIdentity = kit.sandbox_requirements ? { profile_id: text(args.sandbox_profile_id, "sandbox_profile_id"), profile_version: finiteInteger3(args.sandbox_profile_version, "sandbox_profile_version", 1) } : null;
+    const sandboxIdentity = kit.sandbox_requirements ? { profile_id: text(args.sandbox_profile_id, "sandbox_profile_id"), profile_version: finiteInteger(args.sandbox_profile_version, "sandbox_profile_version", 1) } : null;
     const identity = { kit_id: kit.id, kit_version: kit.version, launch_id: launch.id, values: normalized, resolved_assets: resolvedAssets, eval_suite: evalSuite ? { suite_id: evalSuite.id, suite_version: evalSuite.version } : null, sandbox: sandboxIdentity, budget_id: budgetId, budget_limits: budgetLimits2 };
     const digest35 = valueDigest2(identity);
     const applicationId = String(args.application_id ?? `domain_kit_application_${launch.id}`);
@@ -263457,7 +263950,7 @@ ${material}
     const lock = this.domainKitActionLockGet({ application_id: application.id });
     const action = lock.actions.find((item) => item.action_id === request2.action_id);
     if (outcome2 === "succeeded") validateJsonSchema(args.output, action.output_schema);
-    const evidenceIds2 = array8(args.evidence_ids, "evidence_ids").map((item) => text(item, "evidence_id"));
+    const evidenceIds2 = array(args.evidence_ids, "evidence_ids").map((item) => text(item, "evidence_id"));
     if (!evidenceIds2.length) throw new Error("Domain Kit action report requires evidence");
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
     const saved = this.store.save("domain_kit_action_request", String(request2.id), { ...request2, status: outcome2 === "succeeded" ? "completed" : "failed", outcome: outcome2, output_digest: valueDigest2(args.output ?? null), evidence_ids: evidenceIds2, raw_output_stored: false });
@@ -263465,8 +263958,8 @@ ${material}
   }
   acceptanceEvaluationClaim(args) {
     const adapterId = text(args.adapter_id, "adapter_id");
-    const limit3 = finiteInteger3(args.limit, "limit", 10, 1, 100);
-    const leaseSeconds = finiteInteger3(args.lease_seconds, "lease_seconds", 60, 1, 3600);
+    const limit3 = finiteInteger(args.limit, "limit", 10, 1, 100);
+    const leaseSeconds = finiteInteger(args.lease_seconds, "lease_seconds", 60, 1, 3600);
     const planId = args.plan_id === void 0 ? null : text(args.plan_id, "plan_id");
     const jobs = this.store.list("acceptance_evaluation_job", 1e4, (item) => {
       if (item.status !== "ready" || Number(item.attempts) >= Number(item.max_attempts) || item.adapter_id !== adapterId || planId && item.plan_id !== planId) return false;
@@ -263474,14 +263967,14 @@ ${material}
       const launch = plan ? this.store.find("work_launch", String(plan.launch_id)) : null;
       const run = launch?.run_id ? this.store.find("host_run", String(launch.run_id)) : null;
       return run?.status === "completed";
-    }).slice(0, limit3).map((job) => this.store.save("acceptance_evaluation_job", String(job.id), { ...job, status: "leased", attempts: Number(job.attempts) + 1, lease_id: id21("lease"), lease_expires_at: new Date(Date.now() + leaseSeconds * 1e3).toISOString() }));
+    }).slice(0, limit3).map((job) => this.store.save("acceptance_evaluation_job", String(job.id), { ...job, status: "leased", attempts: Number(job.attempts) + 1, lease_id: id22("lease"), lease_expires_at: new Date(Date.now() + leaseSeconds * 1e3).toISOString() }));
     return { jobs };
   }
   acceptanceEvaluationRecover(args) {
     const now3 = args.now === void 0 ? (/* @__PURE__ */ new Date()).toISOString() : text(args.now, "now");
     const nowMs = Date.parse(now3);
     if (Number.isNaN(nowMs)) throw new Error("now must be an ISO timestamp");
-    const limit3 = finiteInteger3(args.limit, "limit", 100, 1, 1e3);
+    const limit3 = finiteInteger(args.limit, "limit", 100, 1, 1e3);
     const recovered = [];
     for (const job of this.store.list("acceptance_evaluation_job", 1e4, (item) => item.status === "leased" && Date.parse(String(item.lease_expires_at)) <= nowMs).slice(0, limit3)) {
       const exhausted = Number(job.attempts) >= Number(job.max_attempts);
@@ -263550,10 +264043,10 @@ ${material}
     const launch = this.store.get("work_launch", text(args.launch_id, "launch_id"));
     const plan = this.store.get("acceptance_plan", text(args.acceptance_plan_id, "acceptance_plan_id"));
     if (launch.task_id !== task.id || plan.task_id !== task.id || plan.launch_id !== launch.id) throw new Error("Verified iteration bindings must belong to the same Task and Work Launch");
-    const maxAttempts = finiteInteger3(args.max_attempts, "max_attempts", 3, 1, 20);
+    const maxAttempts = finiteInteger(args.max_attempts, "max_attempts", 3, 1, 20);
     const allowedPaths = optionalTextArray3(args.allowed_paths, "allowed_paths", ["."]);
     if (allowedPaths.some((path2) => !policyAllowsPath(path2, ["."]))) throw new Error("allowed_paths must be relative workspace paths");
-    const iterationId = String(args.iteration_id ?? id21("verified_iteration"));
+    const iterationId = String(args.iteration_id ?? id22("verified_iteration"));
     const existing = this.store.find("verified_iteration", iterationId);
     const identity = { task_id: task.id, launch_id: launch.id, acceptance_plan_id: plan.id, max_attempts: maxAttempts, allowed_paths: allowedPaths };
     if (existing) {
@@ -263577,7 +264070,7 @@ ${material}
     if (!(/* @__PURE__ */ new Set(["task_failure", "verification_configuration", "environment", "scope_violation", "no_progress"])).has(classification)) throw new Error("Verified iteration classification is unsupported");
     const attemptNo = Number(iteration.attempts_started) + 1;
     const feedback = assertNoSecret5(document2(args.feedback ?? `Acceptance ${assessment.status}.`, "feedback"), "feedback");
-    const attempt = this.store.create("iteration_attempt", String(args.attempt_id ?? id21("iteration_attempt")), { iteration_id: iteration.id, number: attemptNo, assessment_id: assessment.id, assessment_status: assessment.status, classification, feedback_digest: valueDigest2(feedback), raw_feedback_stored: false });
+    const attempt = this.store.create("iteration_attempt", String(args.attempt_id ?? id22("iteration_attempt")), { iteration_id: iteration.id, number: attemptNo, assessment_id: assessment.id, assessment_status: assessment.status, classification, feedback_digest: valueDigest2(feedback), raw_feedback_stored: false });
     let status2 = "active";
     let action = "retry";
     let terminalReason = null;
@@ -263598,7 +264091,7 @@ ${material}
       action = "handoff";
       terminalReason = "attempt_budget_exhausted";
     }
-    const saved = this.store.save("verified_iteration", String(iteration.id), { ...recordPayload10(iteration), status: status2, attempts_started: attemptNo, last_assessment_id: assessment.id, terminal_reason: terminalReason });
+    const saved = this.store.save("verified_iteration", String(iteration.id), { ...payload(iteration), status: status2, attempts_started: attemptNo, last_assessment_id: assessment.id, terminal_reason: terminalReason });
     const next = action === "retry" ? { action: "retry", prompt_feedback: feedback, remaining_attempts: Number(saved.max_attempts) - attemptNo, allowed_paths: saved.allowed_paths } : { action, reason: terminalReason };
     return { iteration: saved, attempt, next, idempotent: false };
   }
@@ -263612,7 +264105,7 @@ ${material}
     const costDelta = costMetric ? Number(comparison.comparison.costs[costMetric]?.delta) : 0;
     const comparable = comparison.split === "held_out" && Number.isFinite(passDelta) && (!costMetric || Number.isFinite(costDelta));
     const recommended = comparable && passDelta >= 0 && costDelta <= 0 && comparison.assessment !== "regressed";
-    const recommendationId = String(args.recommendation_id ?? id21("strategy_recommendation"));
+    const recommendationId = String(args.recommendation_id ?? id22("strategy_recommendation"));
     const existing = this.store.find("strategy_recommendation", recommendationId);
     const identity = { task_id: task.id, comparison_id: comparison.id, cost_metric: costMetric };
     if (existing) {
@@ -263640,7 +264133,7 @@ ${material}
     const scope3 = String(args.scope ?? "global");
     const claimIds = optionalTextArray3(args.claim_ids, "claim_ids");
     claimIds.forEach((item) => this.store.get("knowledge_claim", item));
-    const pageId = String(args.page_id ?? id21("wiki_page"));
+    const pageId = String(args.page_id ?? id22("wiki_page"));
     const existing = this.store.find("wiki_page", pageId);
     const identity = { title, body_digest: valueDigest2(body3), scope: scope3, claim_ids: claimIds };
     if (existing && existing.identity_digest === valueDigest2(identity)) return { page: existing, idempotent: true };
@@ -263659,7 +264152,7 @@ ${material}
     return { page, idempotent: false };
   }
   wikiPageGet(args) {
-    const page = this.store.get("wiki_page", text(args.page_id, "page_id"), args.version === void 0 ? void 0 : finiteInteger3(args.version, "version", 1));
+    const page = this.store.get("wiki_page", text(args.page_id, "page_id"), args.version === void 0 ? void 0 : finiteInteger(args.version, "version", 1));
     const body3 = page.content_ref ? (() => {
       try {
         return this.store.contentStore.readUncheckedSync(String(page.content_ref.path)).body;
@@ -263685,7 +264178,7 @@ ${material}
     if (valueDigest2(body3) === page.body_digest) return { page, changed: false };
     const nextVersion = Number(page.version) + 1;
     const contentRef = this.store.contentStore.writeSync({ kind: "knowledge", record_id: String(page.id), version: nextVersion, scope: String(page.scope ?? "global"), status: "active", sensitivity: "internal", source_id: "builtin.evidence-wiki", body: body3 });
-    const saved = this.store.save("wiki_page", String(page.id), { ...recordPayload10(page), body_digest: valueDigest2(body3), content_ref: contentRef, file_path: contentRef.path, identity_digest: null, revision_source: "filesystem" });
+    const saved = this.store.save("wiki_page", String(page.id), { ...payload(page), body_digest: valueDigest2(body3), content_ref: contentRef, file_path: contentRef.path, identity_digest: null, revision_source: "filesystem" });
     return { page: saved, changed: true };
   }
   knowledgeWorkbenchView(args = {}) {
@@ -263694,7 +264187,7 @@ ${material}
   knowledgeContextBundlePreview(args) {
     const binding = this.knowledgeLaunch.bind({
       bundle_id: text(args.bundle_id, "bundle_id"),
-      ...args.bundle_version === void 0 ? {} : { bundle_version: finiteInteger3(args.bundle_version, "bundle_version", 1) },
+      ...args.bundle_version === void 0 ? {} : { bundle_version: finiteInteger(args.bundle_version, "bundle_version", 1) },
       ...args.now === void 0 ? {} : { now: text(args.now, "now") }
     });
     return { binding, prompt: this.knowledgeLaunch.prompt(binding, "Preview only. Do not execute actions.") };
@@ -263705,7 +264198,7 @@ ${material}
     const fromClaim = this.store.get("knowledge_claim", text(args.from_claim_id, "from_claim_id"));
     const toClaim = this.store.get("knowledge_claim", text(args.to_claim_id, "to_claim_id"));
     if (fromClaim.id === toClaim.id) throw new Error("Knowledge relation endpoints must differ");
-    const relationId = String(args.relation_id ?? id21("knowledge_relation"));
+    const relationId = String(args.relation_id ?? id22("knowledge_relation"));
     const existing = this.store.find("knowledge_relation", relationId);
     const identity = { from_claim_id: fromClaim.id, to_claim_id: toClaim.id, relation };
     if (existing) {
@@ -263717,8 +264210,8 @@ ${material}
   wikiContextCompile(args) {
     const query = assertNoSecret5(text(args.query, "query"), "query");
     const scope3 = String(args.scope ?? "global");
-    const maxItems = finiteInteger3(args.max_items, "max_items", 8, 1, 50);
-    const maxChars = finiteInteger3(args.max_chars, "max_chars", 6e3, 100, 1e5);
+    const maxItems = finiteInteger(args.max_items, "max_items", 8, 1, 50);
+    const maxChars = finiteInteger(args.max_chars, "max_chars", 6e3, 100, 1e5);
     const now3 = args.now === void 0 ? Date.now() : validIsoTime3(args.now, "now");
     const terms3 = [...new Set(query.toLowerCase().match(/[\p{L}\p{N}_-]+/gu) ?? [])];
     const excluded = [];
@@ -263764,7 +264257,7 @@ Evidence: ${item.claim.evidence_ids.join(", ")}
 ${item.content}
 Evidence: ${item.evidence_ids.join(", ")}
 `).join("\n");
-    const bundleId = String(args.bundle_id ?? id21("wiki_context_bundle"));
+    const bundleId = String(args.bundle_id ?? id22("wiki_context_bundle"));
     const existing = this.store.find("wiki_context_bundle", bundleId);
     const identity = { query, scope: scope3, max_items: maxItems, max_chars: maxChars, now: args.now ?? null };
     if (existing) {
@@ -263775,7 +264268,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     return { bundle, context, included, excluded, idempotent: false };
   }
   wikiContextBundleGet(args) {
-    return { bundle: this.store.get("wiki_context_bundle", text(args.bundle_id, "bundle_id"), args.version === void 0 ? void 0 : finiteInteger3(args.version, "version", 1)) };
+    return { bundle: this.store.get("wiki_context_bundle", text(args.bundle_id, "bundle_id"), args.version === void 0 ? void 0 : finiteInteger(args.version, "version", 1)) };
   }
   wikiContextBundleList(args) {
     return this.list("wiki_context_bundle", "bundles", args);
@@ -263790,7 +264283,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     const instructions = assertNoSecret5(document2(args.instructions, "instructions"), "instructions");
     const applicability = assertNoSecret5(document2(args.applicability, "applicability"), "applicability");
     const fallback2 = assertNoSecret5(document2(args.fallback_condition, "fallback_condition"), "fallback_condition");
-    const candidateId2 = String(args.candidate_id ?? id21("wiki_skill_candidate"));
+    const candidateId2 = String(args.candidate_id ?? id22("wiki_skill_candidate"));
     const existing = this.store.find("wiki_skill_candidate", candidateId2);
     const identity = { title, kind: kind4, claim_ids: claimIds, instructions, applicability, fallback_condition: fallback2 };
     if (existing) {
@@ -263801,7 +264294,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     return { candidate: candidate2, idempotent: false };
   }
   wikiSkillCandidateGet(args) {
-    return { candidate: this.store.get("wiki_skill_candidate", text(args.candidate_id, "candidate_id"), args.version === void 0 ? void 0 : finiteInteger3(args.version, "version", 1)) };
+    return { candidate: this.store.get("wiki_skill_candidate", text(args.candidate_id, "candidate_id"), args.version === void 0 ? void 0 : finiteInteger(args.version, "version", 1)) };
   }
   wikiSkillCandidateList(args) {
     return this.list("wiki_skill_candidate", "candidates", args);
@@ -263812,7 +264305,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     if (!(/* @__PURE__ */ new Set(["ready_for_evaluation", "rejected"])).has(status2)) throw new Error("Wiki capability candidate review status is unsupported");
     const reviewer = text(args.reviewer, "reviewer");
     const reason = assertNoSecret5(document2(args.reason, "reason"), "reason");
-    return { candidate: this.store.save("wiki_skill_candidate", String(candidate2.id), { ...recordPayload10(candidate2), status: status2, review: { reviewer, reason_digest: valueDigest2(reason), reviewed_at: (/* @__PURE__ */ new Date()).toISOString() } }) };
+    return { candidate: this.store.save("wiki_skill_candidate", String(candidate2.id), { ...payload(candidate2), status: status2, review: { reviewer, reason_digest: valueDigest2(reason), reviewed_at: (/* @__PURE__ */ new Date()).toISOString() } }) };
   }
   wikiSkillCandidateEvaluationAttest(args) {
     return this.wikiCandidateGovernance.attest(args);
@@ -263824,7 +264317,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     return this.wikiCandidateGovernance.packagePrepare(args);
   }
   wikiSkillCandidatePublicationPackageGet(args) {
-    return { package: this.store.get("wiki_candidate_publication_package", text(args.package_id, "package_id"), args.version === void 0 ? void 0 : finiteInteger3(args.version, "version", 1)) };
+    return { package: this.store.get("wiki_candidate_publication_package", text(args.package_id, "package_id"), args.version === void 0 ? void 0 : finiteInteger(args.version, "version", 1)) };
   }
   wikiSkillCandidatePublicationPackageList(args) {
     return this.list("wiki_candidate_publication_package", "packages", args);
@@ -263876,7 +264369,7 @@ Evidence: ${item.evidence_ids.join(", ")}
       if (valueDigest2(existing) !== valueDigest2(binding)) throw new Error("Work Launch is already bound to another platform preflight");
       return launch;
     }
-    return this.store.save("work_launch", String(launch.id), { ...recordPayload10(launch), platform_execution_preflight: binding });
+    return this.store.save("work_launch", String(launch.id), { ...payload(launch), platform_execution_preflight: binding });
   }
   /**
    * A launch records the host it was prepared against, but a host profile can be
@@ -264019,7 +264512,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     const scope3 = String(args.scope ?? "global");
     const expected = uniqueTextArray4(args.expected_claim_ids, "expected_claim_ids");
     expected.forEach((item) => this.store.get("knowledge_claim", item));
-    const caseId = String(args.case_id ?? id21("knowledge_evaluation_case"));
+    const caseId = String(args.case_id ?? id22("knowledge_evaluation_case"));
     const existing = this.store.find("knowledge_evaluation_case", caseId);
     const identity = { query, scope: scope3, expected_claim_ids: expected };
     if (existing) {
@@ -264035,7 +264528,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     if (args.mode === "citation_support") return { assessment: new ContextHostEvaluation(this.store).evaluateKnowledge(args), changes_routing: false };
     const caseIds = args.case_ids === void 0 ? this.store.list("knowledge_evaluation_case", 1e4).map((item) => String(item.id)) : uniqueTextArray4(args.case_ids, "case_ids");
     if (!caseIds.length) throw new Error("Knowledge evaluation requires at least one case");
-    const topK = finiteInteger3(args.top_k, "top_k", 5, 1, 50);
+    const topK = finiteInteger(args.top_k, "top_k", 5, 1, 50);
     const now3 = args.now ?? (/* @__PURE__ */ new Date()).toISOString();
     const results = caseIds.map((caseId) => {
       const item = this.store.get("knowledge_evaluation_case", caseId);
@@ -264052,7 +264545,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     const minRecall = Number(args.min_recall ?? 1);
     const minEvidence = Number(args.min_evidence_coverage ?? 1);
     if (![minRecall, minEvidence].every((value) => Number.isFinite(value) && value >= 0 && value <= 1)) throw new Error("Knowledge evaluation thresholds must be between 0 and 1");
-    const runId = String(args.run_id ?? id21("knowledge_evaluation_run"));
+    const runId = String(args.run_id ?? id22("knowledge_evaluation_run"));
     const existing = this.store.find("knowledge_evaluation_run", runId);
     const identity = { case_ids: caseIds, top_k: topK, now: now3, min_recall: minRecall, min_evidence_coverage: minEvidence };
     if (existing) {
@@ -264063,7 +264556,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     return { run, idempotent: false };
   }
   knowledgeEvaluationRunGet(args) {
-    return { run: this.store.get("knowledge_evaluation_run", text(args.run_id, "run_id"), args.version === void 0 ? void 0 : finiteInteger3(args.version, "version", 1)) };
+    return { run: this.store.get("knowledge_evaluation_run", text(args.run_id, "run_id"), args.version === void 0 ? void 0 : finiteInteger(args.version, "version", 1)) };
   }
   knowledgeEvaluationRunList(args) {
     return this.list("knowledge_evaluation_run", "runs", args);
@@ -264079,7 +264572,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     const prompt = text(args.prompt, "prompt");
     const workspace = (0, import_node_path45.resolve)(text(args.workspace, "workspace"));
     const deferredStart = args.defer_host_start === true;
-    const launchId = args.launch_id === void 0 ? id21("work_launch") : text(args.launch_id, "launch_id");
+    const launchId = args.launch_id === void 0 ? id22("work_launch") : text(args.launch_id, "launch_id");
     const existing = this.store.find("work_launch", launchId);
     if (existing) {
       if (existing.host !== host || existing.sandbox !== sandbox || existing.workspace !== workspace || existing.prompt_digest !== valueDigest2(prompt) || existing.deferred_start === true !== deferredStart || valueDigest2(existing.knowledge_binding ?? null) !== valueDigest2(knowledgeBinding ?? null)) throw new Error("Work launch idempotency conflict");
@@ -264089,11 +264582,11 @@ Evidence: ${item.evidence_ids.join(", ")}
     const dispatchId = `${driver.dispatchKind}_${launchId}`;
     const common = { dispatch_id: dispatchId, task_id: task.id, workspace, prompt, sandbox, model: args.model, timeout_ms: args.timeout_ms, output_limit: args.output_limit, max_turns: args.max_turns, max_budget_usd: args.max_budget_usd };
     let dispatch = driver.prepare(common).dispatch;
-    if (knowledgeBinding) dispatch = this.store.save(driver.dispatchKind, String(dispatch.id), { ...recordPayload10(dispatch), knowledge_binding: knowledgeBinding });
+    if (knowledgeBinding) dispatch = this.store.save(driver.dispatchKind, String(dispatch.id), { ...payload(dispatch), knowledge_binding: knowledgeBinding });
     let launch = this.store.create("work_launch", launchId, { task_id: task.id, host, dispatch_id: dispatch.id, dispatch_kind: driver.dispatchKind, workspace: dispatch.workspace, sandbox, prompt_digest: dispatch.prompt_digest, retry_of: args.retry_of ?? null, deferred_start: deferredStart, status: sandbox === "workspace-write" ? "awaiting_approval" : "prepared", ...knowledgeBinding ? { knowledge_binding: knowledgeBinding } : {} });
     const trial = this.trialStart({ trial_id: `trial_${launchId}`, task_id: task.id, subject_type: "work_launch", subject_id: launchId, subject_version: launch.version, environment: { host, workspace: dispatch.workspace, sandbox, dispatch_id: dispatch.id, dispatch_version: dispatch.version, ...knowledgeBinding ? { knowledge_binding: knowledgeBinding } : {} }, budget: {} });
     this.trialTraceAppend({ trial_id: trial.id, event_type: "work_launch.prepared", source: "craft_runtime", data: { launch_id: launchId, dispatch_id: dispatch.id, host, sandbox, ...knowledgeBinding ? { knowledge_bundle_id: knowledgeBinding.bundle_id, knowledge_bundle_version: knowledgeBinding.bundle_version, knowledge_context_digest: knowledgeBinding.context_digest } : {} } });
-    launch = this.store.save("work_launch", launchId, { ...recordPayload10(launch), trial_id: trial.id });
+    launch = this.store.save("work_launch", launchId, { ...payload(launch), trial_id: trial.id });
     if (args.acceptance_criteria !== void 0) {
       const acceptance = this.acceptancePlanSave({ task_id: task.id, launch_id: launch.id, criteria: args.acceptance_criteria, name: args.acceptance_name });
       const plan = acceptance.plan;
@@ -264102,7 +264595,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     if (sandbox === "read-only" && !deferredStart) {
       const started = knowledgeBinding ? this.hostRuns.start({ host, dispatch_id: dispatch.id, prompt }) : this.hostRunStart({ host, dispatch_id: dispatch.id, prompt });
       const run = started.run;
-      launch = this.store.save("work_launch", launchId, { ...recordPayload10(launch), status: "running", run_id: run.id });
+      launch = this.store.save("work_launch", launchId, { ...payload(launch), status: "running", run_id: run.id });
     }
     return { launch, task, dispatch, approval_required: sandbox === "workspace-write", idempotent: false };
   }
@@ -264124,7 +264617,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     this.autonomyDecide({ request_id: authorization.id, decision: "approve", actor, approval_ref: `work_launch:${launch.id}` });
     const started = knowledgeBinding ? this.hostRuns.start({ host: launch.host, dispatch_id: launch.dispatch_id, prompt, authorization_request_id: authorization.id }) : this.hostRunStart({ host: launch.host, dispatch_id: launch.dispatch_id, prompt, authorization_request_id: authorization.id });
     const run = started.run;
-    return { launch: this.store.save("work_launch", String(launch.id), { ...recordPayload10(launch), status: "running", decided_by: actor, authorization_request_id: authorization.id, run_id: run.id }), started: true };
+    return { launch: this.store.save("work_launch", String(launch.id), { ...payload(launch), status: "running", decided_by: actor, authorization_request_id: authorization.id, run_id: run.id }), started: true };
   }
   workLaunchGet(args) {
     const launch = this.store.get("work_launch", text(args.launch_id, "launch_id"));
@@ -264304,7 +264797,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     const allowedEffects = uniqueTextArray4(args.allowed_effects ?? [args.sandbox === "workspace-write" ? "local_write" : "read_only"], "allowed_effects");
     let profile;
     if (args.activation_profile_id !== void 0) {
-      profile = this.store.get("activation_profile", text(args.activation_profile_id, "activation_profile_id"), args.activation_profile_version === void 0 ? void 0 : finiteInteger3(args.activation_profile_version, "activation_profile_version", 1));
+      profile = this.store.get("activation_profile", text(args.activation_profile_id, "activation_profile_id"), args.activation_profile_version === void 0 ? void 0 : finiteInteger(args.activation_profile_version, "activation_profile_version", 1));
       if (profile.task_id !== task.id) throw new Error("Activation Profile does not match task");
     } else {
       const assets = this.store.list("capability_asset", 1e4, (asset) => asset.trust !== "untrusted" && asset.health === "healthy");
@@ -264313,7 +264806,7 @@ Evidence: ${item.evidence_ids.join(", ")}
       const identity = { task_id: task.id, goal_fingerprint: valueDigest2(text(args.goal, "goal")), asset_ids: selected.map((asset) => asset.id), asset_versions: Object.fromEntries(selected.map((asset) => [String(asset.id), asset.version])), allowed_effects: allowedEffects, activation: "host_mediated", status: "recommended", selection: selected.length ? "eligible_local_assets" : "no_capability_required" };
       const existing = this.store.find("activation_profile", profileId);
       if (existing) {
-        const existingIdentityDigest = valueDigest2(recordPayload10(existing));
+        const existingIdentityDigest = valueDigest2(payload(existing));
         const expectedIdentityDigest = valueDigest2(identity);
         if (existingIdentityDigest !== expectedIdentityDigest) throw new Error("Execution Fabric Activation Profile idempotency conflict");
         profile = existing;
@@ -264353,7 +264846,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     if (launch.sandbox === "read-only") {
       if (launch.status !== "prepared") throw new Error("Fabric-managed read-only Work Launch is not prepared");
       const hostRun = this.hostRunStart({ host: launch.host, dispatch_id: launch.dispatch_id, prompt }).run;
-      const savedLaunch = this.store.save("work_launch", String(launch.id), { ...recordPayload10(launch), status: "running", run_id: hostRun.id });
+      const savedLaunch = this.store.save("work_launch", String(launch.id), { ...payload(launch), status: "running", run_id: hostRun.id });
       started = { launch: savedLaunch, run: hostRun };
     } else {
       if (launch.status !== "awaiting_approval") throw new Error("Fabric-managed write Work Launch is not awaiting approval");
@@ -264641,166 +265134,47 @@ Evidence: ${item.evidence_ids.join(", ")}
   }
   workflowRegistryScan(args) {
     const root = text(args.project_root, "project_root");
-    const descriptors = discoverWorkflows(root, { limit: args.limit === void 0 ? void 0 : finiteInteger3(args.limit, "limit", 1, 1, 1e3) });
+    const descriptors = discoverWorkflows(root, { limit: args.limit === void 0 ? void 0 : finiteInteger(args.limit, "limit", 1, 1, 1e3) });
     return { descriptors, count: descriptors.length };
   }
   workflowRetirementPlan(args) {
-    const workflowIds = args.workflow_ids === void 0 ? [] : array8(args.workflow_ids, "workflow_ids").map((item) => text(item, "workflow_ids"));
+    const workflowIds = args.workflow_ids === void 0 ? [] : array(args.workflow_ids, "workflow_ids").map((item) => text(item, "workflow_ids"));
     const runs = this.store.list("workflow_run", Number.MAX_SAFE_INTEGER);
     const usage2 = /* @__PURE__ */ new Map();
     for (const run of runs) {
-      const id22 = String(run.workflow_id);
-      if (workflowIds.length && !workflowIds.includes(id22)) continue;
-      const entry2 = usage2.get(id22) ?? { workflow_id: id22, uses: 0, successes: 0, last_used_at: null };
+      const id23 = String(run.workflow_id);
+      if (workflowIds.length && !workflowIds.includes(id23)) continue;
+      const entry2 = usage2.get(id23) ?? { workflow_id: id23, uses: 0, successes: 0, last_used_at: null };
       entry2.uses += 1;
       if (run.status === "passed") entry2.successes += 1;
       entry2.last_used_at = String(run.created_at);
-      usage2.set(id22, entry2);
+      usage2.set(id23, entry2);
     }
     const policy = args.policy && typeof args.policy === "object" && !Array.isArray(args.policy) ? args.policy : {};
     const override = {};
-    if (policy.min_uses !== void 0) override.min_uses = finiteInteger3(policy.min_uses, "min_uses", 0, 0, Number.MAX_SAFE_INTEGER);
-    if (policy.stale_days !== void 0) override.stale_days = finiteInteger3(policy.stale_days, "stale_days", 1, 1, Number.MAX_SAFE_INTEGER);
+    if (policy.min_uses !== void 0) override.min_uses = finiteInteger(policy.min_uses, "min_uses", 0, 0, Number.MAX_SAFE_INTEGER);
+    if (policy.stale_days !== void 0) override.stale_days = finiteInteger(policy.stale_days, "stale_days", 1, 1, Number.MAX_SAFE_INTEGER);
     if (policy.min_success_rate !== void 0) override.min_success_rate = Number(policy.min_success_rate);
     const decisions = planWorkflowRetirement([...usage2.values()], { now: text(args.now ?? (/* @__PURE__ */ new Date()).toISOString(), "now"), policy: override });
     return { decisions, total: decisions.length };
   }
-  knowledgeIndex() {
-    return new KnowledgeIndex(this.store.paths.knowledgeIndex ?? `${this.store.paths.root}/knowledge-index.sqlite`);
-  }
   knowledgeIndexSync(args) {
-    const root = text(args.project_root, "project_root");
-    const index = this.knowledgeIndex();
-    try {
-      const current2 = scanKnowledgeBase(root, { limit: args.limit === void 0 ? void 0 : finiteInteger3(args.limit, "limit", 1, 1, 2e3) });
-      const previous = index.catalog();
-      const plan = diffKnowledgeBase(previous, current2);
-      const result = index.apply(plan, root);
-      return { ...result, plan: { added: plan.added.length, changed: plan.changed.length, removed: plan.removed.length } };
-    } finally {
-      index.close();
-    }
+    return this.cognitiveSearch.knowledgeIndexSync(args);
   }
   knowledgeSearch(args) {
-    const query = text(args.query, "query");
-    const scope3 = args.scope === void 0 ? null : text(args.scope, "scope");
-    const includeCandidates = args.include_candidates !== false;
-    const terms3 = [...new Set(query.toLowerCase().match(/[\p{L}\p{N}_-]+/gu) ?? [])];
-    const governed = this.store.list("knowledge_claim", 1e4).flatMap((claim) => {
-      if (claim.status !== "reviewed" && (!includeCandidates || claim.status !== "candidate")) return [];
-      if (scope3 !== null && claim.scope !== "global" && claim.scope !== scope3) return [];
-      if (claim.valid_until && Date.parse(String(claim.valid_until)) < Date.now()) return [];
-      const content = claim.content_ref ? this.store.contentStore.readCompatSync(claim.content_ref).body : String(claim.content ?? "");
-      const score = terms3.reduce((total, term) => total + Number(`${content} ${Array.isArray(claim.tags) ? claim.tags.join(" ") : ""}`.toLowerCase().includes(term)), 0);
-      return score > 0 ? [{
-        kind: "governed_claim",
-        claim_id: claim.id,
-        claim_version: claim.version,
-        status: claim.status,
-        scope: claim.scope,
-        content,
-        content_digest: claim.content_digest,
-        evidence_ids: claim.evidence_ids,
-        score,
-        relations: this.relationSummary(`claim:${String(claim.id)}`)
-      }] : [];
-    });
-    const index = this.knowledgeIndex();
-    try {
-      const limit3 = args.limit === void 0 ? 20 : finiteInteger3(args.limit, "limit", 1, 1, 100);
-      const indexed = index.search(query, { limit: limit3 }).map((hit) => ({ ...hit, kind: "indexed_document", score: hit.rank, relations: this.relationSummary(hit.path) }));
-      const hits = [...governed, ...indexed].sort((left, right) => Number(right.score) - Number(left.score) || JSON.stringify(left).localeCompare(JSON.stringify(right))).slice(0, limit3);
-      return { hits, queried_governed_claims: true, include_candidates: includeCandidates };
-    } finally {
-      index.close();
-    }
+    return this.cognitiveSearch.knowledgeSearch(args);
   }
-  /**
-   * Read memories for the current turn.
-   *
-   * This is the read half of the wiring gap: `memory_ledger` could be written
-   * from the loop but never read, so an agent could record a lesson and never
-   * benefit from it. It delegates to the governed resolver so every read still
-   * produces a content-free receipt with per-memory reasons and an explicit
-   * omitted count — the agent gains memory access without gaining a way around
-   * the budget or the provenance trail.
-   */
   async memorySearch(args) {
-    if (args.scope_kind === void 0 || args.scope_id === void 0) {
-      return {
-        memories: [],
-        count: 0,
-        omitted_count: 0,
-        receipt_id: null,
-        content_free_receipt: true,
-        skipped: true,
-        reason: "scope_unavailable"
-      };
-    }
-    const resolution = await this.contextResolution.resolve({
-      query: text(args.query, "query"),
-      scope_kind: args.scope_kind,
-      scope_id: text(args.scope_id, "scope_id"),
-      max_items: args.max_items ?? 8,
-      max_chars: args.max_chars ?? 4e3
-    });
-    const items2 = resolution.items ?? [];
-    const receipt = resolution.receipt;
-    return {
-      memories: items2.map((item) => ({
-        memory_id: item.memory_id,
-        memory_version: item.memory_version,
-        content: item.content,
-        sensitivity: item.sensitivity,
-        reason: item.reason
-      })),
-      count: items2.length,
-      omitted_count: receipt?.omitted_count ?? 0,
-      receipt_id: receipt?.id ?? null,
-      content_free_receipt: true
-    };
+    return this.cognitiveSearch.memorySearch(args);
   }
-  /** One-hop relation summary for a knowledge document, so a loop can decide whether to descend. */
-  relationSummary(path2) {
-    const { relations } = this.knowledgeRelations.neighbors({ kind: "knowledge_document", id: path2 });
-    return relations.map((edge) => ({
-      relation_id: edge.relation_id,
-      relation: edge.relation,
-      direction: edge.direction,
-      other: edge.direction === "forward" ? edge.target : edge.source,
-      confidence: edge.confidence
-    }));
-  }
-  /** Declare where a knowledge document belongs and, optionally, when it stops being trustworthy. */
   knowledgeScopeSet(args) {
-    const entries2 = array8(args.entries, "entries").map((item) => {
-      if (!item || typeof item !== "object" || Array.isArray(item)) throw new Error("knowledge scope entries must be objects");
-      return item;
-    });
-    const index = this.knowledgeIndex();
-    try {
-      return { entries: index.setScope(entries2) };
-    } finally {
-      index.close();
-    }
+    return this.cognitiveSearch.knowledgeScopeSet(args);
   }
   knowledgeScopeList(args) {
-    const index = this.knowledgeIndex();
-    try {
-      const scope3 = args.scope === void 0 ? void 0 : String(args.scope);
-      return { entries: index.scopeCatalog(scope3), expired: index.expired() };
-    } finally {
-      index.close();
-    }
+    return this.cognitiveSearch.knowledgeScopeList(args);
   }
-  /** Forget expired documents from the rebuildable projection. Markdown files are never touched. */
   knowledgeScopeForget() {
-    const index = this.knowledgeIndex();
-    try {
-      return index.forgetExpired();
-    } finally {
-      index.close();
-    }
+    return this.cognitiveSearch.knowledgeScopeForget();
   }
   /** Read-only projection of runs, outcomes and cost per successful outcome. */
   metricsReport(args = {}) {
@@ -264830,29 +265204,29 @@ Evidence: ${item.evidence_ids.join(", ")}
   }
   modelAdd(args) {
     const settings = loadSettingsSync(this.store.paths);
-    const id22 = text(args.id, "id").trim().toLowerCase().replace(/[^a-z0-9-]/g, "-");
-    if (/^-+$/.test(id22)) throw new Error("model id is required");
-    if (settings.models.some((m) => m.id === id22)) throw new Error(`model already exists: ${id22}`);
-    const model = validateModelInput(args, id22);
+    const id23 = text(args.id, "id").trim().toLowerCase().replace(/[^a-z0-9-]/g, "-");
+    if (/^-+$/.test(id23)) throw new Error("model id is required");
+    if (settings.models.some((m) => m.id === id23)) throw new Error(`model already exists: ${id23}`);
+    const model = validateModelInput(args, id23);
     const next = saveSettingsSync({ models: [...settings.models, model] }, this.store.paths);
-    return { model: publicModel(next.models.find((m) => m.id === id22)) };
+    return { model: publicModel(next.models.find((m) => m.id === id23)) };
   }
   modelUpdate(args) {
     const settings = loadSettingsSync(this.store.paths);
-    const id22 = text(args.id, "id");
-    const idx = settings.models.findIndex((m) => m.id === id22);
-    if (idx < 0) throw new Error(`model not found: ${id22}`);
-    const updated = validateModelInput(args, id22);
+    const id23 = text(args.id, "id");
+    const idx = settings.models.findIndex((m) => m.id === id23);
+    if (idx < 0) throw new Error(`model not found: ${id23}`);
+    const updated = validateModelInput(args, id23);
     const models = settings.models.slice();
     models[idx] = updated;
     const next = saveSettingsSync({ models }, this.store.paths);
-    return { model: publicModel(next.models.find((m) => m.id === id22)) };
+    return { model: publicModel(next.models.find((m) => m.id === id23)) };
   }
   modelDelete(args) {
     const settings = loadSettingsSync(this.store.paths);
-    const id22 = text(args.id, "id");
-    if (!settings.models.some((m) => m.id === id22)) throw new Error(`model not found: ${id22}`);
-    const models = settings.models.filter((m) => m.id !== id22);
+    const id23 = text(args.id, "id");
+    if (!settings.models.some((m) => m.id === id23)) throw new Error(`model not found: ${id23}`);
+    const models = settings.models.filter((m) => m.id !== id23);
     saveSettingsSync({ models }, this.store.paths);
     return { ok: true };
   }
@@ -264880,14 +265254,14 @@ Evidence: ${item.evidence_ids.join(", ")}
   executionBudgetPlan(args) {
     const host = text(args.host, "host");
     const profile = resolveHostProfile(this.hostProfiles, host);
-    const texts = array8(args.texts ?? [], "texts").map((item) => text(item, "texts"));
+    const texts = array(args.texts ?? [], "texts").map((item) => text(item, "texts"));
     const estimated = estimatePromptTokens(texts);
-    const budget = createBudgetState(finiteInteger3(args.limit, "limit", 1, 1, 1e7), args.reserve === void 0 ? 0 : finiteInteger3(args.reserve, "reserve", 0, 0, 1e7));
+    const budget = createBudgetState(finiteInteger(args.limit, "limit", 1, 1, 1e7), args.reserve === void 0 ? 0 : finiteInteger(args.reserve, "reserve", 0, 0, 1e7));
     const spent = spendTokens(budget, estimated);
-    const complexity = classifyComplexity({ steps: finiteInteger3(args.steps ?? 0, "steps", 0, 0, 1e3), distinct_paths: finiteInteger3(args.distinct_paths ?? 0, "distinct_paths", 0, 0, 1e3), context_chars: texts.reduce((sum, item) => sum + item.length, 0), requires_external_write: args.requires_external_write === true, requires_multi_step_reasoning: args.requires_multi_step_reasoning === true });
+    const complexity = classifyComplexity({ steps: finiteInteger(args.steps ?? 0, "steps", 0, 0, 1e3), distinct_paths: finiteInteger(args.distinct_paths ?? 0, "distinct_paths", 0, 0, 1e3), context_chars: texts.reduce((sum, item) => sum + item.length, 0), requires_external_write: args.requires_external_write === true, requires_multi_step_reasoning: args.requires_multi_step_reasoning === true });
     const tiers = args.tiers && typeof args.tiers === "object" && !Array.isArray(args.tiers) ? args.tiers : {};
     const routing = routeModel({ host, models: tiers, tier: complexity });
-    return { estimated_tokens: estimated, budget: spent.state, exceeded: spent.exceeded, remaining: spent.remaining, complexity, routing, truncation: args.max_result_tokens === void 0 ? null : truncateToBudget(texts.join("\n"), finiteInteger3(args.max_result_tokens, "max_result_tokens", 1, 1, 1e7)) };
+    return { estimated_tokens: estimated, budget: spent.state, exceeded: spent.exceeded, remaining: spent.remaining, complexity, routing, truncation: args.max_result_tokens === void 0 ? null : truncateToBudget(texts.join("\n"), finiteInteger(args.max_result_tokens, "max_result_tokens", 1, 1, 1e7)) };
   }
   hookCatalog(args) {
     const hooks = defineHooks(args.hooks);
@@ -265002,11 +265376,11 @@ Evidence: ${item.evidence_ids.join(", ")}
   dockerSandboxRequestDigest(args) {
     return { request_digest: dockerRequestDigest(
       text(args.image, "image"),
-      array8(args.argv, "argv").map((item) => text(item, "argv"))
+      array(args.argv, "argv").map((item) => text(item, "argv"))
     ) };
   }
   async dockerSandboxProbe(args) {
-    const profile = this.store.get("sandbox_profile", text(args.profile_id, "profile_id"), finiteInteger3(args.profile_version, "profile_version", 0));
+    const profile = this.store.get("sandbox_profile", text(args.profile_id, "profile_id"), finiteInteger(args.profile_version, "profile_version", 0));
     if (profile.lifecycle !== "declared" || profile.backend !== "container" || profile.adapter_id !== "docker") {
       throw new Error("Docker probe requires an exact declared container profile for adapter docker");
     }
@@ -265029,12 +265403,12 @@ Evidence: ${item.evidence_ids.join(", ")}
     return { probe, artifact, evidence: evidence2, profile };
   }
   async dockerSandboxConformance(args) {
-    const profile = this.store.get("sandbox_profile", text(args.profile_id, "profile_id"), finiteInteger3(args.profile_version, "profile_version", 0));
+    const profile = this.store.get("sandbox_profile", text(args.profile_id, "profile_id"), finiteInteger(args.profile_version, "profile_version", 0));
     if (profile.lifecycle !== "declared" || profile.backend !== "container" || profile.adapter_id !== "docker") {
       throw new Error("Docker conformance requires an exact declared container profile for adapter docker");
     }
     const conformance = await this.dockerSandbox.conformance(
-      String(args.probe_id ?? `probe_${id21("docker")}`),
+      String(args.probe_id ?? `probe_${id22("docker")}`),
       args.image,
       profile.capabilities,
       this.store.paths.runtimeDir
@@ -265149,7 +265523,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     const scope3 = String(args.scope ?? "task");
     if (!(/* @__PURE__ */ new Set(["task", "project", "user"])).has(scope3)) throw new Error(`Unsupported feedback scope: ${scope3}`);
     if (scope3 === "task" && !args.task_id) throw new Error("task_id is required for task feedback");
-    return this.store.save("feedback", id21("feedback"), {
+    return this.store.save("feedback", id22("feedback"), {
       corrected: text(args.corrected, "corrected"),
       original: args.original ?? null,
       kind: args.kind ?? "correction",
@@ -265160,7 +265534,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     });
   }
   artifactRegister(args) {
-    return this.store.save("artifact", String(args.artifact_id ?? id21("artifact")), {
+    return this.store.save("artifact", String(args.artifact_id ?? id22("artifact")), {
       kind: text(args.kind, "kind"),
       name: text(args.name, "name"),
       uri: text(args.uri, "uri"),
@@ -265176,7 +265550,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     const confidence2 = String(args.confidence ?? "unverified");
     if (!CONFIDENCE4.has(confidence2)) throw new Error(`Unsupported confidence: ${confidence2}`);
     if (args.artifact_id) this.store.get("artifact", String(args.artifact_id));
-    return this.store.save("evidence", String(args.evidence_id ?? id21("evidence")), {
+    return this.store.save("evidence", String(args.evidence_id ?? id22("evidence")), {
       source_type: text(args.source_type, "source_type"),
       claim: text(args.claim, "claim"),
       confidence: confidence2,
@@ -265188,17 +265562,17 @@ Evidence: ${item.evidence_ids.join(", ")}
   }
   saveVersioned(kind4, prefix, args, required5) {
     for (const key2 of required5) text(args[key2], key2);
-    const recordId = String(args[`${prefix}_id`] ?? id21(prefix));
+    const recordId = String(args[`${prefix}_id`] ?? id22(prefix));
     const payload10 = { ...args };
     delete payload10[`${prefix}_id`];
     return this.store.save(kind4, recordId, payload10);
   }
   list(kind4, key2, args) {
     const query = String(args.query ?? "").toLowerCase();
-    return { [key2]: this.store.list(kind4, finiteInteger3(args.limit, "limit", 20, 1, 1e3), (item) => !query || JSON.stringify(item).toLowerCase().includes(query)) };
+    return { [key2]: this.store.list(kind4, finiteInteger(args.limit, "limit", 20, 1, 1e3), (item) => !query || JSON.stringify(item).toLowerCase().includes(query)) };
   }
   get(kind4, idKey, args) {
-    const version3 = args.version === void 0 ? void 0 : finiteInteger3(args.version, "version", 1);
+    const version3 = args.version === void 0 ? void 0 : finiteInteger(args.version, "version", 1);
     return this.store.get(kind4, text(args[idKey], idKey), version3);
   }
   harnessConfigurationSave(args) {
@@ -265214,11 +265588,11 @@ Evidence: ${item.evidence_ids.join(", ")}
     }, ["name"]);
   }
   evaluationSuiteSave(args) {
-    const cases = array8(args.cases ?? [], "cases").map((value, index) => {
+    const cases = array(args.cases ?? [], "cases").map((value, index) => {
       const item = object(value, `cases[${index}]`);
       const caseId = text(item.case_id, `cases[${index}].case_id`);
       const split = String(item.split ?? "development");
-      if (!EVAL_SPLITS.has(split)) throw new Error(`Unsupported evaluation split: ${split}`);
+      if (!EVAL_SPLITS2.has(split)) throw new Error(`Unsupported evaluation split: ${split}`);
       return { ...item, case_id: caseId, split };
     });
     if (new Set(cases.map((item) => item.case_id)).size !== cases.length) {
@@ -265241,13 +265615,13 @@ Evidence: ${item.evidence_ids.join(", ")}
     const grader = this.store.get(
       "grader",
       text(args.grader_id, "grader_id"),
-      finiteInteger3(args.grader_version, "grader_version", 1)
+      finiteInteger(args.grader_version, "grader_version", 1)
     );
     const verdict = text(args.verdict, "verdict");
     if (!GRADE_VERDICTS.has(verdict)) throw new Error(`Unsupported grade verdict: ${verdict}`);
-    const evidenceIds2 = array8(args.evidence_ids ?? [], "evidence_ids").map((value) => text(value, "evidence_id"));
+    const evidenceIds2 = array(args.evidence_ids ?? [], "evidence_ids").map((value) => text(value, "evidence_id"));
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
-    const gradeId = `grade_${(0, import_node_crypto134.createHash)("sha256").update(JSON.stringify(
+    const gradeId = `grade_${(0, import_node_crypto135.createHash)("sha256").update(JSON.stringify(
       [trialId, grader.id, grader.version]
     )).digest("hex")}`;
     return this.store.create("grade", gradeId, {
@@ -265263,7 +265637,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     });
   }
   signoffPolicySave(args) {
-    const requirements = array8(args.requirements ?? [], "requirements").map((value, index) => {
+    const requirements = array(args.requirements ?? [], "requirements").map((value, index) => {
       const requirement = object(value, `requirements[${index}]`);
       const graderType = text(requirement.grader_type, `requirements[${index}].grader_type`);
       if (!GRADER_TYPES.has(graderType)) throw new Error(`Unsupported grader type: ${graderType}`);
@@ -265286,10 +265660,10 @@ Evidence: ${item.evidence_ids.join(", ")}
     const policy = this.store.get(
       "signoff_policy",
       text(args.policy_id, "policy_id"),
-      args.policy_version === void 0 ? void 0 : finiteInteger3(args.policy_version, "policy_version", 1)
+      args.policy_version === void 0 ? void 0 : finiteInteger(args.policy_version, "policy_version", 1)
     );
     const evaluation = this.store.get("evaluation_run", text(args.evaluation_run_id, "evaluation_run_id"));
-    const gradeIds = array8(args.grade_ids ?? [], "grade_ids").map((value) => text(value, "grade_id"));
+    const gradeIds = array(args.grade_ids ?? [], "grade_ids").map((value) => text(value, "grade_id"));
     if (new Set(gradeIds).size !== gradeIds.length) throw new Error("grade_ids must be unique");
     const trialIds = evaluation.trial_ids;
     const grades = gradeIds.map((gradeId) => {
@@ -265316,7 +265690,7 @@ Evidence: ${item.evidence_ids.join(", ")}
       }
     }
     const decision = checks.every((check2) => check2.passed) ? "passed" : "failed";
-    return this.store.create("signoff", String(args.signoff_id ?? id21("signoff")), {
+    return this.store.create("signoff", String(args.signoff_id ?? id22("signoff")), {
       policy_id: policy.id,
       policy_version: policy.version,
       evaluation_run_id: evaluation.id,
@@ -265333,16 +265707,16 @@ Evidence: ${item.evidence_ids.join(", ")}
     this.store.get("task", taskId3);
     const subjectType = text(args.subject_type, "subject_type");
     const subjectId = text(args.subject_id, "subject_id");
-    const subjectVersion = finiteInteger3(args.subject_version, "subject_version", 1);
+    const subjectVersion = finiteInteger(args.subject_version, "subject_version", 1);
     this.store.get(subjectType, subjectId, subjectVersion);
     let harness;
     if (args.harness_configuration_id !== void 0) {
       harness = this.store.get("harness_configuration", text(
         args.harness_configuration_id,
         "harness_configuration_id"
-      ), args.harness_configuration_version === void 0 ? void 0 : finiteInteger3(args.harness_configuration_version, "harness_configuration_version", 1));
+      ), args.harness_configuration_version === void 0 ? void 0 : finiteInteger(args.harness_configuration_version, "harness_configuration_version", 1));
     }
-    return this.store.create("trial", String(args.trial_id ?? id21("trial")), {
+    return this.store.create("trial", String(args.trial_id ?? id22("trial")), {
       task_id: taskId3,
       case_id: args.case_id === void 0 ? null : text(args.case_id, "case_id"),
       subject_type: subjectType,
@@ -265358,8 +265732,8 @@ Evidence: ${item.evidence_ids.join(", ")}
   trialTraceAppend(args) {
     const trialId = text(args.trial_id, "trial_id");
     this.store.get("trial", trialId);
-    const artifactIds = array8(args.artifact_ids ?? [], "artifact_ids").map((value) => text(value, "artifact_id"));
-    const evidenceIds2 = array8(args.evidence_ids ?? [], "evidence_ids").map((value) => text(value, "evidence_id"));
+    const artifactIds = array(args.artifact_ids ?? [], "artifact_ids").map((value) => text(value, "artifact_id"));
+    const evidenceIds2 = array(args.evidence_ids ?? [], "evidence_ids").map((value) => text(value, "evidence_id"));
     for (const artifactId of artifactIds) this.store.get("artifact", artifactId);
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
     const result = this.store.appendEvent(`trial:${trialId}`, text(args.event_type, "event_type"), {
@@ -265377,7 +265751,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     this.store.get("trial", trialId);
     const verdict = String(args.verdict);
     if (!TRIAL_VERDICTS.has(verdict)) throw new Error(`Unsupported trial verdict: ${verdict}`);
-    const evidenceIds2 = array8(args.evidence_ids ?? [], "evidence_ids").map((value) => text(value, "evidence_id"));
+    const evidenceIds2 = array(args.evidence_ids ?? [], "evidence_ids").map((value) => text(value, "evidence_id"));
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
     const failureType = args.failure_type === void 0 ? verdict === "passed" ? null : "unspecified" : text(args.failure_type, "failure_type");
     const outcome2 = this.store.create("outcome", `outcome_${trialId}`, {
@@ -265819,312 +266193,25 @@ Evidence: ${item.evidence_ids.join(", ")}
     return { trial, trace: this.store.events(`trial:${trialId}`), outcome: outcome2 };
   }
   evaluationRunRecord(args) {
-    const suite = this.store.get(
-      "evaluation_suite",
-      text(args.suite_id, "suite_id"),
-      args.suite_version === void 0 ? void 0 : finiteInteger3(args.suite_version, "suite_version", 1)
-    );
-    const split = String(args.split);
-    if (!EVAL_SPLITS.has(split)) throw new Error(`Unsupported evaluation split: ${split}`);
-    const subjectType = text(args.subject_type, "subject_type");
-    const subjectId = text(args.subject_id, "subject_id");
-    const subjectVersion = finiteInteger3(args.subject_version, "subject_version", 1);
-    this.store.get(subjectType, subjectId, subjectVersion);
-    const trialIds = array8(args.trial_ids, "trial_ids").map((value) => text(value, "trial_id"));
-    if (!trialIds.length || new Set(trialIds).size !== trialIds.length) {
-      throw new Error("trial_ids must contain unique trials");
-    }
-    const cases = array8(suite.cases ?? [], "suite cases");
-    const allowedCases = new Set(cases.filter((item) => item.split === split).map((item) => String(item.case_id)));
-    const outcomes = trialIds.map((trialId) => {
-      const trial = this.store.get("trial", trialId);
-      if (trial.subject_type !== subjectType || trial.subject_id !== subjectId || Number(trial.subject_version) !== subjectVersion) throw new Error(`Trial subject mismatch: ${trialId}`);
-      if (!trial.case_id || !allowedCases.has(String(trial.case_id))) {
-        throw new Error(`Trial case is not in the ${split} suite partition: ${trialId}`);
-      }
-      const outcome2 = this.store.find("outcome", `outcome_${trialId}`);
-      if (!outcome2) throw new Error(`Trial has no outcome: ${trialId}`);
-      return outcome2;
-    });
-    const verdict = outcomes.every((outcome2) => outcome2.verdict === "passed") ? "passed" : "failed";
-    return this.store.create("evaluation_run", String(args.run_id ?? id21("evalrun")), {
-      suite_id: suite.id,
-      suite_version: suite.version,
-      split,
-      subject_type: subjectType,
-      subject_id: subjectId,
-      subject_version: subjectVersion,
-      trial_ids: trialIds,
-      verdict,
-      metrics: object(args.metrics ?? {}, "metrics")
-    });
+    return this.evaluationRuns.evaluationRunRecord(args);
   }
   evaluationRunAggregate(args) {
-    const run = this.store.get("evaluation_run", text(args.run_id, "run_id"));
-    const trials = run.trial_ids.map((trialId) => this.store.get("trial", trialId));
-    const outcomes = trials.map((trial) => this.store.get("outcome", `outcome_${trial.id}`));
-    return aggregateEvaluation(run, trials, outcomes);
+    return this.evaluationRuns.evaluationRunAggregate(args);
   }
   evaluationCompare(args) {
-    const baselineId = text(args.baseline_run_id, "baseline_run_id");
-    const candidateId2 = text(args.candidate_run_id, "candidate_run_id");
-    if (baselineId === candidateId2) throw new Error("Evaluation comparison requires two different runs");
-    const baseline = this.evaluationRunAggregate({ run_id: baselineId });
-    const candidate2 = this.evaluationRunAggregate({ run_id: candidateId2 });
-    for (const field of ["suite_id", "suite_version", "split", "subject_type"]) {
-      if (baseline[field] !== candidate2[field]) throw new Error(`Evaluation runs are not comparable: ${field} differs`);
-    }
-    if (JSON.stringify(baseline.case_ids) !== JSON.stringify(candidate2.case_ids)) {
-      throw new Error("Evaluation runs are not comparable: case_ids differ");
-    }
-    return this.store.create("evaluation_comparison", String(args.comparison_id ?? id21("comparison")), {
-      baseline_run_id: baselineId,
-      candidate_run_id: candidateId2,
-      suite_id: baseline.suite_id,
-      suite_version: baseline.suite_version,
-      split: baseline.split,
-      subject_type: baseline.subject_type,
-      case_ids: baseline.case_ids,
-      baseline,
-      candidate: candidate2,
-      comparison: compareEvaluationAggregates(baseline, candidate2)
-    });
+    return this.evaluationRuns.evaluationCompare(args);
   }
   evaluationRunnerRun(args) {
-    const taskId3 = text(args.task_id, "task_id");
-    this.store.get("task", taskId3);
-    const suite = this.store.get(
-      "evaluation_suite",
-      text(args.suite_id, "suite_id"),
-      args.suite_version === void 0 ? void 0 : finiteInteger3(args.suite_version, "suite_version", 1)
-    );
-    const split = text(args.split, "split");
-    if (!EVAL_SPLITS.has(split)) throw new Error(`Unsupported evaluation split: ${split}`);
-    const projectRoot = text(args.project_root, "project_root");
-    const trialsPerCase = finiteInteger3(args.trials_per_case, "trials_per_case", 1, 1, 20);
-    const subjects = array8(args.subjects, "subjects").map((raw, index) => {
-      const subject = object(raw, `subjects[${index}]`);
-      if (text(subject.subject_type, `subjects[${index}].subject_type`) !== "workflow") {
-        throw new Error("Automatic Eval Runner currently executes only workflow subjects; Agent subjects require a Host runtime operation");
-      }
-      const subjectId = text(subject.subject_id, `subjects[${index}].subject_id`);
-      const subjectVersion = finiteInteger3(subject.subject_version, `subjects[${index}].subject_version`, 1);
-      this.store.get("workflow", subjectId, subjectVersion);
-      return { label: text(subject.label, `subjects[${index}].label`), subject_id: subjectId, subject_version: subjectVersion };
-    });
-    if (subjects.length < 2 || new Set(subjects.map((subject) => subject.label)).size !== subjects.length) {
-      throw new Error("Eval Runner requires at least two uniquely labelled subjects");
-    }
-    const cases = suite.cases.filter((item) => item.split === split);
-    if (!cases.length) throw new Error(`Evaluation Suite has no ${split} cases`);
-    const runner = this.store.create("evaluation_runner", String(args.runner_id ?? id21("eval_runner")), {
-      task_id: taskId3,
-      suite_id: suite.id,
-      suite_version: suite.version,
-      split,
-      trials_per_case: trialsPerCase,
-      status: "running",
-      subjects,
-      environment_fingerprint: fingerprint3(object(args.environment ?? {}, "environment"))
-    });
-    const evaluationRuns = subjects.map((subject) => {
-      const trialIds = [];
-      for (const item of cases) for (let attempt = 1; attempt <= trialsPerCase; attempt += 1) {
-        const trial = this.workflowTrialRun({
-          trial_id: id21("trial"),
-          task_id: taskId3,
-          workflow_id: subject.subject_id,
-          version: subject.subject_version,
-          case_id: item.case_id,
-          project_root: projectRoot,
-          inputs: object(item.inputs ?? {}, "case inputs"),
-          environment: args.environment ?? {},
-          budget: args.budget ?? {}
-        });
-        trialIds.push(String(trial.trial.id));
-      }
-      return this.evaluationRunRecord({
-        suite_id: suite.id,
-        suite_version: suite.version,
-        split,
-        subject_type: "workflow",
-        subject_id: subject.subject_id,
-        subject_version: subject.subject_version,
-        trial_ids: trialIds
-      });
-    });
-    const comparisons = evaluationRuns.slice(1).map((candidate2, index) => this.evaluationCompare({
-      baseline_run_id: evaluationRuns[0].id,
-      candidate_run_id: candidate2.id,
-      comparison_id: `${runner.id}_${index + 1}`
-    }));
-    const completed = this.store.save("evaluation_runner", String(runner.id), {
-      ...recordPayload10(runner),
-      status: "completed",
-      evaluation_run_ids: evaluationRuns.map((run) => run.id),
-      comparison_ids: comparisons.map((comparison) => comparison.id)
-    });
-    return {
-      runner: completed,
-      evaluation_runs: evaluationRuns,
-      comparisons,
-      comparison: comparisons[0].comparison,
-      aggregate: {
-        baseline_trials: evaluationRuns[0].trial_ids.length,
-        candidate_trials: evaluationRuns[1].trial_ids.length,
-        cases: cases.length,
-        trials_per_case: trialsPerCase
-      }
-    };
+    return this.evaluationRuns.evaluationRunnerRun(args);
   }
   evaluationProgramGrade(args) {
-    const evaluation = this.store.get("evaluation_run", text(args.evaluation_run_id, "evaluation_run_id"));
-    const grader = this.store.get(
-      "grader",
-      text(args.grader_id, "grader_id"),
-      args.grader_version === void 0 ? void 0 : finiteInteger3(args.grader_version, "grader_version", 1)
-    );
-    if (grader.grader_type !== "program") throw new Error("Automatic evaluation grading requires a program grader");
-    const configuration = object(grader.configuration, "grader configuration");
-    const minimumPassRate = configuration.minimum_pass_rate === void 0 ? 1 : Number(configuration.minimum_pass_rate);
-    const maximumDuration = configuration.maximum_mean_duration_ms === void 0 ? Number.POSITIVE_INFINITY : Number(configuration.maximum_mean_duration_ms);
-    if (!Number.isFinite(minimumPassRate) || minimumPassRate < 0 || minimumPassRate > 1 || !Number.isFinite(maximumDuration) && maximumDuration !== Number.POSITIVE_INFINITY || maximumDuration < 0) {
-      throw new Error("Program grader configuration is invalid");
-    }
-    const aggregate = this.evaluationRunAggregate({ run_id: evaluation.id });
-    const duration = aggregate.costs.duration_ms;
-    const passed = Number(aggregate.pass_rate) >= minimumPassRate && (duration?.mean === void 0 || Number(duration.mean) <= maximumDuration);
-    const grades = evaluation.trial_ids.map((trialId) => {
-      const gradeId = `grade_${(0, import_node_crypto134.createHash)("sha256").update(JSON.stringify([trialId, grader.id, grader.version])).digest("hex")}`;
-      const existing = this.store.find("grade", gradeId);
-      if (existing) return existing;
-      const outcome2 = this.store.get("outcome", `outcome_${trialId}`);
-      return this.gradeRecord({
-        trial_id: trialId,
-        grader_id: grader.id,
-        grader_version: grader.version,
-        verdict: passed ? "passed" : "failed",
-        score: Number(aggregate.pass_rate),
-        summary: `Program grader evaluated evaluation run ${evaluation.id}.`,
-        evidence_ids: outcome2.evidence_ids,
-        metadata: {
-          evaluation_run_id: evaluation.id,
-          pass_rate: aggregate.pass_rate,
-          minimum_pass_rate: minimumPassRate,
-          maximum_mean_duration_ms: maximumDuration
-        }
-      });
-    });
-    return { grades, passed, aggregate };
-  }
-  evaluationPairedComparison(baselineRun, candidateRun) {
-    const indexed = (run) => {
-      const occurrences = /* @__PURE__ */ new Map();
-      return new Map(run.trial_ids.map((trialId) => {
-        const trial = this.store.get("trial", trialId);
-        const caseId = String(trial.case_id);
-        const occurrence = (occurrences.get(caseId) ?? 0) + 1;
-        occurrences.set(caseId, occurrence);
-        return [`${caseId}:${occurrence}`, this.store.get("outcome", `outcome_${trialId}`)];
-      }));
-    };
-    const baseline = indexed(baselineRun);
-    const candidate2 = indexed(candidateRun);
-    let candidateWins = 0;
-    let baselineWins = 0;
-    let ties = 0;
-    for (const [key2, baselineOutcome] of baseline) {
-      const candidateOutcome = candidate2.get(key2);
-      const baselinePassed = baselineOutcome.verdict === "passed";
-      const candidatePassed = candidateOutcome.verdict === "passed";
-      if (candidatePassed && !baselinePassed) candidateWins += 1;
-      else if (baselinePassed && !candidatePassed) baselineWins += 1;
-      else ties += 1;
-    }
-    return {
-      matched_trials: candidateWins + baselineWins + ties,
-      candidate_wins: candidateWins,
-      baseline_wins: baselineWins,
-      ties,
-      unmatched_baseline_trials: baseline.size - (candidateWins + baselineWins + ties),
-      unmatched_candidate_trials: candidate2.size - (candidateWins + baselineWins + ties)
-    };
+    return this.evaluationRuns.evaluationProgramGrade(args);
   }
   evaluationPromotionAssess(args) {
-    const comparison = this.store.get("evaluation_comparison", text(args.comparison_id, "comparison_id"));
-    const baselineRun = this.store.get("evaluation_run", String(comparison.baseline_run_id));
-    const candidateRun = this.store.get("evaluation_run", String(comparison.candidate_run_id));
-    const minTrials = finiteInteger3(args.min_trials, "min_trials", 2, 1, 1e4);
-    const minimumDelta = args.min_pass_rate_delta === void 0 ? 0 : Number(args.min_pass_rate_delta);
-    const maximumCostRatio = args.max_cost_regression_ratio === void 0 ? Number.POSITIVE_INFINITY : Number(args.max_cost_regression_ratio);
-    const maximumDurationRatio = args.max_duration_regression_ratio === void 0 ? Number.POSITIVE_INFINITY : Number(args.max_duration_regression_ratio);
-    const costMetric = args.cost_metric === void 0 ? "tokens" : text(args.cost_metric, "cost_metric");
-    if (!Number.isFinite(minimumDelta) || minimumDelta < -1 || minimumDelta > 1 || !Number.isFinite(maximumCostRatio) && maximumCostRatio !== Number.POSITIVE_INFINITY || maximumCostRatio < 0 || !Number.isFinite(maximumDurationRatio) && maximumDurationRatio !== Number.POSITIVE_INFINITY || maximumDurationRatio < 0) {
-      throw new Error("Promotion thresholds are invalid");
-    }
-    const baseline = comparison.baseline;
-    const candidate2 = comparison.candidate;
-    const paired = this.evaluationPairedComparison(baselineRun, candidateRun);
-    const baselineCost = metricMean(baseline, costMetric);
-    const candidateCost = metricMean(candidate2, costMetric);
-    const baselineDuration = metricMean(baseline, "duration_ms");
-    const candidateDuration = metricMean(candidate2, "duration_ms");
-    const costRatio = baselineCost === null || candidateCost === null ? null : candidateCost / Math.max(1, baselineCost);
-    const durationRatio = baselineDuration === null || candidateDuration === null ? null : candidateDuration / Math.max(1, baselineDuration);
-    const checks = [
-      { check: "held_out", passed: comparison.split === "held_out" },
-      { check: "minimum_trials", passed: Number(baseline.total) >= minTrials && Number(candidate2.total) >= minTrials },
-      { check: "pass_rate", passed: Number(candidate2.pass_rate) - Number(baseline.pass_rate) >= minimumDelta },
-      { check: "cost_regression", passed: maximumCostRatio === Number.POSITIVE_INFINITY || costRatio !== null && costRatio <= maximumCostRatio },
-      { check: "duration_regression", passed: maximumDurationRatio === Number.POSITIVE_INFINITY || durationRatio !== null && durationRatio <= maximumDurationRatio },
-      { check: "paired_cases", passed: Number(paired.matched_trials) >= minTrials }
-    ];
-    const eligible = checks.every((check2) => check2.passed);
-    const promotion = this.store.create("evaluation_promotion", String(args.promotion_id ?? id21("promotion")), {
-      comparison_id: comparison.id,
-      baseline_run_id: baselineRun.id,
-      candidate_run_id: candidateRun.id,
-      eligible,
-      checks,
-      paired,
-      thresholds: {
-        min_trials: minTrials,
-        min_pass_rate_delta: minimumDelta,
-        cost_metric: costMetric,
-        max_cost_regression_ratio: maximumCostRatio,
-        max_duration_regression_ratio: maximumDurationRatio
-      }
-    });
-    return { eligible, promotion, comparison: {
-      ...comparison,
-      paired,
-      cost_metric: costMetric,
-      cost_regression_ratio: costRatio,
-      duration_regression_ratio: durationRatio
-    } };
+    return this.evaluationRuns.evaluationPromotionAssess(args);
   }
   evaluationReliabilityAssess(args) {
-    const comparison = this.store.get("evaluation_comparison", text(args.comparison_id, "comparison_id"));
-    const baselineRun = this.store.get("evaluation_run", String(comparison.baseline_run_id));
-    const candidateRun = this.store.get("evaluation_run", String(comparison.candidate_run_id));
-    const minTrials = finiteInteger3(args.min_trials, "min_trials", 20, 2, 1e4);
-    const maxBudgetRatio = Number(args.max_budget_ratio ?? 1);
-    if (!Number.isFinite(maxBudgetRatio) || maxBudgetRatio < 0) throw new Error("max_budget_ratio must be non-negative");
-    const paired = this.evaluationPairedComparison(baselineRun, candidateRun);
-    const baselineTrials = baselineRun.trial_ids.map((trialId) => this.store.get("trial", trialId));
-    const candidateTrials = candidateRun.trial_ids.map((trialId) => this.store.get("trial", trialId));
-    const baselineEnvironment = object(baselineTrials[0].environment, "baseline environment");
-    const environmentsMatch = [...baselineTrials, ...candidateTrials].every((trial) => fingerprint3(object(trial.environment, "trial environment")) === fingerprint3(baselineEnvironment));
-    const budgetsMatch = [...baselineTrials, ...candidateTrials].every((trial) => {
-      const baselineBudget = object(baselineTrials[0].budget, "baseline budget");
-      const ratio2 = Number(Object.entries(object(trial.budget, "trial budget")).every(([key2, value]) => Number(value) <= Number(baselineBudget[key2]) * maxBudgetRatio));
-      return ratio2 === 1;
-    });
-    const decisive = Number(paired.candidate_wins) + Number(paired.baseline_wins);
-    const pValue = decisive === 0 ? 1 : 2 ** -decisive * Array.from({ length: Number(paired.baseline_wins) + 1 }, (_, index) => binomial(decisive, Number(paired.candidate_wins) + index)).reduce((sum, value) => sum + value, 0);
-    const status2 = Number(paired.matched_trials) < minTrials || !environmentsMatch || !budgetsMatch ? "inconclusive" : pValue <= 0.05 && Number(paired.candidate_wins) > Number(paired.baseline_wins) ? "eligible" : "rejected";
-    const assessment = this.store.create("evaluation_reliability", String(args.assessment_id ?? id21("reliability")), { comparison_id: comparison.id, status: status2, min_trials: minTrials, max_budget_ratio: maxBudgetRatio, paired, p_value: pValue, environments_match: environmentsMatch, budgets_match: budgetsMatch });
-    return { status: status2, assessment };
+    return this.evaluationRuns.evaluationReliabilityAssess(args);
   }
   judgeAdapterSave(args) {
     const graderType = text(args.grader_type, "grader_type");
@@ -266133,8 +266220,8 @@ Evidence: ${item.evidence_ids.join(", ")}
   }
   judgeCalibrationRecord(args) {
     const judge = this.store.get("judge_adapter", text(args.judge_id, "judge_id"));
-    const total = finiteInteger3(args.total, "total", 1, 1);
-    const agreed = finiteInteger3(args.agreed, "agreed", 0, 0, total);
+    const total = finiteInteger(args.total, "total", 1, 1);
+    const agreed = finiteInteger(args.agreed, "agreed", 0, 0, total);
     const minimum = Number(args.minimum_agreement ?? 0.8);
     if (!Number.isFinite(minimum) || minimum < 0 || minimum > 1) throw new Error("minimum_agreement must be between 0 and 1");
     const goldCaseIds = optionalTextArray3(args.gold_case_ids, "gold_case_ids");
@@ -266142,8 +266229,8 @@ Evidence: ${item.evidence_ids.join(", ")}
     if (goldCaseIds.length && goldCaseIds.length !== total) throw new Error("gold_case_ids must match total calibration examples");
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
     const agreement = agreed / total;
-    const calibration = this.store.create("judge_calibration", String(args.calibration_id ?? id21("calibration")), { judge_id: judge.id, judge_version: judge.version, total, agreed, agreement, minimum_agreement: minimum, gold_case_ids: goldCaseIds, evidence_ids: evidenceIds2, status: agreement >= minimum ? "calibrated" : "advisory" });
-    this.store.save("judge_adapter", String(judge.id), { ...recordPayload10(judge), status: calibration.status, calibration_id: calibration.id });
+    const calibration = this.store.create("judge_calibration", String(args.calibration_id ?? id22("calibration")), { judge_id: judge.id, judge_version: judge.version, total, agreed, agreement, minimum_agreement: minimum, gold_case_ids: goldCaseIds, evidence_ids: evidenceIds2, status: agreement >= minimum ? "calibrated" : "advisory" });
+    this.store.save("judge_adapter", String(judge.id), { ...payload(judge), status: calibration.status, calibration_id: calibration.id });
     return { calibration };
   }
   judgePromotionEligible(args) {
@@ -266174,7 +266261,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
     const axes2 = object(args.design_axes, "design_axes");
     if (!Object.keys(axes2).length || Object.keys(axes2).length > 2 || Object.keys(axes2).some((key2) => !HARNESS_DIMENSIONS.has(key2))) throw new Error("Adaptation Candidate changes at most two supported design axes");
-    const candidate2 = this.store.create("adaptation_candidate", String(args.candidate_id ?? id21("adaptation")), { task_id: task.id, trial_ids: trialIds, evidence_ids: evidenceIds2, hypothesis: assertNoSecret5(text(args.hypothesis, "hypothesis"), "hypothesis"), applicability: assertNoSecret5(text(args.applicability, "applicability"), "applicability"), design_axes: axes2, lifecycle: "draft", publication_allowed: false });
+    const candidate2 = this.store.create("adaptation_candidate", String(args.candidate_id ?? id22("adaptation")), { task_id: task.id, trial_ids: trialIds, evidence_ids: evidenceIds2, hypothesis: assertNoSecret5(text(args.hypothesis, "hypothesis"), "hypothesis"), applicability: assertNoSecret5(text(args.applicability, "applicability"), "applicability"), design_axes: axes2, lifecycle: "draft", publication_allowed: false });
     return { candidate: candidate2 };
   }
   adaptationCandidateAuthorizeCanary(args) {
@@ -266188,13 +266275,13 @@ Evidence: ${item.evidence_ids.join(", ")}
     }
     const judgeGateId = args.judge_gate_id === void 0 ? null : text(args.judge_gate_id, "judge_gate_id");
     if (judgeGateId && this.store.get("evaluation_judge_gate", judgeGateId).status !== "eligible") throw new Error("Adaptation Candidate requires an eligible calibrated Judge Gate");
-    const authorized = this.store.save("adaptation_candidate", String(candidate2.id), { ...recordPayload10(candidate2), lifecycle: "canary_ready", reliability_assessment_id: assessment.id, signoff_id: signoff.id, judge_gate_id: judgeGateId, publication_allowed: false });
+    const authorized = this.store.save("adaptation_candidate", String(candidate2.id), { ...payload(candidate2), lifecycle: "canary_ready", reliability_assessment_id: assessment.id, signoff_id: signoff.id, judge_gate_id: judgeGateId, publication_allowed: false });
     return { candidate: authorized };
   }
   feedbackIntakeCreate(args) {
     const task = this.store.get("task", text(args.task_id, "task_id"));
     const summary2 = assertNoSecret5(text(args.summary, "summary"), "summary");
-    const intake = this.store.create("feedback_intake", String(args.intake_id ?? id21("feedback_intake")), { task_id: task.id, source_uri: assertNoSecret5(text(args.source_uri, "source_uri"), "source_uri"), summary: summary2, metric: args.metric === void 0 ? null : text(args.metric, "metric"), status: "pending_review" });
+    const intake = this.store.create("feedback_intake", String(args.intake_id ?? id22("feedback_intake")), { task_id: task.id, source_uri: assertNoSecret5(text(args.source_uri, "source_uri"), "source_uri"), summary: summary2, metric: args.metric === void 0 ? null : text(args.metric, "metric"), status: "pending_review" });
     return { intake };
   }
   feedbackCaseApprove(args) {
@@ -266202,14 +266289,14 @@ Evidence: ${item.evidence_ids.join(", ")}
     const split = text(args.split, "split");
     if (split !== "development") throw new Error("Feedback intake may only create development cases; held-out requires an independent curator");
     const reviewer = assertNoSecret5(text(args.reviewer, "reviewer"), "reviewer");
-    const caseRecord = this.store.create("feedback_case", String(args.case_id ?? id21("feedback_case")), { intake_id: intake.id, task_id: intake.task_id, split, reviewer, source_uri: intake.source_uri, summary: intake.summary, immutable: true });
-    this.store.save("feedback_intake", String(intake.id), { ...recordPayload10(intake), status: "approved", feedback_case_id: caseRecord.id, reviewer });
+    const caseRecord = this.store.create("feedback_case", String(args.case_id ?? id22("feedback_case")), { intake_id: intake.id, task_id: intake.task_id, split, reviewer, source_uri: intake.source_uri, summary: intake.summary, immutable: true });
+    this.store.save("feedback_intake", String(intake.id), { ...payload(intake), status: "approved", feedback_case_id: caseRecord.id, reviewer });
     return { case: caseRecord };
   }
   canaryStart(args) {
     const candidate2 = this.store.get("adaptation_candidate", text(args.candidate_id, "candidate_id"));
     if (candidate2.lifecycle !== "canary_ready") throw new Error("Adaptation Candidate must pass shadow reliability and Signoff before Canary");
-    const canary = this.store.create("canary", String(args.canary_id ?? id21("canary")), { candidate_id: candidate2.id, candidate_version: candidate2.version, baseline_id: text(args.baseline_id, "baseline_id"), environment_fingerprint: fingerprint3(object(args.environment, "environment")), status: "running" });
+    const canary = this.store.create("canary", String(args.canary_id ?? id22("canary")), { candidate_id: candidate2.id, candidate_version: candidate2.version, baseline_id: text(args.baseline_id, "baseline_id"), environment_fingerprint: fingerprint4(object(args.environment, "environment")), status: "running" });
     return { canary };
   }
   canaryObserve(args) {
@@ -266220,13 +266307,13 @@ Evidence: ${item.evidence_ids.join(", ")}
     if (![baseline, candidate2, threshold].every((value) => Number.isFinite(value) && value >= 0)) throw new Error("Canary metrics must be non-negative finite numbers");
     const regression = candidate2 - baseline > threshold;
     const status2 = regression ? "rolled_back" : "running";
-    const saved = this.store.save("canary", String(canary.id), { ...recordPayload10(canary), status: status2, metric: text(args.metric, "metric"), baseline, candidate: candidate2, threshold, rollback_to: regression ? canary.baseline_id : null });
+    const saved = this.store.save("canary", String(canary.id), { ...payload(canary), status: status2, metric: text(args.metric, "metric"), baseline, candidate: candidate2, threshold, rollback_to: regression ? canary.baseline_id : null });
     return { status: status2, canary: saved };
   }
   experienceMine(args) {
     const subjectType = text(args.subject_type, "subject_type");
     const subjectId = text(args.subject_id, "subject_id");
-    const subjectVersion = finiteInteger3(args.subject_version, "subject_version", 1);
+    const subjectVersion = finiteInteger(args.subject_version, "subject_version", 1);
     const groups = /* @__PURE__ */ new Map();
     for (const trial of this.store.list("trial", 1e4, (item) => item.subject_type === subjectType && item.subject_id === subjectId && Number(item.subject_version) === subjectVersion)) {
       const outcome2 = this.store.find("outcome", `outcome_${trial.id}`);
@@ -266243,7 +266330,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     const candidates = [...groups.values()].filter((group) => group.trial_ids.length >= 2).map((group) => {
       const trialIds = [...group.trial_ids].sort();
       const evidenceIds2 = [...new Set(group.evidence_ids)].sort();
-      const candidateId2 = `experience_mining_${(0, import_node_crypto134.createHash)("sha256").update(`${subjectType}:${subjectId}:${subjectVersion}:${group.pattern_kind}:${group.failure_type}:${trialIds.join(",")}`).digest("hex")}`;
+      const candidateId2 = `experience_mining_${(0, import_node_crypto135.createHash)("sha256").update(`${subjectType}:${subjectId}:${subjectVersion}:${group.pattern_kind}:${group.failure_type}:${trialIds.join(",")}`).digest("hex")}`;
       const payload10 = {
         subject_type: subjectType,
         subject_id: subjectId,
@@ -266269,7 +266356,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     const subjectId = text(args.subject_id, "subject_id");
     const metric2 = text(args.metric, "metric");
     const sequence = this.store.list("operational_signal", 1e4, (signal) => signal.subject_type === subjectType && signal.subject_id === subjectId && signal.metric === metric2).length + 1;
-    return this.store.create("operational_signal", String(args.signal_id ?? id21("signal")), {
+    return this.store.create("operational_signal", String(args.signal_id ?? id22("signal")), {
       task_id: taskId3,
       subject_type: subjectType,
       subject_id: subjectId,
@@ -266282,7 +266369,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     const subjectType = text(args.subject_type, "subject_type");
     const subjectId = text(args.subject_id, "subject_id");
     const metric2 = text(args.metric, "metric");
-    const windowSize = finiteInteger3(args.window_size, "window_size", 10, 1, 1e3);
+    const windowSize = finiteInteger(args.window_size, "window_size", 10, 1, 1e3);
     const direction = text(args.direction, "direction");
     if (!(/* @__PURE__ */ new Set(["lower", "higher"])).has(direction)) throw new Error("direction must be lower or higher");
     const threshold = Number(args.threshold);
@@ -266295,7 +266382,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     const relative_change = (current2 - baseline) / Math.max(Math.abs(baseline), 1);
     const alert = direction === "lower" ? relative_change > threshold : relative_change < -threshold;
     const result = { alert, baseline, current: current2, relative_change, samples: values3.length, direction, threshold };
-    if (alert) this.store.create("operational_alert", String(args.alert_id ?? id21("alert")), {
+    if (alert) this.store.create("operational_alert", String(args.alert_id ?? id22("alert")), {
       subject_type: subjectType,
       subject_id: subjectId,
       metric: metric2,
@@ -266348,7 +266435,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     if (!allowed[current2]?.includes(target)) throw new Error(`Invalid ${subjectType} transition: ${current2} -> ${target}`);
     const verification = target === "verified" ? this.verificationGate(subjectType, subject, args) : { evaluation_run_id: null, signoff_id: null, promotion_id: null };
     return this.store.save(kind4, String(subject.id), {
-      ...recordPayload10(subject),
+      ...payload(subject),
       lifecycle: target,
       previous_version: subject.version,
       transition_reason: text(args.reason, "reason"),
@@ -266361,10 +266448,10 @@ Evidence: ${item.evidence_ids.join(", ")}
   rollbackVersionedSubject(kind4, idKey, subjectType, args) {
     const subjectId = text(args[idKey], idKey);
     const current2 = this.store.get(kind4, subjectId);
-    const target = this.store.get(kind4, subjectId, finiteInteger3(args.target_version, "target_version", 1));
+    const target = this.store.get(kind4, subjectId, finiteInteger(args.target_version, "target_version", 1));
     if (target.lifecycle !== "verified") throw new Error(`Rollback target must be a verified ${subjectType} version`);
     return this.store.save(kind4, subjectId, {
-      ...recordPayload10(target),
+      ...payload(target),
       lifecycle: "verified",
       rollback_from_version: current2.version,
       rollback_to_version: target.version,
@@ -266389,7 +266476,7 @@ Evidence: ${item.evidence_ids.join(", ")}
       evidence_ids: evidenceIds2,
       outcomes,
       success_strategy: text(args.success_strategy, "success_strategy"),
-      failure_modes: array8(args.failure_modes, "failure_modes").map((item) => text(item, "failure_mode")),
+      failure_modes: array(args.failure_modes, "failure_modes").map((item) => text(item, "failure_mode")),
       applicability: text(args.applicability, "applicability")
     }, ["summary"]);
   }
@@ -266422,7 +266509,7 @@ Evidence: ${item.evidence_ids.join(", ")}
       proposalId: String(proposal.id),
       allowExternalWrite: args.allow_external_write
     });
-    const record = this.store.create("skill_publication", String(args.publication_id ?? id21("publication")), {
+    const record = this.store.create("skill_publication", String(args.publication_id ?? id22("publication")), {
       proposal_id: proposal.id,
       proposal_version: proposal.version,
       source_id: source.id,
@@ -266442,21 +266529,21 @@ Evidence: ${item.evidence_ids.join(", ")}
       backupPath: String(publication.backup_path),
       allowExternalWrite: args.allow_external_write
     });
-    const restored = this.store.save("skill_publication", String(publication.id), { ...recordPayload10(publication), status: "rolled_back" });
+    const restored = this.store.save("skill_publication", String(publication.id), { ...payload(publication), status: "rolled_back" });
     await this.catalog.scanSource(String(publication.source_id));
     return restored;
   }
   workflowPlan(args) {
     const workflow = this.get("workflow", "workflow_id", args);
-    const definitions = array8(workflow.inputs ?? [], "workflow inputs");
+    const definitions = array(workflow.inputs ?? [], "workflow inputs");
     if (typeof (args.inputs ?? {}) !== "object" || Array.isArray(args.inputs)) {
       throw new Error("inputs must be an object");
     }
     const inputs = resolveInputs(definitions, args.inputs ?? {});
-    const stepDefinitions = array8(workflow.steps ?? [], "workflow steps");
+    const stepDefinitions = array(workflow.steps ?? [], "workflow steps");
     const steps = normalizeSteps(substitute(stepDefinitions, inputs));
     const allowExecution = optionalBoolean3(args.allow_execution, "allow_execution") ?? false;
-    const sideEffects = array8(args.approved_side_effects ?? [], "approved_side_effects");
+    const sideEffects = array(args.approved_side_effects ?? [], "approved_side_effects");
     const approved = approvedEffects(allowExecution, sideEffects);
     return {
       workflow_id: workflow.id,
@@ -266476,7 +266563,7 @@ Evidence: ${item.evidence_ids.join(", ")}
       new Set(plan.approved_side_effects)
     );
     const passed = results.length === plan.steps.length && results.every((item) => item.passed);
-    return this.store.save("workflow_run", id21("run"), {
+    return this.store.save("workflow_run", id22("run"), {
       workflow_id: plan.workflow_id,
       workflow_version: plan.workflow_version,
       project_root: root,
@@ -266581,9 +266668,9 @@ Evidence: ${item.evidence_ids.join(", ")}
     }));
     const max = Number(args.max_concurrency ?? 4);
     if (!Number.isInteger(max) || max < 1 || max > 32) throw new Error("max_concurrency must be between 1 and 32");
-    const leaseTtl = finiteInteger3(args.lease_ttl_seconds, "lease_ttl_seconds", 300, 1, 3600);
+    const leaseTtl = finiteInteger(args.lease_ttl_seconds, "lease_ttl_seconds", 300, 1, 3600);
     const budget = budgetLimits(object(args.budget ?? {}, "budget"));
-    const planId = args.plan_id === void 0 ? id21("plan") : text(args.plan_id, "plan_id");
+    const planId = args.plan_id === void 0 ? id22("plan") : text(args.plan_id, "plan_id");
     return this.store.create("orchestration_plan", planId, {
       goal: text(args.goal, "goal"),
       task_id: args.task_id ?? null,
@@ -266602,7 +266689,7 @@ Evidence: ${item.evidence_ids.join(", ")}
   orchestrationTrialStart(args) {
     const taskId3 = text(args.task_id, "task_id");
     this.store.get("task", taskId3);
-    const trialId = args.trial_id === void 0 ? id21("trial") : text(args.trial_id, "trial_id");
+    const trialId = args.trial_id === void 0 ? id22("trial") : text(args.trial_id, "trial_id");
     if (this.store.find("trial", trialId)) throw new Error(`Trial already exists: ${trialId}`);
     const caseId = args.case_id === void 0 ? void 0 : text(args.case_id, "case_id");
     const environment = object(args.environment ?? {}, "environment");
@@ -266611,7 +266698,7 @@ Evidence: ${item.evidence_ids.join(", ")}
       this.store.get(
         "harness_configuration",
         text(args.harness_configuration_id, "harness_configuration_id"),
-        args.harness_configuration_version === void 0 ? void 0 : finiteInteger3(args.harness_configuration_version, "harness_configuration_version", 1)
+        args.harness_configuration_version === void 0 ? void 0 : finiteInteger(args.harness_configuration_version, "harness_configuration_version", 1)
       );
     }
     const plan = this.orchestrationCreate({
@@ -266644,15 +266731,15 @@ Evidence: ${item.evidence_ids.join(", ")}
     const plan = this.get("orchestration_plan", "plan_id", args);
     if (plan.status !== "running") throw new Error(`Plan is not running: ${plan.status}`);
     const owner = text(args.claimed_by, "claimed_by");
-    const maximum = finiteInteger3(plan.max_concurrency, "plan max_concurrency", 4, 1, 32);
-    const requested = finiteInteger3(args.capacity, "capacity", maximum, 1);
+    const maximum = finiteInteger(plan.max_concurrency, "plan max_concurrency", 4, 1, 32);
+    const requested = finiteInteger(args.capacity, "capacity", maximum, 1);
     const capacity = Math.min(requested, maximum);
     const recovered = recoverExpiredLeases(plan.nodes);
     const result = dispatchNodes(
       recovered.nodes,
       capacity,
       owner,
-      finiteInteger3(plan.lease_ttl_seconds, "plan lease_ttl_seconds", 300, 1, 3600)
+      finiteInteger(plan.lease_ttl_seconds, "plan lease_ttl_seconds", 300, 1, 3600)
     );
     const saved = this.store.updateIfVersion("orchestration_plan", String(plan.id), Number(plan.version), {
       ...plan,
@@ -266674,7 +266761,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     if (plan.status !== "running") throw new Error(`Plan is not running: ${plan.status}`);
     const leaseId = text(args.lease_id, "lease_id");
     const owner = text(args.claimed_by, "claimed_by");
-    const ttl = finiteInteger3(plan.lease_ttl_seconds, "plan lease_ttl_seconds", 300, 1, 3600);
+    const ttl = finiteInteger(plan.lease_ttl_seconds, "plan lease_ttl_seconds", 300, 1, 3600);
     let found = false;
     const nodes = plan.nodes.map((node) => {
       if (node.lease_id !== leaseId) return node;
@@ -266689,7 +266776,7 @@ Evidence: ${item.evidence_ids.join(", ")}
     const plan = this.get("orchestration_plan", "plan_id", args);
     const leaseId = text(args.lease_id, "lease_id");
     const idempotencyKey = args.idempotency_key === void 0 ? null : text(args.idempotency_key, "idempotency_key");
-    const receipts = array8(plan.submission_receipts ?? [], "submission_receipts");
+    const receipts = array(plan.submission_receipts ?? [], "submission_receipts");
     const existing = idempotencyKey === null ? void 0 : receipts.find((receipt) => receipt.idempotency_key === idempotencyKey);
     if (existing) {
       if (existing.lease_id !== leaseId || existing.verdict !== args.verdict) {
@@ -266707,8 +266794,8 @@ Evidence: ${item.evidence_ids.join(", ")}
     const costs = object(args.costs ?? {}, "costs");
     const accumulatedCosts = addCosts(object(plan.accumulated_costs ?? {}, "accumulated costs"), costs);
     const exceedsBudget = budgetExceeded(accumulatedCosts, budgetLimits(object(plan.budget ?? {}, "plan budget")));
-    const artifactIds = array8(args.artifact_ids ?? [], "artifact_ids").map((value) => text(value, "artifact_id"));
-    const evidenceIds2 = array8(args.evidence_ids ?? [], "evidence_ids").map((value) => text(value, "evidence_id"));
+    const artifactIds = array(args.artifact_ids ?? [], "artifact_ids").map((value) => text(value, "artifact_id"));
+    const evidenceIds2 = array(args.evidence_ids ?? [], "evidence_ids").map((value) => text(value, "evidence_id"));
     for (const artifactId of artifactIds) this.store.get("artifact", artifactId);
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
     const summary2 = args.summary === void 0 ? null : text(args.summary, "summary");
@@ -266761,7 +266848,7 @@ Evidence: ${item.evidence_ids.join(", ")}
       return { plan, ...this.trialGet({ trial_id: trialId }) };
     }
     const result = orchestrationOutcome(plan.nodes, Boolean(plan.budget_exceeded));
-    const stableKey = (0, import_node_crypto134.createHash)("sha256").update(`${plan.id}:${trialId}`).digest("hex");
+    const stableKey = (0, import_node_crypto135.createHash)("sha256").update(`${plan.id}:${trialId}`).digest("hex");
     const artifactId = `artifact_${stableKey}`;
     const artifact = this.store.find("artifact", artifactId) ?? this.artifactRegister({
       artifact_id: artifactId,
@@ -266853,7 +266940,7 @@ Evidence: ${item.evidence_ids.join(", ")}
   async remoteInteropDispatch(args) {
     const status2 = String(args.status ?? "accepted");
     if (!(/* @__PURE__ */ new Set(["accepted", "completed", "failed"])).has(status2)) throw new Error("Unsupported remote status");
-    return this.remoteInterop.dispatch(args, { dispatch: async () => ({ remote_id: text(args.remote_id ?? `remote_${(0, import_node_crypto134.randomUUID)().replaceAll("-", "")}`, "remote_id"), status: status2, ...args.result_digest === void 0 ? {} : { result_digest: text(args.result_digest, "result_digest") } }) });
+    return this.remoteInterop.dispatch(args, { dispatch: async () => ({ remote_id: text(args.remote_id ?? `remote_${(0, import_node_crypto135.randomUUID)().replaceAll("-", "")}`, "remote_id"), status: status2, ...args.result_digest === void 0 ? {} : { result_digest: text(args.result_digest, "result_digest") } }) });
   }
 };
 installAdapterRuntimeMethods(CraftService);
@@ -267366,7 +267453,7 @@ function surfaceToolNames(surface, activeTools, coreToolNames) {
 }
 
 // core/component-trace.ts
-var import_node_crypto135 = require("node:crypto");
+var import_node_crypto136 = require("node:crypto");
 function canonical(value) {
   if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
   if (value && typeof value === "object") {
@@ -267375,7 +267462,7 @@ function canonical(value) {
   return JSON.stringify(value);
 }
 function digest34(value) {
-  return `sha256:${(0, import_node_crypto135.createHash)("sha256").update(canonical(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto136.createHash)("sha256").update(canonical(value)).digest("hex")}`;
 }
 function text30(value, fallback2) {
   return typeof value === "string" && value.trim() ? value.trim() : fallback2;
@@ -267685,14 +267772,14 @@ var McpServer = class {
     this.service = service;
     this.mode = mode2;
     this.hooks = service.hookPlane;
-    this.componentTrace = new ComponentTraceKernel(service.trace, `mcp_${(0, import_node_crypto136.randomUUID)().replaceAll("-", "")}`);
+    this.componentTrace = new ComponentTraceKernel(service.trace, `mcp_${(0, import_node_crypto137.randomUUID)().replaceAll("-", "")}`);
     const allowed = new Set(surfaceToolNames2(mode2));
     const mountedComponent = componentForSurface(mode2);
     this.tools = [...ACTIVE_TOOLS, ...SYSCALL_TOOLS].filter((tool2) => allowed.has(tool2.name));
     this.handlers = createActionHandlers(service, mountedComponent);
     let artifactDigest = null;
     try {
-      artifactDigest = (0, import_node_crypto136.createHash)("sha256").update((0, import_node_fs32.readFileSync)(process.argv[1])).digest("hex");
+      artifactDigest = (0, import_node_crypto137.createHash)("sha256").update((0, import_node_fs32.readFileSync)(process.argv[1])).digest("hex");
     } catch {
     }
     this.fingerprint = {
