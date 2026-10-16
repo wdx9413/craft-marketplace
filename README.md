@@ -28,7 +28,7 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 
 ## 安装
 
-将本仓库作为 Git Marketplace 添加到 Host。无论 Codex 还是 Claude Code，市场清单均提供 `craft-context`、`craft-knowledge`、`craft-memory`、`craft-experience`、`craft-codebase` 五个插件。
+将本仓库作为 Git Marketplace 添加到 Host。Codex 和 Claude Code 均只提供一个插件：`craft-context`。
 
 ### Claude Code
 
@@ -39,24 +39,20 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 /plugin install craft-context@craft-marketplace
 ```
 
-`craft-context` 包含四个子能力的 MCP 工具及参考 Skill；Codex/Claude 插件还提供单入口 Hook，在提示阶段形成一个共享的 Knowledge、Memory、Experience 回执。仓库索引由 Skill/MCP 按需准备。四个独立组件仍可分别安装；与聚合入口同时启用会增加重复的 MCP 和 Hook 入口。纯 Skill + MCP 接入无需 Hook。
+`craft-context` 是统一完整入口，包含 Codebase、Knowledge、Memory、Experience 四层的完整 MCP 工具面和参考 Skill；Codex/Claude 插件提供一个共享 Hook，在提示阶段形成统一的上下文回执。各能力仍按层实现，插件只打包和发布 `craft-context`。
 
-- `craft-context`：默认聚合四子能力，统一上下文预算、来源回执和自动仓库索引。
-- `craft-knowledge`：受证据约束的知识源、Wiki 与受控上下文解析。
-- `craft-memory`：按范围、来源、有效期和证据解析长期记忆。
-- `craft-experience`：从脱敏执行记录生成并验证 Workflow 草案。
-- `craft-codebase`：自动随当前代码仓库接入、checkpoint 固定的只读符号、调用方与候选影响分析。
+- `craft-context`：统一上下文预算、来源回执和仓库索引，并提供 Codebase、Knowledge、Memory、Experience 各层的完整工具能力。
 
-完整 Craft 及其他内部插件仍保留在源码仓库，但不由本发布仓分发。
+分层源码和内部组件继续保留在 Craft 源码仓库中；本发布仓不再分别分发 `craft-codebase`、`craft-knowledge`、`craft-memory` 或 `craft-experience` 插件。
 
-每个插件都是自包含的：其 MCP 入口只引用本插件目录内的 `dist/plugin` bundle。
+插件自包含：MCP 入口和 Hook 只引用 `craft-context` 目录内的 bundle 与分析器资源。
 
 ## 发布来源
 
 - Craft 源码仓库：[wdx9413/craft](https://github.com/wdx9413/craft)
-- Source revision：`3be188b`
+- Source revision/state and working-tree digest：见 `release.json`
 - Craft version：`0.12.44`
 
 发布前应从源码仓库运行打包与 MCP smoke 检查；不要在本仓库手工修改 bundle。
 
-默认安装 `craft-context` 即可使用统一上下文和自动仓库索引；也可按需安装子组件。每个产品的 `dsh/` 目录可独立安装为 DSH 原生插件，并内置 Skill 与本地运行时。
+安装 `craft-context` 即可通过统一入口使用四层组件；Host 不需要再安装独立子组件插件。

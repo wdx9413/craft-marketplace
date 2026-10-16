@@ -225324,7 +225324,7 @@ var TOOL_DEFINITIONS = [
   tool("craft_codebase_refresh", "Checkpoint changed workspace files and rebuild its structural index; requires explicit activation.", ["workspace_id"], false, ["activation_id"]),
   tool("craft_codebase_activate", "Explicitly enable read-only structural analysis for one declared Workspace. It does not scan files or modify any Host configuration.", ["workspace_id"], false, ["activation_id", "actor"]),
   tool("craft_codebase_deactivate", "Disable read-only structural analysis for one Workspace. Existing indexes remain stored but are not queryable until explicitly reactivated.", ["workspace_id"], false, ["activation_id", "actor"]),
-  tool("craft_codebase_status", "Report whether codebase analysis is explicitly enabled, its available snapshot indexes, and any stale state. It never reads source files.", ["workspace_id"], true, ["activation_id"]),
+  tool("craft_codebase_status", "Report readiness, up to 25 recent snapshot index summaries, and the omitted history count. The response excludes graph payloads and never reads source files.", ["workspace_id"], true, ["activation_id"]),
   tool("craft_codebase_analysis_import", "Import bounded language analyzer facts pinned to an active workspace checkpoint. Adapter assertions remain static, partial evidence.", ["workspace_id", "checkpoint_id", "analysis"], false, ["activation_id", "index_id"]),
   tool("craft_codebase_index_build", "Build a read-only structural index from one declared Workspace checkpoint. It stores paths, digests, spans and relations, never source bodies.", ["workspace_id"], false, ["activation_id", "checkpoint_id", "index_id", "analyzer"]),
   tool("craft_codebase_symbol_find", "Find bounded symbols in one ready codebase index and return snapshot-pinned source spans.", ["index_id", "workspace_id", "query"], true, ["activation_id", "limit"]),
@@ -255919,7 +255919,30 @@ var CodebaseIndexKernel = class {
     const indexes = this.store.list("codebase_index", 1e3, (item) => item.workspace_id === workspaceId).map((index) => this.indexStatus(index, workspace));
     const ordered = indexes.sort((left, right) => String(right.created_at).localeCompare(String(left.created_at)));
     const readiness = activation?.status !== "active" ? "disabled" : ordered.length === 0 ? "index_required" : ordered[0].status === "ready" ? "ready" : "rebuild_required";
-    return { workspace_id: workspaceId, enabled: activation?.status === "active", activation, analyzer: ordered[0]?.analyzer ?? "typescript-checker", readiness, indexes: ordered };
+    const recent = ordered.slice(0, 25);
+    return {
+      workspace_id: workspaceId,
+      enabled: activation?.status === "active",
+      activation,
+      analyzer: ordered[0]?.analyzer ?? "typescript-checker",
+      readiness,
+      indexes: recent.map((index) => ({
+        id: index.id,
+        workspace_id: index.workspace_id,
+        checkpoint_id: index.checkpoint_id,
+        status: index.status,
+        analyzer: index.analyzer,
+        analyzer_version: index.analyzer_version,
+        created_at: index.created_at,
+        node_count: index.node_count,
+        edge_count: index.edge_count,
+        graph_storage: index.graph_storage,
+        graph_digest: index.graph_digest,
+        relation_analysis: index.relation_analysis,
+        stale_reason: index.stale_reason
+      })),
+      omitted_index_count: Math.max(0, ordered.length - recent.length)
+    };
   }
   build(args) {
     const workspaceId = identifier20(args.workspace_id, "workspace_id");
@@ -264954,7 +264977,7 @@ function codebaseFailureDiagnostic(error) {
 }
 
 // capability/craft-codebase/basic-analysis.ts
-var ANALYZER_VERSION = "2";
+var ANALYZER_VERSION = "3";
 function basicAnalysis(store, workspaceId, files5) {
   const nodes = [];
   let analyzed = 0;
@@ -264971,7 +264994,7 @@ function basicAnalysis(store, workspaceId, files5) {
     }
     const node = (kind4, name, start2, end) => ({ id: `codebase_node_${stableDigest({ workspaceId, path: file.path, digest: file.digest, kind: kind4, name, start: start2 }).slice(-24)}`, kind: kind4, name, path: file.path, source_digest: file.digest, language: file.language, span: { start_offset: start2, end_offset: end } });
     const parsed2 = [node("file", file.path, 0, 0)];
-    const pattern = /\b(?:function|class|interface|type|enum|const|let|var|def|func|struct|fn|trait|module)\s+([\p{L}_$][\p{L}\p{N}_$]*)/gu;
+    const pattern = /(?:\bfunc\s+(?:\([^)]*\)\s*)?|\b(?:function|class|interface|type|enum|const|let|var|def|struct|fn|trait|module)\s+)([\p{L}_$][\p{L}\p{N}_$]*)/gu;
     let fileOmitted = 0;
     for (const match of file.content.matchAll(pattern)) {
       if (parsed2.length >= 16 || match[1].length > 200) {
@@ -265402,9 +265425,15 @@ function ensureRepositoryAttempt(service, args, sourceRetry) {
       if (languageFiles.length > bounded4.length) degraded.push({ language: adapter.language, status: "partial", reason: "document_limit", omitted_documents: languageFiles.length - bounded4.length });
     }
     for (const language2 of [...new Set(adapterlessFiles.filter((file) => !adaptedPaths.has(file.path)).map((file) => file.language))].sort()) {
+      if (language2 === "go" && !configuredLanguages.has("go")) continue;
       const configuredLanguage = adapterlessFiles.filter((file) => file.language === language2).map((file) => languageIdForFile(file.path)).find(Boolean);
       if (configuredLanguage && configuredLanguages.has(configuredLanguage)) continue;
       degraded.push({ language: language2, status: "unavailable", reason: configuredLanguage ? "no_semantic_adapter" : "unsupported_lsp_language" });
+    }
+    const goFiles = selected.files.filter((file) => file.language === "go" && !configuredLanguages.has("go"));
+    if (goFiles.length) {
+      semanticAnalyses.push(basicAnalysis(service.store, workspaceId, goFiles));
+      degraded.push({ language: "go", status: "partial", reason: "no_semantic_adapter", fallback_analyzer: "craft-basic-symbols", relations: "not_analyzed" });
     }
     if (semanticFiles.length) {
       try {
@@ -274557,6 +274586,11 @@ function domainSurfaceOf(toolName) {
   return SURFACE_RULES.find((rule) => rule.pattern.test(toolName))?.name ?? "workflow";
 }
 function surfaceToolNames(surface, activeTools, coreToolNames) {
+  if (surface === "component-context-complete") {
+    const names3 = /* @__PURE__ */ new Set(["craft_info", "craft_context_open", "craft_context_tools_discover", ...Object.values(DAILY_COMPONENT_TOOLS).flat()]);
+    const components = ["component-knowledge", "component-memory", "component-experience", "component-codebase"];
+    return activeTools.filter((tool2) => names3.has(tool2.name) || components.some((component3) => COMPONENT_SURFACES[component3].test(tool2.name))).map((tool2) => tool2.name);
+  }
   if (surface === "component-context-daily") {
     const names3 = /* @__PURE__ */ new Set(["craft_info", "craft_context_open", "craft_context_tools_discover", ...Object.values(DAILY_COMPONENT_TOOLS).flat(), ...surfaceToolNames("component-codebase", activeTools, coreToolNames)]);
     return activeTools.filter((tool2) => names3.has(tool2.name)).map((tool2) => tool2.name);
@@ -274976,7 +275010,7 @@ function safeFailure(error) {
 // core/interfaces/mcp/product-launch.ts
 var MCP_PRODUCT_SURFACES = {
   full: "syscall",
-  context: "component-context-daily",
+  context: "component-context-complete",
   knowledge: "component-knowledge-daily",
   memory: "component-memory-daily",
   experience: "component-experience-daily",
@@ -275099,6 +275133,7 @@ function resolveLearningWorkerLaunch(serverEntrypoint, exists2 = import_node_fs4
 async function startContextLearningWorker(options) {
   const components = {
     "component-context-daily": { product: "context", learning: "experience,knowledge" },
+    "component-context-complete": { product: "context", learning: "experience,knowledge" },
     "component-knowledge-daily": { product: "knowledge", learning: "knowledge" },
     "component-experience-daily": { product: "experience", learning: "experience" }
   };
@@ -275202,7 +275237,6 @@ if (process.argv[2] === CODEBASE_LSP_WORKER_FLAG && process.argv.length === 3) {
     mode = "";
   }
   if (mode) serveMcpStdio({ mode, input: process.stdin, write: (line2) => process.stdout.write(line2), afterStart: () => {
-    if (!["component-context-daily", "component-knowledge-daily", "component-experience-daily"].includes(mode) || process.env.CRAFT_CONTINUOUS_LEARNING === "0") return void 0;
     return startContextLearningWorker({
       mode,
       server_entrypoint: process.argv[1],

@@ -9,32 +9,8 @@
   "plugins": [
     {
       "name": "craft-context",
-      "description": "craft-context governed context and repository tools",
+      "description": "Complete Knowledge, Memory, Experience, and Codebase tools in one Craft entry point",
       "source": "./plugins/craft-context",
-      "category": "development"
-    },
-    {
-      "name": "craft-knowledge",
-      "description": "craft-knowledge governed context and repository tools",
-      "source": "./plugins/craft-knowledge",
-      "category": "productivity"
-    },
-    {
-      "name": "craft-memory",
-      "description": "craft-memory governed context and repository tools",
-      "source": "./plugins/craft-memory",
-      "category": "productivity"
-    },
-    {
-      "name": "craft-experience",
-      "description": "craft-experience governed context and repository tools",
-      "source": "./plugins/craft-experience",
-      "category": "development"
-    },
-    {
-      "name": "craft-codebase",
-      "description": "craft-codebase governed context and repository tools",
-      "source": "./plugins/craft-codebase",
       "category": "development"
     }
   ]
