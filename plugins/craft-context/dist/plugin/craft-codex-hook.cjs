@@ -224856,7 +224856,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.45";
+var CRAFT_RELEASE_VERSION = "0.12.46";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
@@ -252753,8 +252753,39 @@ var WorkflowEvolutionKernel = class {
     const existing = this.store.find("workflow_evolution_observation", observationId);
     const identityDigest = stableDigest(identity);
     if (existing) {
-      if (existing.identity_digest !== identityDigest) throw new Error("Workflow Evolution observation idempotency conflict");
-      return { observation: existing, idempotent: true };
+      if (existing.identity_digest === identityDigest) return { observation: existing, idempotent: true };
+      const priorSignature = existing.scenario_signature;
+      const sameTerminalEvidence = stableDigest({
+        source: existing.source,
+        outcome: existing.outcome,
+        evidence_ids: existing.evidence_ids,
+        verification: existing.verification ?? null,
+        failure_type: existing.failure_type ?? null,
+        execution_shape: existing.execution_shape ?? [],
+        sanitized: existing.sanitized,
+        content_stored: existing.content_stored
+      }) === stableDigest({
+        source,
+        outcome: outcome2,
+        evidence_ids: evidenceIds2,
+        verification,
+        failure_type: identity.failure_type,
+        execution_shape: executionShape,
+        sanitized: true,
+        content_stored: false
+      });
+      const nextSignature = identity.scenario_signature;
+      const hasHostClassification = args.scenario_signature !== void 0 && nextSignature.source !== "unclassified";
+      const isClassificationUpgrade = priorSignature?.source === "unclassified" && hasHostClassification && sameTerminalEvidence;
+      if (!isClassificationUpgrade) throw new Error("Workflow Evolution observation idempotency conflict");
+      const observation2 = this.store.updateIfVersion(
+        "workflow_evolution_observation",
+        observationId,
+        Number(existing.version),
+        { ...identity, identity_digest: identityDigest, lifecycle: existing.lifecycle }
+      );
+      this.store.appendEvent(`workflow-evolution:${identity.scenario_key}`, "workflow_evolution.classified", { observation_id: observation2.id, outcome: outcome2 });
+      return { observation: observation2, idempotent: false, refined: true };
     }
     const observation = this.store.create("workflow_evolution_observation", observationId, { ...identity, identity_digest: identityDigest, lifecycle: "accepted" });
     this.store.appendEvent(`workflow-evolution:${identity.scenario_key}`, "workflow_evolution.observed", { observation_id: observation.id, outcome: outcome2 });
@@ -255642,22 +255673,26 @@ function full2(paths, reason) {
 var MAX_INPUT_BYTES = 24e6;
 var MAX_OUTPUT_BYTES3 = 64e6;
 var MAX_TIMEOUT_MS3 = 6e4;
-function resolveJavaAnalyzerPath(cwd = process.cwd(), fileExists = import_node_fs33.existsSync, moduleUrl = void 0) {
+function resolveJavaAnalyzerPath(cwd = process.cwd(), fileExists = import_node_fs33.existsSync, moduleUrl = void 0, bundleDirectory = typeof __dirname === "string" ? __dirname : void 0) {
   const entry2 = process.argv[1] ?? "";
   const moduleAnalyzer = moduleUrl ? [(0, import_node_path44.join)((0, import_node_path44.dirname)((0, import_node_url8.fileURLToPath)(moduleUrl)), "analyzers", "AnalyzeJava.java")] : [];
+  const bundleAnalyzer = bundleDirectory ? [(0, import_node_path44.join)(bundleDirectory, "..", "..", "scripts", "codebase", "analyzers", "AnalyzeJava.java")] : [];
   const candidates = [
     ...moduleAnalyzer,
+    ...bundleAnalyzer,
     (0, import_node_path44.join)((0, import_node_path44.dirname)(entry2), "..", "..", "scripts", "codebase", "analyzers", "AnalyzeJava.java"),
     (0, import_node_path44.join)(cwd, "scripts", "codebase", "analyzers", "AnalyzeJava.java"),
     (0, import_node_path44.join)(cwd, "capability", "craft-codebase", "analyzers", "AnalyzeJava.java")
   ];
   return candidates.find(fileExists);
 }
-function resolveJavaControlFlowAnalyzerPath(cwd = process.cwd(), fileExists = import_node_fs33.existsSync, moduleUrl = void 0) {
+function resolveJavaControlFlowAnalyzerPath(cwd = process.cwd(), fileExists = import_node_fs33.existsSync, moduleUrl = void 0, bundleDirectory = typeof __dirname === "string" ? __dirname : void 0) {
   const entry2 = process.argv[1] ?? "";
   const moduleAnalyzer = moduleUrl ? [(0, import_node_path44.join)((0, import_node_path44.dirname)((0, import_node_url8.fileURLToPath)(moduleUrl)), "analyzers", "AnalyzeJavaControlFlow.java")] : [];
+  const bundleAnalyzer = bundleDirectory ? [(0, import_node_path44.join)(bundleDirectory, "..", "..", "scripts", "codebase", "analyzers", "AnalyzeJavaControlFlow.java")] : [];
   const candidates = [
     ...moduleAnalyzer,
+    ...bundleAnalyzer,
     (0, import_node_path44.join)((0, import_node_path44.dirname)(entry2), "..", "..", "scripts", "codebase", "analyzers", "AnalyzeJavaControlFlow.java"),
     (0, import_node_path44.join)(cwd, "scripts", "codebase", "analyzers", "AnalyzeJavaControlFlow.java"),
     (0, import_node_path44.join)(cwd, "capability", "craft-codebase", "analyzers", "AnalyzeJavaControlFlow.java")
@@ -264524,16 +264559,31 @@ function installLearningCycleMethods(serviceClass) {
     const validatedScenarioDefinition = validateExperienceScenarioDefinition(scenarioDefinition);
     const validatedCoarseScenarioDefinition = validateExperienceScenarioDefinition(coarseScenarioDefinition);
     if (validatedCoarseScenarioDefinition && coarseScenario === void 0) throw new Error("coarse scenario definition requires coarse_scenario_key");
-    const identity = {
+    const terminalDigest = stableDigest({
       host,
-      task_id: taskId3,
       turn_id: turnId,
       context_receipt_id: receipt.id,
-      verification_ref: verificationRef,
+      verification_ref_digest: stableDigest(verificationRef),
       outcome: outcome2,
-      scope: scope3,
-      scenario_key: scenario ?? null
-    };
+      scope: scope3
+    });
+    let effectiveTaskId = taskId3;
+    if (scenarioInput !== void 0) {
+      const evidenceIds2 = new Set(this.store.list("evidence", 1e4, (item) => {
+        const metadata = item.metadata;
+        return metadata?.provenance === "host_completion_signal" && metadata.host === host && metadata.turn_id === turnId && metadata.context_receipt_id === receipt.id && metadata.verification_ref_digest === stableDigest(verificationRef) && (metadata.terminal_identity_digest === terminalDigest || metadata.terminal_identity_digest === void 0);
+      }).map((item) => String(item.id)));
+      const priorUnclassified = this.store.list("workflow_evolution_observation", 1e4, (item) => {
+        const signature = item.scenario_signature;
+        const source = item.source;
+        return signature?.source === "unclassified" && item.outcome === outcome2 && source?.scope === `${scope3.kind}:${scope3.id}` && Array.isArray(item.evidence_ids) && item.evidence_ids.some((id23) => evidenceIds2.has(String(id23)));
+      });
+      const exact = priorUnclassified.find((item) => item.source?.id === taskId3);
+      const prior = exact ?? (priorUnclassified.length === 1 ? priorUnclassified[0] : null);
+      const priorTaskId = prior?.source?.id;
+      if (typeof priorTaskId === "string") effectiveTaskId = priorTaskId;
+    }
+    const identity = { host, task_id: effectiveTaskId, turn_id: turnId, context_receipt_id: receipt.id, verification_ref: verificationRef, outcome: outcome2, scope: scope3 };
     const sourceDigest = stableDigest(identity);
     const scenarioSignature = scenario ? {
       schema: "craft.scenario-signature.v1",
@@ -264542,15 +264592,16 @@ function installLearningCycleMethods(serviceClass) {
       target_class: "host_task_completion",
       host_revision: "craft-learning-cycle-v1"
     } : null;
+    const observationSignature = scenarioSignature ?? (scenarioInput === void 0 ? { schema: "craft.scenario-signature.v1", project: scope3, source: "unclassified" } : null);
     const scenarioKey = scenarioSignature ? `scenario:${stableDigest(scenarioSignature).slice(-24)}` : null;
     const evidenceId = `evidence_learning_cycle_${sourceDigest.slice(-20)}`;
-    const evidence2 = this.store.find("evidence", evidenceId) ?? this.evidenceRecord({ evidence_id: evidenceId, source_type: "host_completion_signal", confidence: "bounded", claim: `Host reported terminal verification ${outcome2}.`, locator: `context-receipt:${receipt.id}`, metadata: { provenance: "host_completion_signal", host, task_id: taskId3, turn_id: turnId, verification_ref_digest: stableDigest(verificationRef), context_receipt_id: receipt.id, content_stored: false } });
+    const evidence2 = this.store.find("evidence", evidenceId) ?? this.evidenceRecord({ evidence_id: evidenceId, source_type: "host_completion_signal", confidence: "bounded", claim: `Host reported terminal verification ${outcome2}.`, locator: `context-receipt:${receipt.id}`, metadata: { provenance: "host_completion_signal", terminal_identity_digest: terminalDigest, host, task_id: effectiveTaskId, turn_id: turnId, verification_ref_digest: stableDigest(verificationRef), context_receipt_id: receipt.id, content_stored: false } });
     const observationId = `workflow_evolution_observation_${sourceDigest.slice(-20)}`;
-    const observed = this.workflowEvolutionObserve({ observation_id: observationId, scenario_key: scenarioKey ?? `unclassified:${stableDigest({ scope: scope3, host }).slice(-24)}`, source_kind: `host:${host}`, source_id: taskId3, source_digest: stableDigest({ taskId: taskId3, turnId, outcome: outcome2, verificationRef }), outcome: outcome2, scope: `${scope3.kind}:${scope3.id}`, ...scenarioSignature ? { scenario_signature: scenarioSignature } : {}, evidence_ids: [evidence2.id], sanitized: true, content_stored: false });
+    const observed = this.workflowEvolutionObserve({ observation_id: observationId, scenario_key: scenarioKey ?? `unclassified:${stableDigest({ scope: scope3, host }).slice(-24)}`, source_kind: `host:${host}`, source_id: effectiveTaskId, source_digest: stableDigest({ taskId: effectiveTaskId, turnId, outcome: outcome2, verificationRef }), outcome: outcome2, scope: `${scope3.kind}:${scope3.id}`, ...observationSignature ? { scenario_signature: observationSignature } : {}, evidence_ids: [evidence2.id], sanitized: true, content_stored: false });
     const observationReplay = observed.idempotent === true;
     if (!scenarioKey) return { status: "observed", observation: observed.observation, evidence: evidence2, request: null, next_action: "stable_scenario_key_required_for_cross_task_learning", idempotent: observationReplay };
     const observations = this.workflowEvolutionObservations({ scenario_key: scenarioKey, limit: 100 }).observations;
-    const distinct = observations.filter((item) => item.source.id !== taskId3);
+    const distinct = observations.filter((item) => item.source.id !== effectiveTaskId);
     const taxonomy = scope3.kind === "project" ? recordExperienceScenario({
       experience_dir: this.store.paths.experienceDir,
       project_id: scope3.id.replace(/^project:/u, ""),
