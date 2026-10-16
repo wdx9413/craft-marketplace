@@ -224856,7 +224856,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.44";
+var CRAFT_RELEASE_VERSION = "0.12.45";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
@@ -225676,7 +225676,7 @@ var TOOL_DEFINITIONS = [
   tool("craft_experience_observe", "Record one sanitized, evidence-backed Experience Observation. It is not a Workflow and cannot publish anything.", ["scenario_key", "source_kind", "source_id", "source_digest", "outcome", "evidence_ids", "sanitized"], false, ["observation_id", "failure_type", "content_stored", "scope", "scenario_signature", "execution_shape", "verification"]),
   tool("craft_experience_patterns_list", "List bounded Experience Observations for one scenario so repeated evidence can be inspected before proposing a procedure.", [], true, ["scenario_key", "limit"]),
   tool("craft_experience_procedure_draft", "Create a proposal-only Procedure draft request from at least two independent Experience Observations. Linear Workflow is the default; Graph is allowed only when the observations prove branching, join, approval, recovery, or compensation.", ["scenario_key", "hypothesis", "design_axes", "output_contract_ref"], false, ["request_id", "observation_ids", "procedure_kind"]),
-  tool("craft_experience_procedure_submit", "Submit the bounded linear Workflow or evidence-required Graph draft for an exact Experience request. This never routes, publishes, or executes it.", ["request_id", "workflow_id", "name", "description", "inputs"], false, ["steps", "nodes", "edges", "outputs", "checkpoint_policy", "proposal_id", "model_ticket_id", "replaces_workflow_id", "composition", "graph_control"]),
+  tool("craft_experience_procedure_submit", "Submit the bounded linear Workflow or evidence-required Graph draft for an exact Experience request. model_ticket_id is optional when the current Host model reads the pinned sanitized request and submits its own distillation. The draft remains a candidate; this call never routes, publishes, or executes it.", ["request_id", "workflow_id", "name", "description", "inputs"], false, ["steps", "nodes", "edges", "outputs", "checkpoint_policy", "proposal_id", "model_ticket_id", "replaces_workflow_id", "composition", "graph_control"]),
   tool("craft_experience_procedure_get", "Read one proposal-only Experience Procedure draft and its pinned request.", ["proposal_id"], true, ["request_id"]),
   tool("craft_experience_learning_request_get", "Read a pinned, content-free Experience request and its exact sanitized Observation versions for an external distillation Adapter.", ["request_id"], true),
   tool("craft_experience_learning_evaluation_dispatch", "Create the next content-free Shadow, Held-out, Signoff, or Canary evaluation job for an unpublished Experience candidate.", ["procedure_id"], false, ["dispatch_id"]),
@@ -225772,14 +225772,14 @@ var TOOL_DEFINITIONS = [
   tool("craft_verified_iteration_get", "Read a verification-driven iteration and its content-free attempt history.", ["iteration_id"], true),
   tool("craft_verified_iteration_assess", "Classify one independent acceptance assessment as pass, retry, block, or human handoff; only task failures can retry within budget.", ["iteration_id", "assessment_id", "classification"], false, ["attempt_id", "feedback"]),
   tool("craft_strategy_recommend", "Recommend a candidate strategy only from a comparable held-out evaluation; it never changes routing or executes work.", ["task_id", "comparison_id"], false, ["recommendation_id", "cost_metric"]),
-  tool("craft_knowledge_claim_save", "Save a candidate fact, rule, decision, term, or failure mode with existing evidence. For project claims, the model may classify with a stable scenario_key, bounded scenario_definition (summary, applies_when, excludes), and optional coarse parent/definition. Classification remains candidate until claims from two independent reviewed Sources support it.", ["kind", "content", "evidence_ids"], false, ["claim_id", "title", "scope", "tags", "valid_until", "scope_envelope", "source_id", "scenario_key", "scenario_definition", "coarse_scenario_key", "coarse_scenario_definition"]),
+  tool("craft_knowledge_claim_save", "Save a candidate fact, rule, decision, term, or failure mode with existing evidence. For project or global Claims, the model may classify within that exact scope using scenario_key, bounded scenario_definition (summary, applies_when, excludes), and an optional coarse parent/definition. Classification remains a candidate until independent reviewed Sources support it.", ["kind", "content", "evidence_ids"], false, ["claim_id", "title", "scope", "tags", "valid_until", "scope_envelope", "source_id", "scenario_key", "scenario_definition", "coarse_scenario_key", "coarse_scenario_definition"]),
   tool("craft_knowledge_semantic_review_packet", "Build the exact Claim, source fragment and rubric packet a Codex, Claude, or Provider reviewer must inspect.", ["claim_id"], true),
   tool("craft_knowledge_semantic_provider_review", "Run an explicitly configured OpenAI-compatible semantic review. Keys are only read from the named environment variable.", ["claim_id", "endpoint", "model", "credential_env"], false, ["timeout_ms"]),
   tool("craft_knowledge_claim_get", "Read one exact evidence-backed knowledge claim after current and historical audience checks.", ["claim_id"], true, ["version", "scope_kind", "scope_id", "principal_id", "principal_ids", "tenant_id", "allow_restricted"]),
   tool("craft_knowledge_claim_list", "List locally stored evidence-backed knowledge claims visible to the current audience.", [], true, ["limit", "query", "scope_kind", "scope_id", "principal_id", "principal_ids", "tenant_id", "allow_restricted"]),
-  tool("craft_knowledge_scenario_list", "List the bounded, body-free Knowledge scenario taxonomy for one explicit project. Consult existing fine/coarse keys before classifying a Claim; unclassified is valid when uncertain.", [], true, ["scope", "scope_kind", "scope_id"]),
-  tool("craft_knowledge_scenario_retire", "Retire one obsolete project Knowledge scenario without deleting its claim or evidence references. Requires the current catalog version, a stable request_id and a short reason; coarse scenes can retire only after every child is retired.", ["scope", "scenario_key", "expected_catalog_version", "request_id", "reason"]),
-  tool("craft_knowledge_scenario_migration_propose", "Propose a versioned project Knowledge taxonomy merge or split. New fine scenes remain candidates until reviewed claims from independent trusted sources promote them; source scenes stay searchable during reclassification.", ["scope", "mode", "source_keys", "targets", "expected_catalog_version", "request_id", "reason"]),
+  tool("craft_knowledge_scenario_list", "List the bounded, body-free Knowledge taxonomy for one explicit project or global scope. Catalogs are scope-isolated. Consult existing fine/coarse keys before classifying a Claim; unclassified is valid when uncertain.", [], true, ["scope", "scope_kind", "scope_id"]),
+  tool("craft_knowledge_scenario_retire", "Retire one obsolete Knowledge scenario in an explicit project or global scope without deleting claim or evidence references. Requires the current catalog version, a stable request_id and a short reason; coarse scenes can retire only after every child is retired.", ["scope", "scenario_key", "expected_catalog_version", "request_id", "reason"]),
+  tool("craft_knowledge_scenario_migration_propose", "Propose a versioned Knowledge taxonomy merge or split in an explicit project or global scope. New fine scenes remain candidates until reviewed claims from independent trusted sources promote them; source scenes stay searchable during reclassification.", ["scope", "mode", "source_keys", "targets", "expected_catalog_version", "request_id", "reason"]),
   tool("craft_knowledge_claim_review", "Explicitly review, dispute, supersede, or expire a candidate knowledge claim without deleting history.", ["claim_id", "status", "reviewer", "reason"], false),
   tool("craft_knowledge_promotion_policy_get", "Read this local Knowledge component's automatic promotion threshold. It is local configuration and never imported from another machine.", [], true),
   tool("craft_knowledge_promotion_policy_save", "Adjust the local automatic Knowledge promotion threshold. This is an optional operator override, not a required human review queue.", [], false, ["minimum_independent_support", "minimum_confidence", "automatic", "actor"]),
@@ -227306,9 +227306,9 @@ var ACTIVE_TOOLS = TOOLS;
 // core/mcp/context-tools.ts
 var TASK_TOOLS = {
   recall: ["craft_context_open", "craft_context_resolution_feedback"],
-  knowledge: ["craft_knowledge_search", "craft_knowledge_scenario_list", "craft_knowledge_scenario_retire", "craft_knowledge_scenario_migration_propose", "craft_knowledge_claim_save", "craft_knowledge_host_review", "craft_knowledge_source_ingest"],
-  memory: ["craft_memory_governance", "craft_memory_capture_observed_fact", "craft_memory_capture_user_statement", "craft_memory_conflict_list", "craft_memory_conflict_resolve", "craft_memory_candidate_review", "craft_memory_ledger_remember_approved"],
-  experience: ["craft_experience_scenario_list", "craft_experience_scenario_retire", "craft_experience_scenario_migration_propose", "craft_learning_cycle_finalize", "craft_experience_graph_inspect", "craft_experience_graph_edit", "craft_procedure_plan", "craft_procedure_host_control", "craft_procedure_decision_evaluate", "craft_procedure_invocation_bind", "craft_procedure_invocation_dispatch", "craft_procedure_invocation_report", "craft_procedure_gate", "craft_procedure_invocation_get", "craft_procedure_invocation_transition", "craft_procedure_invocation_resume"],
+  knowledge: ["craft_knowledge_search", "craft_knowledge_bootstrap_install", "craft_knowledge_source_list", "craft_knowledge_source_register", "craft_knowledge_source_ingest", "craft_knowledge_scenario_list", "craft_knowledge_scenario_retire", "craft_knowledge_scenario_migration_propose", "craft_evidence_record", "craft_knowledge_claim_save", "craft_knowledge_claim_get", "craft_knowledge_claim_list", "craft_knowledge_semantic_review_packet", "craft_knowledge_host_review", "craft_knowledge_auto_review", "craft_knowledge_promotion_policy_get"],
+  memory: ["craft_memory_governance", "craft_memory_capture_observed_fact", "craft_memory_capture_user_statement", "craft_memory_candidate_review", "craft_memory_ledger_remember_approved", "craft_memory_ledger_get", "craft_memory_ledger_list", "craft_memory_ledger_transition", "craft_memory_conflict_list", "craft_memory_conflict_resolve", "craft_memory_maintenance_run", "craft_memory_session_finalize"],
+  experience: ["craft_experience_scenario_list", "craft_experience_scenario_retire", "craft_experience_scenario_migration_propose", "craft_learning_cycle_finalize", "craft_evaluation_model_profile_get", "craft_evaluation_model_ticket_list", "craft_experience_procedure_submit", "craft_experience_procedure_get", "craft_experience_learning_request_get", "craft_experience_learning_evaluation_dispatch", "craft_experience_learning_evaluation_dispatch_list", "craft_experience_learning_evaluation_run", "craft_experience_learning_evaluation_result", "craft_experience_graph_inspect", "craft_experience_graph_edit", "craft_procedure_plan", "craft_procedure_host_control", "craft_procedure_decision_evaluate", "craft_procedure_invocation_bind", "craft_procedure_invocation_dispatch", "craft_procedure_invocation_report", "craft_procedure_gate", "craft_procedure_invocation_get", "craft_procedure_invocation_transition", "craft_procedure_invocation_resume"],
   code: ["craft_codebase_symbol_find", "craft_codebase_symbol_explore", "craft_codebase_symbol_read", "craft_codebase_symbols_overview", "craft_codebase_callers_find", "craft_codebase_relations_find", "craft_codebase_impact_query", "craft_codebase_context_slice"],
   "code-analysis": ["craft_codebase_symbol_find", "craft_codebase_symbol_explore", "craft_codebase_symbol_read", "craft_codebase_symbols_overview", "craft_codebase_callers_find", "craft_codebase_relations_find", "craft_codebase_definition_find", "craft_codebase_control_flow_query", "craft_codebase_data_flow_query", "craft_codebase_diagnostics_find", "craft_codebase_impact_query", "craft_codebase_context_slice"]
 };
@@ -227707,6 +227707,13 @@ function knowledgeScenarioProjectId(value) {
   if (!/^[A-Za-z0-9_-]{1,96}$/u.test(projectId2)) throw new Error("Knowledge scenario project identity is invalid");
   return projectId2;
 }
+function scenarioScope(id23, kind4 = "project") {
+  if (kind4 === "global") {
+    if (id23 !== "global") throw new Error("Knowledge global scenario scope identity is invalid");
+    return { kind: kind4, id: id23 };
+  }
+  return { kind: kind4, id: knowledgeScenarioProjectId(id23) };
+}
 function directory2(path2) {
   try {
     const stat4 = (0, import_node_fs13.lstatSync)(path2);
@@ -227716,19 +227723,38 @@ function directory2(path2) {
     (0, import_node_fs13.mkdirSync)(path2, { mode: 448 });
   }
 }
-function readProjectCatalog(root, projectId2) {
+function catalogPath(root, scope3, create) {
   let path2 = root;
-  for (const part of ["", "projects", projectId2]) {
-    if (part) path2 = (0, import_node_path13.join)(path2, part);
+  const parts = scope3.kind === "global" ? ["global"] : ["projects", scope3.id];
+  if (create) directory2(root);
+  else {
+    try {
+      const stat4 = (0, import_node_fs13.lstatSync)(root);
+      if (stat4.isSymbolicLink() || !stat4.isDirectory()) throw new Error("Knowledge scenario catalog path must contain regular directories");
+    } catch (error) {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    }
+  }
+  for (const part of parts) {
+    path2 = (0, import_node_path13.join)(path2, part);
+    if (create) {
+      directory2(path2);
+      continue;
+    }
     try {
       const stat4 = (0, import_node_fs13.lstatSync)(path2);
       if (stat4.isSymbolicLink() || !stat4.isDirectory()) throw new Error("Knowledge scenario catalog path must contain regular directories");
     } catch (error) {
-      if (error.code === "ENOENT") return { catalog_version: 0, scenarios: [], transitions: [] };
+      if (error.code === "ENOENT" && !create) return null;
       throw error;
     }
   }
-  return readCatalog2((0, import_node_path13.join)(path2, "knowledge-scenarios.json"));
+  return (0, import_node_path13.join)(path2, "knowledge-scenarios.json");
+}
+function readScopeCatalog(root, scope3) {
+  const path2 = catalogPath(root, scope3, false);
+  return path2 ? readCatalog2(path2) : { catalog_version: 0, scenarios: [], transitions: [] };
 }
 function readCatalog2(path2) {
   let stat4;
@@ -227843,16 +227869,11 @@ function withLock(path2, work) {
 }
 function recordKnowledgeScenario(args) {
   const { knowledge_dir: root, scenario_key: fineKey, coarse_scenario_key: coarseKey } = args;
-  const projectId2 = knowledgeScenarioProjectId(args.project_id);
+  const scope3 = scenarioScope(args.project_id, args.scope_kind ?? "project");
   const definition2 = validateKnowledgeScenarioDefinition(args.definition);
   const coarseDefinition = validateKnowledgeScenarioDefinition(args.coarse_definition);
   if (!KEY2.test(fineKey) || coarseKey !== void 0 && (!KEY2.test(coarseKey) || coarseKey === fineKey) || !args.claim_id || args.claim_id.length > 200 || !args.source_id || args.source_id.length > 200 || !Array.isArray(args.evidence_ids) || args.evidence_ids.length > 100 || args.evidence_ids.some((id23) => typeof id23 !== "string" || id23.length > 200) || !["candidate", "reviewed", "inactive"].includes(args.status)) throw new Error("Knowledge scenario classification identity is invalid");
-  directory2(root);
-  const projects = (0, import_node_path13.join)(root, "projects");
-  directory2(projects);
-  const project = (0, import_node_path13.join)(projects, projectId2);
-  directory2(project);
-  const path2 = (0, import_node_path13.join)(project, "knowledge-scenarios.json");
+  const path2 = catalogPath(root, scope3, true);
   return withLock(path2, () => {
     const catalog = readCatalog2(path2);
     if (catalog.scenarios.some((item) => item.scenario_key === fineKey && item.lifecycle === "retired") || coarseKey && catalog.scenarios.some((item) => item.scenario_key === coarseKey && item.lifecycle === "retired")) {
@@ -227898,17 +227919,12 @@ function recordKnowledgeScenario(args) {
   });
 }
 function retireKnowledgeScenario(args) {
-  const projectId2 = knowledgeScenarioProjectId(args.project_id), key2 = args.scenario_key;
+  const scope3 = scenarioScope(args.project_id, args.scope_kind ?? "project"), key2 = args.scenario_key;
   const reason = args.reason.trim();
   if (!KEY2.test(key2) || !Number.isSafeInteger(args.expected_catalog_version) || args.expected_catalog_version < 0 || !args.request_id.trim() || args.request_id.length > 200 || !reason || reason.length > 500) {
     throw new Error("Knowledge scenario retirement request is invalid");
   }
-  directory2(args.knowledge_dir);
-  const projects = (0, import_node_path13.join)(args.knowledge_dir, "projects");
-  directory2(projects);
-  const project = (0, import_node_path13.join)(projects, projectId2);
-  directory2(project);
-  const path2 = (0, import_node_path13.join)(project, "knowledge-scenarios.json");
+  const path2 = catalogPath(args.knowledge_dir, scope3, true);
   return withLock(path2, () => {
     const catalog = readCatalog2(path2), reasonDigest = stableDigest(reason);
     const prior = catalog.transitions.find((item) => item.request_id === args.request_id);
@@ -227947,7 +227963,7 @@ function retireKnowledgeScenario(args) {
   });
 }
 function proposeKnowledgeScenarioMigration(args) {
-  const projectId2 = knowledgeScenarioProjectId(args.project_id), reason = args.reason.trim();
+  const scope3 = scenarioScope(args.project_id, args.scope_kind ?? "project"), reason = args.reason.trim();
   if (!Array.isArray(args.source_keys) || !Array.isArray(args.targets)) throw new Error("Knowledge scenario migration proposal is invalid");
   const sources = [...new Set(args.source_keys)], targets = args.targets;
   if (args.mode !== "merge" && args.mode !== "split" || !Number.isSafeInteger(args.expected_catalog_version) || args.expected_catalog_version < 0 || !args.request_id.trim() || args.request_id.length > 200 || !reason || reason.length > 500 || sources.length !== args.source_keys.length || sources.some((key2) => !KEY2.test(key2)) || args.mode === "merge" && (sources.length < 2 || targets.length !== 1) || args.mode === "split" && (sources.length !== 1 || targets.length < 2 || targets.length > 8) || targets.length > 8) throw new Error("Knowledge scenario migration proposal is invalid");
@@ -227957,12 +227973,7 @@ function proposeKnowledgeScenarioMigration(args) {
   }
   const definitions = targets.map((target) => validateKnowledgeScenarioDefinition(target.definition));
   if (definitions.some((definition2) => !definition2)) throw new Error("Knowledge scenario migration requires a definition for every target");
-  directory2(args.knowledge_dir);
-  const projects = (0, import_node_path13.join)(args.knowledge_dir, "projects");
-  directory2(projects);
-  const project = (0, import_node_path13.join)(projects, projectId2);
-  directory2(project);
-  const path2 = (0, import_node_path13.join)(project, "knowledge-scenarios.json");
+  const path2 = catalogPath(args.knowledge_dir, scope3, true);
   return withLock(path2, () => {
     const catalog = readCatalog2(path2);
     const proposalDigest = stableDigest({
@@ -228015,20 +228026,21 @@ function proposeKnowledgeScenarioMigration(args) {
     return { status: "candidate", catalog_version: catalog.catalog_version, transition, target_keys: targetKeys, idempotent: false };
   });
 }
-function knowledgeScenarioCanClassify(knowledgeDir, projectId2, scenarioKey) {
+function knowledgeScenarioCanClassify(knowledgeDir, projectId2, scenarioKey, scopeKind = "project") {
   if (!KEY2.test(scenarioKey)) return false;
-  const normalizedProjectId = knowledgeScenarioProjectId(projectId2);
-  const entry2 = readProjectCatalog(knowledgeDir, normalizedProjectId).scenarios.find((item) => item.scenario_key === scenarioKey);
+  const scope3 = scenarioScope(projectId2, scopeKind);
+  const entry2 = readScopeCatalog(knowledgeDir, scope3).scenarios.find((item) => item.scenario_key === scenarioKey);
   return !entry2 || entry2.lifecycle === "candidate" || entry2.lifecycle === "active";
 }
 function updateKnowledgeScenarioClaim(knowledgeDir, claim, status2) {
   if (typeof claim.scenario_key !== "string") return null;
   const scope3 = scopeFromKey(String(claim.scope ?? "global"));
-  if (scope3.kind !== "project") return null;
+  if (scope3.kind !== "project" && scope3.kind !== "global") return null;
   const evidenceIds2 = Array.isArray(claim.evidence_ids) ? claim.evidence_ids.map(String) : [];
   return recordKnowledgeScenario({
     knowledge_dir: knowledgeDir,
     project_id: scope3.id,
+    scope_kind: scope3.kind,
     scenario_key: claim.scenario_key,
     ...typeof claim.coarse_scenario_key === "string" ? { coarse_scenario_key: claim.coarse_scenario_key } : {},
     claim_id: String(claim.id),
@@ -228039,19 +228051,19 @@ function updateKnowledgeScenarioClaim(knowledgeDir, claim, status2) {
     ...claim.coarse_scenario_definition !== void 0 ? { coarse_definition: claim.coarse_scenario_definition } : {}
   });
 }
-function knowledgeScenarioIsActive(knowledgeDir, projectId2, scenarioKey) {
+function knowledgeScenarioIsActive(knowledgeDir, projectId2, scenarioKey, scopeKind = "project") {
   if (!KEY2.test(scenarioKey)) return false;
-  let normalizedProjectId;
+  let scope3;
   try {
-    normalizedProjectId = knowledgeScenarioProjectId(projectId2);
+    scope3 = scenarioScope(projectId2, scopeKind);
   } catch {
     return false;
   }
-  const entry2 = readProjectCatalog(knowledgeDir, normalizedProjectId).scenarios.find((item) => item.scenario_key === scenarioKey);
+  const entry2 = readScopeCatalog(knowledgeDir, scope3).scenarios.find((item) => item.scenario_key === scenarioKey);
   return entry2?.lifecycle === "active";
 }
-function listKnowledgeScenarios(knowledgeDir, projectId2) {
-  const catalog = readProjectCatalog(knowledgeDir, knowledgeScenarioProjectId(projectId2));
+function listKnowledgeScenarios(knowledgeDir, projectId2, scopeKind = "project") {
+  const catalog = readScopeCatalog(knowledgeDir, scenarioScope(projectId2, scopeKind));
   return {
     catalog_version: catalog.catalog_version,
     scenarios: catalog.scenarios.map((item) => ({
@@ -228507,9 +228519,13 @@ var KnowledgeClaimGovernance = class {
     const coarseScenarioDefinition = validateKnowledgeScenarioDefinition(args.coarse_scenario_definition);
     if (coarseScenarioDefinition && !coarseScenarioKey) throw new Error("coarse scenario definition requires coarse_scenario_key");
     if (coarseScenarioKey && !scenarioKey) throw new Error("coarse_scenario_key requires scenario_key");
-    if ((scenarioKey || coarseScenarioKey) && scopeFromKey(scope3).kind !== "project") throw new Error("Knowledge scenario classification requires project scope");
+    const scenarioScope2 = scopeFromKey(scope3);
+    if ((scenarioKey || coarseScenarioKey) && scenarioScope2.kind !== "project" && scenarioScope2.kind !== "global") {
+      throw new Error("Knowledge scenario classification requires project or global scope");
+    }
+    const scenarioScopeKind = scenarioScope2.kind === "global" ? "global" : "project";
     if (scenarioKey && !/^[a-z0-9][a-z0-9._/-]{0,95}$/u.test(scenarioKey) || coarseScenarioKey && !/^[a-z0-9][a-z0-9._/-]{0,95}$/u.test(coarseScenarioKey) || scenarioKey !== void 0 && scenarioKey === coarseScenarioKey) throw new Error("Knowledge scenario keys must be distinct bounded stable identifiers");
-    if (scenarioKey && !knowledgeScenarioCanClassify(this.store.paths.knowledgeDir, scopeFromKey(scope3).id, scenarioKey) || coarseScenarioKey && !knowledgeScenarioCanClassify(this.store.paths.knowledgeDir, scopeFromKey(scope3).id, coarseScenarioKey)) {
+    if (scenarioKey && !knowledgeScenarioCanClassify(this.store.paths.knowledgeDir, scenarioScope2.id, scenarioKey, scenarioScopeKind) || coarseScenarioKey && !knowledgeScenarioCanClassify(this.store.paths.knowledgeDir, scenarioScope2.id, coarseScenarioKey, scenarioScopeKind)) {
       throw new Error("Knowledge scenario is conflicted or retired and cannot receive classifications");
     }
     const identity = { kind: kind4, content_digest: contentDigest, scope: scope3, scope_envelope: envelope, source_id: sourceId, evidence_ids: evidenceIds2, tags: tags2, valid_until: validUntil, ...title ? { title } : {} };
@@ -252127,10 +252143,10 @@ var EvaluationModelProfileKernel = class {
         if (ticket.purpose !== "knowledge_scenario_classification") return false;
         if (ticket.status !== "ready_for_adapter") return false;
         const claim = this.store.find("knowledge_claim", String(target.id));
-        if (!claim || !KNOWLEDGE_CLASSIFIABLE_STATUSES.has(String(claim.status)) || typeof claim.scenario_key === "string" || Number(claim.version) !== Number(target.version) || claim.content_digest !== target.content_digest) return false;
-        const scope3 = scopeFromKey(String(claim.scope ?? "global"));
-        if (scope3.kind !== "project") return false;
-        return Number(listKnowledgeScenarios(this.store.paths.knowledgeDir, scope3.id).catalog_version) === Number(target.catalog_version);
+        if (!claim || typeof claim.scope !== "string" || !KNOWLEDGE_CLASSIFIABLE_STATUSES.has(String(claim.status)) || typeof claim.scenario_key === "string" || Number(claim.version) !== Number(target.version) || claim.content_digest !== target.content_digest) return false;
+        const scope3 = scopeFromKey(String(claim.scope));
+        if (scope3.kind !== "project" && scope3.kind !== "global") return false;
+        return Number(listKnowledgeScenarios(this.store.paths.knowledgeDir, scope3.id, scope3.kind).catalog_version) === Number(target.catalog_version);
       }
       if (ticket.purpose === "evaluation") return true;
       if (ticket.purpose !== "workflow_evolution") return false;
@@ -252198,10 +252214,10 @@ var EvaluationModelProfileKernel = class {
       const claim = this.store.get("knowledge_claim", text15(args.knowledge_claim_id, "knowledge_claim_id"));
       const scope3 = scopeFromKey(String(claim.scope ?? "global"));
       const source = typeof claim.source_id === "string" ? this.store.find("knowledge_source", claim.source_id) : null;
-      if (!KNOWLEDGE_CLASSIFIABLE_STATUSES.has(String(claim.status)) || typeof claim.scenario_key === "string" || scope3.kind !== "project" || !source || source.status !== "active" || source.trust === "untrusted") {
-        throw new Error("Knowledge scenario ticket requires an unclassified project Claim from an active trusted Source");
+      if (typeof claim.scope !== "string" || !KNOWLEDGE_CLASSIFIABLE_STATUSES.has(String(claim.status)) || typeof claim.scenario_key === "string" || scope3.kind !== "project" && scope3.kind !== "global" || !source || source.status !== "active" || source.trust === "untrusted") {
+        throw new Error("Knowledge scenario ticket requires an unclassified project or global Claim from an active trusted Source");
       }
-      const catalog = listKnowledgeScenarios(this.store.paths.knowledgeDir, scope3.id);
+      const catalog = listKnowledgeScenarios(this.store.paths.knowledgeDir, scope3.id, scope3.kind);
       return {
         kind: "knowledge_scenario_classification",
         id: claim.id,
@@ -252946,6 +252962,8 @@ var CODE_TERM_ALIASES = {
 var ACTION_TERMS = /* @__PURE__ */ new Set(["analyze", "build", "call", "collect", "combine", "create", "execute", "find", "launch", "lookup", "merge", "normalize", "persist", "plan", "resolve", "run", "search", "simulate", "start"]);
 var SYMBOL_ACTION_TERMS = /* @__PURE__ */ new Set([...ACTION_TERMS, "cancel", "delete", "fetch", "get", "list", "read", "remove", "stop", "update"]);
 var GENERIC_ACTION_TERMS = /* @__PURE__ */ new Set(["build", "call", "create", "execute", "run", "start"]);
+var STRUCTURE_TERMS = /* @__PURE__ */ new Set(["adapter", "agent", "client", "controller", "engine", "factory", "manager", "processor", "repository", "scheduler", "server", "service", "store", "worker"]);
+var STRUCTURAL_DECLARATION_KINDS = /* @__PURE__ */ new Set(["class", "enum", "interface", "struct", "type"]);
 var GENERIC_TASK_TERMS = /* @__PURE__ */ new Set([...ACTION_TERMS, "api", "endpoint", "handler", "task", "job", "http", "multiple", "concurrent", "concurrency", "parallel"]);
 var GENERIC_SYMBOL_IDENTIFIERS = /* @__PURE__ */ new Set([...GENERIC_TASK_TERMS, "conversation", "extract", "file", "id", "import", "module", "name", "path", "request", "result", "turn", "type", "value"]);
 function identifierTerms(value) {
@@ -252963,8 +252981,10 @@ var CodeSymbolSearchIndex = class {
   #byId = /* @__PURE__ */ new Map();
   #nameTermsById = /* @__PURE__ */ new Map();
   #pathTermsById = /* @__PURE__ */ new Map();
+  #ownerTermsById = /* @__PURE__ */ new Map();
   #partialNamesByTrigram = /* @__PURE__ */ new Map();
-  constructor(nodes, searchContext = /* @__PURE__ */ new Map()) {
+  #methodNames = /* @__PURE__ */ new Set();
+  constructor(nodes, searchContext = /* @__PURE__ */ new Map(), enclosingTypeContext = /* @__PURE__ */ new Map()) {
     for (const node of nodes) {
       const id23 = String(node.id ?? "");
       if (!id23 || this.#byId.has(id23)) continue;
@@ -252976,6 +252996,8 @@ var CodeSymbolSearchIndex = class {
       this.#byId.set(id23, node);
       this.#nameTermsById.set(id23, new Set(nameTerms));
       this.#pathTermsById.set(id23, new Set(pathTerms));
+      this.#ownerTermsById.set(id23, new Set(identifierTerms(enclosingTypeContext.get(id23) ?? "")));
+      if (node.declaration_kind === "method") this.#methodNames.add(name.toLowerCase());
       const characters = [...name.toLowerCase()];
       for (let offset = 0; offset + 3 <= characters.length; offset++) {
         const trigram = characters.slice(offset, offset + 3).join("");
@@ -252994,9 +253016,11 @@ var CodeSymbolSearchIndex = class {
     const queryTerms = new Set(terms3);
     const queryActionTerms = new Set(terms3.filter((term) => SYMBOL_ACTION_TERMS.has(term)));
     const queryNameTerms = identifierTerms(queryText);
+    const queryStructureTerms = new Set([...queryTerms].filter((term) => STRUCTURE_TERMS.has(term)));
     const queryIdentifiers = queryText.match(/[A-Za-z_$][A-Za-z0-9_$]*/gu) ?? [];
     const queryIdentifierNames = new Set(queryIdentifiers.map((term) => term.toLowerCase()));
     const queryCodeIdentifiers = new Set(queryIdentifiers.filter((term) => /[a-z][A-Z]/u.test(term)).map((term) => term.toLowerCase()));
+    const explicitMethodMentioned = [...queryCodeIdentifiers].some((name) => this.#methodNames.has(name));
     const queryTypeIdentifiers = new Set(queryIdentifiers.filter((term) => /^[A-Z][A-Za-z0-9_$]*[A-Z][A-Za-z0-9_$]*$/u.test(term)));
     const explicitTerms = new Set(queryNameTerms);
     const analyzerIntent = identifierTerms(queryText).includes("analyzer");
@@ -253007,10 +253031,14 @@ var CodeSymbolSearchIndex = class {
       const name = typeof node.name === "string" ? node.name.toLowerCase() : "";
       const nameTerms = this.#nameTermsById.get(hit.id);
       const pathTerms = this.#pathTermsById.get(hit.id);
+      const ownerTerms = this.#ownerTermsById.get(hit.id);
       const nameMatches = [...queryTerms].filter((term) => nameTerms.has(term)).length;
       const pathMatches = [...queryTerms].filter((term) => pathTerms.has(term)).length;
       const domainMatches = [...queryTerms].filter((term) => !explicitTerms.has(term) && !GENERIC_TASK_TERMS.has(term) && nameTerms.has(term)).length;
+      const ownerDomainMatches = [...queryTerms].filter((term) => !GENERIC_TASK_TERMS.has(term) && !nameTerms.has(term) && !pathTerms.has(term) && ownerTerms.has(term)).length;
+      const ownerDomainMatch = ownerDomainMatches * 18;
       const declarationKind2 = String(node.declaration_kind ?? "");
+      const structureMatch = !explicitMethodMentioned && STRUCTURAL_DECLARATION_KINDS.has(declarationKind2) && [...queryStructureTerms].some((term) => nameTerms.has(term)) ? 24 : 0;
       const declarationMatch = (terms3.includes("function") || analyzerIntent) && declarationKind2 === "function" ? 24 : 0;
       const actionMatch = actionIntent && ["function", "method"].includes(declarationKind2) ? 36 : 0;
       const exactIdentifierMatch = queryCodeIdentifiers.has(name) ? 44 + (declarationKind2 === "method" ? 16 : 0) : 0;
@@ -253026,7 +253054,7 @@ var CodeSymbolSearchIndex = class {
       const testPathPenalty = testPath && !queryTerms.has("test") ? 88 : 0;
       const symbolActionTerms = [...nameTerms].filter((term) => SYMBOL_ACTION_TERMS.has(term));
       const actionConflictPenalty = queryActionTerms.size > 0 && symbolActionTerms.length > 0 && !symbolActionTerms.some((term) => queryActionTerms.has(term)) ? 32 : 0;
-      return [hit.id, { node, score: hit.score + fieldMatch + domainMatches * 30 + declarationMatch + actionMatch + exactIdentifierMatch + exactWordMatch + namedMethodMatch + constructorMatch + namedActionMatch - testPathPenalty - actionConflictPenalty + (name === lowered ? 20 : name.startsWith(lowered) ? 5 : name.includes(lowered) ? 2 : 0) }];
+      return [hit.id, { node, score: hit.score + fieldMatch + domainMatches * 30 + ownerDomainMatch + structureMatch + declarationMatch + actionMatch + exactIdentifierMatch + exactWordMatch + namedMethodMatch + constructorMatch + namedActionMatch - testPathPenalty - actionConflictPenalty + (name === lowered ? 20 : name.startsWith(lowered) ? 5 : name.includes(lowered) ? 2 : 0) }];
     }));
     const characters = [...lowered];
     const partialCandidates = characters.length >= 3 ? [...this.#partialNamesByTrigram.get(characters.slice(0, 3).join("")) ?? []].map((id23) => [id23, this.#byId.get(id23)]) : [...this.#byId.entries()];
@@ -253990,12 +254018,23 @@ function selectLspRelationSymbols(nodes, limit3, prioritizeCallables = false) {
     group.push(node);
     byPath.set(path2, group);
   }
-  if (prioritizeCallables) for (const group of byPath.values()) group.sort((left, right) => {
-    const leftCallable = [6, 9, 12].includes(Number(left.symbol_kind));
-    const rightCallable = [6, 9, 12].includes(Number(right.symbol_kind));
-    return Number(rightCallable) - Number(leftCallable);
-  });
-  const groups = [...byPath.values()];
+  const compareText = (left, right) => left < right ? -1 : left > right ? 1 : 0;
+  const compareSymbol = (left, right) => {
+    const leftSpan = left.span && typeof left.span === "object" ? left.span : {};
+    const rightSpan = right.span && typeof right.span === "object" ? right.span : {};
+    const leftStart = Number.isSafeInteger(leftSpan.start_offset) ? Number(leftSpan.start_offset) : Number.MAX_SAFE_INTEGER;
+    const rightStart = Number.isSafeInteger(rightSpan.start_offset) ? Number(rightSpan.start_offset) : Number.MAX_SAFE_INTEGER;
+    return leftStart - rightStart || compareText(String(left.name ?? ""), String(right.name ?? "")) || compareText(String(left.id ?? ""), String(right.id ?? ""));
+  };
+  const groups = [...byPath.entries()].sort(([left], [right]) => compareText(left, right)).map(([, group]) => group.sort((left, right) => {
+    if (prioritizeCallables) {
+      const leftCallable = [6, 9, 12].includes(Number(left.symbol_kind));
+      const rightCallable = [6, 9, 12].includes(Number(right.symbol_kind));
+      const callableOrder = Number(rightCallable) - Number(leftCallable);
+      if (callableOrder) return callableOrder;
+    }
+    return compareSymbol(left, right);
+  }));
   const selected = [];
   for (let offset = 0; selected.length < limit3; offset++) {
     const candidates = groups.map((group) => group[offset]).filter((node) => node !== void 0);
@@ -254076,11 +254115,15 @@ function collectLspRelations(input) {
   }
   for (const raw of input.calls) {
     const target = nodesById.get(String(raw.symbol_id));
-    if (!target || !Array.isArray(raw.incoming_calls)) {
+    if (!target) {
       omit("call_target_or_incoming_invalid");
       continue;
     }
-    for (const incoming of raw.incoming_calls) {
+    if (raw.incoming_calls !== void 0 && !Array.isArray(raw.incoming_calls)) {
+      omit("call_target_or_incoming_invalid");
+      continue;
+    }
+    for (const incoming of raw.incoming_calls ?? []) {
       const sourceItem = incoming.from;
       const sourceDoc = sourceItem && documentForUri(String(sourceItem.uri), root, byUri, byPath);
       const selection = sourceItem?.selectionRange;
@@ -254098,6 +254141,39 @@ function collectLspRelations(input) {
           continue;
         }
         append("calls", source, target, { start_offset: start, end_offset: end });
+      }
+    }
+    if (raw.outgoing_calls !== void 0 && !Array.isArray(raw.outgoing_calls)) {
+      omit("call_source_or_outgoing_invalid");
+      continue;
+    }
+    const sourceDocument = byPath.get(String(target.path));
+    if (!sourceDocument) {
+      if (raw.outgoing_calls?.length) omit("call_source_unmapped");
+      continue;
+    }
+    for (const outgoing of raw.outgoing_calls ?? []) {
+      const targetItem = outgoing.to;
+      const targetDocument = targetItem && documentForUri(String(targetItem.uri), root, byUri, byPath);
+      const selection = targetItem?.selectionRange;
+      const targetOffset = targetDocument?.index.offset(selection?.start);
+      const callee = targetDocument && targetOffset !== void 0 ? nodesByPathOffset.get(targetDocument.path)?.get(targetOffset) : void 0;
+      if (!callee) {
+        omit("outgoing_call_target_unmapped");
+        continue;
+      }
+      if (!Array.isArray(outgoing.fromRanges)) {
+        omit("outgoing_call_ranges_invalid");
+        continue;
+      }
+      for (const range of outgoing.fromRanges) {
+        const start = sourceDocument.index.offset(range.start);
+        const end = sourceDocument.index.offset(range.end);
+        if (start === void 0 || end === void 0 || end < start) {
+          omit("outgoing_call_range_invalid");
+          continue;
+        }
+        append("calls", target, callee, { start_offset: start, end_offset: end });
       }
     }
   }
@@ -254278,6 +254354,9 @@ async function analyzeLspSnapshot(input, timeoutMs = input.request_timeout_ms ??
   let stderrBytes = 0;
   const publishedDiagnostics = /* @__PURE__ */ new Map();
   const diagnosticWaiters = /* @__PURE__ */ new Set();
+  const activeWorkDoneProgress = /* @__PURE__ */ new Set();
+  const workDoneProgressWaiters = /* @__PURE__ */ new Set();
+  let workDoneProgressEvents = 0;
   const failPending = (error) => {
     closed = error;
     for (const item of pending.values()) {
@@ -254359,6 +254438,16 @@ async function analyzeLspSnapshot(input, timeoutMs = input.request_timeout_ms ??
         }
         continue;
       }
+      if (message.method === "$/progress" && message.id === void 0) {
+        const params = asRecord(message.params), token = params?.token, value = asRecord(params?.value);
+        if ((typeof token === "string" || typeof token === "number") && value) {
+          if (value.kind === "begin") activeWorkDoneProgress.add(token);
+          else if (value.kind === "end") activeWorkDoneProgress.delete(token);
+          workDoneProgressEvents++;
+          for (const waiter of [...workDoneProgressWaiters]) waiter();
+        }
+        continue;
+      }
       if (message.id === void 0) continue;
       const item = pending.get(message.id);
       if (!item) continue;
@@ -254393,7 +254482,7 @@ async function analyzeLspSnapshot(input, timeoutMs = input.request_timeout_ms ??
       processId: process.pid,
       rootUri: (0, import_node_url6.pathToFileURL)(cwd).href,
       rootPath: cwd,
-      capabilities: { textDocument: {
+      capabilities: { window: { workDoneProgress: true }, textDocument: {
         publishDiagnostics: { relatedInformation: true, versionSupport: true, codeDescriptionSupport: true, dataSupport: true },
         diagnostic: { dynamicRegistration: false },
         documentSymbol: { hierarchicalDocumentSymbolSupport: true },
@@ -254481,6 +254570,8 @@ async function analyzeLspSnapshot(input, timeoutMs = input.request_timeout_ms ??
       }));
       documents.push(...batch);
     }
+    const progressWait = activeWorkDoneProgress.size > 0 ? await waitForWorkDoneProgress(activeWorkDoneProgress, workDoneProgressWaiters, timeoutMs) : false;
+    const workDoneProgressWaited = progressWait || workDoneProgressEvents > 0;
     const symbolAnalysis = normalizeLspSymbols({ analyzer: input.analyzer, analyzer_version: input.analyzer_version, documents });
     const documentSymbolCache = [];
     let symbolCacheBytes = 0, symbolCacheOmittedDocuments = 0;
@@ -254519,6 +254610,8 @@ async function analyzeLspSnapshot(input, timeoutMs = input.request_timeout_ms ??
     const relationTypeHierarchy = [];
     let relationQueryFailures = 0;
     let relationQueryOmissions = 0;
+    let outgoingCallHierarchyAvailable = callsAvailable;
+    const relationCapabilityNotes = /* @__PURE__ */ new Map();
     let definitionLookups = 0;
     const seenDefinitionLocations = /* @__PURE__ */ new Set();
     const relationFailureStages = /* @__PURE__ */ new Map();
@@ -254562,32 +254655,35 @@ async function analyzeLspSnapshot(input, timeoutMs = input.request_timeout_ms ??
           if (prepareSucceeded && prepared !== null) {
             if (!Array.isArray(prepared)) failRelation("call_hierarchy_invalid_prepare_result");
             else {
-              const incomingCalls = [];
+              const incomingCalls = [], outgoingCalls = [];
               for (const item of prepared.slice(0, 10)) {
                 try {
                   const result = await request2("callHierarchy/incomingCalls", { item });
-                  if (result === null) continue;
-                  if (!Array.isArray(result)) {
-                    failRelation("call_hierarchy_invalid_incoming_result");
-                    continue;
+                  if (result !== null) {
+                    if (!Array.isArray(result)) failRelation("call_hierarchy_invalid_incoming_result");
+                    else incomingCalls.push(...result);
                   }
-                  incomingCalls.push(...result);
                 } catch (error) {
                   failRelation(`call_hierarchy_incoming_failed_${safeFailureCode(error)}`);
                 }
+                if (outgoingCallHierarchyAvailable) {
+                  try {
+                    const result = await request2("callHierarchy/outgoingCalls", { item });
+                    if (result !== null) {
+                      if (!Array.isArray(result)) failRelation("call_hierarchy_invalid_outgoing_result");
+                      else outgoingCalls.push(...result);
+                    }
+                  } catch (error) {
+                    const failureCode = safeFailureCode(error);
+                    if (failureCode === "-32601") {
+                      relationCapabilityNotes.set("outgoing_call_hierarchy_unavailable", (relationCapabilityNotes.get("outgoing_call_hierarchy_unavailable") ?? 0) + 1);
+                      outgoingCallHierarchyAvailable = false;
+                    } else failRelation(`call_hierarchy_outgoing_failed_${failureCode}`);
+                  }
+                }
               }
-              relationCalls.push({ symbol_id: symbol.id, incoming_calls: incomingCalls });
+              relationCalls.push({ symbol_id: symbol.id, incoming_calls: incomingCalls, outgoing_calls: outgoingCalls });
             }
-          }
-        }
-        if (implementationsAvailable) {
-          try {
-            const result = await request2("textDocument/implementation", { textDocument: { uri }, position: selection });
-            const locations = normalizeLocations(result);
-            if (locations) relationImplementations.push({ symbol_id: symbol.id, locations });
-            else failRelation("implementation_invalid_result");
-          } catch (error) {
-            failRelation(`implementation_request_failed_${safeFailureCode(error)}`);
           }
         }
         if (typeDefinitionsAvailable) {
@@ -254684,6 +254780,18 @@ async function analyzeLspSnapshot(input, timeoutMs = input.request_timeout_ms ??
         }
       }));
     }
+    if (implementationsAvailable) for (const symbol of ordinaryRelationSymbols) {
+      const { document: document3, selection } = resolveLspSymbolPosition(input.documents, symbol);
+      const uri = (0, import_node_url6.pathToFileURL)((0, import_node_path40.resolve)(cwd, document3.path)).href;
+      try {
+        const result = await request2("textDocument/implementation", { textDocument: { uri }, position: selection });
+        const locations = normalizeLocations(result);
+        if (locations) relationImplementations.push({ symbol_id: symbol.id, locations });
+        else failRelation("implementation_invalid_result");
+      } catch (error) {
+        failRelation(`implementation_request_failed_${safeFailureCode(error)}`);
+      }
+    }
     const collected = collectLspRelations({
       cwd,
       documents: documents.map((document3) => ({ ...document3, uri: (0, import_node_url6.pathToFileURL)((0, import_node_path40.resolve)(cwd, String(document3.path))).href })),
@@ -254712,7 +254820,7 @@ async function analyzeLspSnapshot(input, timeoutMs = input.request_timeout_ms ??
     const diagnosticItems = diagnosticReports.flat();
     const languageErrorCount = diagnosticItems.filter((item) => asRecord(item)?.severity === 1).length;
     const languageWarningCount = diagnosticItems.filter((item) => asRecord(item)?.severity === 2).length;
-    const relationStatus = !requestedRelations.length ? "not_requested" : unsupportedRelations.length > 0 || relationQueryFailures > 0 || relationOmittedCount > 0 || languageErrorCount > 0 ? "partial" : "analyzed";
+    const relationStatus = !requestedRelations.length ? "not_requested" : unsupportedRelations.length > 0 || relationQueryFailures > 0 || relationOmittedCount > 0 || languageErrorCount > 0 || progressWait ? "partial" : "analyzed";
     await request2("shutdown", null);
     notify("exit", {});
     child.stdin.end();
@@ -254735,6 +254843,8 @@ async function analyzeLspSnapshot(input, timeoutMs = input.request_timeout_ms ??
       relation_query_failures: relationQueryFailures,
       relation_omitted_stages: collected.omitted_relation_stages,
       relation_failure_stages: [...relationFailureStages].map(([stage, count3]) => ({ stage, count: count3 })),
+      relation_capability_notes: [...relationCapabilityNotes].map(([stage, count3]) => ({ stage, count: count3 })),
+      ...workDoneProgressEvents ? { work_done_progress_waited: workDoneProgressWaited, work_done_progress_timed_out: progressWait } : {},
       language_diagnostics: {
         observed_document_count: diagnosticReports.length,
         item_count: diagnosticItems.length,
@@ -254786,6 +254896,21 @@ async function waitForDiagnosticPublications(uris, published, waiters, timeoutMs
       if (uris.every((uri) => published.has(uri))) finish();
     };
     waiters.add(wake);
+  });
+}
+async function waitForWorkDoneProgress(active, waiters, timeoutMs) {
+  return new Promise((resolveWait) => {
+    const check2 = () => {
+      if (!active.size) finish(false);
+    };
+    const finish = (timedOut) => {
+      clearTimeout(timer);
+      waiters.delete(check2);
+      resolveWait(timedOut);
+    };
+    const timer = setTimeout(() => finish(true), timeoutMs);
+    waiters.add(check2);
+    check2();
   });
 }
 function normalizePublishedDiagnostics(document3, raw) {
@@ -255685,7 +255810,8 @@ var MAX_SHARD_BYTES = 1e6;
 var MAX_ROUTE_BYTES = 64 * 1024 * 1024;
 var MAX_ROUTE_SHARD_BYTES = 4 * 1024 * 1024;
 var CURRENT_GRAPH_STORAGE = "sharded-v4";
-var SEARCH_CONTEXT_DECLARATION_KINDS = /* @__PURE__ */ new Set(["function", "method", "class", "interface", "type", "enum"]);
+var SEARCH_CONTEXT_DECLARATION_KINDS = /* @__PURE__ */ new Set(["function", "method", "class", "interface", "type", "enum", "struct"]);
+var SEARCH_CONTEXT_CONTAINER_KINDS = /* @__PURE__ */ new Set(["class", "interface", "type", "enum", "struct"]);
 function controlFlowFallback(flow, language2) {
   return flow.result ?? {
     status: "unavailable",
@@ -256769,7 +256895,7 @@ var CodebaseIndexKernel = class {
     }
     const symbols = this.loadNodes(index).filter((node) => node.kind === "symbol");
     const searchContext = this.symbolSearchContext(index, symbols);
-    const search = new CodeSymbolSearchIndex(symbols, searchContext);
+    const search = new CodeSymbolSearchIndex(symbols, searchContext.identifiers, searchContext.enclosingTypes);
     this.#symbolSearchCache.set(String(index.id), { fingerprint: fingerprint5, search });
     while (this.#symbolSearchCache.size > 2) this.#symbolSearchCache.delete(this.#symbolSearchCache.keys().next().value);
     return search;
@@ -256777,12 +256903,12 @@ var CodebaseIndexKernel = class {
   /** Build ephemeral identifier-only search terms from digest-verified declarations. */
   symbolSearchContext(index, symbols) {
     const spans = symbols.filter((node) => SEARCH_CONTEXT_DECLARATION_KINDS.has(String(node.declaration_kind ?? "")) && node.declaration_span && typeof node.declaration_span === "object");
-    if (!spans.length) return /* @__PURE__ */ new Map();
+    if (!spans.length) return { identifiers: /* @__PURE__ */ new Map(), enclosingTypes: /* @__PURE__ */ new Map() };
     const checkpoint = this.store.get("workspace_checkpoint", String(index.checkpoint_id));
     const entries2 = new Map(checkpoint.entries.map((entry2) => [String(entry2.path), entry2]));
     const byPath = /* @__PURE__ */ new Map();
     for (const symbol of spans) byPath.set(symbol.path, [...byPath.get(symbol.path) ?? [], symbol]);
-    const contexts = /* @__PURE__ */ new Map();
+    const contexts = /* @__PURE__ */ new Map(), enclosingTypes = /* @__PURE__ */ new Map();
     const perPathBudget = Math.floor(2e6 / byPath.size);
     for (const [path2, fileSymbols] of [...byPath].sort(([a], [b]) => a.localeCompare(b))) {
       const entry2 = entries2.get(path2);
@@ -256790,16 +256916,21 @@ var CodebaseIndexKernel = class {
       const source = this.sourceFile(String(checkpoint.snapshot_root), entry2);
       const orderedSymbols = fileSymbols.sort((a, b) => Number(a.declaration_span.start_offset) - Number(b.declaration_span.start_offset) || a.id.localeCompare(b.id));
       const perSymbolBudget = Math.floor(perPathBudget / orderedSymbols.length);
+      const containers = [];
       for (const symbol of orderedSymbols) {
         const range = symbol.declaration_span;
         const start = Number(range.start_offset), end = Number(range.end_offset);
         if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || end < start || end > source.content.length) continue;
+        while (containers.length && Number(containers.at(-1).declaration_span.end_offset) < end) containers.pop();
+        const ownerNames = containers.slice(-8).map((owner) => String(owner.name)).filter(Boolean);
+        if (ownerNames.length) enclosingTypes.set(symbol.id, ownerNames.join(" "));
         const snippet = source.content.slice(start, Math.min(end, start + Math.min(16e3, perSymbolBudget)));
         const identifiers = snippet.match(/[A-Za-z_$][\w$]*/gu) ?? [];
         if (identifiers.length) contexts.set(symbol.id, identifiers.join(" "));
+        if (SEARCH_CONTEXT_CONTAINER_KINDS.has(String(symbol.declaration_kind))) containers.push(symbol);
       }
     }
-    return contexts;
+    return { identifiers: contexts, enclosingTypes };
   }
   impactDependencyDigest(dependencies) {
     const routes = [...dependencies.routes].sort(), shards = [...dependencies.shards].sort();
@@ -261280,7 +261411,10 @@ var CognitiveSearchCoordinator = class {
     const scenarioKey = args.scenario_key === void 0 ? null : text(args.scenario_key, "scenario_key");
     if (scenarioKey !== null && !/^[a-z0-9][a-z0-9._/-]{0,95}$/u.test(scenarioKey)) throw new Error("scenario_key must be a bounded stable identifier");
     const scenarioParts = scope3?.split(":") ?? [];
-    const scenarioActive = scenarioKey === null || scenarioParts[0] === "project" && knowledgeScenarioIsActive(this.store.paths.knowledgeDir, scenarioParts.slice(1).join(":"), scenarioKey);
+    if (scenarioKey !== null && !scope3) throw new Error("scenario_key requires an explicit Knowledge scope");
+    const scenarioKind = scenarioParts[0] === "global" && scenarioParts.length === 1 ? "global" : scenarioParts[0] === "project" && scenarioParts.length > 1 ? "project" : null;
+    const scenarioId = scenarioKind === "global" ? "global" : scenarioParts.slice(1).join(":");
+    const scenarioActive = scenarioKey === null || scenarioKind !== null && knowledgeScenarioIsActive(this.store.paths.knowledgeDir, scenarioId, scenarioKey, scenarioKind);
     const includeCandidates = args.include_candidates !== false;
     const terms3 = [...new Set(query.toLowerCase().match(/[\p{L}\p{N}_-]+/gu) ?? [])];
     const governed = this.store.list("knowledge_claim", 1e4).flatMap((claim) => {
@@ -261288,6 +261422,15 @@ var CognitiveSearchCoordinator = class {
       if (claim.status !== "reviewed" && (!includeCandidates || claim.status !== "candidate")) return [];
       if (scope3 !== null && claim.scope !== "global" && claim.scope !== scope3) return [];
       if (scenarioKey !== null && (!scenarioActive || claim.scenario_key !== scenarioKey && claim.coarse_scenario_key !== scenarioKey)) return [];
+      if (scenarioKey !== null) {
+        let claimScope;
+        try {
+          claimScope = scopeFromKey(String(claim.scope ?? "global"));
+        } catch {
+          return [];
+        }
+        if (scenarioKind !== claimScope.kind || scenarioKind === "project" && scenarioId !== claimScope.id) return [];
+      }
       if (claim.valid_until !== void 0 && claim.valid_until !== null && (typeof claim.valid_until !== "string" || !Number.isFinite(Date.parse(claim.valid_until)) || Date.parse(claim.valid_until) < Date.now())) return [];
       if (claim.content_ref && !contentReference(claim.content_ref)) throw new Error("Knowledge content reference is invalid");
       const content = contentReference(claim.content_ref) ? this.store.contentStore.readCompatSync(claim.content_ref).body : String(claim.content ?? "");
@@ -261323,16 +261466,27 @@ var CognitiveSearchCoordinator = class {
   knowledgeScenarioList(args) {
     const scope3 = text(args.scope ?? `${text(args.scope_kind, "scope_kind")}:${text(args.scope_id, "scope_id")}`, "scope");
     const [kind4, ...parts] = scope3.split(":");
-    if (kind4 !== "project" || !parts.length) throw new Error("Knowledge scenario catalog requires an explicit project scope");
-    return { scope: scope3, ...listKnowledgeScenarios(this.store.paths.knowledgeDir, parts.join(":")) };
+    if (kind4 === "global" && parts.length === 0) return { scope: scope3, ...listKnowledgeScenarios(this.store.paths.knowledgeDir, "global", "global") };
+    if (kind4 !== "project" || !parts.length) throw new Error("Knowledge scenario catalog requires an explicit project or global scope");
+    return { scope: scope3, ...listKnowledgeScenarios(this.store.paths.knowledgeDir, parts.join(":"), "project") };
   }
   knowledgeScenarioRetire(args) {
     const scope3 = text(args.scope ?? `${text(args.scope_kind, "scope_kind")}:${text(args.scope_id, "scope_id")}`, "scope");
     const [kind4, ...parts] = scope3.split(":");
-    if (kind4 !== "project" || !parts.length) throw new Error("Knowledge scenario retirement requires an explicit project scope");
+    if (kind4 === "global" && parts.length === 0) return retireKnowledgeScenario({
+      knowledge_dir: this.store.paths.knowledgeDir,
+      project_id: "global",
+      scope_kind: "global",
+      scenario_key: text(args.scenario_key, "scenario_key"),
+      expected_catalog_version: finiteInteger(args.expected_catalog_version, "expected_catalog_version", 0, 0),
+      request_id: text(args.request_id, "request_id"),
+      reason: text(args.reason, "reason")
+    });
+    if (kind4 !== "project" || !parts.length) throw new Error("Knowledge scenario retirement requires an explicit project or global scope");
     return retireKnowledgeScenario({
       knowledge_dir: this.store.paths.knowledgeDir,
       project_id: parts.join(":"),
+      scope_kind: "project",
       scenario_key: text(args.scenario_key, "scenario_key"),
       expected_catalog_version: finiteInteger(args.expected_catalog_version, "expected_catalog_version", 0, 0),
       request_id: text(args.request_id, "request_id"),
@@ -261342,11 +261496,13 @@ var CognitiveSearchCoordinator = class {
   knowledgeScenarioMigrationPropose(args) {
     const scope3 = text(args.scope ?? `${text(args.scope_kind, "scope_kind")}:${text(args.scope_id, "scope_id")}`, "scope");
     const [kind4, ...parts] = scope3.split(":");
-    if (kind4 !== "project" || !parts.length) throw new Error("Knowledge scenario migration requires an explicit project scope");
+    const globalScope = kind4 === "global" && parts.length === 0;
+    if (!globalScope && (kind4 !== "project" || !parts.length)) throw new Error("Knowledge scenario migration requires an explicit project or global scope");
     if (!Array.isArray(args.source_keys) || !Array.isArray(args.targets)) throw new Error("Knowledge scenario migration sources and targets must be arrays");
     return proposeKnowledgeScenarioMigration({
       knowledge_dir: this.store.paths.knowledgeDir,
-      project_id: parts.join(":"),
+      project_id: globalScope ? "global" : parts.join(":"),
+      scope_kind: globalScope ? "global" : "project",
       mode: text(args.mode, "mode"),
       source_keys: args.source_keys,
       targets: args.targets,
@@ -264458,7 +264614,8 @@ function installLearningCycleMethods(serviceClass) {
       request: evolutionRequest,
       model_ticket: ticket,
       scenario_catalog: taxonomy,
-      next_action: submitted ? "run_the_pinned_candidate_through_ordered_external_evaluation_gates" : ticket?.status === "ready_for_adapter" ? "model_adapter_distills_proposal_then_external_evaluator_runs_ordered_gates" : ticket ? String(ticket.next_action ?? "configure_workflow_evolution_model_profile_then_distill_and_evaluate") : "configure_workflow_evolution_model_profile_then_distill_and_evaluate",
+      distillation_mode: submitted ? null : ticket?.status === "ready_for_adapter" ? "configured_model_adapter" : "current_host_model",
+      next_action: submitted ? "run_the_pinned_candidate_through_ordered_external_evaluation_gates" : ticket?.status === "ready_for_adapter" ? "model_adapter_distills_proposal_then_external_evaluator_runs_ordered_gates" : "current_host_model_reads_pinned_request_submits_candidate_then_runs_ordered_evaluation_gates",
       idempotent: observationReplay && request2.idempotent === true && !ticketWasCreated
     };
   };
@@ -265159,12 +265316,14 @@ function lspFailureDiagnostic(error) {
   const stage = /(?:during|at) ([a-zA-Z][\w/.-]*)/u.exec(message)?.[1];
   const signal = /signal (SIG[A-Z0-9]+)/u.exec(message)?.[1];
   const exitCode = /\(code (-?\d+), signal/u.exec(message)?.[1];
+  const protocolCode = /(?:protocol code |Language server request failed[^\n]*\()(-?\d+)\)/u.exec(message)?.[1];
   const reason = /timed out/iu.test(message) ? "request_timeout" : signal ? "server_crash" : /Unable to start configured language server/u.test(message) ? "server_unavailable" : /worker_unavailable/u.test(message) ? "worker_unavailable" : /Language server request failed/u.test(message) ? "server_request_failed" : "analysis_failed";
   return {
     reason,
     ...stage ? { failure_stage: stage } : {},
     ...signal ? { signal } : {},
-    ...exitCode && Number.isSafeInteger(Number(exitCode)) ? { exit_code: Number(exitCode) } : {}
+    ...exitCode && Number.isSafeInteger(Number(exitCode)) ? { exit_code: Number(exitCode) } : {},
+    ...protocolCode !== void 0 && Number.isSafeInteger(Number(protocolCode)) ? { protocol_error_code: Number(protocolCode) } : {}
   };
 }
 function runConfiguredLsp(adapter, files5, service, contextFiles = []) {
@@ -265203,6 +265362,12 @@ function runConfiguredLsp(adapter, files5, service, contextFiles = []) {
         stdio: ["pipe", "pipe", "ignore"]
       });
       result = JSON.parse(output);
+    }
+    if (result.format === "craft-lsp-worker-failure-v1") {
+      const reason = String(result.reason ?? "analysis_failed");
+      const stage = typeof result.failure_stage === "string" ? ` during ${result.failure_stage}` : "";
+      const protocolCode = Number.isSafeInteger(result.protocol_error_code) ? ` (protocol code ${String(result.protocol_error_code)})` : "";
+      throw new Error(`${reason === "server_request_failed" ? "Language server request failed" : reason}${stage}${protocolCode}`);
     }
     return contextFiles.length ? { ...result, diagnostics: { ...result.diagnostics, workspace_file_digests: contextFiles.map(({ path: path2, digest: digest35 }) => ({ path: path2, digest: digest35 })) } } : result;
   } finally {
@@ -265361,7 +265526,20 @@ function ensureRepositoryAttempt(service, args, sourceRetry) {
           adapter_config_digest: adapterConfigDigest
         })));
       } catch (error) {
-        degraded.push({ language: adapter.language, status: "unavailable", ...lspFailureDiagnostic(error) });
+        const failure = lspFailureDiagnostic(error);
+        if (adapter.language === "go") {
+          semanticAnalyses.push(basicAnalysis(service.store, workspaceId, languageFiles));
+          degraded.push({
+            language: "go",
+            status: "partial",
+            reason: failure.reason,
+            semantic_adapter_status: "unavailable",
+            failure_stage: failure.failure_stage,
+            protocol_error_code: failure.protocol_error_code,
+            fallback_analyzer: "craft-basic-symbols",
+            relations: "not_analyzed"
+          });
+        } else degraded.push({ language: adapter.language, status: "unavailable", ...failure });
       }
       if (languageFiles.length > bounded4.length) degraded.push({ language: adapter.language, status: "partial", reason: "document_limit", omitted_documents: languageFiles.length - bounded4.length });
     }
