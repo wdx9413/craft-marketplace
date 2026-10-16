@@ -730,6 +730,24 @@ function failureKind(error) {
   const name = error instanceof Error ? error.name : "Error";
   return /^[A-Za-z][A-Za-z0-9]{0,31}$/u.test(name) ? name : "Error";
 }
+var SAFE_CLASSIFICATION_SKIP_REASONS = /* @__PURE__ */ new Set([
+  "ambiguous",
+  "model_profile_unavailable",
+  "model_profile_not_ready",
+  "multiple_active_profiles_for_purpose",
+  "multiple_models_require_explicit_profile",
+  "needs_credential",
+  "needs_enablement",
+  "no_configured_model",
+  "provider_unavailable",
+  "unavailable",
+  "explicitly_enable_network_execution"
+]);
+function classificationSkipReason(classification) {
+  const reason = classification.reason;
+  if (typeof reason === "string" && (SAFE_CLASSIFICATION_SKIP_REASONS.has(reason) || /^set_[A-Z][A-Z0-9_]{0,63}$/u.test(reason))) return reason;
+  return "configuration_unavailable";
+}
 async function runLearningTick(deps, syncKnowledge = false) {
   let experience;
   try {
@@ -753,6 +771,8 @@ function learningTickStatus(result, once) {
   const knowledgeFailure = typeof knowledge?.failure_kind === "string" ? knowledge.failure_kind : null;
   const classification = knowledge?.classification && typeof knowledge.classification === "object" ? knowledge.classification : null;
   const classificationFailure = classification?.status === "failed" ? typeof classification.failure_kind === "string" && /^[A-Za-z][A-Za-z0-9]{0,31}$/u.test(classification.failure_kind) ? classification.failure_kind : "Error" : null;
+  const classificationSkipped = classification?.skipped === true;
+  const classificationSkip = classificationSkipped ? classificationSkipReason(classification) : null;
   const failedClassifications = Array.isArray(classification?.outcomes) ? classification.outcomes.filter((value) => Boolean(value && typeof value === "object" && !Array.isArray(value) && value.status === "failed")).length : 0;
   const classificationFailureStages = /* @__PURE__ */ new Map();
   if (Array.isArray(classification?.outcomes)) for (const value of classification.outcomes) {
@@ -782,11 +802,13 @@ function learningTickStatus(result, once) {
 `] : [],
     ...classificationFailure ? [`Craft Knowledge scenario classification failed (${classificationFailure}).
 `] : [],
+    ...classificationSkip ? [`Craft Knowledge scenario classification skipped (${classificationSkip}); configure one ready model profile to resume.
+`] : [],
     ...!classificationFailure && failedClassifications ? [`Craft Knowledge scenario classification failed for ${failedClassifications} Claim(s)${stageSummary ? ` at ${stageSummary}` : ""}.
 `] : [],
     ...sourceIssues
   ].join("");
-  return { diagnostics, exit_code: once && (experienceFailure !== null || knowledgeFailure !== null || classificationFailure !== null || failedClassifications > 0 || sourceIssues.length > 0) ? 1 : null };
+  return { diagnostics, exit_code: once && (experienceFailure !== null || knowledgeFailure !== null || classificationFailure !== null || classificationSkipped || failedClassifications > 0 || sourceIssues.length > 0) ? 1 : null };
 }
 function learningFailureKind(error) {
   return failureKind(error);
