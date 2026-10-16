@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // deploy/experience-learning/worker.ts
-import { spawn } from "node:child_process";
+import { spawn as spawn2 } from "node:child_process";
 import { realpathSync } from "node:fs";
 import { createInterface } from "node:readline";
 import { pathToFileURL } from "node:url";
@@ -18,6 +18,9 @@ var SCOPE_KINDS = new Set(COGNITIVE_SCOPE_KINDS);
 
 // common/craft-common-base/src/digest.ts
 import { createHash } from "node:crypto";
+function digestJson(value) {
+  return `sha256:${createHash("sha256").update(JSON.stringify(value)).digest("hex")}`;
+}
 function stableDigest(value) {
   return stableDigestStreaming(value);
 }
@@ -81,6 +84,7 @@ var PROVIDER_NAME = /^[a-z][a-z0-9-]{0,31}$/u;
 var ENV_NAME = /^[A-Z_][A-Z0-9_]*$/u;
 var TIER_ORDER = ["frontier", "standard", "small"];
 var PROVIDER_CATALOG = [
+  { provider: "codex-cli", label: "Codex CLI Host", protocol: "openai-compatible", base_url: "https://codex-cli-host.invalid", api_key_env: "CODEX_CLI_AUTH_STORE", chat_path: "/host/exec", models: { small: "gpt-6-luna" }, cost_hint: 1, supports_tools: false, host_managed_auth: true, context_cache: NO_CONTEXT_CACHE },
   { provider: "deepseek", label: "DeepSeek", protocol: "openai-compatible", base_url: "https://api.deepseek.com/v1", api_key_env: "DEEPSEEK_API_KEY", chat_path: "/chat/completions", models: { small: "deepseek-chat", standard: "deepseek-chat", frontier: "deepseek-reasoner" }, cost_hint: 1, supports_tools: true, context_cache: DEEPSEEK_CONTEXT_CACHE },
   { provider: "volcengine", label: "\u706B\u5C71\u5F15\u64CE\u65B9\u821F", protocol: "openai-compatible", base_url: "https://ark.cn-beijing.volces.com/api/v3", api_key_env: "ARK_API_KEY", chat_path: "/chat/completions", models: { small: "doubao-lite", standard: "doubao-pro", frontier: "doubao-pro-32k" }, cost_hint: 2, supports_tools: true, context_cache: NO_CONTEXT_CACHE },
   { provider: "qwen", label: "\u901A\u4E49\u5343\u95EE", protocol: "openai-compatible", base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1", api_key_env: "DASHSCOPE_API_KEY", chat_path: "/chat/completions", models: { small: "qwen-turbo", standard: "qwen-plus", frontier: "qwen-max" }, cost_hint: 2, supports_tools: true, context_cache: NO_CONTEXT_CACHE },
@@ -144,6 +148,7 @@ function defineProvider(input) {
     models,
     cost_hint: costHint,
     supports_tools: supportsTools,
+    ...input.host_managed_auth === true ? { host_managed_auth: true } : {},
     context_cache: cacheSpec(provider, baseUrl, input.context_cache)
   };
 }
@@ -250,6 +255,7 @@ function createFetchTransport(options = {}) {
   if (!Number.isInteger(maxResponseBytes) || maxResponseBytes < 1024) throw new Error("maxResponseBytes must be at least 1024");
   return {
     complete: async (spec, request) => {
+      if (spec.host_managed_auth) throw new Error(`Model ${spec.provider} requires its Host-managed transport.`);
       const key2 = env[spec.api_key_env]?.trim();
       if (!key2) throw new Error(`Model ${spec.provider} is not configured; set ${spec.api_key_env} before running Craft.`);
       const headers = { "content-type": "application/json" };
@@ -295,6 +301,9 @@ function createFetchTransport(options = {}) {
     }
   };
 }
+
+// core/version.ts
+var CRAFT_RELEASE_VERSION = "0.12.48";
 
 // deploy/experience-learning/workflow-contract.ts
 function object(value, name) {
@@ -660,6 +669,10 @@ async function runKnowledgeScenarioClassificationOnce(deps) {
     let processingStage = "model_request";
     try {
       const messages = [{ role: "system", content: system }, { role: "user", content: JSON.stringify(packet) }];
+      if (transport.acquireCall && !transport.acquireCall(provider.provider)) {
+        outcomes.push({ claim_id: claim.id, ticket_id: ticketId, status: "skipped", reason: "model_call_budget_exhausted" });
+        break;
+      }
       const response = await transport.complete(provider, buildChatRequest(provider, {
         model: String(profile.model),
         messages,
@@ -723,6 +736,142 @@ async function runKnowledgeScenarioClassificationOnce(deps) {
     }
   }
   return { processed: outcomes.length, outcomes };
+}
+
+// deploy/experience-learning/codex-cli-transport.ts
+import { tmpdir } from "node:os";
+
+// core/host-driver.ts
+import { spawn } from "node:child_process";
+var executeHostProcess = async (request) => new Promise((accept, reject) => {
+  const child = spawn(request.executable, request.argv, { cwd: request.cwd, shell: false, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
+  let stdout = "";
+  let stderr = "";
+  let outputLimited = false;
+  let timedOut = false;
+  let cancelled = false;
+  let inputError = null;
+  const append = (current, chunk) => {
+    const next = current + chunk.toString("utf8");
+    if (Buffer.byteLength(next) <= request.outputLimit) return next;
+    outputLimited = true;
+    return Buffer.from(next).subarray(0, request.outputLimit).toString("utf8");
+  };
+  const observed = (stream, chunk) => request.observe?.({ stream, bytes: chunk.length, digest: digestJson(chunk.toString("utf8")) });
+  child.stdout.on("data", (chunk) => {
+    stdout = append(stdout, chunk);
+    observed("stdout", chunk);
+  });
+  child.stderr.on("data", (chunk) => {
+    stderr = append(stderr, chunk);
+    observed("stderr", chunk);
+  });
+  child.stdin.on("error", (error) => {
+    inputError = error;
+    child.kill();
+  });
+  child.once("error", (error) => {
+    clearTimeout(timer);
+    reject(error);
+  });
+  const timer = setTimeout(() => {
+    timedOut = true;
+    child.kill();
+  }, request.timeoutMs);
+  const abort = () => {
+    cancelled = true;
+    child.kill();
+  };
+  request.signal?.addEventListener("abort", abort, { once: true });
+  if (request.signal?.aborted) abort();
+  child.once("close", (exitCode, signal) => {
+    clearTimeout(timer);
+    request.signal?.removeEventListener("abort", abort);
+    if (inputError && !cancelled && !timedOut) reject(inputError);
+    else accept({ exitCode, signal, stdout, stderr, timedOut, cancelled, outputLimited });
+  });
+  child.stdin.end(request.stdin);
+});
+
+// deploy/experience-learning/codex-cli-transport.ts
+var MODEL = "gpt-6-luna";
+var TIMEOUT_MS = 12e4;
+var OUTPUT_LIMIT = 65536;
+function messagesFrom(request) {
+  const messages = request.body.messages;
+  if (!Array.isArray(messages) || !messages.length) throw new Error("Codex Host request must contain messages");
+  return messages.map((value, index) => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`Codex Host message ${index} must be an object`);
+    const item = value;
+    if (typeof item.role !== "string" || typeof item.content !== "string") throw new Error(`Codex Host message ${index} must contain text`);
+    if (!(/* @__PURE__ */ new Set(["system", "user", "assistant"])).has(item.role)) throw new Error(`Codex Host role ${item.role} is unsupported`);
+    return { role: item.role, content: item.content };
+  });
+}
+function parseEvents(stdout) {
+  const events = [];
+  for (const line of stdout.split(/\r?\n/u).filter(Boolean)) {
+    try {
+      const value = JSON.parse(line);
+      if (!value || typeof value !== "object" || Array.isArray(value)) return { invalid: true, message: null, usage: null, terminal: null, terminalLast: false, failed: false };
+      events.push(value);
+    } catch {
+      return { invalid: true, message: null, usage: null, terminal: null, terminalLast: false, failed: false };
+    }
+  }
+  const messages = events.filter((event) => event.type === "item.completed" && event.item?.type === "agent_message");
+  const terminalEvents = events.filter((event) => event.type === "turn.completed");
+  const terminal = terminalEvents.length === 1 ? terminalEvents[0] : null;
+  const usage = terminal?.usage && typeof terminal.usage === "object" && !Array.isArray(terminal.usage) ? terminal.usage : null;
+  const message = messages.at(-1)?.item;
+  return {
+    invalid: false,
+    message: typeof message?.text === "string" ? message.text : null,
+    usage,
+    terminal,
+    terminalLast: events.at(-1) === terminal,
+    failed: events.some((event) => event.type === "turn.failed" || event.type === "error")
+  };
+}
+var CodexCliModelTransport = class {
+  executor;
+  used = false;
+  constructor(executor = executeHostProcess) {
+    this.executor = executor;
+  }
+  acquireCall(provider) {
+    if (provider !== "codex-cli" || this.used) return false;
+    this.used = true;
+    return true;
+  }
+  async complete(spec, request) {
+    if (spec.provider !== "codex-cli" || !spec.host_managed_auth) throw new Error("Codex Host transport received an incompatible provider");
+    if (request.body.model !== MODEL) throw new Error(`Codex Host model must be ${MODEL}`);
+    const prompt = messagesFrom(request).map((message) => `## ${message.role}
+${message.content}`).join("\n\n");
+    const argv = ["exec", "--ignore-user-config", "--ephemeral", "--sandbox", "read-only", "--skip-git-repo-check", "--model", MODEL, "--json", "-"];
+    const result = await this.executor({ executable: "codex", argv, cwd: tmpdir(), stdin: prompt, timeoutMs: TIMEOUT_MS, outputLimit: OUTPUT_LIMIT });
+    const parsed = parseEvents(result.stdout);
+    const completed = result.exitCode === 0 && result.signal === null && !result.timedOut && !result.cancelled && !result.outputLimited && !parsed.invalid && !parsed.failed && parsed.terminal !== null && parsed.terminalLast && parsed.message !== null;
+    if (!completed) throw new Error(result.timedOut ? "Codex Host timed out" : result.outputLimited ? "Codex Host output exceeded its bound" : "Codex Host did not return one complete model response");
+    const usage = parsed.usage;
+    return { text: parsed.message, model: MODEL, usage: usage && Number.isSafeInteger(usage.input_tokens) && Number.isSafeInteger(usage.output_tokens) ? { input_tokens: Number(usage.input_tokens), output_tokens: Number(usage.output_tokens) } : null };
+  }
+};
+function createLearningModelTransport(host, executor) {
+  if (host !== "codex-cli") return void 0;
+  const codex = new CodexCliModelTransport(executor);
+  const api = createFetchTransport({ maxAttempts: 1 });
+  let used = false;
+  return {
+    acquireCall: (provider) => {
+      if (used) return false;
+      if (provider === "codex-cli") codex.acquireCall(provider);
+      used = true;
+      return true;
+    },
+    complete: (spec, request) => spec.provider === "codex-cli" ? codex.complete(spec, request) : api.complete(spec, request)
+  };
 }
 
 // deploy/experience-learning/learning-tick.ts
@@ -972,6 +1121,10 @@ async function runDistillationOnce(deps) {
     };
     if (JSON.stringify(input).length > 12e3) throw new Error("Pinned Experience request exceeds the distillation input limit");
     const messages = [{ role: "system", content: system }, { role: "user", content: JSON.stringify(input) }];
+    if (deps.transport?.acquireCall && !deps.transport.acquireCall(provider.provider)) {
+      outcomes.push({ ticket_id: ticket.id, request_id: requestId, status: "skipped", reason: "model_call_budget_exhausted" });
+      break;
+    }
     const transport = deps.transport ?? createFetchTransport({ maxAttempts: Number(profile.max_attempts ?? 1) });
     const chat = await transport.complete(provider, buildChatRequest(provider, {
       model: string2(profile.model, "profile.model", 200),
@@ -994,12 +1147,24 @@ async function runDistillationOnce(deps) {
       steps
     });
     const procedure = result.procedure ? object3(result.procedure, "submitted procedure") : null;
+    const proposal = result.proposal ? object3(result.proposal, "submitted proposal") : null;
+    await deps.client.call("craft_evaluation_model_ticket_complete", {
+      ticket_id: ticket.id,
+      result_digest: stableDigest({
+        ticket_id: ticket.id,
+        request_id: requestId,
+        proposal_id: proposal?.id ?? null,
+        procedure_id: procedure?.id ?? null,
+        procedure_digest: proposal?.identity_digest ?? null,
+        status: "candidate_submitted"
+      })
+    });
     const firstDispatch = procedure && typeof procedure.id === "string" ? await deps.client.call("craft_experience_learning_evaluation_dispatch", { procedure_id: procedure.id }) : null;
     outcomes.push({
       ticket_id: ticket.id,
       request_id: requestId,
       status: "candidate_submitted",
-      proposal_id: result.proposal?.id ?? null,
+      proposal_id: proposal?.id ?? null,
       procedure_id: procedure?.id ?? null,
       evaluation_dispatch_id: firstDispatch?.dispatch?.id ?? null,
       evaluation_stage: firstDispatch?.dispatch?.stage ?? null
@@ -1014,7 +1179,7 @@ var McpStdioClient = class {
   closed = false;
   nextId = 1;
   constructor(command, args) {
-    this.child = spawn(command, args, { stdio: ["pipe", "pipe", "pipe"], env: { ...process.env, CRAFT_CONTINUOUS_LEARNING: "0" } });
+    this.child = spawn2(command, args, { stdio: ["pipe", "pipe", "pipe"], env: { ...process.env, CRAFT_CONTINUOUS_LEARNING: "0" } });
     this.lines = createInterface({ input: this.child.stdout });
     this.lines.on("line", (line) => this.receive(line));
     this.child.stderr.on("data", () => {
@@ -1060,7 +1225,7 @@ var McpStdioClient = class {
     });
   }
   async initialize() {
-    await this.request("initialize", { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "craft-continuous-learning-worker", version: "0.12.44" } });
+    await this.request("initialize", { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "craft-continuous-learning-worker", version: CRAFT_RELEASE_VERSION } });
     this.child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" })}
 `);
   }
@@ -1119,7 +1284,8 @@ async function main() {
     await client.initialize();
     do {
       const syncKnowledge = knowledgeEnabled && Date.now() - lastKnowledgeSync >= knowledgePollMs;
-      const result = await runLearningTick2({ client }, syncKnowledge, components);
+      const modelTransport = createLearningModelTransport(process.env.CRAFT_LEARNING_MODEL_HOST);
+      const result = await runLearningTick2({ client, ...modelTransport ? { transport: modelTransport } : {} }, syncKnowledge, components);
       const knowledge = result.knowledge;
       if (syncKnowledge && !knowledge?.failure_kind) lastKnowledgeSync = Date.now();
       const status = learningTickStatus(result, once);
