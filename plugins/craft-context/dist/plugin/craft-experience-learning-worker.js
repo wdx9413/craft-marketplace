@@ -303,7 +303,7 @@ function createFetchTransport(options = {}) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.48";
+var CRAFT_RELEASE_VERSION = "0.12.49";
 
 // deploy/experience-learning/workflow-contract.ts
 function object(value, name) {

@@ -224872,7 +224872,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.48";
+var CRAFT_RELEASE_VERSION = "0.12.49";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
