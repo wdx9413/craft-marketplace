@@ -219571,6 +219571,15 @@ function contentReference(value) {
 
 // common/craft-common-store-local/src/store.ts
 var RESERVED_FIELDS = /* @__PURE__ */ new Set(["id", "version", "created_at", "updated_at"]);
+var CONTENT_REFERENCE_RECORD_KINDS = [
+  "knowledge_claim",
+  "knowledge_fragment",
+  "wiki_page",
+  "memory_ledger",
+  "episodic_memory",
+  "semantic_memory",
+  "experience_procedure"
+];
 function payloadOnly(payload10) {
   return Object.fromEntries(Object.entries(payload10).filter(([key2]) => !RESERVED_FIELDS.has(key2)));
 }
@@ -219635,13 +219644,14 @@ var CraftStore = class {
       [this.paths.memoryDatabaseFile, "memory"],
       [this.paths.experienceDatabaseFile, "experience"]
     ];
-    const rows4 = database.prepare("SELECT kind,id,version,payload_json,updated_at FROM records").all();
+    const placeholders = CONTENT_REFERENCE_RECORD_KINDS.map(() => "?").join(",");
+    const rows4 = database.prepare(`SELECT kind,id,version,payload_json,updated_at FROM records WHERE kind IN (${placeholders})`);
     for (const [path2, domain] of entries2) {
       const index = new import_node_sqlite.DatabaseSync(path2);
       try {
         index.exec("PRAGMA busy_timeout=15000; PRAGMA journal_mode=WAL; BEGIN IMMEDIATE; CREATE TABLE IF NOT EXISTS content_index (kind TEXT NOT NULL, id TEXT NOT NULL, version INTEGER NOT NULL, content_ref TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(kind,id,version)); DELETE FROM content_index;");
         const insert = index.prepare("INSERT INTO content_index(kind,id,version,content_ref,updated_at) VALUES(?,?,?,?,?)");
-        for (const row of rows4) {
+        for (const row of rows4.iterate(...CONTENT_REFERENCE_RECORD_KINDS)) {
           const payload10 = JSON.parse(String(row.payload_json));
           const ref3 = payload10.content_ref;
           if (!ref3 || typeof ref3 !== "object" || Array.isArray(ref3) || ref3.kind !== domain) continue;
@@ -224879,7 +224889,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.50";
+var CRAFT_RELEASE_VERSION = "0.12.51";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
