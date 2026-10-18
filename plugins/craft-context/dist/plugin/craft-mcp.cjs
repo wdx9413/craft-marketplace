@@ -224889,7 +224889,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.51";
+var CRAFT_RELEASE_VERSION = "0.12.52";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
@@ -274802,7 +274802,10 @@ var DAILY_COMPONENT_TOOLS = {
     "craft_context_resolution_resolve",
     "craft_knowledge_memory_bundle",
     "craft_scope_identity_resolve_project",
-    "craft_decision_context_gate_open"
+    "craft_decision_context_gate_open",
+    "craft_trace_start",
+    "craft_trace_append",
+    "craft_trace_finalize"
   ],
   "component-memory-daily": [
     "craft_memory_asset_inspect",
