@@ -1,12 +1,12 @@
-// ../../bin/craft-datasec-hook.ts
+// bin/craft-datasec-hook.ts
 import { readFileSync as readFileSync2 } from "node:fs";
 import { homedir } from "node:os";
 import { join as join2 } from "node:path";
 
-// hook.ts
+// capability/craft-datasec/hook.ts
 import { extname } from "node:path";
 
-// rules.ts
+// capability/craft-datasec/rules.ts
 var DEFAULT_RULES = [
   { name: "phone", pattern: String.raw`(?<!\d)(?:\+?86[ -]?)?1[3-9](?:[ -]?\d){9}(?!\d)` },
   { name: "identity", pattern: String.raw`(?<!\d)[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx](?!\d)` },
@@ -67,7 +67,7 @@ var Sanitizer = class {
   }
 };
 
-// vault.ts
+// capability/craft-datasec/vault.ts
 import { createHash, createHmac, randomBytes } from "node:crypto";
 import { constants, closeSync, fstatSync, linkSync, lstatSync, mkdirSync, mkdtempSync, openSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -179,7 +179,7 @@ var TokenVault = class {
   }
 };
 
-// hook.ts
+// capability/craft-datasec/hook.ts
 var FAILURE = "craft-datasec\uFF1A\u672C\u5730\u8131\u654F\u5931\u8D25\uFF0C\u5185\u5BB9\u5DF2\u9690\u85CF\u3002\u8BF7\u68C0\u67E5\u672C\u5730\u89C4\u5219\u548C\u79C1\u6709\u6620\u5C04\u76EE\u5F55\u3002";
 var BINARY = /\.(?:xls[xmb]?|xlt[xm]|pdf|png|jpe?g|gif|webp|bmp|svg|ico|zip|gz|tar|7z|docx?|pptx?|mp[34]|wav)$/i;
 var EDIT = /^(?:Edit|Write|MultiEdit|NotebookEdit|apply_patch)$/;
@@ -247,7 +247,7 @@ function blankResult(value) {
   return blank(value);
 }
 
-// ../../bin/craft-datasec-hook.ts
+// bin/craft-datasec-hook.ts
 var [host, event] = process.argv.slice(2);
 if (!["claude", "codex"].includes(host) || !["PreToolUse", "PostToolUse", "UserPromptSubmit"].includes(event)) {
   process.stderr.write("craft-datasec: expected <claude|codex> <PreToolUse|PostToolUse|UserPromptSubmit>\n");

@@ -2,9 +2,9 @@
 
 // deploy/experience-learning/worker.ts
 import { spawn as spawn2 } from "node:child_process";
-import { realpathSync as realpathSync2 } from "node:fs";
+import { realpathSync as realpathSync4 } from "node:fs";
 import { createInterface } from "node:readline";
-import { join as join8 } from "node:path";
+import { join as join10 } from "node:path";
 import { pathToFileURL } from "node:url";
 
 // common/craft-common-base/src/scope-policy.ts
@@ -52,7 +52,7 @@ function stableDigestStreaming(value) {
     }
     if (item && typeof item === "object") {
       const entries = Object.entries(item);
-      const signature = JSON.stringify(entries.map(([key2]) => key2).sort());
+      const signature = JSON.stringify(entries.map(([key2]) => key2));
       let orderedKeys = keyOrderCache.get(signature);
       if (!orderedKeys) {
         orderedKeys = entries.map(([key2]) => key2).sort((left, right) => left.localeCompare(right, "zh"));
@@ -288,12 +288,12 @@ function createFetchTransport(options = {}) {
           retryable = [408, 429, 500, 502, 503, 504].includes(response.status);
           if (!retryable || attempt === maxAttempts) throw lastError;
           const retryAfter = Number(response.headers.get("retry-after") ?? "0");
-          await new Promise((resolve10) => setTimeout(resolve10, Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter * 1e3, 1e4) : attempt * 250));
+          await new Promise((resolve9) => setTimeout(resolve9, Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter * 1e3, 1e4) : attempt * 250));
         } catch (error) {
           lastError = error instanceof Error ? error : new Error(String(error));
           if (!retryable || attempt === maxAttempts) throw lastError;
           if (lastError.name === "AbortError") lastError = new Error(`Model request timed out after ${timeoutMs}ms`);
-          await new Promise((resolve10) => setTimeout(resolve10, attempt * 250));
+          await new Promise((resolve9) => setTimeout(resolve9, attempt * 250));
         } finally {
           clearTimeout(timer);
         }
@@ -304,14 +304,14 @@ function createFetchTransport(options = {}) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.104";
+var CRAFT_RELEASE_VERSION = "0.12.105";
 
 // common/craft-common-store-local/src/paths.ts
-import { randomUUID } from "node:crypto";
+import { createHash as createHash2, randomUUID } from "node:crypto";
 import { chmod, mkdir, open, rename, unlink } from "node:fs/promises";
-import { existsSync, readFileSync } from "node:fs";
+import { closeSync, existsSync, fsyncSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 function dataRoot(env = process.env) {
   const configured = env.CRAFT_DATA_DIR?.trim();
   if (configured) return resolve(configured);
@@ -348,6 +348,7 @@ function craftPaths(root = dataRoot()) {
     artifactsDir: join(resolved, "artifacts"),
     knowledgeDir: join(resolved, "knowledge"),
     memoryDir: join(resolved, "memory"),
+    sessionsDir: join(resolved, "sessions"),
     experienceDir: join(resolved, "experience"),
     knowledgeDatabaseFile: join(resolved, "knowledge", "knowledge.db"),
     memoryDatabaseFile: join(resolved, "memory", "memory.db"),
@@ -360,6 +361,48 @@ function craftPaths(root = dataRoot()) {
     // its tables are independent from the content-index projection.
     knowledgeIndex: join(resolved, "knowledge", "knowledge.db")
   };
+}
+function projectStorageIdentity(projectRoot) {
+  const canonicalRoot = realpathSync(projectRoot);
+  if (!statSync(canonicalRoot).isDirectory()) throw new Error("Project storage root must be a directory");
+  const pathHash = createHash2("sha256").update(canonicalRoot).digest("hex");
+  const readableName = basename(canonicalRoot).replace(/[^\p{L}\p{N}._-]+/gu, "-").replace(/^[-.]+|[-.]+$/gu, "").slice(0, 48) || "root";
+  return { canonical_root: canonicalRoot, path_sha256: pathHash, directory_name: `${readableName}--${pathHash}` };
+}
+function canonicalCandidatePath(path) {
+  let current = resolve(path);
+  const suffix = [];
+  while (!lstatSync(current, { throwIfNoEntry: false })) {
+    suffix.unshift(basename(current));
+    current = dirname(current);
+  }
+  return resolve(realpathSync(current), ...suffix);
+}
+function verifyProjectMapping(directory, identity) {
+  const mappingPath = join(directory, "project.json");
+  const stat2 = lstatSync(mappingPath);
+  if (stat2.isSymbolicLink() || !stat2.isFile()) throw new Error("Project storage mapping must be a regular file");
+  let stored;
+  try {
+    stored = JSON.parse(readFileSync(mappingPath, "utf8"));
+  } catch {
+    throw new Error("Project storage mapping is malformed");
+  }
+  if (!stored || typeof stored !== "object" || Array.isArray(stored) || stored.schema_version !== 1 || stored.canonical_root !== identity.canonical_root || stored.path_sha256 !== identity.path_sha256 || stored.directory_name !== identity.directory_name) {
+    throw new Error("Project storage mapping does not match the canonical root");
+  }
+}
+function existingProjectStorageDirectory(paths, projectRoot) {
+  const identity = projectStorageIdentity(projectRoot);
+  const projectsRoot = join(paths.root, "projects");
+  const directory = join(projectsRoot, identity.directory_name);
+  for (const path of [paths.root, projectsRoot, directory]) {
+    const stat2 = lstatSync(path, { throwIfNoEntry: false });
+    if (!stat2) return null;
+    if (stat2.isSymbolicLink() || !stat2.isDirectory()) throw new Error("Project storage path must use regular directories");
+  }
+  verifyProjectMapping(directory, identity);
+  return directory;
 }
 async function atomicPrivateJson(path, value, platform = process.platform) {
   const content = `${JSON.stringify(value, null, 2)}
@@ -627,8 +670,8 @@ function validateDistilledWorkflowSteps(value) {
 }
 
 // deploy/experience-learning/knowledge-sync.ts
-import { createHash as createHash2 } from "node:crypto";
-import { lstatSync, readFileSync as readFileSync2 } from "node:fs";
+import { createHash as createHash3 } from "node:crypto";
+import { lstatSync as lstatSync2, readFileSync as readFileSync2 } from "node:fs";
 import { dirname as dirname2, join as join2, resolve as resolve2 } from "node:path";
 
 // common/craft-common-log/src/journal-sink.ts
@@ -637,7 +680,13 @@ var processState = globalThis;
 var queues = processState[queueKey] ??= /* @__PURE__ */ new Map();
 
 // common/craft-common-store-local/src/store.ts
+import { backup, DatabaseSync as DatabaseSync3 } from "node:sqlite";
+
+// common/craft-common-store-local/src/trace-shards.ts
 import { DatabaseSync } from "node:sqlite";
+
+// common/craft-common-store-local/src/codebase-shards.ts
+import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 
 // common/craft-common-log/src/operation.ts
 import { AsyncLocalStorage } from "node:async_hooks";
@@ -647,8 +696,10 @@ var context = processState2[contextKey] ??= new AsyncLocalStorage();
 var object2 = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
 function operationErrorCode(error) {
   const value = object2(error);
-  if (typeof value.code === "string" && /^(?:ERR_[A-Z_]+|EACCES|ENOENT|EEXIST|EPERM|ETIMEDOUT)$/u.test(value.code)) return value.code;
+  if (value.code === "ERR_SQLITE_ERROR" && [5, 6].includes(Number(value.errcode))) return "STORAGE_BUSY";
   const message = error instanceof Error ? error.message : "";
+  if (/database (?:is )?(?:locked|busy)|sqlite_busy|sqlite_locked/iu.test(message)) return "STORAGE_BUSY";
+  if (typeof value.code === "string" && /^(?:ERR_[A-Z_]+|EACCES|ENOENT|EEXIST|EPERM|ETIMEDOUT)$/u.test(value.code)) return value.code;
   if (/denied|unauthorized|forbidden/iu.test(message)) return "ACCESS_DENIED";
   if (/conflict|stale|drift/iu.test(message)) return "STATE_CONFLICT";
   if (/budget|limit|exceed/iu.test(message)) return "LIMIT_EXCEEDED";
@@ -674,7 +725,7 @@ function statePath(options) {
   return resolve2(options.state_file ?? join2(craftPaths(dataRoot()).knowledgeDir, "learning-worker-state.json"));
 }
 function sourceRef(sourceId) {
-  return `sha256:${createHash2("sha256").update(sourceId).digest("hex")}`;
+  return `sha256:${createHash3("sha256").update(sourceId).digest("hex")}`;
 }
 function validSourceCursors(value) {
   if (value === void 0) return {};
@@ -687,7 +738,7 @@ function validSourceCursors(value) {
 }
 function readState(path) {
   try {
-    const stat2 = lstatSync(path);
+    const stat2 = lstatSync2(path);
     if (stat2.isSymbolicLink() || !stat2.isFile()) throw new Error("Knowledge worker state must be a regular file");
     const state = JSON.parse(readFileSync2(path, "utf8"));
     if (![LEGACY_STATE_SCHEMA, STATE_SCHEMA].includes(String(state.schema)) || !(state.last_source_ref === null || typeof state.last_source_ref === "string")) {
@@ -702,7 +753,7 @@ function readState(path) {
 async function writeState(path, lastSourceId, sourceCursors) {
   const parent = dirname2(path);
   try {
-    if (lstatSync(parent).isSymbolicLink()) throw new Error("Knowledge worker state directory must not be a symbolic link");
+    if (lstatSync2(parent).isSymbolicLink()) throw new Error("Knowledge worker state directory must not be a symbolic link");
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
   }
@@ -793,18 +844,39 @@ async function runKnowledgeSyncOnce(client, options = {}) {
 }
 
 // deploy/experience-learning/knowledge-classification.ts
-import { isAbsolute, resolve as resolve3, sep } from "node:path";
+import { isAbsolute, join as join3, relative, sep } from "node:path";
+import { lstatSync as lstatSync4, readFileSync as readFileSync4, realpathSync as realpathSync2 } from "node:fs";
 import { tmpdir } from "node:os";
 
+// core/knowledge-model-redaction.ts
+var SENSITIVE_MODEL_TEXT_PATTERNS = [
+  /-----BEGIN(?: [A-Z0-9]+)? PRIVATE KEY-----[\s\S]*?-----END(?: [A-Z0-9]+)? PRIVATE KEY-----/giu,
+  /\b(?:authorization|proxy-authorization)\s*:\s*(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]+/giu,
+  /\b(?:api[-_ ]?key|access[-_ ]?token|refresh[-_ ]?token|client[-_ ]?secret|password|passwd|secret|token)\s*[:=]\s*(?:"[^"]*"|'[^']*'|[^\s,;]+)/giu,
+  /\b(?:sk-[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{16,}|AKIA[A-Z0-9]{16})\b/giu,
+  /\bhttps?:\/\/[^\s<>"']+/giu,
+  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/giu,
+  /\b(?:\d{1,3}\.){3}\d{1,3}\b/gu,
+  /\b(?:[A-F0-9]{1,4}:){2,7}[A-F0-9]{1,4}\b|\b(?:[A-F0-9]{1,4}:){1,7}:|\B:(?::[A-F0-9]{1,4}){1,7}\b/giu,
+  /(?:\/Users\/|\/home\/)[A-Za-z0-9._-]+(?:\/[^\s<>"']*)?/gu,
+  /\b[A-Z]:\\Users\\[^\\/\s<>"']+(?:\\[^\s<>"']*)?/giu
+];
+function redactKnowledgeModelText(value) {
+  if (typeof value === "string") return SENSITIVE_MODEL_TEXT_PATTERNS.reduce((text2, pattern) => text2.replace(pattern, "[REDACTED]"), value);
+  if (Array.isArray(value)) return value.map(redactKnowledgeModelText);
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key2, item]) => [key2, redactKnowledgeModelText(item)]));
+  return value;
+}
+
 // deploy/experience-learning/knowledge-classification-state.ts
-import { lstatSync as lstatSync2, readFileSync as readFileSync3 } from "node:fs";
+import { lstatSync as lstatSync3, readFileSync as readFileSync3 } from "node:fs";
 import { dirname as dirname3 } from "node:path";
 var SCHEMA = "craft.knowledge-classification-attempts.v1";
 var DIGEST = /^sha256:[a-f0-9]{64}$/u;
 var MAX_ENTRIES = 500;
 function readAttempts(path) {
   try {
-    const stat2 = lstatSync2(path);
+    const stat2 = lstatSync3(path);
     if (stat2.isSymbolicLink() || !stat2.isFile()) throw new Error("Knowledge classification state must be a regular file");
     const state = JSON.parse(readFileSync3(path, "utf8"));
     if (state.last_claim_id !== void 0 && (typeof state.last_claim_id !== "string" || !/^[A-Za-z0-9._:-]{1,200}$/u.test(state.last_claim_id)) || state.schema !== SCHEMA || !state.attempts || typeof state.attempts !== "object" || Array.isArray(state.attempts)) {
@@ -827,7 +899,7 @@ function readAttempts(path) {
 function checkStateDirectory(path) {
   const parent = dirname3(path);
   try {
-    if (lstatSync2(parent).isSymbolicLink()) throw new Error("Knowledge classification state directory must not be a symbolic link");
+    if (lstatSync3(parent).isSymbolicLink()) throw new Error("Knowledge classification state directory must not be a symbolic link");
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
   }
@@ -925,38 +997,45 @@ function safeFailureCode(error) {
   if (/^coarse_scenario/u.test(message) || message === "fine and coarse scenario keys must differ") return "coarse_scenario_invalid";
   return "operation_failed";
 }
-var SENSITIVE_MODEL_TEXT_PATTERNS = [
-  /-----BEGIN(?: [A-Z0-9]+)? PRIVATE KEY-----[\s\S]*?-----END(?: [A-Z0-9]+)? PRIVATE KEY-----/giu,
-  /\b(?:authorization|proxy-authorization)\s*:\s*(?:bearer|basic)\s+[A-Za-z0-9._~+/=-]+/giu,
-  /\b(?:api[-_ ]?key|access[-_ ]?token|refresh[-_ ]?token|client[-_ ]?secret|password|passwd|secret|token)\s*[:=]\s*(?:"[^"]*"|'[^']*'|[^\s,;]+)/giu,
-  /\b(?:sk-[A-Za-z0-9_-]{16,}|gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{16,}|AKIA[A-Z0-9]{16})\b/giu,
-  /\bhttps?:\/\/[^\s<>"']+/giu,
-  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/giu,
-  /\b(?:\d{1,3}\.){3}\d{1,3}\b/gu,
-  /\b(?:[A-F0-9]{1,4}:){2,7}[A-F0-9]{1,4}\b|\b(?:[A-F0-9]{1,4}:){1,7}:|\B:(?::[A-F0-9]{1,4}){1,7}\b/giu,
-  /(?:\/Users\/|\/home\/)[A-Za-z0-9._-]+(?:\/[^\s<>"']*)?/gu,
-  /\b[A-Z]:\\Users\\[^\\/\s<>"']+(?:\\[^\s<>"']*)?/giu
-];
-function redactKnowledgeModelText(value) {
-  if (typeof value === "string") return SENSITIVE_MODEL_TEXT_PATTERNS.reduce((text2, pattern) => text2.replace(pattern, "[REDACTED]"), value);
-  if (Array.isArray(value)) return value.map(redactKnowledgeModelText);
-  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key2, item]) => [key2, redactKnowledgeModelText(item)]));
-  return value;
-}
 function projectRootFromClaim(claim) {
   const contentRef = claim.content_ref;
   if (!contentRef || typeof contentRef !== "object" || Array.isArray(contentRef)) return void 0;
   const contentPath = contentRef.path;
   if (typeof contentPath !== "string" || !contentPath.trim() || !isAbsolute(contentPath)) return void 0;
+  let normalizedPath;
+  try {
+    normalizedPath = canonicalCandidatePath(contentPath);
+  } catch {
+    return void 0;
+  }
+  const paths = craftPaths(dataRoot());
+  const globalKnowledgeDirectory = canonicalCandidatePath(join3(paths.knowledgeDir, "md"));
+  if (normalizedPath.startsWith(`${globalKnowledgeDirectory}${sep}`)) return void 0;
+  const projectRelative = relative(canonicalCandidatePath(join3(paths.root, "projects")), normalizedPath);
+  const parts = projectRelative.split(sep);
+  if (parts.length >= 4 && parts[1] === "knowledge" && parts[2] === "md") {
+    try {
+      const directory = join3(paths.root, "projects", parts[0]);
+      const mapping = join3(directory, "project.json");
+      const stat2 = lstatSync4(mapping);
+      if (stat2.isSymbolicLink() || !stat2.isFile()) return void 0;
+      const stored = JSON.parse(readFileSync4(mapping, "utf8"));
+      if (typeof stored.canonical_root !== "string") return void 0;
+      const root = realpathSync2(stored.canonical_root);
+      if (projectStorageIdentity(root).directory_name !== parts[0]) return void 0;
+      if (!existingProjectStorageDirectory(paths, root)) return void 0;
+      return root;
+    } catch {
+      return void 0;
+    }
+  }
   const marker = `${sep}.craft_data${sep}knowledge${sep}md${sep}`;
-  const normalizedPath = resolve3(contentPath);
-  if (normalizedPath.startsWith(`${resolve3(dataRoot(), "knowledge", "md")}${sep}`)) return void 0;
   const markerIndex = normalizedPath.lastIndexOf(marker);
   return markerIndex > 0 ? normalizedPath.slice(0, markerIndex) : void 0;
 }
 function isTemporaryProjectRoot(projectRoot) {
-  const candidate = resolve3(projectRoot);
-  const temporaryRoots = /* @__PURE__ */ new Set([resolve3(tmpdir()), resolve3("/tmp"), resolve3("/private/tmp")]);
+  const candidate = canonicalCandidatePath(projectRoot);
+  const temporaryRoots = new Set([tmpdir(), "/tmp", "/private/tmp"].map(canonicalCandidatePath));
   return [...temporaryRoots].some((root) => candidate === root || candidate.startsWith(`${root}${sep}`));
 }
 async function runKnowledgeScenarioClassificationOnce(deps) {
@@ -1201,14 +1280,14 @@ async function runKnowledgeScenarioClassificationOnce(deps) {
         processingStage = "result_trace";
         await deps.client.call("craft_trace_append", {
           trace_id: traceId,
-          event_kind: "knowledge.reviewed",
+          event_kind: "knowledge.source_reviewed",
           actor: "knowledge-classification-worker",
           source: "craft-knowledge",
           trust: "verified",
           operation_id: ticketId,
           output_refs: [claim.id],
           data: { review_digest: reviewDigest, decision: reviewDecision, status: review.status, claim_status: claimStatus, promoted: review.promoted === true },
-          summary: "Evidence-backed Knowledge Host review recorded"
+          summary: review.promoted === true || alreadyReviewed ? "Knowledge Claim is already reviewed" : "Host verified source support; independent effectiveness evaluation is still required"
         });
         processingStage = "ticket_bind";
         await bindKnowledgeTicketResult(deps.client, traceId, ticketId, String(claim.id), reviewDigest);
@@ -1398,22 +1477,22 @@ async function bindKnowledgeTicketResult(client, traceId, ticketId, claimId, res
 }
 
 // deploy/experience-learning/session-knowledge-candidates.ts
-import { lstatSync as lstatSync3, readFileSync as readFileSync4 } from "node:fs";
-import { dirname as dirname5, join as join4, resolve as resolve6 } from "node:path";
+import { lstatSync as lstatSync5, readFileSync as readFileSync5 } from "node:fs";
+import { dirname as dirname5, join as join5, resolve as resolve6 } from "node:path";
 
 // core/codex-session-archive.ts
-import { createHash as createHash5 } from "node:crypto";
+import { createHash as createHash6 } from "node:crypto";
 import { lstat, mkdir as mkdir2, open as open2, readFile as readFile2, readdir, realpath, stat } from "node:fs/promises";
 import { homedir as homedir2 } from "node:os";
-import { dirname as dirname4, join as join3, relative, resolve as resolve5, sep as sep2 } from "node:path";
+import { dirname as dirname4, join as join4, relative as relative2, resolve as resolve5, sep as sep2 } from "node:path";
 
 // core/scope-identity.ts
-import { createHash as createHash3 } from "node:crypto";
+import { createHash as createHash4 } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { realpathSync } from "node:fs";
+import { realpathSync as realpathSync3 } from "node:fs";
 import { resolve as resolve4 } from "node:path";
 function hash(value) {
-  return createHash3("sha256").update(value).digest("hex").slice(0, 24);
+  return createHash4("sha256").update(value).digest("hex").slice(0, 24);
 }
 function normalizeRemote(value) {
   const trimmed = value.trim().replace(/\.git$/u, "");
@@ -1425,7 +1504,7 @@ function projectIdentityFromRoot(root, userNamedId) {
   const localPath = resolve4(root);
   let canonicalPath = localPath;
   try {
-    canonicalPath = realpathSync(localPath);
+    canonicalPath = realpathSync3(localPath);
   } catch {
   }
   let remote = null;
@@ -1443,7 +1522,7 @@ function projectIdentityFromRoot(root, userNamedId) {
 }
 
 // core/codex-task-prose.ts
-import { createHash as createHash4 } from "node:crypto";
+import { createHash as createHash5 } from "node:crypto";
 var SECRET = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
 function sanitizeCodexTaskGoal(value) {
   if (typeof value !== "string" || !value.trim() || value.length > 8e3 || SECRET.test(value)) return null;
@@ -1452,7 +1531,7 @@ function sanitizeCodexTaskGoal(value) {
 }
 function codexTaskGoalDigest(value) {
   const goal = sanitizeCodexTaskGoal(value);
-  return goal ? `sha256:${createHash4("sha256").update(goal).digest("hex")}` : null;
+  return goal ? `sha256:${createHash5("sha256").update(goal).digest("hex")}` : null;
 }
 
 // core/codex-session-verification.ts
@@ -1582,7 +1661,7 @@ var MAX_LINE_BYTES = 64 * 1024 * 1024;
 var MAX_TASK_EXCERPT_BYTES = 8 * 1024 * 1024;
 var SHA256 = /^sha256:[a-f0-9]{64}$/u;
 function hash2(value) {
-  return createHash5("sha256").update(value).digest("hex");
+  return createHash6("sha256").update(value).digest("hex");
 }
 function object4(value) {
   return value && typeof value === "object" && !Array.isArray(value) ? value : null;
@@ -1821,7 +1900,7 @@ async function listSessionFiles(root) {
     entries.sort((left, right) => left.name.localeCompare(right.name));
     for (const entry of entries) {
       if (entry.isSymbolicLink()) continue;
-      const path = join3(directory, entry.name);
+      const path = join4(directory, entry.name);
       if (entry.isDirectory()) await visit(path);
       else if (entry.isFile() && entry.name.endsWith(".jsonl")) files.push(path);
     }
@@ -1850,19 +1929,19 @@ async function readCodexSessionChunk(path, start, fileSize, budget) {
   }
 }
 function sourceRoot(options, env) {
-  const codexHome = env.CODEX_HOME?.trim() || join3(homedir2(), ".codex");
-  return resolve5(options.sessions_root ?? join3(codexHome, "sessions"));
+  const codexHome = env.CODEX_HOME?.trim() || join4(homedir2(), ".codex");
+  return resolve5(options.sessions_root ?? join4(codexHome, "sessions"));
 }
 function archiveRoot(options, env) {
   if (options.archived_sessions_root !== void 0) return resolve5(options.archived_sessions_root);
   if (options.sessions_root !== void 0) return null;
-  return join3(dirname4(sourceRoot(options, env)), "archived_sessions");
+  return join4(dirname4(sourceRoot(options, env)), "archived_sessions");
 }
 function sourceKey(path, archived) {
   return archived ? `archived_sessions\0${path}` : path;
 }
 function statePath2(options, env) {
-  return resolve5(options.state_file ?? join3(craftPaths(dataRoot(env)).runtimeDir, "codex-session-collection.json"));
+  return resolve5(options.state_file ?? join4(craftPaths(dataRoot(env)).runtimeDir, "codex-session-collection.json"));
 }
 function removeSourceTasks(state, sourcePath, source, archived) {
   for (const id of source.task_ids) if (state.tasks[id]?.source_path === sourcePath && state.tasks[id]?.source_root === "archived_sessions" === archived) delete state.tasks[id];
@@ -1895,11 +1974,11 @@ async function runCodexSessionCollectionOnce(options = {}, env = process.env) {
   if (archive !== null) roots.push({ root: archive, archived: true });
   const files = [];
   for (const source of roots) for (const path of await listSessionFiles(source.root)) files.push({ ...source, path });
-  const availableSources = new Set(files.map((source) => sourceKey(relative(source.root, source.path).split(sep2).join("/"), source.archived)));
+  const availableSources = new Set(files.map((source) => sourceKey(relative2(source.root, source.path).split(sep2).join("/"), source.archived)));
   const candidates = [];
   for (const { path, root, archived } of files) {
     const info = await stat(path);
-    const relativePath = relative(root, path).split(sep2).join("/");
+    const relativePath = relative2(root, path).split(sep2).join("/");
     const key2 = sourceKey(relativePath, archived);
     const prior = state.sources[key2] ?? null;
     const relocated = prior !== null && prior.task_ids.some((id) => {
@@ -2238,13 +2317,13 @@ function object6(value, name) {
   return value;
 }
 function candidateStatePath(options) {
-  return resolve6(options.state_file ?? join4(craftPaths(dataRoot(options.env)).knowledgeDir, "session-candidate-state.json"));
+  return resolve6(options.state_file ?? join5(craftPaths(dataRoot(options.env)).knowledgeDir, "session-candidate-state.json"));
 }
 function readCandidateState(path) {
   try {
-    const stat2 = lstatSync3(path);
+    const stat2 = lstatSync5(path);
     if (stat2.isSymbolicLink() || !stat2.isFile() || stat2.size > 8 * 1024 * 1024) throw new Error("Knowledge session candidate state file is invalid");
-    const value = JSON.parse(readFileSync4(path, "utf8"));
+    const value = JSON.parse(readFileSync5(path, "utf8"));
     const skips = value.terminal_skips === void 0 ? {} : value.terminal_skips;
     const traces = value.trace_ids_by_task === void 0 ? {} : value.trace_ids_by_task;
     if (value.schema !== STATE_SCHEMA3 || !Array.isArray(value.processed_task_ids) || value.processed_task_ids.length > 5e4 || value.processed_task_ids.some((id) => typeof id !== "string" || !id.trim() || id.length > 160) || !skips || typeof skips !== "object" || Array.isArray(skips) || Object.keys(skips).length > 5e4 || !traces || typeof traces !== "object" || Array.isArray(traces) || Object.keys(traces).length > 5e4 || Object.entries(traces).some(([taskId, traceId]) => !taskId.trim() || taskId.length > 160 || typeof traceId !== "string" || !/^trace[-_][A-Za-z0-9_-]{1,160}$/u.test(traceId)) || Object.entries(skips).some(([id, raw]) => {
@@ -2266,7 +2345,7 @@ function readCandidateState(path) {
 async function writeCandidateState(path, state) {
   const parent = dirname5(path);
   try {
-    if (lstatSync3(parent).isSymbolicLink()) throw new Error("Knowledge session candidate state directory must not be a symbolic link");
+    if (lstatSync5(parent).isSymbolicLink()) throw new Error("Knowledge session candidate state directory must not be a symbolic link");
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
   }
@@ -2483,10 +2562,57 @@ async function runSessionKnowledgeCandidateOnce(deps) {
   };
 }
 
+// deploy/experience-learning/knowledge-storage.ts
+import { lstatSync as lstatSync6, readFileSync as readFileSync6 } from "node:fs";
+import { dirname as dirname6, join as join6 } from "node:path";
+var SCHEMA2 = "craft.knowledge-storage-cursor.v1";
+var CURSOR = /^[A-Za-z0-9_-]{1,4096}$/u;
+async function runKnowledgeStorageReconcileOnce(client, stateFile = join6(craftPaths(dataRoot()).knowledgeDir, "storage-migration-state.json")) {
+  let cursor = null;
+  try {
+    const parent = lstatSync6(dirname6(stateFile));
+    if (parent.isSymbolicLink() || !parent.isDirectory()) throw new Error("Knowledge storage state directory must be regular");
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+  try {
+    const stat2 = lstatSync6(stateFile);
+    if (!stat2.isFile() || stat2.isSymbolicLink() || stat2.size > 16384) throw new Error("Knowledge storage state file is invalid");
+    const state = JSON.parse(readFileSync6(stateFile, "utf8"));
+    if (state.schema !== SCHEMA2 || state.cursor !== null && (typeof state.cursor !== "string" || !CURSOR.test(state.cursor))) throw new Error("Knowledge storage state is invalid");
+    cursor = state.cursor;
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+  const result = await client.call("craft_knowledge_storage_reconcile", { max_records: 500, ...cursor ? { cursor } : {} });
+  if (!["partial", "completed"].includes(String(result.status)) || !Array.isArray(result.blocked) || typeof result.has_more !== "boolean" || !Number.isSafeInteger(result.examined) || Number(result.examined) < 0 || Number(result.examined) > 500 || !Number.isSafeInteger(result.migrated) || Number(result.migrated) < 0 || Number(result.migrated) > Number(result.examined) || !Number.isSafeInteger(result.skipped) || Number(result.skipped) < 0 || Number(result.skipped) > Number(result.examined) || result.phase !== void 0 && !["records", "content"].includes(String(result.phase)) || result.retired_content !== void 0 && (!Number.isSafeInteger(result.retired_content) || Number(result.retired_content) < 0 || Number(result.retired_content) > Number(result.examined)) || result.blocked.length > Number(result.examined) || result.dry_run === true || !result.has_more && result.next_cursor !== null || result.has_more && (typeof result.next_cursor !== "string" || !CURSOR.test(result.next_cursor) || result.next_cursor === cursor)) throw new Error("Knowledge storage migration returned an invalid page");
+  const next = result.has_more ? result.next_cursor : null;
+  if (next !== cursor) {
+    try {
+      const parent = lstatSync6(dirname6(stateFile));
+      if (parent.isSymbolicLink() || !parent.isDirectory()) throw new Error("Knowledge storage state directory must be regular");
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+    await atomicPrivateJson(stateFile, { schema: SCHEMA2, cursor: next, updated_at: (/* @__PURE__ */ new Date()).toISOString() });
+  }
+  return {
+    status: result.status,
+    examined: result.examined,
+    migrated: result.migrated,
+    skipped: result.skipped,
+    ...result.phase !== void 0 ? { phase: result.phase } : {},
+    ...result.retired_content !== void 0 ? { retired_content: result.retired_content } : {},
+    blocked_count: result.blocked.length,
+    has_more: result.has_more,
+    raw_content_stored: false
+  };
+}
+
 // deploy/experience-learning/session-knowledge-evaluation.ts
-import { lstatSync as lstatSync4, readFileSync as readFileSync5 } from "node:fs";
-import { dirname as dirname6, join as join5, resolve as resolve7 } from "node:path";
-var SCHEMA2 = "craft.knowledge-session-evaluation-state.v1";
+import { lstatSync as lstatSync7, readFileSync as readFileSync7 } from "node:fs";
+import { dirname as dirname7, join as join7, resolve as resolve7 } from "node:path";
+var SCHEMA3 = "craft.knowledge-session-evaluation-state.v1";
 var OUTPUT_SCHEMA2 = { type: "object", properties: {
   decision: { type: "string", enum: ["labeled", "skip"] },
   expected_claim_ids: { type: "array", items: { type: "string", minLength: 1, maxLength: 160 }, maxItems: 8 }
@@ -2496,15 +2622,15 @@ function object7(value, name) {
   return value;
 }
 function evaluationStatePath(deps) {
-  return resolve7(deps.state_file ?? join5(craftPaths(dataRoot(deps.env)).knowledgeDir, "session-evaluation-state.json"));
+  return resolve7(deps.state_file ?? join7(craftPaths(dataRoot(deps.env)).knowledgeDir, "session-evaluation-state.json"));
 }
 function readState3(path) {
   try {
-    const stat2 = lstatSync4(path);
+    const stat2 = lstatSync7(path);
     if (stat2.isSymbolicLink() || !stat2.isFile() || stat2.size > 8 * 1024 * 1024) throw new Error("Knowledge evaluation state file is invalid");
-    const value = JSON.parse(readFileSync5(path, "utf8"));
+    const value = JSON.parse(readFileSync7(path, "utf8"));
     const traces = value.trace_ids_by_task === void 0 ? {} : value.trace_ids_by_task;
-    if (value.schema !== SCHEMA2 || !Array.isArray(value.processed_task_ids) || value.processed_task_ids.length > 5e4 || value.processed_task_ids.some((id) => typeof id !== "string" || !id.trim() || id.length > 160) || value.last_attempted_task_id !== void 0 && (typeof value.last_attempted_task_id !== "string" || !value.last_attempted_task_id.trim() || value.last_attempted_task_id.length > 160) || !traces || typeof traces !== "object" || Array.isArray(traces) || Object.keys(traces).length > 5e4 || Object.entries(traces).some(([taskId, traceId]) => !taskId.trim() || taskId.length > 160 || typeof traceId !== "string" || !/^trace[-_][A-Za-z0-9_-]{1,160}$/u.test(traceId))) throw new Error("Knowledge evaluation state is invalid");
+    if (value.schema !== SCHEMA3 || !Array.isArray(value.processed_task_ids) || value.processed_task_ids.length > 5e4 || value.processed_task_ids.some((id) => typeof id !== "string" || !id.trim() || id.length > 160) || value.last_attempted_task_id !== void 0 && (typeof value.last_attempted_task_id !== "string" || !value.last_attempted_task_id.trim() || value.last_attempted_task_id.length > 160) || !traces || typeof traces !== "object" || Array.isArray(traces) || Object.keys(traces).length > 5e4 || Object.entries(traces).some(([taskId, traceId]) => !taskId.trim() || taskId.length > 160 || typeof traceId !== "string" || !/^trace[-_][A-Za-z0-9_-]{1,160}$/u.test(traceId))) throw new Error("Knowledge evaluation state is invalid");
     return { processed_task_ids: [...new Set(value.processed_task_ids)], trace_ids_by_task: traces, last_attempted_task_id: value.last_attempted_task_id };
   } catch (error) {
     if (error.code === "ENOENT") return { processed_task_ids: [], trace_ids_by_task: {} };
@@ -2513,12 +2639,12 @@ function readState3(path) {
 }
 async function writeState2(path, state) {
   try {
-    if (lstatSync4(dirname6(path)).isSymbolicLink()) throw new Error("Knowledge evaluation state directory must not be a symbolic link");
+    if (lstatSync7(dirname7(path)).isSymbolicLink()) throw new Error("Knowledge evaluation state directory must not be a symbolic link");
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
   }
   await atomicPrivateJson(path, {
-    schema: SCHEMA2,
+    schema: SCHEMA3,
     processed_task_ids: state.processed_task_ids.slice(-5e4),
     trace_ids_by_task: Object.fromEntries(Object.entries(state.trace_ids_by_task).slice(-5e4)),
     last_attempted_task_id: state.last_attempted_task_id,
@@ -2568,16 +2694,24 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
     return { status: "skipped", processed: 1, reason: "verifiable_test_result_unavailable", raw_content_stored: false };
   }
   const listed = await deps.client.call("craft_knowledge_claim_list", { limit: 1e3, scope_kind: "project", scope_id: task.project_scope_id.slice("project:".length) });
-  const reviewed = (Array.isArray(listed.claims) ? listed.claims : []).filter((claim) => claim.status === "reviewed" && claim.scope === task.project_scope_id).slice(0, 12);
+  const candidates = (Array.isArray(listed.claims) ? listed.claims : []).filter((claim) => claim.status === "candidate" && claim.scope === task.project_scope_id).slice(0, 12);
   const claims = [];
-  for (const item of reviewed) {
+  for (const item of candidates) {
     const packetResult = await deps.client.call("craft_knowledge_semantic_review_packet", { claim_id: item.id });
     if (packetResult.status !== "ready") continue;
-    const packet2 = object7(packetResult.packet, "reviewed Claim packet"), claim = object7(packet2.claim, "reviewed Claim");
-    if (claim.id !== item.id || packetResult.claim_status !== "reviewed" || typeof claim.content !== "string" || !claim.content.trim()) continue;
-    claims.push({ claim_id: String(claim.id), title: String(claim.title ?? ""), content: String(claim.content), tags: claim.tags ?? [] });
+    const packet2 = object7(packetResult.packet, "candidate Claim packet"), claim = object7(packet2.claim, "candidate Claim");
+    if (claim.id !== item.id || packetResult.claim_status !== "candidate" || !Number.isSafeInteger(claim.version) || Number(claim.version) < 1 || typeof claim.identity_digest !== "string" || typeof claim.content_digest !== "string" || typeof claim.content !== "string" || !claim.content.trim()) continue;
+    claims.push({
+      claim_id: String(claim.id),
+      claim_version: Number(claim.version),
+      identity_digest: claim.identity_digest,
+      content_digest: claim.content_digest,
+      title: String(claim.title ?? ""),
+      content: String(claim.content),
+      tags: claim.tags ?? []
+    });
   }
-  if (!claims.length) return { status: "waiting_for_reviewed_claims", processed: 0, reason: "no_reviewed_project_claims", raw_content_stored: false };
+  if (!claims.length) return { status: "waiting_for_candidate_claims", processed: 0, reason: "no_current_project_candidates", raw_content_stored: false };
   const profileResult = await deps.client.call("craft_evaluation_model_profile_ensure_single", { purpose: "knowledge_scenario_classification" });
   if (profileResult.status !== "ready_for_adapter" || !profileResult.profile) return {
     status: "waiting_for_model",
@@ -2596,17 +2730,24 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
   };
   const provider = (deps.providers ?? PROVIDER_CATALOG).find((item) => item.provider === profile.provider) ?? (detail.provider ? defineProvider(object7(detail.provider, "Knowledge evaluation provider")) : void 0);
   if (!provider) return { status: "waiting_for_model", processed: 0, reason: "provider_unavailable", raw_content_stored: false };
+  const candidateClaimIds = claims.map((claim) => String(claim.claim_id));
+  const candidateClaimRefs = claims.map((claim) => ({
+    claim_id: claim.claim_id,
+    claim_version: claim.claim_version,
+    identity_digest: claim.identity_digest,
+    content_digest: claim.content_digest
+  }));
   const packet = redactKnowledgeModelText({
     query: excerpt.task_goal,
     task_result: excerpt.task_result,
-    reviewed_claims: claims,
+    candidate_claims: claims,
     verification_artifacts: verificationArtifacts,
     sanitized: true,
     source_content_stored: false
   });
-  const inputDigest = stableDigest({ purpose: "knowledge_held_out_label.v1", task_id: task.task_id, packet });
+  const inputDigest = stableDigest({ purpose: "knowledge_candidate_shadow_label.v1", task_id: task.task_id, packet });
   const fingerprint = stableDigest({ provider: provider.provider, model: profile.model });
-  const system = `\u4E3A\u72EC\u7ACB\u7559\u51FA\u4F1A\u8BDD\u751F\u6210\u5F85\u5BA1\u6807\u7B7E\u3002\u53EA\u4ECE\u7ED9\u5B9A\u7684\u5DF2\u5BA1\u6838 Claim \u4E2D\u9009\u62E9\u76F4\u63A5\u56DE\u7B54\u4EFB\u52A1\u76EE\u6807\u7684 Claim\uFF0C\u4E0D\u5F97\u6539\u5199 Claim \u6216\u81C6\u9020\u6807\u7B7E\uFF1B\u6CA1\u6709\u5145\u5206\u5339\u914D\u65F6\u8FD4\u56DE skip\u3002\u8FD4\u56DE JSON\uFF1Adecision \u4E3A labeled \u6216 skip\uFF0Cexpected_claim_ids \u4E3A\u6240\u9009 Claim ID \u6570\u7EC4\u3002\u8BE5\u6807\u7B7E\u662F\u6A21\u578B\u5019\u9009\uFF0C\u4E0D\u662F\u4EBA\u5DE5\u771F\u503C\uFF1B\u6765\u6E90\u8BC1\u636E\u8D44\u683C\u7531 Craft \u540E\u7EED\u72EC\u7ACB\u5224\u65AD\u3002${generatedTextLanguageInstruction(deps.contentLanguage ?? "zh-CN")}`;
+  const system = `\u4E3A\u72EC\u7ACB\u7559\u51FA\u4F1A\u8BDD\u751F\u6210\u5F85\u5BA1\u6807\u7B7E\u3002\u53EA\u4ECE\u7ED9\u5B9A\u7684\u5F53\u524D\u5019\u9009 Claim \u4E2D\u9009\u62E9\u76F4\u63A5\u56DE\u7B54\u4EFB\u52A1\u76EE\u6807\u7684 Claim\uFF0C\u4E0D\u5F97\u6539\u5199 Claim \u6216\u81C6\u9020\u6807\u7B7E\uFF1B\u6CA1\u6709\u5145\u5206\u5339\u914D\u65F6\u8FD4\u56DE skip\u3002\u8FD4\u56DE JSON\uFF1Adecision \u4E3A labeled \u6216 skip\uFF0Cexpected_claim_ids \u4E3A\u6240\u9009 Claim ID \u6570\u7EC4\u3002\u8BE5\u6807\u7B7E\u662F\u6A21\u578B\u5019\u9009\uFF0C\u4E0D\u662F\u4EBA\u5DE5\u771F\u503C\uFF1B\u6765\u6E90\u8BC1\u636E\u8D44\u683C\u7531 Craft \u540E\u7EED\u72EC\u7ACB\u5224\u65AD\u3002${generatedTextLanguageInstruction(deps.contentLanguage ?? "zh-CN")}`;
   const messages = [{ role: "system", content: system }, { role: "user", content: JSON.stringify(packet) }];
   if (!deps.transport) return { status: "waiting_for_model", processed: 0, reason: "model_transport_unavailable", raw_content_stored: false };
   if (deps.transport.acquireCall && !deps.transport.acquireCall(provider.provider)) return { status: "waiting_for_budget", processed: 0, reason: "model_call_budget_exhausted", raw_content_stored: false };
@@ -2630,13 +2771,13 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
       input_refs: [inputDigest],
       model_fingerprint: fingerprint,
       data: { purpose: "knowledge_held_out_label", input_digest: inputDigest, source_ref: task.source_ref, content_stored: false },
-      summary: "\u5DF2\u53D1\u9001\u8131\u654F\u7559\u51FA\u4EFB\u52A1\u548C\u5DF2\u5BA1\u6838 Claim \u6458\u8981\uFF0C\u751F\u6210\u5F85\u5BA1\u8BC4\u6D4B\u6807\u7B7E"
+      summary: "\u5DF2\u53D1\u9001\u8131\u654F\u7559\u51FA\u4EFB\u52A1\u548C\u5F53\u524D\u5019\u9009\u6458\u8981\uFF0C\u751F\u6210\u5F85\u5BA1\u8BC4\u6D4B\u6807\u7B7E"
     });
     const request = buildChatRequest(provider, { model: String(profile.model), messages, max_tokens: Math.min(Number(profile.max_output_tokens ?? 1024), 1024), temperature: 0 });
     if (provider.provider === "codex-cli") request.body.codex_output_schema = OUTPUT_SCHEMA2;
     const response = await deps.transport.complete(provider, request);
     const output = parseOutput(response.text);
-    if (!Array.isArray(output.expected_claim_ids) || output.expected_claim_ids.length > 8 || output.expected_claim_ids.some((id) => typeof id !== "string" || !claims.some((claim) => claim.claim_id === id)) || output.decision === "labeled" && output.expected_claim_ids.length === 0 || output.decision === "skip" && output.expected_claim_ids.length !== 0 || !["labeled", "skip"].includes(String(output.decision))) throw new Error("Knowledge evaluation labels must be selected from reviewed Claims");
+    if (!Array.isArray(output.expected_claim_ids) || output.expected_claim_ids.length > 8 || output.expected_claim_ids.some((id) => typeof id !== "string" || !candidateClaimIds.includes(id)) || output.decision === "labeled" && output.expected_claim_ids.length === 0 || output.decision === "skip" && output.expected_claim_ids.length !== 0 || !["labeled", "skip"].includes(String(output.decision))) throw new Error("Knowledge evaluation labels must be selected from current candidate Claims");
     await deps.client.call("craft_trace_append", {
       trace_id: traceId,
       event_kind: "model.completed",
@@ -2654,8 +2795,9 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
       const verificationEvidence = await recordSessionVerificationEvidence(deps.client, task, excerpt);
       if (!verificationEvidence) throw new Error("held-out test Evidence is unavailable");
       caseEvidenceId = String(verificationEvidence.id);
+      const caseIdDigest = stableDigest({ task_id: task.task_id, candidate_claim_refs: candidateClaimRefs });
       const saved = await deps.client.call("craft_knowledge_evaluation_case_save", {
-        case_id: `knowledge_case_${stableDigest(task.task_id).slice(-24)}`,
+        case_id: `knowledge_case_${caseIdDigest.slice(-24)}`,
         query: String(redactKnowledgeModelText(excerpt.task_goal)),
         expected_claim_ids: output.expected_claim_ids,
         scope: task.project_scope_id,
@@ -2665,13 +2807,16 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
         evaluation_channel: "real_session",
         dataset_partition: "held_out",
         label_source: "model_candidate",
-        sanitized: true
+        sanitized: true,
+        candidate_claim_refs: candidateClaimRefs
       });
       const evaluationCase = object7(saved.case, "saved Knowledge evaluation case");
       caseId = String(evaluationCase.id);
       const run = await deps.client.call("craft_knowledge_evaluation_run", {
-        run_id: `knowledge_run_${stableDigest({ case_id: caseId, now: (/* @__PURE__ */ new Date()).toISOString() }).slice(-24)}`,
+        run_id: `knowledge_run_${stableDigest({ case_id: caseId, input_digest: inputDigest }).slice(-24)}`,
+        mode: "candidate_shadow",
         case_ids: [caseId],
+        candidate_claim_ids: candidateClaimIds,
         top_k: 10
       });
       const runRecord = object7(run.run, "Knowledge evaluation run");
@@ -2697,7 +2842,7 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
       output_refs: [caseId, caseEvidenceId].filter((value) => value !== null),
       model_fingerprint: fingerprint,
       data: { result_digest: resultDigest, case_id: caseId, evidence_id: caseEvidenceId, label_source: "model_candidate", evaluation_eligible: evaluationEligible },
-      summary: caseId ? "\u5DF2\u5EFA\u7ACB\u5F85\u72EC\u7ACB\u5BA1\u5B9A\u7684\u7559\u51FA\u8BC4\u6D4B\u6848\u4F8B" : "\u6A21\u578B\u672A\u627E\u5230\u5145\u5206\u5339\u914D\u7684\u5DF2\u5BA1\u6838 Claim"
+      summary: caseId ? "\u5DF2\u5EFA\u7ACB\u5F85\u4E8C\u6B21\u5BA1\u5B9A\u7684\u7559\u51FA\u8BC4\u6D4B\u6848\u4F8B" : "\u6A21\u578B\u672A\u627E\u5230\u5145\u5206\u5339\u914D\u7684\u5F53\u524D\u5019\u9009"
     });
     await deps.client.call("craft_trace_finalize", { trace_id: traceId, status: "completed", summary: "\u7559\u51FA\u8BC4\u6D4B\u6807\u7B7E\u5019\u9009\u5904\u7406\u5B8C\u6210" });
     state.processed_task_ids.push(String(task.task_id));
@@ -2731,25 +2876,292 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
   }
 }
 
+// deploy/experience-learning/session-knowledge-adjudication-state.ts
+import { lstatSync as lstatSync8, readFileSync as readFileSync8 } from "node:fs";
+import { dirname as dirname8 } from "node:path";
+var SCHEMA4 = "craft.knowledge-session-adjudication-cursor.v2";
+var ID = /^[A-Za-z0-9._:-]{1,200}$/u;
+var MAX_RETRIES = 1e4;
+var MAX_STATE_BYTES = 4194304;
+var RETRY_BASE_MS = 3e4;
+var RETRY_MAX_MS = 36e5;
+function checkCursorDirectory(path) {
+  try {
+    const parent = lstatSync8(dirname8(path));
+    if (parent.isSymbolicLink() || !parent.isDirectory()) throw new Error("Knowledge adjudication cursor directory is invalid");
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+}
+function readState4(path) {
+  checkCursorDirectory(path);
+  try {
+    const stat2 = lstatSync8(path);
+    if (stat2.isSymbolicLink() || !stat2.isFile() || stat2.size > MAX_STATE_BYTES) throw new Error("Knowledge adjudication cursor file is invalid");
+    const value = JSON.parse(readFileSync8(path, "utf8"));
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Knowledge adjudication cursor is invalid");
+    const state = value;
+    if (state.schema !== SCHEMA4 || state.after_id !== null && (typeof state.after_id !== "string" || !ID.test(state.after_id))) {
+      throw new Error("Knowledge adjudication cursor is invalid");
+    }
+    const retries = state.retries === void 0 ? {} : state.retries;
+    if (!retries || typeof retries !== "object" || Array.isArray(retries) || Object.keys(retries).length > MAX_RETRIES) {
+      throw new Error("Knowledge adjudication retry state is invalid");
+    }
+    for (const [id, raw] of Object.entries(retries)) {
+      const item = raw;
+      if (!ID.test(id) || !item || typeof item !== "object" || !Number.isSafeInteger(item.attempts) || Number(item.attempts) < 1 || typeof item.last_failure_at !== "string" || !Number.isFinite(Date.parse(item.last_failure_at)) || typeof item.next_attempt_at !== "string" || !Number.isFinite(Date.parse(item.next_attempt_at)) || typeof item.failure_kind !== "string" || !/^[A-Za-z][A-Za-z0-9]{0,31}$/u.test(item.failure_kind)) {
+        throw new Error("Knowledge adjudication retry state is invalid");
+      }
+    }
+    return { after_id: state.after_id, retries };
+  } catch (error) {
+    if (error.code === "ENOENT") return { after_id: null, retries: {} };
+    throw error;
+  }
+}
+async function writeState3(path, state) {
+  checkCursorDirectory(path);
+  await atomicPrivateJson(path, { schema: SCHEMA4, ...state, updated_at: (/* @__PURE__ */ new Date()).toISOString() });
+}
+function readKnowledgeAdjudicationCursor(path) {
+  return readState4(path).after_id;
+}
+function readKnowledgeAdjudicationRetries(path) {
+  return readState4(path).retries;
+}
+async function writeKnowledgeAdjudicationCursor(path, afterId) {
+  if (afterId !== null && (typeof afterId !== "string" || !ID.test(afterId))) throw new Error("Knowledge adjudication cursor is invalid");
+  const state = readState4(path);
+  await writeState3(path, { ...state, after_id: afterId });
+}
+async function recordKnowledgeAdjudicationFailure(path, caseId, failureKind2, now) {
+  if (!ID.test(caseId) || !/^[A-Za-z][A-Za-z0-9]{0,31}$/u.test(failureKind2)) throw new Error("Knowledge adjudication retry input is invalid");
+  const nowMs = Date.parse(now);
+  if (!Number.isFinite(nowMs)) throw new Error("Knowledge adjudication retry time is invalid");
+  const state = readState4(path), prior = state.retries[caseId];
+  if (!prior && Object.keys(state.retries).length >= MAX_RETRIES) throw new Error("Knowledge adjudication retry capacity reached");
+  const attempts = Math.min(Number(prior?.attempts ?? 0) + 1, 31);
+  const delay = Math.min(RETRY_BASE_MS * 2 ** Math.min(attempts - 1, 16), RETRY_MAX_MS);
+  const retry = { attempts, last_failure_at: new Date(nowMs).toISOString(), next_attempt_at: new Date(nowMs + delay).toISOString(), failure_kind: failureKind2 };
+  await writeState3(path, { ...state, retries: { ...state.retries, [caseId]: retry } });
+  return retry;
+}
+async function clearKnowledgeAdjudicationFailure(path, caseId) {
+  const state = readState4(path);
+  if (!Object.hasOwn(state.retries, caseId)) return;
+  const retries = { ...state.retries };
+  delete retries[caseId];
+  await writeState3(path, { ...state, retries });
+}
+
+// deploy/experience-learning/session-knowledge-adjudication.ts
+function object8(value, name) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${name} must be an object`);
+  return value;
+}
+function safeFailureKind3(error) {
+  const name = error instanceof Error ? error.name : "Error";
+  return /^[A-Za-z][A-Za-z0-9]{0,31}$/u.test(name) ? name : "Error";
+}
+function providerFor(profile, detail, providers) {
+  return providers.find((item) => item.provider === profile.provider) ?? (detail.provider ? defineProvider(object8(detail.provider, "Knowledge adjudication provider")) : void 0);
+}
+function runRefs(run) {
+  return Array.isArray(run.case_ids) ? run.case_ids.filter((item) => typeof item === "string") : [];
+}
+async function runSessionKnowledgeAdjudicationOnce(deps, now = (/* @__PURE__ */ new Date()).toISOString()) {
+  const nowMs = Date.parse(now);
+  if (!Number.isFinite(nowMs)) throw new Error("Knowledge adjudication now must be an ISO timestamp");
+  const afterId = deps.knowledge_adjudication_cursor_file ? readKnowledgeAdjudicationCursor(deps.knowledge_adjudication_cursor_file) : void 0;
+  const retries = deps.knowledge_adjudication_cursor_file ? readKnowledgeAdjudicationRetries(deps.knowledge_adjudication_cursor_file) : {};
+  const caseResult = await deps.client.call("craft_knowledge_evaluation_case_list", {
+    limit: 1e3,
+    ...deps.knowledge_adjudication_cursor_file ? { after_id: afterId ?? "" } : {}
+  });
+  const cases = Array.isArray(caseResult.cases) ? caseResult.cases : [];
+  if (deps.knowledge_adjudication_cursor_file && (!Array.isArray(caseResult.cases) || cases.length > 1e3)) {
+    throw new Error("Knowledge evaluation case page is invalid");
+  }
+  const runResult = await deps.client.call("craft_knowledge_evaluation_run_list", { limit: 1e3 });
+  const runs = Array.isArray(runResult.runs) ? runResult.runs : [];
+  const pending = cases.filter((item) => item.dataset_partition === "held_out" && item.evaluation_channel === "real_session" && (Array.isArray(item.candidate_claim_refs) && item.candidate_claim_refs.length > 0 || Array.isArray(item.expected_claim_ids) && item.expected_claim_ids.length > 0) && (item.label_source === "model_candidate" && !item.adjudication_id || item.label_source === "host_adjudicated" && !runs.some((run) => run.mode === (Array.isArray(item.candidate_claim_refs) && item.candidate_claim_refs.length > 0 ? "candidate_shadow" : "retrieval") && runRefs(run).includes(String(item.id)))));
+  const eligible = pending.filter((item) => Date.parse(String(retries[String(item.id)]?.next_attempt_at ?? "1970-01-01T00:00:00.000Z")) <= nowMs);
+  const pendingDates = pending.map((item) => Date.parse(String(item.created_at ?? ""))).filter(Number.isFinite).sort((a, b) => a - b);
+  const retryDates = pending.map((item) => Date.parse(String(retries[String(item.id)]?.next_attempt_at ?? ""))).filter((value) => Number.isFinite(value) && value > nowMs).sort((a, b) => a - b);
+  const queueMetrics = {
+    page_pending_count: pending.length,
+    page_ready_count: eligible.length,
+    page_deferred_count: pending.length - eligible.length,
+    page_oldest_pending_at: pendingDates.length ? new Date(pendingDates[0]).toISOString() : null,
+    page_oldest_pending_age_ms: pendingDates.length ? Math.max(0, nowMs - pendingDates[0]) : 0,
+    page_next_retry_at: retryDates.length ? new Date(retryDates[0]).toISOString() : null
+  };
+  const withMetrics = (result) => deps.knowledge_adjudication_cursor_file ? { ...result, queue_metrics: queueMetrics } : result;
+  let current;
+  if (deps.knowledge_adjudication_cursor_file) {
+    const hasMore = caseResult.has_more;
+    const nextCursor = caseResult.next_cursor;
+    if (typeof hasMore !== "boolean" || nextCursor !== null && (typeof nextCursor !== "string" || !/^[A-Za-z0-9._:-]{1,200}$/u.test(nextCursor)) || !hasMore && nextCursor !== null || hasMore && (!nextCursor || nextCursor === afterId)) throw new Error("Knowledge evaluation case page is invalid");
+    current = eligible[0];
+    await writeKnowledgeAdjudicationCursor(deps.knowledge_adjudication_cursor_file, current ? String(current.id) : hasMore ? String(nextCursor) : null);
+  } else {
+    current = eligible.sort((a, b) => String(a.created_at ?? "").localeCompare(String(b.created_at ?? "")) || String(a.id).localeCompare(String(b.id)))[0];
+  }
+  if (!current) return withMetrics({ status: pending.length ? "waiting_for_retry" : "idle", processed: 0, model_calls: 0, raw_content_stored: false });
+  if (current.label_source === "host_adjudicated") {
+    const adjudicationId = String(current.adjudication_id ?? "");
+    const exactCandidateRefs = Array.isArray(current.candidate_claim_refs) ? current.candidate_claim_refs : [];
+    const mode = exactCandidateRefs.length ? "candidate_shadow" : "retrieval";
+    const shadow = await deps.client.call("craft_knowledge_evaluation_run", {
+      run_id: `knowledge_run_${stableDigest({ case_id: current.id, adjudication_id: adjudicationId }).slice(-24)}`,
+      mode,
+      case_ids: [String(current.id)],
+      ...exactCandidateRefs.length ? { candidate_claim_ids: exactCandidateRefs.map((ref) => String(ref.claim_id)) } : {},
+      top_k: 10,
+      now: String(current.adjudication_created_at ?? current.updated_at ?? current.created_at)
+    });
+    const run = object8(shadow.run, "Knowledge candidate-shadow run");
+    if (deps.knowledge_adjudication_cursor_file) await clearKnowledgeAdjudicationFailure(deps.knowledge_adjudication_cursor_file, String(current.id));
+    return withMetrics({
+      status: "shadow_evaluation_created",
+      processed: 1,
+      model_calls: 0,
+      case_id: current.id,
+      run_id: run.id,
+      run_status: run.status,
+      evaluation_eligible: run.metrics?.provenance_eligible === true,
+      raw_content_stored: false
+    });
+  }
+  const claimRefs = Array.isArray(current.candidate_claim_refs) && current.candidate_claim_refs.length > 0 ? current.candidate_claim_refs : current.expected_claim_ids.map((claim_id) => ({ claim_id }));
+  const claimsAreVersionBound = Array.isArray(current.candidate_claim_refs) && current.candidate_claim_refs.length > 0;
+  const claims = [];
+  for (const ref of claimRefs) {
+    const packetResult = await deps.client.call("craft_knowledge_semantic_review_packet", { claim_id: ref.claim_id });
+    if (packetResult.status !== "ready" || !["candidate", "reviewed"].includes(String(packetResult.claim_status))) return withMetrics({ status: "waiting_for_current_claims", processed: 0, model_calls: 0, raw_content_stored: false });
+    const packet = object8(packetResult.packet, "Knowledge Claim packet"), claim = object8(packet.claim, "Knowledge Claim");
+    if (claim.id !== ref.claim_id || claimsAreVersionBound && (claim.version !== ref.claim_version || claim.content_digest !== ref.content_digest) || typeof claim.content !== "string" || !claim.content.trim()) {
+      return withMetrics({ status: "waiting_for_current_candidates", processed: 0, model_calls: 0, raw_content_stored: false });
+    }
+    claims.push({ claim_id: claim.id, claim_version: claim.version, title: claim.title ?? "", content: claim.content, tags: claim.tags ?? [] });
+  }
+  const evidence = [];
+  for (const evidenceId of Array.isArray(current.source_evidence_ids) ? current.source_evidence_ids : []) {
+    const result = await deps.client.call("craft_evidence_get", { evidence_id: evidenceId });
+    const item = object8(result.evidence ?? result, "held-out Evidence");
+    const metadata = item.metadata && typeof item.metadata === "object" ? item.metadata : {};
+    if (item.id !== evidenceId || !["confirmed", "program"].includes(String(item.confidence)) || metadata.source_session_id !== current.source_session_id || metadata.task_id !== current.source_task_id) {
+      return withMetrics({ status: "waiting_for_verified_evidence", processed: 0, model_calls: 0, raw_content_stored: false });
+    }
+    evidence.push({
+      evidence_id: item.id,
+      source_type: item.source_type,
+      confidence: item.confidence,
+      claim: typeof item.claim === "string" ? item.claim : "",
+      source_session_id: metadata.source_session_id,
+      task_id: metadata.task_id
+    });
+  }
+  if (!evidence.length) return withMetrics({ status: "waiting_for_verified_evidence", processed: 0, model_calls: 0, raw_content_stored: false });
+  const profileResult = await deps.client.call("craft_evaluation_model_profile_ensure_single", { purpose: "knowledge_scenario_classification" });
+  if (profileResult.status !== "ready_for_adapter" || !profileResult.profile) return withMetrics({
+    status: "waiting_for_model",
+    processed: 0,
+    model_calls: 0,
+    reason: String(profileResult.reason ?? profileResult.status ?? "model_profile_unavailable"),
+    raw_content_stored: false
+  });
+  const profile = object8(profileResult.profile, "Knowledge adjudication profile");
+  const detail = object8(await deps.client.call("craft_evaluation_model_profile_get", { profile_id: profile.id, version: profile.version }), "Knowledge adjudication profile detail");
+  if (object8(detail.readiness, "Knowledge adjudication profile readiness").status !== "ready_for_adapter") return withMetrics({
+    status: "waiting_for_model",
+    processed: 0,
+    model_calls: 0,
+    reason: "model_profile_not_ready",
+    raw_content_stored: false
+  });
+  const provider = providerFor(profile, detail, deps.providers ?? PROVIDER_CATALOG);
+  if (!provider) return withMetrics({ status: "waiting_for_model", processed: 0, model_calls: 0, reason: "provider_unavailable", raw_content_stored: false });
+  if (provider.provider !== "codex-cli" || profile.model !== "gpt-6-luna") return withMetrics({
+    status: "waiting_for_model",
+    processed: 0,
+    model_calls: 0,
+    reason: "codex_host_required",
+    raw_content_stored: false
+  });
+  try {
+    const persisted = object8(await deps.client.call("craft_knowledge_evaluation_case_adjudicate", {
+      case_id: String(current.id),
+      expected_version: current.version
+    }), "Knowledge adjudication persistence");
+    const case_ = object8(persisted.case, "adjudicated Knowledge case");
+    const adjudication = object8(persisted.adjudication, "Knowledge adjudication record");
+    const decision = String(adjudication.decision);
+    if (deps.knowledge_adjudication_cursor_file) await clearKnowledgeAdjudicationFailure(deps.knowledge_adjudication_cursor_file, String(current.id));
+    if (decision === "accepted" || decision === "corrected") {
+      const mode = claimsAreVersionBound ? "candidate_shadow" : "retrieval";
+      const run = object8(await deps.client.call("craft_knowledge_evaluation_run", {
+        run_id: `knowledge_run_${stableDigest({ case_id: case_.id, adjudication_id: adjudication.id }).slice(-24)}`,
+        mode,
+        case_ids: [String(case_.id)],
+        ...claimsAreVersionBound ? { candidate_claim_ids: claimRefs.map((ref) => String(ref.claim_id)) } : {},
+        top_k: 10,
+        now: String(adjudication.created_at ?? case_.updated_at ?? case_.created_at)
+      }), "Knowledge candidate-shadow run").run;
+      return withMetrics({
+        status: "adjudicated",
+        processed: 1,
+        model_calls: Number(persisted.model_calls ?? 1),
+        case_id: case_.id,
+        trace_id: persisted.trace_id,
+        adjudication_id: adjudication.id,
+        decision,
+        evaluation_run_id: run.id,
+        evaluation_status: run.status,
+        evaluation_eligible: run.metrics?.provenance_eligible === true,
+        raw_content_stored: false
+      });
+    }
+    return withMetrics({
+      status: decision,
+      processed: 1,
+      model_calls: Number(persisted.model_calls ?? 1),
+      case_id: case_.id,
+      trace_id: persisted.trace_id,
+      adjudication_id: adjudication.id,
+      raw_content_stored: false
+    });
+  } catch (error) {
+    if (deps.knowledge_adjudication_cursor_file) await recordKnowledgeAdjudicationFailure(
+      deps.knowledge_adjudication_cursor_file,
+      String(current.id),
+      safeFailureKind3(error),
+      now
+    );
+    throw error;
+  }
+}
+
 // deploy/experience-learning/knowledge-stage-scheduler.ts
-import { lstatSync as lstatSync5, readFileSync as readFileSync6 } from "node:fs";
-import { dirname as dirname7, resolve as resolve8 } from "node:path";
-var KNOWLEDGE_LEARNING_STAGES = ["classification", "session_candidate", "session_evaluation"];
-var SCHEMA3 = "craft.knowledge-learning-stage-cursor.v1";
+import { lstatSync as lstatSync9, readFileSync as readFileSync9 } from "node:fs";
+import { dirname as dirname9, resolve as resolve8 } from "node:path";
+var KNOWLEDGE_LEARNING_STAGES = ["classification", "session_candidate", "session_evaluation", "session_adjudication"];
+var SCHEMA5 = "craft.knowledge-learning-stage-cursor.v1";
 var PASS_ORDER_SCHEMA = "craft.learning-pass-order.v1";
 async function nextLearningPassOrder(pathValue) {
   const path = resolve8(pathValue);
   try {
-    const parent = lstatSync5(dirname7(path));
+    const parent = lstatSync9(dirname9(path));
     if (parent.isSymbolicLink() || !parent.isDirectory()) throw new Error("Learning pass cursor directory is invalid");
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
   }
   let order = "experience_first";
   try {
-    const stat2 = lstatSync5(path);
+    const stat2 = lstatSync9(path);
     if (stat2.isSymbolicLink() || !stat2.isFile() || stat2.size > 4096) throw new Error("Learning pass cursor file is invalid");
-    const state = JSON.parse(readFileSync6(path, "utf8"));
+    const state = JSON.parse(readFileSync9(path, "utf8"));
     if (state.schema !== PASS_ORDER_SCHEMA || !["experience_first", "knowledge_first"].includes(String(state.next_order))) throw new Error("Learning pass cursor state is invalid");
     order = state.next_order;
   } catch (error) {
@@ -2763,24 +3175,24 @@ async function nextKnowledgeLearningStage(pathValue, enabledStages = KNOWLEDGE_L
   if (!enabledStages.length || new Set(enabledStages).size !== enabledStages.length || enabledStages.some((stage2) => !KNOWLEDGE_LEARNING_STAGES.includes(stage2))) throw new Error("Knowledge stages must be a non-empty unique supported list");
   const path = resolve8(pathValue);
   try {
-    const parent = lstatSync5(dirname7(path));
+    const parent = lstatSync9(dirname9(path));
     if (parent.isSymbolicLink() || !parent.isDirectory()) throw new Error("Knowledge stage cursor directory is invalid");
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
   }
   let cursor = 0;
   try {
-    const stat2 = lstatSync5(path);
+    const stat2 = lstatSync9(path);
     if (stat2.isSymbolicLink() || !stat2.isFile() || stat2.size > 4096) throw new Error("Knowledge stage cursor file is invalid");
-    const state = JSON.parse(readFileSync6(path, "utf8"));
-    if (state.schema !== SCHEMA3 || !Number.isSafeInteger(state.cursor) || Number(state.cursor) < 0 || Number(state.cursor) > 1e4) throw new Error("Knowledge stage cursor state is invalid");
+    const state = JSON.parse(readFileSync9(path, "utf8"));
+    if (state.schema !== SCHEMA5 || !Number.isSafeInteger(state.cursor) || Number(state.cursor) < 0 || Number(state.cursor) > 1e4) throw new Error("Knowledge stage cursor state is invalid");
     cursor = Number(state.cursor);
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
   }
   const index = cursor % enabledStages.length;
   const stage = enabledStages[index];
-  await atomicPrivateJson(path, { schema: SCHEMA3, cursor: (index + 1) % enabledStages.length, updated_at: (/* @__PURE__ */ new Date()).toISOString() });
+  await atomicPrivateJson(path, { schema: SCHEMA5, cursor: (index + 1) % enabledStages.length, updated_at: (/* @__PURE__ */ new Date()).toISOString() });
   return stage;
 }
 
@@ -2788,7 +3200,7 @@ async function nextKnowledgeLearningStage(pathValue, enabledStages = KNOWLEDGE_L
 import { randomUUID as randomUUID2 } from "node:crypto";
 var KEY = /^[a-z0-9][a-z0-9._/-]{0,95}$/u;
 var SECRET3 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
-function object8(value, name) {
+function object9(value, name) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${name} must be an object`);
   return value;
 }
@@ -2805,7 +3217,7 @@ function summary(value, name) {
   return value.trim();
 }
 function definition2(value, name) {
-  const item = object8(value, name);
+  const item = object9(value, name);
   const fields = ["summary", "applies_when", "excludes"];
   for (const field of fields) if (typeof item[field] !== "string" || !String(item[field]).trim() || String(item[field]).length > 500 || SECRET3.test(String(item[field]))) {
     throw new Error(`${name} is invalid`);
@@ -2820,7 +3232,7 @@ function parseDecision(response) {
   } catch {
     throw new Error("Scenario classifier returned invalid JSON");
   }
-  const item = object8(raw, "scenario classification");
+  const item = object9(raw, "scenario classification");
   if (item.decision === "unclassified") return { decision: "unclassified" };
   if (item.decision !== "classified" || typeof item.scenario_key !== "string" || !KEY.test(item.scenario_key)) throw new Error("Scenario classifier decision is invalid");
   const result = { decision: "classified", scenario_key: item.scenario_key, scenario_definition: definition2(item.scenario_definition, "scenario_definition") };
@@ -2845,26 +3257,26 @@ function safeErrorClass2(error, stage) {
 }
 async function runExperienceScenarioClassificationOnce(deps) {
   const listed = await deps.client.call("craft_evaluation_model_ticket_list", { purpose: "workflow_evolution", limit: 100 });
-  const tickets = array3(listed.tickets, "tickets").map((value, index) => object8(value, `tickets[${index}]`));
+  const tickets = array3(listed.tickets, "tickets").map((value, index) => object9(value, `tickets[${index}]`));
   const ticket = tickets.find((value) => {
     const target2 = value.target;
     return value.purpose === "workflow_evolution" && target2?.kind === "experience_scenario_classification_request";
   });
   if (!ticket) return { processed: 0, outcomes: [] };
-  const target = object8(ticket.target, "ticket.target");
+  const target = object9(ticket.target, "ticket.target");
   const ticketId = summary(ticket.id, "ticket.id");
   const requestId = summary(target.id, "ticket.target.id");
   const scope = summary(target.scope, "ticket.target.scope");
   if (!/^project:[A-Za-z0-9_-]{1,96}$/u.test(scope)) throw new Error("Experience classification ticket scope is invalid");
-  const readiness = object8(ticket.readiness, "ticket.readiness");
+  const readiness = object9(ticket.readiness, "ticket.readiness");
   if (readiness.status !== "ready_for_adapter") return { processed: 0, skipped: true, reason: readiness.next_action ?? "model_profile_not_ready", outcomes: [] };
   const profileResult = await deps.client.call("craft_evaluation_model_profile_get", { profile_id: ticket.profile_id, version: ticket.profile_version });
-  const profile = object8(profileResult.profile, "profile"), profileReadiness = object8(profileResult.readiness, "profile.readiness");
+  const profile = object9(profileResult.profile, "profile"), profileReadiness = object9(profileResult.readiness, "profile.readiness");
   if (profileReadiness.status !== "ready_for_adapter") return { processed: 0, skipped: true, reason: profileReadiness.next_action ?? "model_profile_not_ready", outcomes: [] };
-  const provider = (deps.providers ?? PROVIDER_CATALOG).find((item) => item.provider === profile.provider) ?? (profileResult.provider ? defineProvider(object8(profileResult.provider, "profile provider")) : void 0);
+  const provider = (deps.providers ?? PROVIDER_CATALOG).find((item) => item.provider === profile.provider) ?? (profileResult.provider ? defineProvider(object9(profileResult.provider, "profile provider")) : void 0);
   if (!provider) return { processed: 0, skipped: true, reason: "provider_unavailable", outcomes: [] };
   const requestResult = await deps.client.call("craft_experience_scenario_classification_request_get", { request_id: requestId, scope });
-  const request = object8(requestResult.request, "classification request"), taxonomy = object8(requestResult.taxonomy, "Experience taxonomy");
+  const request = object9(requestResult.request, "classification request"), taxonomy = object9(requestResult.taxonomy, "Experience taxonomy");
   if (request.status !== "awaiting_model" || Number(request.version) !== Number(target.version)) {
     if (request.status === "classified" || request.status === "unclassified") {
       await deps.client.call("craft_evaluation_model_ticket_complete", { ticket_id: ticketId, result_digest: digest(request.result_digest, "request.result_digest") });
@@ -2872,7 +3284,7 @@ async function runExperienceScenarioClassificationOnce(deps) {
     }
     return { processed: 0, outcomes: [{ ticket_id: ticketId, request_id: requestId, status: "stale" }] };
   }
-  const context2 = object8(request.context, "classification context");
+  const context2 = object9(request.context, "classification context");
   if (context2.sanitized !== true || context2.content_stored !== false) throw new Error("Experience classifier received non-sanitized task context");
   const paths = array3(context2.observed_paths, "context.observed_paths");
   if (paths.length > 16 || paths.some((path) => typeof path !== "string" || path.length > 256 || path.startsWith("/") || path.includes("\\") || path.split("/").some((part) => !part || part === "." || part === ".." || part.startsWith(".")) || /(?:secret|token|credential|password|private|\.env)/iu.test(String(path)))) throw new Error("Experience classifier received unsafe paths");
@@ -2953,7 +3365,7 @@ async function runExperienceScenarioClassificationOnce(deps) {
     processingStage = "classification_link";
     let observationId = null;
     if (decision.decision === "classified") {
-      const taxonomyScenarios = packet.taxonomy.scenarios.map((value, index) => object8(value, `taxonomy.scenarios[${index}]`));
+      const taxonomyScenarios = packet.taxonomy.scenarios.map((value, index) => object9(value, `taxonomy.scenarios[${index}]`));
       const existingFine = taxonomyScenarios.find((item) => item.scenario_key === decision.scenario_key && item.tier !== "coarse");
       const existingCoarse = decision.coarse_scenario_key ? taxonomyScenarios.find((item) => item.scenario_key === decision.coarse_scenario_key && item.tier === "coarse") : void 0;
       if (existingFine && (existingFine.lifecycle === "conflicted" || existingFine.lifecycle === "retired")) {
@@ -3047,10 +3459,10 @@ async function runExperienceScenarioClassificationOnce(deps) {
   }
 }
 
-// deploy/experience-learning/codex-cli-transport.ts
+// core/codex-cli-model-transport.ts
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir as tmpdir2 } from "node:os";
-import { join as join6 } from "node:path";
+import { join as join8 } from "node:path";
 
 // core/host-driver.ts
 import { spawn } from "node:child_process";
@@ -3113,7 +3525,7 @@ function estimateTokens(value) {
   return Math.max(1, Math.ceil(cjk + (characters.length - cjk) / 4));
 }
 
-// deploy/experience-learning/codex-cli-transport.ts
+// core/codex-cli-model-transport.ts
 var MODEL = "gpt-6-luna";
 var TIMEOUT_MS = 12e4;
 var OUTPUT_LIMIT = 65536;
@@ -3190,8 +3602,8 @@ ${message.content}`).join("\n\n");
       const argv = ["exec", "--ignore-user-config", "--ephemeral", "--sandbox", "read-only", "--skip-git-repo-check"];
       argv.push("-c", "skills.max_context_tokens=1", "-c", "features.shell_tool=false", "-c", "features.view_image=false", "-c", 'web_search="disabled"');
       if (schema) {
-        schemaDirectory = await mkdtemp(join6(tmpdir2(), "craft-learning-schema-"));
-        const schemaPath = join6(schemaDirectory, "output-schema.json");
+        schemaDirectory = await mkdtemp(join8(tmpdir2(), "craft-learning-schema-"));
+        const schemaPath = join8(schemaDirectory, "output-schema.json");
         await writeFile(schemaPath, JSON.stringify(schema), { encoding: "utf8", flag: "wx", mode: 384 });
         argv.push("--output-schema", schemaPath);
       }
@@ -3357,10 +3769,10 @@ function learningFailureKind(error) {
   return failureKind(error);
 }
 
-// core/interfaces/learning-worker-supervisor.ts
-import { createHash as createHash6, randomUUID as randomUUID3 } from "node:crypto";
+// core/infrastructure/learning-worker-lock.ts
+import { createHash as createHash7, randomUUID as randomUUID3 } from "node:crypto";
 import { link, mkdir as mkdir3, open as open3, readFile as readFile3, rename as rename2, unlink as unlink2 } from "node:fs/promises";
-import { dirname as dirname8, join as join7, resolve as resolve9 } from "node:path";
+import { join as join9 } from "node:path";
 var workerLockFileSystem = { link, mkdir: mkdir3, open: open3, readFile: readFile3, rename: rename2, unlink: unlink2 };
 function learningWorkerOwnerAlive(pid, kill = process.kill) {
   try {
@@ -3403,7 +3815,7 @@ async function acquireComponentLock(path, fileSystem, isOwnerAlive) {
       throw new Error("Learning worker lock is invalid; reconciliation required");
     }
     if (isOwnerAlive(previousPid)) return null;
-    const ownerDigest = createHash6("sha256").update(previous.owner_id).digest("hex");
+    const ownerDigest = createHash7("sha256").update(previous.owner_id).digest("hex");
     const recoveredPath = `${path}.recovered.${Date.now()}.${ownerDigest}`;
     await fileSystem.rename(path, recoveredPath);
     const moved = JSON.parse(await fileSystem.readFile(recoveredPath, "utf8"));
@@ -3433,7 +3845,7 @@ async function acquireLearningWorkerLocks(runtimeDir, components, dependencies =
   await fileSystem.mkdir(runtimeDir, { recursive: true, mode: 448 });
   const releases = [];
   for (const component of [...new Set(components)].sort()) {
-    const release = await acquireComponentLock(join7(runtimeDir, `learning-worker-${component}.lock.json`), fileSystem, isOwnerAlive);
+    const release = await acquireComponentLock(join9(runtimeDir, `learning-worker-${component}.lock.json`), fileSystem, isOwnerAlive);
     if (!release) {
       await Promise.all(releases.reverse().map((item) => item()));
       return null;
@@ -3477,7 +3889,7 @@ async function runEvaluationOnce(client) {
     if (seen.has(dispatchId)) continue;
     seen.add(dispatchId);
     const result = await client.call("craft_experience_learning_evaluation_run", { dispatch_id: dispatchId });
-    const resolved = object9(result.dispatch, "evaluation result dispatch");
+    const resolved = object10(result.dispatch, "evaluation result dispatch");
     outcomes.push({
       dispatch_id: dispatchId,
       stage: dispatch.stage,
@@ -3485,7 +3897,7 @@ async function runEvaluationOnce(client) {
       ...typeof result.reason === "string" ? { reason: result.reason } : {},
       ...typeof result.current === "object" && result.current ? { current_procedure_id: result.current.id ?? null } : {}
     });
-    if (result.next_dispatch && typeof result.next_dispatch === "object") pending.push(object9(result.next_dispatch, "next evaluation dispatch"));
+    if (result.next_dispatch && typeof result.next_dispatch === "object") pending.push(object10(result.next_dispatch, "next evaluation dispatch"));
   }
   return { processed: outcomes.length, outcomes };
 }
@@ -3521,16 +3933,20 @@ async function runLearningTick2(deps, syncKnowledge = false, components = ["expe
   const config = await loadConfig(paths);
   const configuredDeps = { ...deps, contentLanguage: deps.contentLanguage ?? config?.contentLanguage ?? "zh-CN" };
   const includesExperience = components.includes("experience"), includesKnowledge = components.includes("knowledge");
-  const passOrder = includesExperience && includesKnowledge ? await nextLearningPassOrder(deps.learning_pass_cursor_file ?? join8(paths.runtimeDir, "learning-pass-order.json")) : includesKnowledge ? "knowledge_first" : "experience_first";
+  const passOrder = includesExperience && includesKnowledge ? await nextLearningPassOrder(deps.learning_pass_cursor_file ?? join10(paths.runtimeDir, "learning-pass-order.json")) : includesKnowledge ? "knowledge_first" : "experience_first";
   return runLearningTick({
     pass_order: passOrder,
     ...runSessionCollection ? { run_session_collection: runSessionCollection } : {},
     run_experience_pass: () => includesExperience ? runOnce(configuredDeps) : Promise.resolve({ processed: 0, outcomes: [], skipped: true }),
     run_knowledge_pass: async () => {
-      const ingestion = syncKnowledge ? await runKnowledgeSyncOnce(deps.client) : { status: "not_due", processed: 0, content_stored: false, raw_content_stored: false };
+      const storage = syncKnowledge ? await runKnowledgeStorageReconcileOnce(deps.client, join10(paths.knowledgeDir, "storage-migration-state.json")) : null;
+      const ingestion = syncKnowledge ? {
+        ...await runKnowledgeSyncOnce(deps.client),
+        ...storage && (Number(storage.examined) > Number(storage.skipped) || storage.has_more === true) ? { storage_reconciliation: storage } : {}
+      } : { status: "not_due", processed: 0, content_stored: false, raw_content_stored: false };
       const knowledgeDir = paths.knowledgeDir;
       const stage = await nextKnowledgeLearningStage(
-        deps.knowledge_stage_cursor_file ?? join8(knowledgeDir, "learning-stage-cursor.json"),
+        deps.knowledge_stage_cursor_file ?? join10(knowledgeDir, "learning-stage-cursor.json"),
         runSessionCollection ? void 0 : ["classification"]
       );
       if (stage === "classification") {
@@ -3541,7 +3957,7 @@ async function runLearningTick2(deps, syncKnowledge = false, components = ["expe
             providers: configuredDeps.providers,
             transport: configuredDeps.transport,
             contentLanguage: configuredDeps.contentLanguage,
-            state_file: join8(knowledgeDir, "classification-attempts.json")
+            state_file: join10(knowledgeDir, "classification-attempts.json")
           });
         } catch (error) {
           classification = { status: "failed", failure_kind: learningFailureKind(error) };
@@ -3567,22 +3983,38 @@ async function runLearningTick2(deps, syncKnowledge = false, components = ["expe
           ...taskCandidates.status === "failed" ? { failure_kind: taskCandidates.failure_kind } : {}
         };
       }
-      let evaluationCases;
+      if (stage === "session_evaluation") {
+        let evaluationCases;
+        try {
+          evaluationCases = await runSessionKnowledgeEvaluationOnce({
+            client: configuredDeps.client,
+            providers: configuredDeps.providers,
+            transport: configuredDeps.transport,
+            contentLanguage: configuredDeps.contentLanguage,
+            env
+          });
+        } catch (error) {
+          evaluationCases = { status: "failed", failure_kind: learningFailureKind(error), raw_content_stored: false };
+        }
+        return {
+          ...ingestion,
+          ...evaluationCases.status !== "idle" && evaluationCases.status !== "skipped" ? { evaluation_cases: evaluationCases } : {},
+          ...evaluationCases.status === "failed" ? { failure_kind: evaluationCases.failure_kind } : {}
+        };
+      }
+      let adjudication;
       try {
-        evaluationCases = await runSessionKnowledgeEvaluationOnce({
-          client: configuredDeps.client,
-          providers: configuredDeps.providers,
-          transport: configuredDeps.transport,
-          contentLanguage: configuredDeps.contentLanguage,
-          env
+        adjudication = await runSessionKnowledgeAdjudicationOnce({
+          ...configuredDeps,
+          knowledge_adjudication_cursor_file: join10(paths.knowledgeDir, "session-adjudication-cursor.json")
         });
       } catch (error) {
-        evaluationCases = { status: "failed", failure_kind: learningFailureKind(error), raw_content_stored: false };
+        adjudication = { status: "failed", failure_kind: learningFailureKind(error), raw_content_stored: false };
       }
       return {
         ...ingestion,
-        ...evaluationCases.status !== "idle" && evaluationCases.status !== "skipped" ? { evaluation_cases: evaluationCases } : {},
-        ...evaluationCases.status === "failed" ? { failure_kind: evaluationCases.failure_kind } : {}
+        ...adjudication.status !== "idle" && adjudication.status !== "skipped" ? { session_adjudication: adjudication } : {},
+        ...adjudication.status === "failed" ? { failure_kind: adjudication.failure_kind } : {}
       };
     }
   }, includesKnowledge);
@@ -3597,7 +4029,7 @@ function mcpCommandOptions(env = process.env) {
   }
   return { command, args };
 }
-function object9(value, name) {
+function object10(value, name) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${name} must be an object`);
   return value;
 }
@@ -3634,7 +4066,7 @@ function parseModelJson(value) {
   } catch {
     throw new Error("Distillation model must return one JSON object");
   }
-  return object9(parsed, "model output");
+  return object10(parsed, "model output");
 }
 function stringArray(value, name, maximum = 32) {
   const values = array4(value, name);
@@ -3642,10 +4074,10 @@ function stringArray(value, name, maximum = 32) {
   return values.map((item, index) => string2(item, `${name}[${index}]`, 160));
 }
 function boundedObservation(value, index) {
-  const observation = object9(value, `observations[${index}]`);
+  const observation = object10(value, `observations[${index}]`);
   if (observation.sanitized !== true || observation.content_stored !== false) throw new Error("Experience request contains an observation outside the sanitized content-free contract");
   if (!(/* @__PURE__ */ new Set(["passed", "failed", "inconclusive"])).has(String(observation.outcome))) throw new Error(`observations[${index}].outcome is unsupported`);
-  const verification = observation.verification === null || observation.verification === void 0 ? null : object9(observation.verification, `observations[${index}].verification`);
+  const verification = observation.verification === null || observation.verification === void 0 ? null : object10(observation.verification, `observations[${index}].verification`);
   return {
     outcome: observation.outcome,
     failure_type: typeof observation.failure_type === "string" ? observation.failure_type.slice(0, 160) : null,
@@ -3662,28 +4094,28 @@ async function runDistillationOnce(deps) {
   const tickets = array4(ticketsResult.tickets, "tickets");
   const outcomes = [];
   for (const ticket of tickets) {
-    const readiness = object9(ticket.readiness, "ticket.readiness");
+    const readiness = object10(ticket.readiness, "ticket.readiness");
     if (readiness.status !== "ready_for_adapter") {
       outcomes.push({ ticket_id: ticket.id, status: "skipped", reason: readiness.next_action });
       continue;
     }
-    const target = object9(ticket.target, "ticket.target");
+    const target = object10(ticket.target, "ticket.target");
     if (ticket.purpose !== "workflow_evolution" || target.kind !== "workflow_evolution_request") continue;
     const requestId = string2(target.id, "ticket target id", 160);
     const profileResult = await deps.client.call("craft_evaluation_model_profile_get", { profile_id: ticket.profile_id, version: ticket.profile_version });
-    const profile = object9(profileResult.profile, "profile");
-    const profileReadiness = object9(profileResult.readiness, "profile.readiness");
+    const profile = object10(profileResult.profile, "profile");
+    const profileReadiness = object10(profileResult.readiness, "profile.readiness");
     if (profileReadiness.status !== "ready_for_adapter") {
       outcomes.push({ ticket_id: ticket.id, status: "skipped", reason: profileReadiness.next_action ?? "profile_not_ready" });
       continue;
     }
-    const provider = (deps.providers ?? PROVIDER_CATALOG).find((item) => item.provider === profile.provider) ?? (profileResult.provider ? defineProvider(object9(profileResult.provider, "profile provider")) : void 0);
+    const provider = (deps.providers ?? PROVIDER_CATALOG).find((item) => item.provider === profile.provider) ?? (profileResult.provider ? defineProvider(object10(profileResult.provider, "profile provider")) : void 0);
     if (!provider) {
       outcomes.push({ ticket_id: ticket.id, status: "skipped", reason: "provider_unavailable" });
       continue;
     }
     const requestResult = await deps.client.call("craft_experience_learning_request_get", { request_id: requestId });
-    const request = object9(requestResult.request, "request");
+    const request = object10(requestResult.request, "request");
     if (request.lifecycle !== "awaiting_model" || Number(request.version) !== Number(target.version)) {
       outcomes.push({ ticket_id: ticket.id, status: "stale", request_id: requestId });
       continue;
@@ -3718,7 +4150,7 @@ async function runDistillationOnce(deps) {
       request_version: request.version,
       input
     });
-    const started = object9(await deps.client.call("craft_trace_start", {
+    const started = object10(await deps.client.call("craft_trace_start", {
       task_id: `experience:${requestId}`,
       operation_id: String(ticket.id),
       model_fingerprint: modelFingerprint,
@@ -3731,7 +4163,7 @@ async function runDistillationOnce(deps) {
         content_stored: false
       }
     }), "Experience distillation Trace start");
-    const traceId = String(object9(started.trace, "Experience distillation Trace").id ?? "");
+    const traceId = String(object10(started.trace, "Experience distillation Trace").id ?? "");
     if (!traceId) throw new Error("Experience distillation Trace has no id");
     const modelSource = provider.provider === "codex-cli" ? "codex-cli-learning-transport" : "model-gateway";
     let processingStage = "trace_request";
@@ -3785,8 +4217,8 @@ async function runDistillationOnce(deps) {
         inputs,
         steps
       });
-      const procedure = result.procedure ? object9(result.procedure, "submitted procedure") : null;
-      const proposal = result.proposal ? object9(result.proposal, "submitted proposal") : null;
+      const procedure = result.procedure ? object10(result.procedure, "submitted procedure") : null;
+      const proposal = result.proposal ? object10(result.proposal, "submitted proposal") : null;
       const candidateDigest = stableDigest({
         ticket_id: ticket.id,
         request_id: requestId,
@@ -3868,6 +4300,9 @@ async function runDistillationOnce(deps) {
 }
 var DEFAULT_MCP_REQUEST_TIMEOUT_MS = 6e4;
 var MAX_MCP_REQUEST_TIMEOUT_MS = 3e5;
+function learningMcpRequestTimeoutMs(method, params, configuredMs) {
+  return method === "tools/call" && params.name === "craft_knowledge_evaluation_case_adjudicate" ? Math.max(configuredMs, 135e3) : configuredMs;
+}
 var McpStdioClient = class {
   child;
   pending = /* @__PURE__ */ new Map();
@@ -3889,7 +4324,7 @@ var McpStdioClient = class {
   receive(line) {
     let message;
     try {
-      message = object9(JSON.parse(line), "MCP response");
+      message = object10(JSON.parse(line), "MCP response");
     } catch {
       return;
     }
@@ -3901,7 +4336,7 @@ var McpStdioClient = class {
       pending.reject(new Error(String(message.error.message ?? "MCP request failed")));
       return;
     }
-    pending.resolve(object9(message.result, "MCP result"));
+    pending.resolve(object10(message.result, "MCP result"));
   }
   failAll(error) {
     if (this.closed) return;
@@ -3912,22 +4347,23 @@ var McpStdioClient = class {
   request(method, params = {}) {
     if (this.closed) return Promise.reject(new Error("Craft MCP child is closed"));
     const id = this.nextId++;
-    return new Promise((resolve10, reject) => {
+    return new Promise((resolve9, reject) => {
       let timer;
       this.pending.set(id, {
         resolve: (value) => {
           clearTimeout(timer);
-          resolve10(value);
+          resolve9(value);
         },
         reject: (error) => {
           clearTimeout(timer);
           reject(error);
         }
       });
+      const timeoutMs = learningMcpRequestTimeoutMs(method, params, this.requestTimeoutMs);
       timer = setTimeout(() => {
         this.failAll(new Error(`MCP request timed out: ${method}`));
         this.child.kill();
-      }, this.requestTimeoutMs);
+      }, timeoutMs);
       try {
         this.child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id, method, params })}
 `, (error) => {
@@ -3965,12 +4401,12 @@ var McpStdioClient = class {
         typeof code === "string" && /^[A-Z][A-Z_]{0,63}$/u.test(code) ? { code: `ERR_MCP_${code}` } : {}
       );
     }
-    if (result.structuredContent && typeof result.structuredContent === "object") return object9(result.structuredContent, "MCP structuredContent");
+    if (result.structuredContent && typeof result.structuredContent === "object") return object10(result.structuredContent, "MCP structuredContent");
     const content = Array.isArray(result.content) ? result.content : [];
     const text2 = content.find((item) => typeof item.text === "string")?.text;
     if (typeof text2 === "string") {
       try {
-        return object9(JSON.parse(text2), "MCP text result");
+        return object10(JSON.parse(text2), "MCP text result");
       } catch {
       }
     }
@@ -4021,12 +4457,12 @@ async function main() {
   };
   process.once("SIGINT", stop);
   process.once("SIGTERM", stop);
-  const waitForNextTick = () => new Promise((resolve10) => {
+  const waitForNextTick = () => new Promise((resolve9) => {
     let timer;
     const finish = () => {
       clearTimeout(timer);
       if (wakePoll === finish) wakePoll = null;
-      resolve10();
+      resolve9();
     };
     wakePoll = finish;
     timer = setTimeout(finish, nextPollMs);
@@ -4067,7 +4503,7 @@ async function main() {
     await releaseWorkerLocks?.();
   }
 }
-if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync2(process.argv[1])).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync4(process.argv[1])).href) {
   main().catch((error) => {
     process.stderr.write(`Craft learning worker failed (${learningFailureKind(error)}).
 `);
@@ -4078,6 +4514,7 @@ export {
   McpStdioClient,
   boundedPollInterval,
   learningComponents,
+  learningMcpRequestTimeoutMs,
   learningPollInterval,
   learningWorkFound,
   mcpCommandOptions,

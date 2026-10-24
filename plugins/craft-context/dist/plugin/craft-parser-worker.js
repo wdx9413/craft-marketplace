@@ -1,5 +1,11 @@
 // common/craft-common-store-local/src/store.ts
+import { backup, DatabaseSync as DatabaseSync3 } from "node:sqlite";
+
+// common/craft-common-store-local/src/trace-shards.ts
 import { DatabaseSync } from "node:sqlite";
+
+// common/craft-common-store-local/src/codebase-shards.ts
+import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 
 // common/craft-common-base/src/scope-policy.ts
 var COGNITIVE_SCOPE_KINDS = ["user", "project", "workspace", "task", "session", "team", "organization", "global"];
