@@ -1,0 +1,23 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "craft-marketplace",
+  "version": "0.12.104",
+  "description": "Craft 的知识、记忆与经验沉淀组件，适用于 Claude Code。",
+  "owner": {
+    "name": "wdx9413"
+  },
+  "plugins": [
+    {
+      "name": "craft-context",
+      "description": "Complete Knowledge, Memory, Experience, and Codebase tools in one Craft entry point",
+      "source": "./plugins/craft-context",
+      "category": "development"
+    },
+    {
+      "name": "craft-datasec",
+      "description": "本地文本脱敏：独立的同步 hook，无 Context 或 MCP 依赖。",
+      "source": "./plugins/craft-datasec",
+      "category": "development"
+    }
+  ]
+}
