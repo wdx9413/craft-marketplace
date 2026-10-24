@@ -219468,7 +219468,12 @@ function contentTitle(body3, title, fallback2 = "untitled") {
   return value.slice(0, 120);
 }
 function titleSlug(title) {
-  const slug2 = title.replace(/[\\/]/gu, " ").replace(/[^\p{L}\p{N}._ -]/gu, " ").trim().replace(/\s+/gu, "-").replace(/-+/gu, "-").replace(/^[.-]+|[.-]+$/gu, "").slice(0, 96);
+  const normalized = title.replace(/[\\/]/gu, " ").replace(/[^\p{L}\p{N}._ -]/gu, " ").trim().replace(/\s+/gu, "-").replace(/-+/gu, "-").replace(/^[.-]+|[.-]+$/gu, "");
+  let slug2 = "";
+  for (const character of normalized) {
+    if (Buffer.byteLength(slug2 + character, "utf8") > 80) break;
+    slug2 += character;
+  }
   return slug2 || "untitled";
 }
 function idSuffix(recordId) {
@@ -221650,8 +221655,10 @@ var CraftStore = class {
     if (!scopes.length) return [];
     const scopeSql = `EXISTS (SELECT 1 FROM json_each(?) s WHERE
       json_extract(r.payload_json,'$.scope')=json_extract(s.value,'$.kind')||':'||json_extract(s.value,'$.id')
+      OR (json_extract(r.payload_json,'$.scope')=json_extract(s.value,'$.id') AND substr(json_extract(s.value,'$.id'),1,length(json_extract(s.value,'$.kind'))+1)=json_extract(s.value,'$.kind')||':')
       OR (json_extract(s.value,'$.kind')='global' AND json_extract(r.payload_json,'$.scope')='global')
-      OR (json_extract(r.payload_json,'$.scope.kind')=json_extract(s.value,'$.kind') AND json_extract(r.payload_json,'$.scope.id')=json_extract(s.value,'$.id')))`;
+      OR (json_extract(r.payload_json,'$.scope.kind')=json_extract(s.value,'$.kind') AND json_extract(r.payload_json,'$.scope.id')=json_extract(s.value,'$.id'))
+      OR (json_extract(r.payload_json,'$.scope.kind')=json_extract(s.value,'$.kind') AND substr(json_extract(s.value,'$.id'),1,length(json_extract(s.value,'$.kind'))+1)=json_extract(s.value,'$.kind')||':' AND json_extract(r.payload_json,'$.scope.id')=substr(json_extract(s.value,'$.id'),length(json_extract(s.value,'$.kind'))+2)))`;
     const values3 = [JSON.stringify(scopes)];
     if (temporal?.known_at !== void 0 && !Number.isFinite(Date.parse(temporal.known_at))) throw new Error("Invalid scoped known_at");
     const cutoff = temporal?.known_at === void 0 ? "" : " AND updated_at<=?";
@@ -227484,7 +227491,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.105";
+var CRAFT_RELEASE_VERSION = "0.12.106";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
@@ -233192,11 +233199,18 @@ function revision(value, fallback2) {
   return result;
 }
 function matchesScope(memory, taskId3, workspaceId) {
-  const scope3 = String(memory.scope);
-  if (scope3 === "user") return true;
+  const raw = memory.scope;
+  const scope3 = typeof raw === "string" ? raw : raw && typeof raw === "object" && !Array.isArray(raw) ? String(raw.kind ?? "") : "";
+  if (scope3 === "user" || scope3 === "global") return true;
   if (scope3 === "task") return memory.task_id === taskId3;
-  if (scope3 === "workspace") return memory.workspace_id === workspaceId;
+  if (scope3 === "workspace" || scope3 === "project") return memory.workspace_id === workspaceId;
   return false;
+}
+function memoryScopeName(value) {
+  if (typeof value === "string") return value;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "";
+  const kind4 = String(value.kind ?? "");
+  return kind4 === "global" ? "user" : kind4;
 }
 function profileSelector(value, name, allowed) {
   const values3 = strings3(value, name);
@@ -233383,7 +233397,7 @@ var WorkbenchKernel = class {
     if (validUntil !== null && Number.isNaN(Date.parse(validUntil))) throw new Error("valid_until must be an ISO timestamp");
     const superseded = args.supersedes_id === void 0 ? null : this.store.get("memory_item", text(args.supersedes_id, "supersedes_id"));
     if (superseded && superseded.status !== "active") throw new Error("Only an active memory can be superseded");
-    if (superseded && (superseded.scope !== scope3 || superseded.task_id !== (args.task_id ?? null) || superseded.workspace_id !== (args.workspace_id ?? null))) {
+    if (superseded && (memoryScopeName(superseded.scope) !== scope3 || superseded.task_id !== (args.task_id ?? null) || superseded.workspace_id !== (args.workspace_id ?? null))) {
       throw new Error("Replacement memory must keep the same scope target");
     }
     const content = text(args.content, "content");
@@ -242062,7 +242076,8 @@ function storedScopeKey(value) {
   if (typeof value === "string") return value;
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const record2 = value;
-  return typeof record2.kind === "string" && typeof record2.id === "string" ? `${record2.kind}:${record2.id}` : null;
+  if (typeof record2.kind !== "string" || typeof record2.id !== "string") return null;
+  return record2.kind === record2.id ? record2.kind : `${record2.kind}:${record2.id}`;
 }
 var SECRET7 = /(?:api[_-]?key|authorization|cookie|password|passwd|secret|token)\s*[:=]\s*[^\s]{6,}/iu;
 var MemoryConsolidationKernel = class {
@@ -242163,7 +242178,13 @@ var MemoryConsolidationKernel = class {
       return { query, scope: null, results: [], skipped: true, reason: "scope_unavailable" };
     }
     const scope3 = resolvedScope.scope;
-    const memories = this.store.list("semantic_memory", 1e4, (item) => item.status === "active" && (scope3 === null || storedScopeKey(item.scope) === scope3));
+    const memories = this.store.list("semantic_memory", 1e4, (item) => {
+      if (item.status !== "active" || scope3 === null) return item.status === "active";
+      const stored = storedScopeKey(item.scope);
+      const separator = scope3.indexOf(":");
+      const legacyPartitionKey = separator > 0 ? `${scope3.slice(0, separator)}:${scope3}` : null;
+      return stored === scope3 || stored === legacyPartitionKey || ["user", "task", "workspace"].includes(scope3) && (stored?.startsWith(`${scope3}:`) ?? false) || scope3 === "user" && (stored === "global" || stored === "global:global");
+    });
     const results = memories.filter((item) => this.body(item).toLowerCase().includes(query)).map((item) => ({ ...item, content: this.body(item) }));
     return { query, results };
   }
@@ -246749,8 +246770,10 @@ var ContextReadGuard = class {
     }
     const scopeSql = `EXISTS (SELECT 1 FROM json_each(?) s WHERE
       json_extract(payload_json,'$.scope')=json_extract(s.value,'$.kind')||':'||json_extract(s.value,'$.id')
+      OR (json_extract(payload_json,'$.scope')=json_extract(s.value,'$.id') AND substr(json_extract(s.value,'$.id'),1,length(json_extract(s.value,'$.kind'))+1)=json_extract(s.value,'$.kind')||':')
       OR (json_extract(s.value,'$.kind')='global' AND json_extract(payload_json,'$.scope')='global')
-      OR (json_extract(payload_json,'$.scope.kind')=json_extract(s.value,'$.kind') AND json_extract(payload_json,'$.scope.id')=json_extract(s.value,'$.id')))`;
+      OR (json_extract(payload_json,'$.scope.kind')=json_extract(s.value,'$.kind') AND json_extract(payload_json,'$.scope.id')=json_extract(s.value,'$.id'))
+      OR (json_extract(payload_json,'$.scope.kind')=json_extract(s.value,'$.kind') AND substr(json_extract(s.value,'$.id'),1,length(json_extract(s.value,'$.kind'))+1)=json_extract(s.value,'$.kind')||':' AND json_extract(payload_json,'$.scope.id')=substr(json_extract(s.value,'$.id'),length(json_extract(s.value,'$.kind'))+2)))`;
     const rows4 = scopes?.length ? store.database.prepare(`WITH relevant AS (
       SELECT kind,id,payload_json FROM records WHERE kind IN ('memory_ledger','knowledge_claim','experience_procedure') AND (${scopeSql})
     ), wanted(kind,id) AS (
@@ -253984,8 +254007,8 @@ var TrustProfileKernel = class {
   }
   list(args = {}) {
     const limit3 = integer21(args.limit, "limit", 100, 1);
-    const scopeKey = args.task_class === void 0 ? null : text(args.task_class, "task_class");
-    const profiles = this.store.list("trust_profile", limit3, (item) => scopeKey === null || item.task_class === scopeKey);
+    const scopeKey2 = args.task_class === void 0 ? null : text(args.task_class, "task_class");
+    const profiles = this.store.list("trust_profile", limit3, (item) => scopeKey2 === null || item.task_class === scopeKey2);
     return { profiles, count: profiles.length };
   }
   get(args) {
@@ -256186,6 +256209,12 @@ function recordScope2(value) {
   const [kind4, ...rest] = String(value).split(":");
   return { kind: kind4, id: rest.join(":") };
 }
+function scopeKey(scope3) {
+  return scope3.id.startsWith(`${scope3.kind}:`) ? scope3.id : `${scope3.kind}:${scope3.id}`;
+}
+function matchesScope2(stored, scope3) {
+  return stored === scopeKey(scope3) || stored === `${scope3.kind}:${scope3.id}`;
+}
 var ExperienceContribution = class {
   member = "experience";
   store;
@@ -256205,8 +256234,8 @@ var ExperienceContribution = class {
     const wanted = terms3(request2.query);
     const scopes = request2.scope_stack ?? [{ kind: request2.scope_kind, id: request2.scope_id }];
     const access4 = { principal_id: request2.principal_id, principal_ids: request2.principal_ids, tenant_id: request2.tenant_id, purpose: request2.cognitive_purpose };
-    const scoped = this.store.listScoped("experience_procedure", scopes, 10001, (procedure) => scopes.some((scope3) => procedure.scope === `${scope3.kind}:${scope3.id}`) && scopeAllows(scopeEnvelope(procedure.scope_envelope, recordScope2(procedure.scope)), access4));
-    const hasDraft = this.store.listScoped("experience_graph_draft", scopes, 1, (draft) => scopes.some((scope3) => draft.scope === `${scope3.kind}:${scope3.id}`) && scopeAllows(scopeEnvelope(draft.scope_envelope, recordScope2(draft.scope)), access4)).length > 0;
+    const scoped = this.store.listScoped("experience_procedure", scopes, 10001, (procedure) => scopes.some((scope3) => matchesScope2(procedure.scope, scope3)) && scopeAllows(scopeEnvelope(procedure.scope_envelope, recordScope2(procedure.scope)), access4));
+    const hasDraft = this.store.listScoped("experience_graph_draft", scopes, 1, (draft) => scopes.some((scope3) => matchesScope2(draft.scope, scope3)) && scopeAllows(scopeEnvelope(draft.scope_envelope, recordScope2(draft.scope)), access4)).length > 0;
     const eligible = scoped.map((latest) => activeProcedure(this.store, String(latest.id))).filter((item) => item !== null);
     if (eligible.length > 1e4) throw new Error("Experience candidate budget exceeded; narrow the scope stack");
     const descriptions = new Map(eligible.map((procedure) => [String(procedure.id), this.describe(procedure)]));
@@ -276236,9 +276265,11 @@ ${task.goal}`.toLowerCase();
   workbenchMemoryCompatSave(args) {
     const memoryId = optionalText6(args.memory_id, "memory_id");
     const previous = memoryId === void 0 ? null : this.store.get("memory_item", memoryId);
+    const rawScope = firstDefined(args.scope, previous?.scope, "user");
+    const scope3 = typeof rawScope === "string" ? rawScope : rawScope && typeof rawScope === "object" && !Array.isArray(rawScope) ? String(rawScope.kind ?? "") : "";
     return this.memoryRemember({
       kind: firstDefined(args.kind, previous?.kind, "fact"),
-      scope: firstDefined(args.scope, previous?.scope, "user"),
+      scope: scope3,
       content: args.content,
       source: "studio_user",
       task_id: firstDefined(args.task_id, previous?.task_id),
