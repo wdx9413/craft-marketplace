@@ -227511,7 +227511,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.108";
+var CRAFT_RELEASE_VERSION = "0.12.109";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
@@ -280642,14 +280642,15 @@ var CodexHookBridge = class {
     const event = text32(input.hook_event_name);
     input = this.correlateTurn(input, event);
     if (member2 === "context") {
-      if (event === "SessionStart" || event === "SessionEnd") {
-        for (const component2 of CONTEXT_MEMBERS2) this.lifecycle(component2, event, input, component2 === "memory");
+      if (event === "SessionStart") return {};
+      if (event === "SessionEnd") {
+        this.lifecycle("memory", event, input);
         return {};
       }
       if (event === "UserPromptSubmit") return await this.prompt(member2, input);
       if (event === "PostToolUse") return this.tool(input);
       if (event === "Stop") {
-        for (const component2 of CONTEXT_MEMBERS2) this.stop(component2, input);
+        this.stop("experience", input);
       }
       return {};
     }
