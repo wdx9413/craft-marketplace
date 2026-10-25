@@ -304,7 +304,7 @@ function createFetchTransport(options = {}) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.109";
+var CRAFT_RELEASE_VERSION = "0.12.110";
 
 // common/craft-common-store-local/src/paths.ts
 import { createHash as createHash2, randomUUID } from "node:crypto";
@@ -684,6 +684,8 @@ import { backup, DatabaseSync as DatabaseSync3 } from "node:sqlite";
 
 // common/craft-common-store-local/src/trace-shards.ts
 import { DatabaseSync } from "node:sqlite";
+var TRACE_KINDS = /* @__PURE__ */ new Set(["trace", "trace_event", "trace_feedback", "telemetry_event", "trace_archive"]);
+var TRACE_SHARDED_KINDS = /* @__PURE__ */ new Set([...TRACE_KINDS, "codex_hook_turn", "codex_hook_signal"]);
 
 // common/craft-common-store-local/src/codebase-shards.ts
 import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
@@ -1686,7 +1688,7 @@ function messageText(value) {
   }).join("\n");
 }
 function sanitizedTaskProse(value, maximum) {
-  const result = value.replace(/(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]+/giu, "[\u5DF2\u8131\u654F]").replace(/```[\s\S]*?```/gu, " ").replace(/`[^`]*`/gu, " ").replace(/https?:\/\/\S+/giu, " ").replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/gu, " ").replace(/(?:\/[\w.-]+){2,}|[A-Za-z]:\\(?:[^\\\s]+\\)*[^\\\s]*/gu, " ").replace(/\b(?:[a-f0-9]{32,}|[A-Za-z0-9_-]{40,})\b/giu, " ").replace(/\b(?:\+?\d[\d ()-]{7,}\d)\b/gu, "[\u53F7\u7801\u5DF2\u8131\u654F]").replace(/\s+/gu, " ").trim().slice(0, maximum).trim();
+  const result = value.replace(/\bbearer\s+[^\s,，;；。！？]+/giu, "[\u5DF2\u8131\u654F]").replace(/(?:api[_ -]?key|authorization|cookie|password|secret|access[_ -]?token|token|ticket|账号|账户|帐号|密钥|密码|口令|令牌|凭证|票据)\s*(?::|=|：|＝|\bis\b|\bare\b|是|为)\s*["'“‘]?[^\s,，;；。！？]+/giu, "[\u5DF2\u8131\u654F]").replace(/```[\s\S]*?```/gu, " ").replace(/`[^`]*`/gu, " ").replace(/https?:\/\/\S+/giu, " ").replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/gu, " ").replace(/(?:\/[\w.-]+){2,}|[A-Za-z]:\\(?:[^\\\s]+\\)*[^\\\s]*/gu, " ").replace(/\b(?:[a-f0-9]{32,}|[A-Za-z0-9_-]{40,})\b/giu, " ").replace(/\b(?:\+?\d[\d ()-]{7,}\d)\b/gu, "[\u53F7\u7801\u5DF2\u8131\u654F]").replace(/\s+/gu, " ").trim().slice(0, maximum).trim();
   return result.length >= 8 ? result : null;
 }
 function projectScope(cwd, cache) {

@@ -219814,11 +219814,15 @@ var import_node_sqlite = require("node:sqlite");
 
 // common/craft-common-store-local/src/sqlite-busy-timeout.ts
 function sqliteBusyTimeoutMs(env = process.env) {
-  return env.CRAFT_HOOK_MODE === "1" ? 750 : 15e3;
+  return env.CRAFT_HOOK_MODE === "1" ? 100 : 15e3;
+}
+function sqliteTraceBusyTimeoutMs(env = process.env) {
+  return env.CRAFT_HOOK_MODE === "1" ? 100 : 15e3;
 }
 
 // common/craft-common-store-local/src/trace-shards.ts
 var TRACE_KINDS = /* @__PURE__ */ new Set(["trace", "trace_event", "trace_feedback", "telemetry_event", "trace_archive"]);
+var TRACE_SHARDED_KINDS = /* @__PURE__ */ new Set([...TRACE_KINDS, "codex_hook_turn", "codex_hook_signal"]);
 var SHARD_COUNT = 16;
 var RESERVED = /* @__PURE__ */ new Set(["id", "version", "created_at", "updated_at"]);
 function payloadOnly(value) {
@@ -219863,7 +219867,7 @@ var TraceShardStore = class {
     }
     const database = new import_node_sqlite.DatabaseSync(file);
     try {
-      database.exec(`PRAGMA busy_timeout=${sqliteBusyTimeoutMs()}; PRAGMA foreign_keys=ON;`);
+      database.exec(`PRAGMA busy_timeout=${sqliteTraceBusyTimeoutMs()}; PRAGMA foreign_keys=ON;`);
       if (create && String(database.prepare("PRAGMA journal_mode").get().journal_mode).toLowerCase() !== "wal")
         database.exec("PRAGMA journal_mode=WAL;");
       if (!database.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='records'").get()) database.exec(`BEGIN IMMEDIATE;
@@ -219876,6 +219880,21 @@ var TraceShardStore = class {
       CREATE TABLE IF NOT EXISTS events(stream TEXT NOT NULL,sequence INTEGER NOT NULL,event_type TEXT NOT NULL,
         payload_json TEXT NOT NULL,created_at TEXT NOT NULL,PRIMARY KEY(stream,sequence));
       COMMIT;`);
+      if (create) {
+        const lookupExisted = database.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='hook_signal_lookup'").get() !== void 0;
+        database.exec(`CREATE TABLE IF NOT EXISTS hook_signal_lookup(
+          id TEXT PRIMARY KEY,version INTEGER NOT NULL,scope_kind TEXT NOT NULL,scope_id TEXT NOT NULL,
+          session_id TEXT NOT NULL,turn_id TEXT NOT NULL,observed_at_ms REAL);
+          CREATE INDEX IF NOT EXISTS hook_signal_lookup_turn
+            ON hook_signal_lookup(scope_kind,scope_id,session_id,turn_id,observed_at_ms,id);`);
+        if (!lookupExisted) database.exec(`INSERT OR REPLACE INTO hook_signal_lookup
+          SELECT r.id,r.version,json_extract(r.payload_json,'$.scope.kind'),json_extract(r.payload_json,'$.scope.id'),
+            json_extract(r.payload_json,'$.session_id'),json_extract(r.payload_json,'$.turn_id'),json_extract(r.payload_json,'$.observed_at_ms')
+          FROM records r WHERE r.kind='codex_hook_signal'
+            AND r.version=(SELECT MAX(latest.version) FROM records latest WHERE latest.kind=r.kind AND latest.id=r.id)
+            AND json_extract(r.payload_json,'$.scope.kind') IS NOT NULL AND json_extract(r.payload_json,'$.scope.id') IS NOT NULL
+            AND json_extract(r.payload_json,'$.session_id') IS NOT NULL AND json_extract(r.payload_json,'$.turn_id') IS NOT NULL`);
+      }
     } catch (error) {
       database.close();
       throw error;
@@ -219932,6 +219951,19 @@ var TraceShardStore = class {
     const payload10 = payloadOnly(value), now3 = (/* @__PURE__ */ new Date()).toISOString();
     const next = version3 ?? Number(database.prepare("SELECT COALESCE(MAX(version),0)+1 version FROM records WHERE kind=? AND id=?").get(kind4, id23).version);
     database.prepare("INSERT INTO records(kind,id,version,payload_json,created_at,updated_at) VALUES(?,?,?,?,?,?)").run(kind4, id23, next, JSON.stringify(payload10), now3, now3);
+    if (kind4 === "codex_hook_signal" && payload10.scope && typeof payload10.scope === "object" && !Array.isArray(payload10.scope) && typeof payload10.scope.kind === "string" && typeof payload10.scope.id === "string" && typeof payload10.session_id === "string" && typeof payload10.turn_id === "string") {
+      const scope3 = payload10.scope;
+      database.prepare(`INSERT OR REPLACE INTO hook_signal_lookup(id,version,scope_kind,scope_id,session_id,turn_id,observed_at_ms)
+        VALUES(?,?,?,?,?,?,?)`).run(
+        id23,
+        next,
+        scope3.kind,
+        scope3.id,
+        payload10.session_id,
+        payload10.turn_id,
+        typeof payload10.observed_at_ms === "number" ? payload10.observed_at_ms : null
+      );
+    }
     return { ...payload10, id: id23, version: next, created_at: now3, updated_at: now3 };
   }
   find(kind4, id23, version3, traceId) {
@@ -219954,6 +219986,19 @@ var TraceShardStore = class {
       }
     }
     return records2.sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)) || String(b.id).localeCompare(String(a.id))).slice(0, limit3);
+  }
+  /** Read only the signals for one Host turn; avoid decoding every Hook signal in every shard. */
+  hookSignalsForTurn(scopeKind, scopeId, sessionId, turnId, limit3) {
+    if (!scopeKind || !scopeId || !sessionId || !turnId || !Number.isSafeInteger(limit3) || limit3 <= 0) return [];
+    const records2 = [];
+    for (const [, database] of this.existing()) {
+      if (!database.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='hook_signal_lookup'").get()) continue;
+      const rows4 = database.prepare(`SELECT r.* FROM hook_signal_lookup l JOIN records r
+        ON r.kind='codex_hook_signal' AND r.id=l.id AND r.version=l.version
+        WHERE l.scope_kind=? AND l.scope_id=? AND l.session_id=? AND l.turn_id=? LIMIT ?`).all(scopeKind, scopeId, sessionId, turnId, limit3);
+      records2.push(...rows4.map(record));
+    }
+    return records2.sort((a, b) => Number(a.observed_at_ms ?? Date.parse(String(a.created_at))) - Number(b.observed_at_ms ?? Date.parse(String(b.created_at))) || String(a.id).localeCompare(String(b.id))).slice(0, limit3);
   }
   count(kind4) {
     return this.existing().reduce((total, [, database]) => total + Number(database.prepare(
@@ -220667,7 +220712,7 @@ var CraftStore = class {
     this.assertPartitionDomain(kind4, id23, payload10);
     const existingPointer = this.partitionPointer(kind4, id23);
     if (this.memoryScope(kind4, { ...payload10, id: id23 }, true, Boolean(existingPointer))) return this.writeMemory(kind4, id23, payload10, "save", void 0, version3);
-    if (TRACE_KINDS.has(kind4) && !this.traceWriteIsLegacy(kind4, id23, payload10)) return this.traceShards.save(kind4, id23, payload10, version3);
+    if (TRACE_SHARDED_KINDS.has(kind4) && !this.traceWriteIsLegacy(kind4, id23, payload10)) return this.traceShards.save(kind4, id23, payload10, version3);
     if (CODEBASE_GRAPH_KINDS.has(kind4) && this.codebaseShards.raw(kind4, id23) && !this.database.prepare("SELECT 1 FROM records WHERE kind=? AND id=? LIMIT 1").get(kind4, id23))
       return this.codebaseShards.save(kind4, id23, payload10, version3);
     return this.transaction((database) => {
@@ -220677,7 +220722,7 @@ var CraftStore = class {
   }
   create(kind4, id23, payload10) {
     if (this.memoryScope(kind4, { ...payload10, id: id23 })) return this.writeMemory(kind4, id23, payload10, "create");
-    if (TRACE_KINDS.has(kind4) && !this.traceWriteIsLegacy(kind4, id23, payload10)) return this.traceShards.create(kind4, id23, payload10);
+    if (TRACE_SHARDED_KINDS.has(kind4) && !this.traceWriteIsLegacy(kind4, id23, payload10)) return this.traceShards.create(kind4, id23, payload10);
     if (CODEBASE_GRAPH_KINDS.has(kind4) && this.codebaseShards.raw(kind4, id23)) throw new Error(`${kind4} already exists: ${id23}`);
     return this.transaction((database) => {
       const existing = database.prepare("SELECT 1 present FROM records WHERE kind=? AND id=? LIMIT 1").get(kind4, id23);
@@ -220726,8 +220771,8 @@ var CraftStore = class {
     return this.transaction(() => entries2.map((entry2) => this.save(entry2.kind, entry2.id, entry2.payload, entry2.version)));
   }
   traceBatchId(entries2) {
-    if (!entries2.some((entry2) => TRACE_KINDS.has(entry2.kind))) return null;
-    const ids6 = entries2.map((entry2) => TRACE_KINDS.has(entry2.kind) ? entry2.kind === "trace" || entry2.kind === "trace_archive" ? entry2.id : entry2.payload.trace_id : null);
+    if (!entries2.some((entry2) => TRACE_SHARDED_KINDS.has(entry2.kind))) return null;
+    const ids6 = entries2.map((entry2) => TRACE_SHARDED_KINDS.has(entry2.kind) ? entry2.kind === "trace" || entry2.kind === "trace_archive" ? entry2.id : entry2.payload.trace_id : null);
     if (ids6.some((id23) => typeof id23 !== "string" || !id23) || new Set(ids6).size !== 1)
       throw new Error("Trace batch must contain one Trace and no unrelated records");
     return ids6[0];
@@ -220735,7 +220780,7 @@ var CraftStore = class {
   updateIfVersion(kind4, id23, expectedVersion, payload10) {
     this.assertPartitionDomain(kind4, id23, payload10);
     if (this.memoryScope(kind4, { ...payload10, id: id23 })) return this.writeMemory(kind4, id23, payload10, "save", expectedVersion);
-    if (TRACE_KINDS.has(kind4) && !this.traceWriteIsLegacy(kind4, id23, payload10)) {
+    if (TRACE_SHARDED_KINDS.has(kind4) && !this.traceWriteIsLegacy(kind4, id23, payload10)) {
       const traceId = kind4 === "trace" || kind4 === "trace_archive" ? id23 : String(payload10.trace_id ?? "");
       return this.traceShards.transaction(traceId, () => {
         const current2 = this.traceShards.find(kind4, id23, void 0, traceId);
@@ -221612,7 +221657,7 @@ var CraftStore = class {
     ).get(kind4, id23) : this.database.prepare(
       "SELECT * FROM records WHERE kind=? AND id=? AND version=?"
     ).get(kind4, id23, version3);
-    if (!row) return TRACE_KINDS.has(kind4) ? this.traceShards.find(kind4, id23, version3) : CODEBASE_GRAPH_KINDS.has(kind4) ? this.codebaseShards.find(kind4, id23, version3) : null;
+    if (!row) return TRACE_SHARDED_KINDS.has(kind4) ? this.traceShards.find(kind4, id23, version3) : CODEBASE_GRAPH_KINDS.has(kind4) ? this.codebaseShards.find(kind4, id23, version3) : null;
     const raw = row;
     const partition = this.partitionPointerFromPayload(JSON.parse(String(raw.payload_json)));
     if (partition) {
@@ -221636,7 +221681,7 @@ var CraftStore = class {
     if (typeof kind4 !== "string" || !kind4.trim()) throw new Error("kind must not be empty");
     if (!Array.isArray(ids6) || ids6.length > 1e4 || ids6.some((id23) => typeof id23 !== "string" || !id23.trim())) throw new Error("record ids exceed read bounds");
     const unique3 = [...new Set(ids6)];
-    if (TRACE_KINDS.has(kind4) || CODEBASE_GRAPH_KINDS.has(kind4)) return unique3.flatMap((id23) => {
+    if (TRACE_SHARDED_KINDS.has(kind4) || CODEBASE_GRAPH_KINDS.has(kind4)) return unique3.flatMap((id23) => {
       const found = this.find(kind4, id23, void 0, hydrate);
       return found ? [found] : [];
     });
@@ -221670,9 +221715,9 @@ var CraftStore = class {
       records2.push(record2);
       if (records2.length === bounded4) break;
     }
-    if (!TRACE_KINDS.has(kind4) && !CODEBASE_GRAPH_KINDS.has(kind4)) return records2;
+    if (!TRACE_SHARDED_KINDS.has(kind4) && !CODEBASE_GRAPH_KINDS.has(kind4)) return records2;
     const merged = /* @__PURE__ */ new Map();
-    for (const item of TRACE_KINDS.has(kind4) ? this.traceShards.list(kind4, bounded4, predicate) : this.codebaseShards.list(kind4, bounded4, predicate)) merged.set(String(item.id), item);
+    for (const item of TRACE_SHARDED_KINDS.has(kind4) ? this.traceShards.list(kind4, bounded4, predicate) : this.codebaseShards.list(kind4, bounded4, predicate)) merged.set(String(item.id), item);
     for (const item of records2) merged.set(String(item.id), item);
     return [...merged.values()].sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)) || String(b.id).localeCompare(String(a.id))).slice(0, bounded4);
   }
@@ -221765,7 +221810,7 @@ var CraftStore = class {
     const central = Number(this.database.prepare(`SELECT COUNT(*) count FROM records r JOIN (
       SELECT id,MAX(version) version FROM records WHERE kind=? GROUP BY id
       ) latest ON latest.id=r.id AND latest.version=r.version WHERE r.kind=?`).get(kind4, kind4).count);
-    return central + (TRACE_KINDS.has(kind4) ? this.traceShards.count(kind4) : CODEBASE_GRAPH_KINDS.has(kind4) ? this.codebaseShards.count(kind4) : 0);
+    return central + (TRACE_SHARDED_KINDS.has(kind4) ? this.traceShards.count(kind4) : CODEBASE_GRAPH_KINDS.has(kind4) ? this.codebaseShards.count(kind4) : 0);
   }
   /** Count latest records for multiple kinds in one indexed query. */
   countMany(kinds) {
@@ -221781,7 +221826,7 @@ var CraftStore = class {
       ) latest GROUP BY kind`).all(JSON.stringify(unique3));
     for (const row of rows4) counts[row.kind] = Number(row.count);
     for (const kind4 of unique3) {
-      if (TRACE_KINDS.has(kind4)) counts[kind4] += this.traceShards.count(kind4);
+      if (TRACE_SHARDED_KINDS.has(kind4)) counts[kind4] += this.traceShards.count(kind4);
       else if (CODEBASE_GRAPH_KINDS.has(kind4)) counts[kind4] += this.codebaseShards.count(kind4);
     }
     return counts;
@@ -227572,7 +227617,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.109";
+var CRAFT_RELEASE_VERSION = "0.12.110";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
@@ -248420,11 +248465,16 @@ var ScopeIdentityKernel = class {
     const identity = projectIdentityFromRoot(root, typeof args.project_id === "string" ? args.project_id : void 0);
     const canonical = identity.canonical_scope;
     const projectId2 = canonical.id;
-    return this.store.transaction(() => {
-      const existing = this.store.find("project_identity", projectId2);
-      const saved = existing ?? this.store.create("project_identity", projectId2, { ...identity, identity_digest: stableDigest({ canonical, project_kind: identity.project_kind, remote_digest: identity.remote_digest }) });
+    const existing = this.store.find("project_identity", projectId2);
+    if (existing) {
       const alias = this.bindAlias({ scope_kind: "project", scope_id: projectId2, alias_kind: "path", alias: identity.local_path_alias });
-      return { identity: saved, alias: alias.alias, idempotent: Boolean(existing) && alias.idempotent === true };
+      return { identity: existing, alias: alias.alias, idempotent: alias.idempotent === true };
+    }
+    return this.store.transaction(() => {
+      const current2 = this.store.find("project_identity", projectId2);
+      const saved = current2 ?? this.store.create("project_identity", projectId2, { ...identity, identity_digest: stableDigest({ canonical, project_kind: identity.project_kind, remote_digest: identity.remote_digest }) });
+      const alias = this.bindAlias({ scope_kind: "project", scope_id: projectId2, alias_kind: "path", alias: identity.local_path_alias });
+      return { identity: saved, alias: alias.alias, idempotent: Boolean(current2) && alias.idempotent === true };
     });
   }
   bindAlias(args) {
@@ -248435,11 +248485,16 @@ var ScopeIdentityKernel = class {
     if (scopeKind !== "project" || !scopeId || !alias || !(/* @__PURE__ */ new Set(["path", "legacy", "git_remote", "user_named"])).has(aliasKind)) throw new Error("Scope Alias is invalid");
     const id23 = `scope_alias_${hash(canonicalJson({ scopeKind, scopeId, aliasKind, alias }))}`;
     const identity = { scope: { kind: scopeKind, id: scopeId }, alias_kind: aliasKind, alias, alias_digest: stableDigest(alias) };
+    const existing = this.store.find("scope_alias", id23);
+    if (existing) {
+      if (existing.identity_digest !== stableDigest(identity)) throw new Error("Scope Alias idempotency conflict");
+      return { alias: existing, idempotent: true };
+    }
     return this.store.transaction(() => {
-      const existing = this.store.find("scope_alias", id23);
-      if (existing) {
-        if (existing.identity_digest !== stableDigest(identity)) throw new Error("Scope Alias idempotency conflict");
-        return { alias: existing, idempotent: true };
+      const current2 = this.store.find("scope_alias", id23);
+      if (current2) {
+        if (current2.identity_digest !== stableDigest(identity)) throw new Error("Scope Alias idempotency conflict");
+        return { alias: current2, idempotent: true };
       }
       return { alias: this.store.create("scope_alias", id23, { ...identity, identity_digest: stableDigest(identity), status: "active" }), idempotent: false };
     });
