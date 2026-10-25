@@ -219822,7 +219822,7 @@ function sqliteTraceBusyTimeoutMs(env = process.env) {
 
 // common/craft-common-store-local/src/trace-shards.ts
 var TRACE_KINDS = /* @__PURE__ */ new Set(["trace", "trace_event", "trace_feedback", "telemetry_event", "trace_archive"]);
-var TRACE_SHARDED_KINDS = /* @__PURE__ */ new Set([...TRACE_KINDS, "codex_hook_turn", "codex_hook_signal"]);
+var TRACE_SHARDED_KINDS = /* @__PURE__ */ new Set([...TRACE_KINDS, "codex_hook_turn", "codex_hook_signal", "context_hook_session"]);
 var SHARD_COUNT = 16;
 var RESERVED = /* @__PURE__ */ new Set(["id", "version", "created_at", "updated_at"]);
 function payloadOnly(value) {
@@ -227617,7 +227617,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.110";
+var CRAFT_RELEASE_VERSION = "0.12.111";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [

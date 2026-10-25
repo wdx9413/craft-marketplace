@@ -1414,7 +1414,7 @@ var init_trace_shards = __esm({
     import_node_sqlite = require("node:sqlite");
     init_sqlite_busy_timeout();
     TRACE_KINDS = /* @__PURE__ */ new Set(["trace", "trace_event", "trace_feedback", "telemetry_event", "trace_archive"]);
-    TRACE_SHARDED_KINDS = /* @__PURE__ */ new Set([...TRACE_KINDS, "codex_hook_turn", "codex_hook_signal"]);
+    TRACE_SHARDED_KINDS = /* @__PURE__ */ new Set([...TRACE_KINDS, "codex_hook_turn", "codex_hook_signal", "context_hook_session"]);
     SHARD_COUNT = 16;
     RESERVED = /* @__PURE__ */ new Set(["id", "version", "created_at", "updated_at"]);
     TraceShardStore = class {
@@ -9219,7 +9219,7 @@ var CRAFT_RELEASE_VERSION;
 var init_version = __esm({
   "core/version.ts"() {
     "use strict";
-    CRAFT_RELEASE_VERSION = "0.12.110";
+    CRAFT_RELEASE_VERSION = "0.12.111";
   }
 });
 
@@ -284234,7 +284234,7 @@ var init_codex_hook_bridge = __esm({
           const turnId = text33(input.turn_id) ?? (prior?.ambiguous !== true && pending.length === 1 ? pending[0] : void 0);
           return turnId ? { ...input, turn_id: turnId } : input;
         }
-        return this.service.store.transaction(() => {
+        return this.service.store.traceTransaction(sessionKey, () => {
           const prior = this.service.store.find("context_hook_session", sessionKey);
           let pending = Array.isArray(prior?.pending_turn_ids) ? prior.pending_turn_ids : [];
           let ambiguous = prior?.ambiguous === true;
@@ -284244,15 +284244,15 @@ var init_codex_hook_bridge = __esm({
             turnId ??= `hook_turn_${sessionKey.slice(-24)}_${sequence}`;
             if (!pending.includes(turnId)) pending = [...pending, turnId];
             ambiguous ||= pending.length > 1;
-            this.service.store.save("context_hook_session", sessionKey, { scope: scope3, session_id: sessionId, sequence, last_turn_id: turnId, pending_turn_ids: pending, ambiguous, content_free: true });
+            this.service.store.save("context_hook_session", sessionKey, { trace_id: sessionKey, scope: scope3, session_id: sessionId, sequence, last_turn_id: turnId, pending_turn_ids: pending, ambiguous, content_free: true });
           } else if (event === "Stop") {
             if (!turnId && !ambiguous && pending.length === 1) turnId = pending[0];
             if (event === "Stop" && turnId && pending.includes(turnId)) {
               pending = pending.filter((id23) => id23 !== turnId);
-              this.service.store.save("context_hook_session", sessionKey, { ...payload(prior), pending_turn_ids: pending, ambiguous: pending.length > 0 && ambiguous });
+              this.service.store.save("context_hook_session", sessionKey, { ...payload(prior), trace_id: sessionKey, pending_turn_ids: pending, ambiguous: pending.length > 0 && ambiguous });
             }
           } else if ((event === "SessionStart" || event === "SessionEnd") && prior) {
-            this.service.store.save("context_hook_session", sessionKey, { ...payload(prior), pending_turn_ids: [], ambiguous: false });
+            this.service.store.save("context_hook_session", sessionKey, { ...payload(prior), trace_id: sessionKey, pending_turn_ids: [], ambiguous: false });
           }
           return turnId ? { ...input, turn_id: turnId } : input;
         });
@@ -284704,8 +284704,12 @@ async function main() {
     const service = await CraftService2.open(store);
     serviceOpenMs = performance.now() - serviceOpenStarted;
     const handlerStarted = performance.now();
-    const output = await new CodexHookBridge2(service).handle(component2, input);
-    handlerMs = performance.now() - handlerStarted;
+    let output;
+    try {
+      output = await new CodexHookBridge2(service).handle(component2, input);
+    } finally {
+      handlerMs = performance.now() - handlerStarted;
+    }
     const outputStarted = performance.now();
     process.stdout.write(`${JSON.stringify(output)}
 `);
