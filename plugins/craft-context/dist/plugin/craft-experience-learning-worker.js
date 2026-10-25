@@ -304,7 +304,7 @@ function createFetchTransport(options = {}) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.111";
+var CRAFT_RELEASE_VERSION = "0.12.112";
 
 // common/craft-common-store-local/src/paths.ts
 import { createHash as createHash2, randomUUID } from "node:crypto";
@@ -2926,7 +2926,7 @@ function readState4(path) {
     }
     for (const [id, raw] of Object.entries(retries)) {
       const item = raw;
-      if (!ID.test(id) || !item || typeof item !== "object" || !Number.isSafeInteger(item.attempts) || Number(item.attempts) < 1 || typeof item.last_failure_at !== "string" || !Number.isFinite(Date.parse(item.last_failure_at)) || typeof item.next_attempt_at !== "string" || !Number.isFinite(Date.parse(item.next_attempt_at)) || typeof item.failure_kind !== "string" || !/^[A-Za-z][A-Za-z0-9]{0,31}$/u.test(item.failure_kind)) {
+      if (!ID.test(id) || !item || typeof item !== "object" || !Number.isSafeInteger(item.attempts) || Number(item.attempts) < 1 || typeof item.last_failure_at !== "string" || !Number.isFinite(Date.parse(item.last_failure_at)) || typeof item.next_attempt_at !== "string" || !Number.isFinite(Date.parse(item.next_attempt_at)) || typeof item.failure_kind !== "string" || !/^[A-Za-z][A-Za-z0-9]{0,31}$/u.test(item.failure_kind) || item.failure_code !== void 0 && (typeof item.failure_code !== "string" || !/^[A-Z][A-Z0-9_]{0,63}$/u.test(item.failure_code))) {
         throw new Error("Knowledge adjudication retry state is invalid");
       }
     }
@@ -2951,15 +2951,22 @@ async function writeKnowledgeAdjudicationCursor(path, afterId) {
   const state = readState4(path);
   await writeState3(path, { ...state, after_id: afterId });
 }
-async function recordKnowledgeAdjudicationFailure(path, caseId, failureKind2, now) {
+async function recordKnowledgeAdjudicationFailure(path, caseId, failureKind2, now, failureCode) {
   if (!ID.test(caseId) || !/^[A-Za-z][A-Za-z0-9]{0,31}$/u.test(failureKind2)) throw new Error("Knowledge adjudication retry input is invalid");
+  if (failureCode !== void 0 && !/^[A-Z][A-Z0-9_]{0,63}$/u.test(failureCode)) throw new Error("Knowledge adjudication failure code is invalid");
   const nowMs = Date.parse(now);
   if (!Number.isFinite(nowMs)) throw new Error("Knowledge adjudication retry time is invalid");
   const state = readState4(path), prior = state.retries[caseId];
   if (!prior && Object.keys(state.retries).length >= MAX_RETRIES) throw new Error("Knowledge adjudication retry capacity reached");
   const attempts = Math.min(Number(prior?.attempts ?? 0) + 1, 31);
   const delay = Math.min(RETRY_BASE_MS * 2 ** Math.min(attempts - 1, 16), RETRY_MAX_MS);
-  const retry = { attempts, last_failure_at: new Date(nowMs).toISOString(), next_attempt_at: new Date(nowMs + delay).toISOString(), failure_kind: failureKind2 };
+  const retry = {
+    attempts,
+    last_failure_at: new Date(nowMs).toISOString(),
+    next_attempt_at: new Date(nowMs + delay).toISOString(),
+    failure_kind: failureKind2,
+    ...failureCode ? { failure_code: failureCode } : {}
+  };
   await writeState3(path, { ...state, retries: { ...state.retries, [caseId]: retry } });
   return retry;
 }
@@ -2979,6 +2986,11 @@ function object8(value, name) {
 function safeFailureKind3(error) {
   const name = error instanceof Error ? error.name : "Error";
   return /^[A-Za-z][A-Za-z0-9]{0,31}$/u.test(name) ? name : "Error";
+}
+function safeFailureCode2(error) {
+  if (!error || typeof error !== "object") return void 0;
+  const code = error.code;
+  return typeof code === "string" && /^[A-Z][A-Z0-9_]{0,63}$/u.test(code) ? code : void 0;
 }
 function providerFor(profile, detail, providers) {
   return providers.find((item) => item.provider === profile.provider) ?? (detail.provider ? defineProvider(object8(detail.provider, "Knowledge adjudication provider")) : void 0);
@@ -3153,7 +3165,8 @@ async function runSessionKnowledgeAdjudicationOnce(deps, now = (/* @__PURE__ */ 
       deps.knowledge_adjudication_cursor_file,
       String(current.id),
       safeFailureKind3(error),
-      now
+      now,
+      safeFailureCode2(error)
     );
     throw error;
   }
