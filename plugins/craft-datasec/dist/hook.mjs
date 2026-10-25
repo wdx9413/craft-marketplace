@@ -1,7 +1,8 @@
 // bin/craft-datasec-hook.ts
 import { readFileSync as readFileSync2 } from "node:fs";
 import { homedir } from "node:os";
-import { join as join2 } from "node:path";
+import { fileURLToPath } from "node:url";
+import { resolve, join as join2 } from "node:path";
 
 // capability/craft-datasec/hook.ts
 import { extname } from "node:path";
@@ -42,17 +43,17 @@ var Sanitizer = class {
       }
     }
     matches.sort((a, b) => a.start - b.start || b.end - a.end);
-    let end = 0, result = "";
+    let end = 0, result2 = "";
     for (const match of matches) {
       if (match.start < end || protectedRanges.some(([start, stop]) => match.start < stop && match.end > start)) continue;
       const value = text.slice(match.start, match.end);
       if (match.name === "email" && !/^[^@]+@[^@]+$/.test(value)) throw new Error("Invalid email rule match");
       const replacement = match.name === "email" ? `${value[0]}*@${value.slice(value.indexOf("@") + 1)}` : this.token(match.name, value);
-      result += text.slice(end, match.start) + replacement;
+      result2 += text.slice(end, match.start) + replacement;
       end = match.end;
       this.count++;
     }
-    return result + text.slice(end);
+    return result2 + text.slice(end);
   }
   value(value, depth = 0) {
     if (depth > 64) throw new Error("Result nesting exceeds text redaction limit");
@@ -186,8 +187,8 @@ var EDIT = /^(?:Edit|Write|MultiEdit|NotebookEdit|apply_patch)$/;
 function denied(reason) {
   return { hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: reason } };
 }
-function hidden(host2, reason, replacement) {
-  if (host2 === "claude") return { systemMessage: reason, hookSpecificOutput: { hookEventName: "PostToolUse", updatedToolOutput: replacement } };
+function hidden(host, reason, replacement) {
+  if (host === "claude") return { systemMessage: reason, hookSpecificOutput: { hookEventName: "PostToolUse", updatedToolOutput: replacement } };
   return { decision: "block", reason: JSON.stringify(replacement), systemMessage: reason };
 }
 function blank(value, depth = 0) {
@@ -204,14 +205,14 @@ function restore(value, vault) {
   if (value !== null && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, item]) => [vault.restore(key), restore(item, vault)]));
   return value;
 }
-function handleHook(host2, event2, input, root, rules = DEFAULT_RULES) {
+function handleHook(host, event, input, root, rules = DEFAULT_RULES) {
   let vault;
   const getVault = () => vault ??= new TokenVault(root, input.session_id ?? "");
   const apply = () => {
-    if (input.hook_event_name !== event2) throw new Error("Mismatched hook event");
-    if (event2 === "UserPromptSubmit") return {};
+    if (input.hook_event_name !== event) throw new Error("Mismatched hook event");
+    if (event === "UserPromptSubmit") return {};
     const sanitizer = new Sanitizer(rules, (name, text) => getVault().token(name, text));
-    if (event2 === "PreToolUse") {
+    if (event === "PreToolUse") {
       const args = input.tool_input ?? {};
       const name = input.tool_name ?? "";
       if (name === "Read" && typeof args === "object" && args !== null && !Array.isArray(args) && typeof args.file_path === "string" && BINARY.test(extname(args.file_path))) {
@@ -219,22 +220,22 @@ function handleHook(host2, event2, input, root, rules = DEFAULT_RULES) {
       }
       if (!JSON.stringify(args).includes("[CRAFT_DATASEC_")) return {};
       if (!EDIT.test(name)) return denied("craft-datasec\uFF1A\u5360\u4F4D\u7B26\u53EA\u5141\u8BB8\u5728\u672C\u5730\u6587\u4EF6\u7F16\u8F91\u5DE5\u5177\u4E2D\u8FD8\u539F\uFF0C\u4E0D\u80FD\u81EA\u52A8\u7528\u4E8E\u547D\u4EE4\u6216\u8FDC\u7A0B\u8C03\u7528\u3002");
-      return { hookSpecificOutput: { hookEventName: event2, permissionDecision: "allow", updatedInput: restore(args, getVault()) } };
+      return { hookSpecificOutput: { hookEventName: event, permissionDecision: "allow", updatedInput: restore(args, getVault()) } };
     }
     if (input.tool_response === void 0) throw new Error("Missing tool result");
     const safe = sanitizer.value(input.tool_response);
     if (!sanitizer.count) return {};
     vault?.flush();
-    return hidden(host2, `craft-datasec\uFF1A\u5DF2\u5728\u672C\u5730\u8131\u654F ${sanitizer.count} \u5904\u5185\u5BB9\u3002`, safe);
+    return hidden(host, `craft-datasec\uFF1A\u5DF2\u5728\u672C\u5730\u8131\u654F ${sanitizer.count} \u5904\u5185\u5BB9\u3002`, safe);
   };
   let output;
   try {
     output = apply();
   } catch {
-    if (event2 === "PostToolUse") {
+    if (event === "PostToolUse") {
       const replacement = input.tool_response ?? null;
-      output = { ...hidden(host2, FAILURE, blankResult(replacement)), continue: false, stopReason: FAILURE };
-    } else if (event2 === "UserPromptSubmit") {
+      output = { ...hidden(host, FAILURE, blankResult(replacement)), continue: false, stopReason: FAILURE };
+    } else if (event === "UserPromptSubmit") {
       output = {};
     } else {
       output = denied(FAILURE);
@@ -248,22 +249,39 @@ function blankResult(value) {
 }
 
 // bin/craft-datasec-hook.ts
-var [host, event] = process.argv.slice(2);
-if (!["claude", "codex"].includes(host) || !["PreToolUse", "PostToolUse", "UserPromptSubmit"].includes(event)) {
-  process.stderr.write("craft-datasec: expected <claude|codex> <PreToolUse|PostToolUse|UserPromptSubmit>\n");
-  process.exitCode = 2;
-} else {
+function runDataSecHookCli(args, raw, env = process.env) {
+  const [host, event] = args;
+  if (!["claude", "codex"].includes(host) || !["PreToolUse", "PostToolUse", "UserPromptSubmit"].includes(event)) {
+    return { exitCode: 2, stderr: "craft-datasec: expected <claude|codex> <PreToolUse|PostToolUse|UserPromptSubmit>\n" };
+  }
   let input = {};
   try {
-    const raw = readFileSync2(0, "utf8");
     input = JSON.parse(raw);
     if (input === null || typeof input !== "object" || Array.isArray(input)) throw new Error("Invalid event");
-    const config = process.env.CRAFT_DATASEC_RULES;
+    const config = env.CRAFT_DATASEC_RULES;
     const rules = config ? JSON.parse(readFileSync2(config, "utf8")) : DEFAULT_RULES;
-    const root = process.env.CRAFT_DATASEC_DIR ?? join2(homedir(), ".craft-datasec");
-    process.stdout.write(JSON.stringify(handleHook(host, event, input, root, rules)) + "\n");
+    const root = env.CRAFT_DATASEC_DIR ?? join2(homedir(), ".craft-datasec");
+    return { exitCode: 0, stdout: `${JSON.stringify(handleHook(host, event, input, root, rules))}
+` };
   } catch {
-    const fallback = event === "PostToolUse" ? hidden(host, FAILURE, blankResult(input?.tool_response ?? null)) : handleHook(host, event, {}, "", []);
-    process.stdout.write(JSON.stringify(fallback) + "\n");
+    const fallback = event === "PostToolUse" ? { ...hidden(host, FAILURE, blankResult(input?.tool_response ?? null)), ...host === "claude" ? { continue: false, stopReason: FAILURE } : {} } : handleHook(host, event, {}, "", []);
+    return { exitCode: 0, stdout: `${JSON.stringify(fallback)}
+` };
   }
 }
+function runIfInvoked(argv1, modulePath, run) {
+  return argv1 && resolve(argv1) === resolve(modulePath) ? run() : null;
+}
+function writeCliResult(result2, stdout, stderr) {
+  if (!result2) return;
+  if (result2.stderr) stderr.write(result2.stderr);
+  if (result2.stdout) stdout.write(result2.stdout);
+  process.exitCode = result2.exitCode;
+}
+var result = runIfInvoked(process.argv[1], fileURLToPath(import.meta.url), () => runDataSecHookCli(process.argv.slice(2), readFileSync2(0, "utf8")));
+writeCliResult(result, process.stdout, process.stderr);
+export {
+  runDataSecHookCli,
+  runIfInvoked,
+  writeCliResult
+};

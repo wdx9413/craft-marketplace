@@ -3991,10 +3991,10 @@ var require_resolve_block_map = __commonJS({
       let offset = bm.offset;
       let commentEnd = null;
       for (const collItem of bm.items) {
-        const { start: start2, key: key2, sep: sep13, value } = collItem;
+        const { start: start2, key: key2, sep: sep12, value } = collItem;
         const keyProps = resolveProps.resolveProps(start2, {
           indicator: "explicit-key-ind",
-          next: key2 ?? sep13?.[0],
+          next: key2 ?? sep12?.[0],
           offset,
           onError,
           parentIndent: bm.indent,
@@ -4008,7 +4008,7 @@ var require_resolve_block_map = __commonJS({
             else if ("indent" in key2 && key2.indent !== bm.indent)
               onError(offset, "BAD_INDENT", startColMsg);
           }
-          if (!keyProps.anchor && !keyProps.tag && !sep13) {
+          if (!keyProps.anchor && !keyProps.tag && !sep12) {
             commentEnd = keyProps.end;
             if (keyProps.comment) {
               if (map.comment)
@@ -4032,7 +4032,7 @@ var require_resolve_block_map = __commonJS({
         ctx.atKey = false;
         if (utilMapIncludes.mapIncludes(ctx, map.items, keyNode))
           onError(keyStart, "DUPLICATE_KEY", "Map keys must be unique");
-        const valueProps = resolveProps.resolveProps(sep13 ?? [], {
+        const valueProps = resolveProps.resolveProps(sep12 ?? [], {
           indicator: "map-value-ind",
           next: value,
           offset: keyNode.range[2],
@@ -4048,7 +4048,7 @@ var require_resolve_block_map = __commonJS({
             if (ctx.options.strict && keyProps.start < valueProps.found.offset - 1024)
               onError(keyNode.range, "KEY_OVER_1024_CHARS", "The : indicator must be at most 1024 chars after the start of an implicit block mapping key");
           }
-          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : composeEmptyNode(ctx, offset, sep13, null, valueProps, onError);
+          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : composeEmptyNode(ctx, offset, sep12, null, valueProps, onError);
           if (ctx.schema.compat)
             utilFlowIndentCheck.flowIndentCheck(bm.indent, value, onError);
           offset = valueNode.range[2];
@@ -4139,7 +4139,7 @@ var require_resolve_end = __commonJS({
       let comment = "";
       if (end) {
         let hasSpace = false;
-        let sep13 = "";
+        let sep12 = "";
         for (const token of end) {
           const { source, type } = token;
           switch (type) {
@@ -4153,13 +4153,13 @@ var require_resolve_end = __commonJS({
               if (!comment)
                 comment = cb;
               else
-                comment += sep13 + cb;
-              sep13 = "";
+                comment += sep12 + cb;
+              sep12 = "";
               break;
             }
             case "newline":
               if (comment)
-                sep13 += source;
+                sep12 += source;
               hasSpace = true;
               break;
             default:
@@ -4202,18 +4202,18 @@ var require_resolve_flow_collection = __commonJS({
       let offset = fc.offset + fc.start.source.length;
       for (let i = 0; i < fc.items.length; ++i) {
         const collItem = fc.items[i];
-        const { start: start2, key: key2, sep: sep13, value } = collItem;
+        const { start: start2, key: key2, sep: sep12, value } = collItem;
         const props = resolveProps.resolveProps(start2, {
           flow: fcName,
           indicator: "explicit-key-ind",
-          next: key2 ?? sep13?.[0],
+          next: key2 ?? sep12?.[0],
           offset,
           onError,
           parentIndent: fc.indent,
           startOnNewline: false
         });
         if (!props.found) {
-          if (!props.anchor && !props.tag && !sep13 && !value) {
+          if (!props.anchor && !props.tag && !sep12 && !value) {
             if (i === 0 && props.comma)
               onError(props.comma, "UNEXPECTED_TOKEN", `Unexpected , in ${fcName}`);
             else if (i < fc.items.length - 1)
@@ -4267,8 +4267,8 @@ var require_resolve_flow_collection = __commonJS({
             }
           }
         }
-        if (!isMap && !sep13 && !props.found) {
-          const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep13, null, props, onError);
+        if (!isMap && !sep12 && !props.found) {
+          const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep12, null, props, onError);
           coll.items.push(valueNode);
           offset = valueNode.range[2];
           if (isBlock(value))
@@ -4280,7 +4280,7 @@ var require_resolve_flow_collection = __commonJS({
           if (isBlock(key2))
             onError(keyNode.range, "BLOCK_IN_FLOW", blockMsg);
           ctx.atKey = false;
-          const valueProps = resolveProps.resolveProps(sep13 ?? [], {
+          const valueProps = resolveProps.resolveProps(sep12 ?? [], {
             flow: fcName,
             indicator: "map-value-ind",
             next: value,
@@ -4291,8 +4291,8 @@ var require_resolve_flow_collection = __commonJS({
           });
           if (valueProps.found) {
             if (!isMap && !props.found && ctx.options.strict) {
-              if (sep13)
-                for (const st of sep13) {
+              if (sep12)
+                for (const st of sep12) {
                   if (st === valueProps.found)
                     break;
                   if (st.type === "newline") {
@@ -4309,7 +4309,7 @@ var require_resolve_flow_collection = __commonJS({
             else
               onError(valueProps.start, "MISSING_CHAR", `Missing , or : between ${fcName} items`);
           }
-          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep13, null, valueProps, onError) : null;
+          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep12, null, valueProps, onError) : null;
           if (valueNode) {
             if (isBlock(value))
               onError(valueNode.range, "BLOCK_IN_FLOW", blockMsg);
@@ -4489,7 +4489,7 @@ var require_resolve_block_scalar = __commonJS({
           chompStart = i + 1;
       }
       let value = "";
-      let sep13 = "";
+      let sep12 = "";
       let prevMoreIndented = false;
       for (let i = 0; i < contentStart; ++i)
         value += lines[i][0].slice(trimIndent) + "\n";
@@ -4506,24 +4506,24 @@ var require_resolve_block_scalar = __commonJS({
           indent = "";
         }
         if (type === Scalar.Scalar.BLOCK_LITERAL) {
-          value += sep13 + indent.slice(trimIndent) + content;
-          sep13 = "\n";
+          value += sep12 + indent.slice(trimIndent) + content;
+          sep12 = "\n";
         } else if (indent.length > trimIndent || content[0] === "	") {
-          if (sep13 === " ")
-            sep13 = "\n";
-          else if (!prevMoreIndented && sep13 === "\n")
-            sep13 = "\n\n";
-          value += sep13 + indent.slice(trimIndent) + content;
-          sep13 = "\n";
+          if (sep12 === " ")
+            sep12 = "\n";
+          else if (!prevMoreIndented && sep12 === "\n")
+            sep12 = "\n\n";
+          value += sep12 + indent.slice(trimIndent) + content;
+          sep12 = "\n";
           prevMoreIndented = true;
         } else if (content === "") {
-          if (sep13 === "\n")
+          if (sep12 === "\n")
             value += "\n";
           else
-            sep13 = "\n";
+            sep12 = "\n";
         } else {
-          value += sep13 + content;
-          sep13 = " ";
+          value += sep12 + content;
+          sep12 = " ";
           prevMoreIndented = false;
         }
       }
@@ -4705,25 +4705,25 @@ var require_resolve_flow_scalar = __commonJS({
       if (!match)
         return source;
       let res = match[1];
-      let sep13 = " ";
+      let sep12 = " ";
       let pos = first.lastIndex;
       line2.lastIndex = pos;
       while (match = line2.exec(source)) {
         if (match[1] === "") {
-          if (sep13 === "\n")
-            res += sep13;
+          if (sep12 === "\n")
+            res += sep12;
           else
-            sep13 = "\n";
+            sep12 = "\n";
         } else {
-          res += sep13 + match[1];
-          sep13 = " ";
+          res += sep12 + match[1];
+          sep12 = " ";
         }
         pos = line2.lastIndex;
       }
       const last = /[ \t]*(.*)/sy;
       last.lastIndex = pos;
       match = last.exec(source);
-      return res + sep13 + (match?.[1] ?? "");
+      return res + sep12 + (match?.[1] ?? "");
     }
     function doubleQuotedValue(source, onError) {
       let res = "";
@@ -5533,14 +5533,14 @@ var require_cst_stringify = __commonJS({
         }
       }
     }
-    function stringifyItem({ start: start2, key: key2, sep: sep13, value }) {
+    function stringifyItem({ start: start2, key: key2, sep: sep12, value }) {
       let res = "";
       for (const st of start2)
         res += st.source;
       if (key2)
         res += stringifyToken(key2);
-      if (sep13)
-        for (const st of sep13)
+      if (sep12)
+        for (const st of sep12)
           res += st.source;
       if (value)
         res += stringifyToken(value);
@@ -6707,18 +6707,18 @@ var require_parser = __commonJS({
         if (this.type === "map-value-ind") {
           const prev = getPrevProps(this.peek(2));
           const start2 = getFirstKeyStartProps(prev);
-          let sep13;
+          let sep12;
           if (scalar4.end) {
-            sep13 = scalar4.end;
-            sep13.push(this.sourceToken);
+            sep12 = scalar4.end;
+            sep12.push(this.sourceToken);
             delete scalar4.end;
           } else
-            sep13 = [this.sourceToken];
+            sep12 = [this.sourceToken];
           const map = {
             type: "block-map",
             offset: scalar4.offset,
             indent: scalar4.indent,
-            items: [{ start: start2, key: scalar4, sep: sep13 }]
+            items: [{ start: start2, key: scalar4, sep: sep12 }]
           };
           this.onKeyLine = true;
           this.stack[this.stack.length - 1] = map;
@@ -6871,15 +6871,15 @@ var require_parser = __commonJS({
                 } else if (isFlowToken(it.key) && !includesToken(it.sep, "newline")) {
                   const start3 = getFirstKeyStartProps(it.start);
                   const key2 = it.key;
-                  const sep13 = it.sep;
-                  sep13.push(this.sourceToken);
+                  const sep12 = it.sep;
+                  sep12.push(this.sourceToken);
                   delete it.key;
                   delete it.sep;
                   this.stack.push({
                     type: "block-map",
                     offset: this.offset,
                     indent: this.indent,
-                    items: [{ start: start3, key: key2, sep: sep13 }]
+                    items: [{ start: start3, key: key2, sep: sep12 }]
                   });
                 } else if (start2.length > 0) {
                   it.sep = it.sep.concat(start2, this.sourceToken);
@@ -7073,13 +7073,13 @@ var require_parser = __commonJS({
             const prev = getPrevProps(parent);
             const start2 = getFirstKeyStartProps(prev);
             fixFlowSeqItems(fc);
-            const sep13 = fc.end.splice(1, fc.end.length);
-            sep13.push(this.sourceToken);
+            const sep12 = fc.end.splice(1, fc.end.length);
+            sep12.push(this.sourceToken);
             const map = {
               type: "block-map",
               offset: fc.offset,
               indent: fc.indent,
-              items: [{ start: start2, key: fc, sep: sep13 }]
+              items: [{ start: start2, key: fc, sep: sep12 }]
             };
             this.onKeyLine = true;
             this.stack[this.stack.length - 1] = map;
@@ -16760,11 +16760,11 @@ ${lanes.join("\n")}
           return toComponents;
         }
         const components = toComponents.slice(start2);
-        const relative24 = [];
+        const relative25 = [];
         for (; start2 < fromComponents.length; start2++) {
-          relative24.push("..");
+          relative25.push("..");
         }
-        return ["", ...relative24, ...components];
+        return ["", ...relative25, ...components];
       }
       function getRelativePathFromDirectory(fromDirectory, to, getCanonicalFileNameOrIgnoreCase) {
         Debug.assert(getRootLength(fromDirectory) > 0 === getRootLength(to) > 0, "Paths must either both be absolute or both be relative");
@@ -55460,11 +55460,11 @@ ${lanes.join("\n")}
             if (i < rootLength) {
               return void 0;
             }
-            const sep13 = directory3.lastIndexOf(directorySeparator, i - 1);
-            if (sep13 === -1) {
+            const sep12 = directory3.lastIndexOf(directorySeparator, i - 1);
+            if (sep12 === -1) {
               return void 0;
             }
-            return directory3.substr(0, Math.max(sep13, rootLength));
+            return directory3.substr(0, Math.max(sep12, rootLength));
           }
         }
       }
@@ -61309,9 +61309,9 @@ ${lanes.join("\n")}
               if (!startsWithDirectory(target, realPathDirectory, getCanonicalFileName)) {
                 return;
               }
-              const relative24 = getRelativePathFromDirectory(realPathDirectory, target, getCanonicalFileName);
+              const relative25 = getRelativePathFromDirectory(realPathDirectory, target, getCanonicalFileName);
               for (const symlinkDirectory of symlinkDirectories) {
-                const option2 = resolvePath(symlinkDirectory, relative24);
+                const option2 = resolvePath(symlinkDirectory, relative25);
                 const result2 = cb(option2, target === referenceRedirect);
                 shouldFilterIgnoredPaths = true;
                 if (result2) return result2;
@@ -219399,6 +219399,13 @@ var import_node_fs4 = require("node:fs");
 var import_node_path3 = require("node:path");
 var SECRET = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
 var SAFE_ID = /^[A-Za-z0-9._-]+$/u;
+function samePath(left, right) {
+  return (0, import_node_path3.relative)((0, import_node_path3.resolve)(left), (0, import_node_path3.resolve)(right)) === "";
+}
+function isWithinPath(root, target) {
+  const rel = (0, import_node_path3.relative)((0, import_node_path3.resolve)(root), (0, import_node_path3.resolve)(target));
+  return rel !== "" && !(0, import_node_path3.isAbsolute)(rel) && rel !== ".." && !rel.startsWith(`..${import_node_path3.sep}`);
+}
 function bodyDigest(body3) {
   return `sha256:${(0, import_node_crypto3.createHash)("sha256").update(body3, "utf8").digest("hex")}`;
 }
@@ -219468,7 +219475,12 @@ function contentTitle(body3, title, fallback2 = "untitled") {
   return value.slice(0, 120);
 }
 function titleSlug(title) {
-  const slug2 = title.replace(/[\\/]/gu, " ").replace(/[^\p{L}\p{N}._ -]/gu, " ").trim().replace(/\s+/gu, "-").replace(/-+/gu, "-").replace(/^[.-]+|[.-]+$/gu, "").slice(0, 96);
+  const normalized = title.replace(/[\\/]/gu, " ").replace(/[^\p{L}\p{N}._ -]/gu, " ").trim().replace(/\s+/gu, "-").replace(/-+/gu, "-").replace(/^[.-]+|[.-]+$/gu, "");
+  let slug2 = "";
+  for (const character of normalized) {
+    if (Buffer.byteLength(slug2 + character, "utf8") > 80) break;
+    slug2 += character;
+  }
   return slug2 || "untitled";
 }
 function idSuffix(recordId) {
@@ -219513,7 +219525,7 @@ var MarkdownContentStore = class {
   isCanonicalRef(ref3) {
     const directory3 = (0, import_node_path3.resolve)(this.directory(ref3.kind, void 0, ref3.scope));
     const target = (0, import_node_path3.resolve)(ref3.path);
-    const inDirectory = ref3.kind === "experience" ? target.startsWith(`${directory3}${import_node_path3.sep}`) : (0, import_node_path3.dirname)(target) === directory3;
+    const inDirectory = ref3.kind === "experience" ? isWithinPath(directory3, target) : samePath((0, import_node_path3.dirname)(target), directory3);
     return inDirectory && target.endsWith(`.v${ref3.version}.md`);
   }
   async write(input) {
@@ -219634,12 +219646,12 @@ var MarkdownContentStore = class {
     if (this.isCanonicalRef(scopedRef)) return this.readSync(scopedRef);
     const globalDirectory = canonicalCandidatePath(this.directory(ref3.kind));
     const target = canonicalCandidatePath(scopedRef.path);
-    const isLegacySharedProjectRef = (scopedRef.kind === "knowledge" || scopedRef.kind === "memory" || scopedRef.kind === "experience") && scopedRef.scope?.startsWith("project:") && (target === globalDirectory || target.startsWith(`${globalDirectory}${import_node_path3.sep}`));
+    const isLegacySharedProjectRef = (scopedRef.kind === "knowledge" || scopedRef.kind === "memory" || scopedRef.kind === "experience") && scopedRef.scope?.startsWith("project:") && (samePath(target, globalDirectory) || isWithinPath(globalDirectory, target));
     const compatibilityDirectory = canonicalCandidatePath(this.directory(scopedRef.kind, void 0, scopedRef.scope, void 0, scopedRef.path, false));
     const canonicalDirectory = canonicalCandidatePath(this.directory(scopedRef.kind, void 0, scopedRef.scope));
-    const withinScopedLegacyDirectory = scopedRef.kind === "experience" ? target.startsWith(`${compatibilityDirectory}${import_node_path3.sep}`) : (0, import_node_path3.dirname)(target) === compatibilityDirectory;
+    const withinScopedLegacyDirectory = scopedRef.kind === "experience" ? isWithinPath(compatibilityDirectory, target) : samePath((0, import_node_path3.dirname)(target), compatibilityDirectory);
     const isScopedLegacyRef = scopedRef.scope?.startsWith("project:") || scopedRef.kind === "memory" && scopedRef.scope?.startsWith("session:") ? compatibilityDirectory !== canonicalDirectory && withinScopedLegacyDirectory : false;
-    if (!isLegacySharedProjectRef && !isScopedLegacyRef && target !== canonicalCandidatePath(this.legacyPathFor(scopedRef.kind, scopedRef.record_id, scopedRef.version))) {
+    if (!isLegacySharedProjectRef && !isScopedLegacyRef && !samePath(target, canonicalCandidatePath(this.legacyPathFor(scopedRef.kind, scopedRef.record_id, scopedRef.version)))) {
       throw new Error("Content reference path is outside the canonical directory");
     }
     if (!(0, import_node_fs4.lstatSync)(scopedRef.path).isFile()) throw new Error("Legacy content path must use regular files and directories");
@@ -219799,6 +219811,13 @@ var import_node_crypto4 = require("node:crypto");
 var import_node_fs5 = require("node:fs");
 var import_node_path4 = require("node:path");
 var import_node_sqlite = require("node:sqlite");
+
+// common/craft-common-store-local/src/sqlite-busy-timeout.ts
+function sqliteBusyTimeoutMs(env = process.env) {
+  return env.CRAFT_HOOK_MODE === "1" ? 750 : 15e3;
+}
+
+// common/craft-common-store-local/src/trace-shards.ts
 var TRACE_KINDS = /* @__PURE__ */ new Set(["trace", "trace_event", "trace_feedback", "telemetry_event", "trace_archive"]);
 var SHARD_COUNT = 16;
 var RESERVED = /* @__PURE__ */ new Set(["id", "version", "created_at", "updated_at"]);
@@ -219844,17 +219863,19 @@ var TraceShardStore = class {
     }
     const database = new import_node_sqlite.DatabaseSync(file);
     try {
-      database.exec("PRAGMA busy_timeout=15000; PRAGMA foreign_keys=ON;");
+      database.exec(`PRAGMA busy_timeout=${sqliteBusyTimeoutMs()}; PRAGMA foreign_keys=ON;`);
       if (create && String(database.prepare("PRAGMA journal_mode").get().journal_mode).toLowerCase() !== "wal")
         database.exec("PRAGMA journal_mode=WAL;");
-      if (!database.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='records'").get()) database.exec(`CREATE TABLE records(
+      if (!database.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='records'").get()) database.exec(`BEGIN IMMEDIATE;
+      CREATE TABLE IF NOT EXISTS records(
       kind TEXT NOT NULL,id TEXT NOT NULL,version INTEGER NOT NULL,
       payload_json TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,
       PRIMARY KEY(kind,id,version));
-      CREATE INDEX records_latest ON records(kind,id,version DESC);
-      CREATE INDEX records_trace_id ON records(kind,json_extract(payload_json,'$.trace_id'),id,version DESC);
-      CREATE TABLE events(stream TEXT NOT NULL,sequence INTEGER NOT NULL,event_type TEXT NOT NULL,
-        payload_json TEXT NOT NULL,created_at TEXT NOT NULL,PRIMARY KEY(stream,sequence));`);
+      CREATE INDEX IF NOT EXISTS records_latest ON records(kind,id,version DESC);
+      CREATE INDEX IF NOT EXISTS records_trace_id ON records(kind,json_extract(payload_json,'$.trace_id'),id,version DESC);
+      CREATE TABLE IF NOT EXISTS events(stream TEXT NOT NULL,sequence INTEGER NOT NULL,event_type TEXT NOT NULL,
+        payload_json TEXT NOT NULL,created_at TEXT NOT NULL,PRIMARY KEY(stream,sequence));
+      COMMIT;`);
     } catch (error) {
       database.close();
       throw error;
@@ -220061,7 +220082,7 @@ var CodebaseShardStore = class {
     }
     const database = new import_node_sqlite2.DatabaseSync(file);
     try {
-      database.exec("PRAGMA busy_timeout=15000");
+      database.exec(`PRAGMA busy_timeout=${sqliteBusyTimeoutMs()}`);
       if (create && String(database.prepare("PRAGMA journal_mode").get().journal_mode).toLowerCase() !== "wal")
         database.exec("PRAGMA journal_mode=WAL");
       if (!database.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='records'").get()) database.exec(`CREATE TABLE records(
@@ -220312,7 +220333,7 @@ var CraftStore = class {
     const existed = (0, import_node_fs7.existsSync)(this.paths.databaseFile);
     const database = new import_node_sqlite3.DatabaseSync(this.paths.databaseFile);
     try {
-      database.exec("PRAGMA busy_timeout=15000; PRAGMA foreign_keys=ON;");
+      database.exec(`PRAGMA busy_timeout=${sqliteBusyTimeoutMs()}; PRAGMA foreign_keys=ON;`);
       ensureJournalMode(database);
       if (existed && storedSchemaVersion(database) < SCHEMA_VERSION) {
         database.exec("PRAGMA wal_checkpoint(FULL)");
@@ -220465,7 +220486,7 @@ var CraftStore = class {
     for (const [path2, domain] of entries2) {
       const index = new import_node_sqlite3.DatabaseSync(path2);
       try {
-        index.exec("PRAGMA busy_timeout=15000;");
+        index.exec(`PRAGMA busy_timeout=${sqliteBusyTimeoutMs()};`);
         ensureJournalMode(index);
         const expected = references2[domain].map((row) => [row.kind, row.id, row.version, row.content_ref, row.updated_at]).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
         const matches3 = () => {
@@ -220644,7 +220665,8 @@ var CraftStore = class {
   }
   save(kind4, id23, payload10, version3) {
     this.assertPartitionDomain(kind4, id23, payload10);
-    if (this.memoryScope(kind4, { ...payload10, id: id23 })) return this.writeMemory(kind4, id23, payload10, "save", void 0, version3);
+    const existingPointer = this.partitionPointer(kind4, id23);
+    if (this.memoryScope(kind4, { ...payload10, id: id23 }, true, Boolean(existingPointer))) return this.writeMemory(kind4, id23, payload10, "save", void 0, version3);
     if (TRACE_KINDS.has(kind4) && !this.traceWriteIsLegacy(kind4, id23, payload10)) return this.traceShards.save(kind4, id23, payload10, version3);
     if (CODEBASE_GRAPH_KINDS.has(kind4) && this.codebaseShards.raw(kind4, id23) && !this.database.prepare("SELECT 1 FROM records WHERE kind=? AND id=? LIMIT 1").get(kind4, id23))
       return this.codebaseShards.save(kind4, id23, payload10, version3);
@@ -220762,14 +220784,14 @@ var CraftStore = class {
     const pointer3 = this.partitionPointer(kind4, id23);
     if (pointer3 && pointer3.domain !== this.partitionDomain(kind4, payload10)) throw new Error("Record cannot change capability storage owner");
   }
-  knowledgeScope(kind4, payload10) {
+  knowledgeScope(kind4, payload10, allowMissingParents = false) {
     const metadata = payload10.metadata && typeof payload10.metadata === "object" ? payload10.metadata : {};
-    if (metadata.scope !== void 0) return metadata.scope;
-    if (typeof payload10.project_scope_id === "string") return payload10.project_scope_id;
-    if (typeof metadata.project_scope_id === "string") return metadata.project_scope_id;
+    let declared = payload10.scope ?? metadata.scope;
+    if (declared === void 0 && typeof payload10.project_scope_id === "string") declared = payload10.project_scope_id;
+    if (declared === void 0 && typeof metadata.project_scope_id === "string") declared = metadata.project_scope_id;
     const contentRef = payload10.content_ref;
-    if (contentRef?.kind === "knowledge" && typeof contentRef.scope === "string") return contentRef.scope;
-    if (typeof payload10.project_id === "string") return { kind: "project", id: payload10.project_id };
+    if (declared === void 0 && contentRef?.kind === "knowledge" && typeof contentRef.scope === "string") declared = contentRef.scope;
+    if (declared === void 0 && typeof payload10.project_id === "string") declared = { kind: "project", id: payload10.project_id };
     const refs6 = [];
     const ref3 = (parentKind, id23) => {
       if (typeof id23 === "string" && id23) refs6.push([parentKind, id23]);
@@ -220779,8 +220801,15 @@ var CraftStore = class {
     if (kind4 !== "knowledge_document") ref3("knowledge_document", payload10.document_id);
     if (kind4.startsWith("wiki_candidate_")) ref3("wiki_skill_candidate", payload10.candidate_id);
     for (const id23 of Array.isArray(payload10.case_ids) ? payload10.case_ids : []) ref3("knowledge_evaluation_case", id23);
+    for (const id23 of Array.isArray(payload10.expected_claim_ids) ? payload10.expected_claim_ids : []) ref3("knowledge_claim", id23);
+    for (const item of Array.isArray(payload10.candidate_claim_refs) ? payload10.candidate_claim_refs : []) ref3("knowledge_claim", item.claim_id ?? item.id);
     for (const id23 of Array.isArray(payload10.claim_ids) ? payload10.claim_ids : []) ref3("knowledge_claim", id23);
     for (const item of Array.isArray(payload10.claim_refs) ? payload10.claim_refs : []) ref3("knowledge_claim", item.claim_id ?? item.id);
+    ref3("knowledge_claim", payload10.from_claim_id);
+    ref3("knowledge_claim", payload10.to_claim_id);
+    for (const id23 of Array.isArray(payload10.evidence_ids) ? payload10.evidence_ids : []) ref3("evidence", id23);
+    for (const id23 of Array.isArray(payload10.source_evidence_ids) ? payload10.source_evidence_ids : []) ref3("evidence", id23);
+    ref3("evidence", payload10.evidence_id);
     for (const endpoint4 of [payload10.source, payload10.target]) {
       if (endpoint4 && typeof endpoint4 === "object" && !Array.isArray(endpoint4)) {
         const item = endpoint4;
@@ -220789,15 +220818,63 @@ var CraftStore = class {
     }
     const scopes = refs6.map(([parentKind, id23]) => {
       const parent = this.find(parentKind, id23, void 0, false);
-      if (!parent) throw new Error("Knowledge storage parent is unavailable");
-      return this.memoryScope(parentKind, parent, false) ?? { kind: "global", id: "global" };
-    });
+      if (parentKind === "knowledge_source" && id23 === "builtin.evidence-wiki") return [{ kind: "global", id: "global" }];
+      if (parentKind === "knowledge_source" && id23 === "builtin.serena-project-knowledge" && parent?.kind === "serena" && parent.locator === ".serena/memories") {
+        const templateScope = this.memoryScope(parentKind, parent, false);
+        return [templateScope];
+      }
+      if (!parent) {
+        if (allowMissingParents) return [];
+        throw new Error(`Knowledge storage parent is unavailable: ${parentKind}/${id23}`);
+      }
+      const pointer3 = this.partitionPointer(parentKind, id23);
+      const scope3 = pointer3?.domain === "knowledge" ? pointer3.scope : this.memoryScope(parentKind, parent, false);
+      return scope3 ? [scope3] : [];
+    }).flat();
+    let declaredScope;
+    if (declared !== void 0 && declared !== null) {
+      if (typeof declared === "string") {
+        if (declared === "global") declaredScope = { kind: "global", id: "global" };
+        else {
+          const separator = declared.indexOf(":");
+          if (separator > 0) declaredScope = { kind: declared.slice(0, separator), id: declared.slice(separator + 1) };
+          else if (["user", "task", "workspace"].includes(declared)) {
+            const id23 = payload10[`${declared}_id`];
+            declaredScope = { kind: declared, id: typeof id23 === "string" && id23.trim() ? id23 : "legacy" };
+          } else throw new Error("Memory storage scope is malformed");
+        }
+      } else if (typeof declared === "object" && !Array.isArray(declared)) {
+        const candidate2 = declared;
+        if (typeof candidate2.kind !== "string" || typeof candidate2.id !== "string" || !candidate2.id.trim()) throw new Error("Memory storage scope is malformed");
+        declaredScope = { kind: candidate2.kind, id: candidate2.id };
+      } else throw new Error("Memory storage scope is malformed");
+      if (!["global", "user", "project", "workspace", "task", "session", "team", "organization", "legacy"].includes(declaredScope.kind)) {
+        throw new Error("Memory storage scope is malformed");
+      }
+    }
     const specific = scopes.filter((scope3) => scope3.kind !== "global" && scope3.kind !== "user");
     const unique3 = new Map(specific.map((scope3) => [JSON.stringify(scope3), scope3]));
     if (unique3.size > 1) throw new Error("Knowledge record cannot combine different storage scopes");
-    return [...unique3.values()][0] ?? { kind: "global", id: "global" };
+    if (unique3.size === 1 && scopes.some((scope3) => scope3.kind === "user")) {
+      throw new Error("Knowledge record cannot combine different storage scopes");
+    }
+    if (unique3.size === 1) {
+      const inherited = [...unique3.values()][0];
+      if (declaredScope && JSON.stringify(declaredScope) !== JSON.stringify(inherited) && inherited.kind !== "global" && inherited.kind !== "user") throw new Error("Knowledge record cannot combine different storage scopes");
+      return declaredScope ?? inherited;
+    }
+    const neutral = new Map(scopes.map((scope3) => [JSON.stringify(scope3), scope3]));
+    if (neutral.size === 1) {
+      const inherited = [...neutral.values()][0];
+      if (declaredScope && inherited.kind === "user" && declaredScope.kind === "user" && JSON.stringify(declaredScope) !== JSON.stringify(inherited)) throw new Error("Knowledge record cannot combine different storage scopes");
+      if (declaredScope) return declaredScope;
+      const mayInheritNeutralParent = refs6.some(([parentKind]) => ["knowledge_claim", "knowledge_evaluation_case", "wiki_skill_candidate"].includes(parentKind)) || kind4 !== "knowledge_claim" && refs6.some(([parentKind]) => parentKind === "knowledge_source");
+      return mayInheritNeutralParent ? inherited : void 0;
+    }
+    if (neutral.size > 1) throw new Error("Knowledge record cannot combine different storage scopes");
+    return declaredScope;
   }
-  memoryScope(kind4, payload10, storage = true) {
+  memoryScope(kind4, payload10, storage = true, allowMissingKnowledgeParents = false) {
     const domain = this.partitionDomain(kind4, payload10);
     if (!domain) return null;
     let value = payload10.scope;
@@ -220808,7 +220885,10 @@ var CraftStore = class {
       const metadata = payload10.metadata;
       value = metadata.scope ?? metadata.project_scope_id;
     }
-    if (domain === "knowledge" && value === void 0) value = this.knowledgeScope(kind4, payload10);
+    if (domain === "knowledge") {
+      value = this.knowledgeScope(kind4, payload10, allowMissingKnowledgeParents);
+      if (value === void 0 || value === null) throw new Error("Knowledge storage scope is unavailable");
+    }
     if (domain === "experience" && (value === void 0 || value === null) && payload10.source && typeof payload10.source === "object") {
       value = payload10.source.scope;
     }
@@ -221031,7 +221111,7 @@ var CraftStore = class {
     }
     const database = new import_node_sqlite3.DatabaseSync(file);
     try {
-      database.exec("PRAGMA busy_timeout=15000; PRAGMA foreign_keys=ON;");
+      database.exec(`PRAGMA busy_timeout=${sqliteBusyTimeoutMs()}; PRAGMA foreign_keys=ON;`);
       ensureJournalMode(database);
       ensureCurrentSchema(database);
       if (!tableExists(database, "content_index")) database.exec("CREATE TABLE content_index (kind TEXT NOT NULL, id TEXT NOT NULL, version INTEGER NOT NULL, content_ref TEXT NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY(kind,id,version))");
@@ -221075,7 +221155,7 @@ var CraftStore = class {
     }
     const database = new import_node_sqlite3.DatabaseSync(file, { readOnly: true });
     try {
-      database.exec("PRAGMA busy_timeout=15000; PRAGMA query_only=ON;");
+      database.exec(`PRAGMA busy_timeout=${sqliteBusyTimeoutMs()}; PRAGMA query_only=ON;`);
     } catch (error) {
       database.close();
       throw error;
@@ -221430,10 +221510,11 @@ var CraftStore = class {
   }
   writeMemory(kind4, id23, payload10, mode, expectedVersion, version3) {
     const domain = this.partitionDomain(kind4, payload10);
-    const scope3 = this.memoryScope(kind4, { ...payload10, id: id23 });
     const current2 = this.find(kind4, id23, void 0, false);
+    const currentPointer = mode === "save" && current2 ? this.partitionPointer(kind4, id23) : null;
+    const scope3 = this.memoryScope(kind4, { ...payload10, id: id23 }, true, Boolean(currentPointer));
     if (mode === "create" && current2) throw new Error(`${kind4} already exists: ${id23}`);
-    if (mode === "save" && current2 && JSON.stringify(this.memoryScope(kind4, current2)) !== JSON.stringify(scope3)) {
+    if (mode === "save" && current2 && JSON.stringify(currentPointer?.scope ?? this.memoryScope(kind4, current2)) !== JSON.stringify(scope3)) {
       throw new Error("Memory record cannot change storage scope");
     }
     const payloadVersion = Number.isSafeInteger(payload10.version) ? Number(payload10.version) : Number(current2?.version ?? 0);
@@ -221650,8 +221731,10 @@ var CraftStore = class {
     if (!scopes.length) return [];
     const scopeSql = `EXISTS (SELECT 1 FROM json_each(?) s WHERE
       json_extract(r.payload_json,'$.scope')=json_extract(s.value,'$.kind')||':'||json_extract(s.value,'$.id')
+      OR (json_extract(r.payload_json,'$.scope')=json_extract(s.value,'$.id') AND substr(json_extract(s.value,'$.id'),1,length(json_extract(s.value,'$.kind'))+1)=json_extract(s.value,'$.kind')||':')
       OR (json_extract(s.value,'$.kind')='global' AND json_extract(r.payload_json,'$.scope')='global')
-      OR (json_extract(r.payload_json,'$.scope.kind')=json_extract(s.value,'$.kind') AND json_extract(r.payload_json,'$.scope.id')=json_extract(s.value,'$.id')))`;
+      OR (json_extract(r.payload_json,'$.scope.kind')=json_extract(s.value,'$.kind') AND json_extract(r.payload_json,'$.scope.id')=json_extract(s.value,'$.id'))
+      OR (json_extract(r.payload_json,'$.scope.kind')=json_extract(s.value,'$.kind') AND substr(json_extract(s.value,'$.id'),1,length(json_extract(s.value,'$.kind'))+1)=json_extract(s.value,'$.kind')||':' AND json_extract(r.payload_json,'$.scope.id')=substr(json_extract(s.value,'$.id'),length(json_extract(s.value,'$.kind'))+2)))`;
     const values3 = [JSON.stringify(scopes)];
     if (temporal?.known_at !== void 0 && !Number.isFinite(Date.parse(temporal.known_at))) throw new Error("Invalid scoped known_at");
     const cutoff = temporal?.known_at === void 0 ? "" : " AND updated_at<=?";
@@ -222114,8 +222197,13 @@ function scopeAllows(envelope, access4) {
   return envelope.audience.principal_ids.some((principal) => principals.has(principal));
 }
 function sourceAllows(source, access4) {
-  const applicability = scope(source.scope, { kind: "global", id: "global" });
-  return scopeAllows(scopeEnvelope(source.scope_envelope, applicability), { ...access4, purpose: void 0 });
+  if (source.scope === void 0 || source.scope === null) return false;
+  try {
+    const applicability = typeof source.scope === "string" ? scopeFromKey(source.scope) : scope(source.scope, { kind: "global", id: "global" });
+    return scopeAllows(scopeEnvelope(source.scope_envelope, applicability), { ...access4, purpose: void 0 });
+  } catch {
+    return false;
+  }
 }
 function scopeAccess(value) {
   const principalId = value.principal_id === void 0 ? void 0 : required(value.principal_id, "principal_id");
@@ -227484,7 +227572,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.105";
+var CRAFT_RELEASE_VERSION = "0.12.108";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
@@ -228469,7 +228557,7 @@ var TOOL_DEFINITIONS = [
   tool("craft_verified_iteration_get", "Read a verification-driven iteration and its content-free attempt history.", ["iteration_id"], true),
   tool("craft_verified_iteration_assess", "Classify one independent acceptance assessment as pass, retry, block, or human handoff; only task failures can retry within budget.", ["iteration_id", "assessment_id", "classification"], false, ["attempt_id", "feedback"]),
   tool("craft_strategy_recommend", "Recommend a candidate strategy only from a comparable held-out evaluation; it never changes routing or executes work.", ["task_id", "comparison_id"], false, ["recommendation_id", "cost_metric"]),
-  tool("craft_knowledge_claim_save", "Save a candidate fact, rule, decision, term, or failure mode with existing evidence. For project or global Claims, the model may classify within that exact scope using scenario_key, bounded scenario_definition (summary, applies_when, excludes), and an optional coarse parent/definition. Classification remains a candidate until independent reviewed Sources support it.", ["kind", "content", "evidence_ids"], false, ["claim_id", "title", "scope", "tags", "valid_until", "scope_envelope", "source_id", "scenario_key", "scenario_definition", "coarse_scenario_key", "coarse_scenario_definition", "project_root"]),
+  tool("craft_knowledge_claim_save", "Save a candidate fact, rule, decision, term, or failure mode with existing evidence and an explicit project or global scope. For project or global Claims, the model may classify within that exact scope using scenario_key, bounded scenario_definition (summary, applies_when, excludes), and an optional coarse parent/definition. Classification remains a candidate until independent reviewed Sources support it.", ["kind", "content", "evidence_ids", "scope"], false, ["claim_id", "title", "tags", "valid_until", "scope_envelope", "source_id", "scenario_key", "scenario_definition", "coarse_scenario_key", "coarse_scenario_definition", "project_root"]),
   tool("craft_knowledge_session_evidence_record", "Store a sanitized Codex task summary and digest-only successful test evidence as a project Knowledge fragment; raw session and test output text are never stored.", ["scope", "task_id", "source_session_id", "turn_id", "source_ref", "task_goal", "task_result", "verification_artifacts", "sanitized"], false, ["observed_at"]),
   tool("craft_knowledge_semantic_review_packet", "Build the exact Claim, source fragment and rubric packet a Codex, Claude, or Provider reviewer must inspect.", ["claim_id"], true),
   tool("craft_knowledge_semantic_provider_review", "Run an explicitly configured OpenAI-compatible semantic review. Keys are only read from the named environment variable.", ["claim_id", "endpoint", "model", "credential_env"], false, ["timeout_ms"]),
@@ -229363,7 +229451,7 @@ var TOOL_DEFINITIONS = [
   tool("craft_artifact_register", "Register a portable artifact reference.", ["kind", "name", "uri"], false, ["artifact_id", "media_type", "digest", "size_bytes", "producer_type", "producer_id", "metadata"]),
   tool("craft_artifact_get", "Read an artifact reference.", ["artifact_id"], true),
   tool("craft_artifact_list", "List artifact references.", [], true, ["limit", "query"]),
-  tool("craft_evidence_record", "Record a claim with source and confidence.", ["source_type", "claim"], false, ["evidence_id", "confidence", "artifact_id", "locator", "observed_at", "metadata"]),
+  tool("craft_evidence_record", "Record a claim with source and confidence.", ["source_type", "claim"], false, ["evidence_id", "confidence", "artifact_id", "locator", "observed_at", "metadata", "scope", "source_id", "fragment_id"]),
   tool("craft_evidence_get", "Read an evidence record.", ["evidence_id"], true),
   tool("craft_evidence_list", "List evidence records.", [], true, ["limit", "query"]),
   tool("craft_workflow_save", "Save a new draft workflow version.", ["name"], false, ["workflow_id", "inputs", "steps", "description"]),
@@ -231253,6 +231341,22 @@ var INGESTIBLE = /* @__PURE__ */ new Set([".md", ".mdx", ".txt"]);
 function digest5(value) {
   return `sha256:${(0, import_node_crypto28.createHash)("sha256").update(value).digest("hex")}`;
 }
+function knowledgeScenarioScope(record2) {
+  const contentRef = record2.content_ref && typeof record2.content_ref === "object" && !Array.isArray(record2.content_ref) ? record2.content_ref : {};
+  const scope3 = record2.scope ?? (contentRef.kind === "knowledge" ? contentRef.scope : void 0);
+  try {
+    const parsed2 = typeof scope3 === "string" ? scope3 === "global" ? { kind: "global", id: "global" } : (() => {
+      const separator = scope3.indexOf(":");
+      if (separator <= 0 || separator === scope3.length - 1) throw new Error("Knowledge scenario scope is malformed");
+      return parseScope({ scope_kind: scope3.slice(0, separator), scope_id: scope3.slice(separator + 1) });
+    })() : scope3 && typeof scope3 === "object" && !Array.isArray(scope3) ? parseScope({ scope_kind: scope3.kind, scope_id: scope3.id }) : void 0;
+    if (parsed2?.kind === "global" && parsed2.id === "global") return "global";
+    if (parsed2?.kind === "project" && /^(?:project:)?[A-Za-z0-9_-]{1,96}$/u.test(parsed2.id)) return `project:${parsed2.id}`;
+  } catch {
+    return void 0;
+  }
+  return void 0;
+}
 function within(root, candidate2) {
   const value = (0, import_node_path21.relative)(root, candidate2);
   return value === "" || !value.startsWith(`..${import_node_path21.sep}`) && value !== ".." && !value.split(import_node_path21.sep).includes("..");
@@ -231441,14 +231545,14 @@ var KnowledgeSourceRegistry = class {
     return locator2 !== null && legacy.includes(locator2) ? locator2 : current2;
   }
   updateStaleScenarioClaim(claim, source) {
-    if (typeof claim.scenario_key !== "string") return;
-    const scope3 = String(claim.scope ?? "global");
+    const scope3 = knowledgeScenarioScope(claim);
+    if (typeof claim.scenario_key !== "string" || !scope3) return;
     const contentPath = claim.content_ref?.path;
     const projectRoot = projectRootForKnowledgeSource(source);
     updateKnowledgeScenarioClaim(knowledgeDirectoryForScope(this.store, scope3, {
       ...typeof contentPath === "string" ? { reference_path: contentPath } : {},
       ...projectRoot ? { project_root: projectRoot } : {}
-    }), claim, "inactive");
+    }), { ...claim, scope: scope3 }, "inactive");
   }
   sourceRegister(args) {
     const kind4 = text(args.kind, "kind");
@@ -231514,9 +231618,11 @@ var KnowledgeSourceRegistry = class {
       ...automaticTransition ? { automatic_transition: automaticTransition } : {}
     });
     for (const claim of this.store.list("knowledge_claim", 1e5, (item) => item.source_id === source.id && typeof item.scenario_key === "string", false, { source_ids: [String(source.id)], document_ids: [] })) {
-      updateKnowledgeScenarioClaim(knowledgeDirectoryForScope(this.store, String(claim.scope ?? "global"), {
+      const scope3 = knowledgeScenarioScope(claim);
+      if (!scope3) continue;
+      updateKnowledgeScenarioClaim(knowledgeDirectoryForScope(this.store, scope3, {
         ...claim.content_ref?.path ? { reference_path: String(claim.content_ref.path) } : {}
-      }), claim, "inactive");
+      }), { ...claim, scope: scope3 }, "inactive");
     }
     return { source: saved };
   }
@@ -231538,7 +231644,8 @@ var KnowledgeSourceRegistry = class {
         processed_files: result.processed_files ?? 0,
         total_files: result.total_files ?? null,
         has_more: result.has_more ?? false,
-        invalidated_documents: result.invalidated_documents ?? 0
+        invalidated_documents: result.invalidated_documents ?? 0,
+        unscoped_claims_skipped: result.unscoped_claims_skipped ?? 0
       });
       return { ...result, ingestion_receipt: receipt };
     } catch (error) {
@@ -231601,6 +231708,7 @@ var KnowledgeSourceRegistry = class {
       const revision2 = existing ?? this.store.create("knowledge_source_revision", revisionId, { source_id: source.id, source_version: source.version, source_revision_digest: revisionDigest, locator_digest: stableDigest(root), file_count: documents.length, status: "current", immutable: true });
       const manifest = new Map(documents.map((doc) => [doc.id, doc]));
       const invalid = /* @__PURE__ */ new Set();
+      let unscopedClaimsSkipped = 0;
       for (const prior of this.store.list("knowledge_document", 10001, (doc) => doc.source_id === source.id && doc.root_digest === stableDigest(root))) {
         const current2 = manifest.get(String(prior.id));
         if (!current2 || current2.digest !== prior.content_digest) {
@@ -231611,6 +231719,10 @@ var KnowledgeSourceRegistry = class {
       for (const claim of this.store.list("knowledge_claim", 1e5, (item) => item.source_id === source.id && Boolean(item.source_revision_id), false, { source_ids: [String(source.id)], document_ids: [] })) {
         const obsolete = claim.document_id ? invalid.has(String(claim.document_id)) : claim.source_revision_id !== revision2.id;
         if (obsolete && ["reviewed", "candidate"].includes(String(claim.status))) {
+          if (!knowledgeScenarioScope(claim)) {
+            unscopedClaimsSkipped++;
+            continue;
+          }
           const stale = this.store.save("knowledge_claim", String(claim.id), { ...payload(claim), status: "stale", revalidation_required: true, stale_since_revision: revision2.id });
           this.updateStaleScenarioClaim(stale, source);
         }
@@ -231685,7 +231797,8 @@ var KnowledgeSourceRegistry = class {
         next_cursor: hasMore ? Buffer.from(JSON.stringify({ digest: revisionDigest, offset: nextOffset })).toString("base64url") : null,
         processed_files: selected.length,
         total_files: documents.length,
-        invalidated_documents: invalid.size
+        invalidated_documents: invalid.size,
+        unscoped_claims_skipped: unscopedClaimsSkipped
       };
     });
   }
@@ -231965,7 +232078,7 @@ var KnowledgeClaimGovernance = class {
     const kind4 = text(args.kind, "kind");
     if (!KNOWLEDGE_KINDS.has(kind4)) throw new Error("Knowledge claim kind is unsupported");
     const content = assertNoSecret(document(args.content, "content"), "content");
-    const scope3 = String(args.scope ?? "global");
+    const scope3 = text(args.scope, "scope");
     const evidenceIds2 = uniqueTextArray(args.evidence_ids, "evidence_ids");
     evidenceIds2.forEach((item) => this.store.get("evidence", item));
     const tags2 = optionalTextArray(args.tags, "tags");
@@ -233192,11 +233305,18 @@ function revision(value, fallback2) {
   return result;
 }
 function matchesScope(memory, taskId3, workspaceId) {
-  const scope3 = String(memory.scope);
-  if (scope3 === "user") return true;
+  const raw = memory.scope;
+  const scope3 = typeof raw === "string" ? raw : raw && typeof raw === "object" && !Array.isArray(raw) ? String(raw.kind ?? "") : "";
+  if (scope3 === "user" || scope3 === "global") return true;
   if (scope3 === "task") return memory.task_id === taskId3;
-  if (scope3 === "workspace") return memory.workspace_id === workspaceId;
+  if (scope3 === "workspace" || scope3 === "project") return memory.workspace_id === workspaceId;
   return false;
+}
+function memoryScopeName(value) {
+  if (typeof value === "string") return value;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "";
+  const kind4 = String(value.kind ?? "");
+  return kind4 === "global" ? "user" : kind4;
 }
 function profileSelector(value, name, allowed) {
   const values3 = strings3(value, name);
@@ -233383,7 +233503,7 @@ var WorkbenchKernel = class {
     if (validUntil !== null && Number.isNaN(Date.parse(validUntil))) throw new Error("valid_until must be an ISO timestamp");
     const superseded = args.supersedes_id === void 0 ? null : this.store.get("memory_item", text(args.supersedes_id, "supersedes_id"));
     if (superseded && superseded.status !== "active") throw new Error("Only an active memory can be superseded");
-    if (superseded && (superseded.scope !== scope3 || superseded.task_id !== (args.task_id ?? null) || superseded.workspace_id !== (args.workspace_id ?? null))) {
+    if (superseded && (memoryScopeName(superseded.scope) !== scope3 || superseded.task_id !== (args.task_id ?? null) || superseded.workspace_id !== (args.workspace_id ?? null))) {
       throw new Error("Replacement memory must keep the same scope target");
     }
     const content = text(args.content, "content");
@@ -239437,6 +239557,7 @@ var KnowledgeAutoReviewKernel = class {
     const identity = { automatic, minimum_independent_support: minimum, minimum_confidence: confidence2 };
     if (existing.identity_digest === digest12(identity)) return { policy: existing, idempotent: true };
     const saved = this.store.save("knowledge_promotion_policy", DEFAULT_POLICY_ID, {
+      scope: { kind: "global", id: "global" },
       ...identity,
       policy_id: DEFAULT_POLICY_ID,
       revision: Number(existing.revision) + 1,
@@ -242062,7 +242183,8 @@ function storedScopeKey(value) {
   if (typeof value === "string") return value;
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const record2 = value;
-  return typeof record2.kind === "string" && typeof record2.id === "string" ? `${record2.kind}:${record2.id}` : null;
+  if (typeof record2.kind !== "string" || typeof record2.id !== "string") return null;
+  return record2.kind === record2.id ? record2.kind : `${record2.kind}:${record2.id}`;
 }
 var SECRET7 = /(?:api[_-]?key|authorization|cookie|password|passwd|secret|token)\s*[:=]\s*[^\s]{6,}/iu;
 var MemoryConsolidationKernel = class {
@@ -242163,7 +242285,13 @@ var MemoryConsolidationKernel = class {
       return { query, scope: null, results: [], skipped: true, reason: "scope_unavailable" };
     }
     const scope3 = resolvedScope.scope;
-    const memories = this.store.list("semantic_memory", 1e4, (item) => item.status === "active" && (scope3 === null || storedScopeKey(item.scope) === scope3));
+    const memories = this.store.list("semantic_memory", 1e4, (item) => {
+      if (item.status !== "active" || scope3 === null) return item.status === "active";
+      const stored = storedScopeKey(item.scope);
+      const separator = scope3.indexOf(":");
+      const legacyPartitionKey = separator > 0 ? `${scope3.slice(0, separator)}:${scope3}` : null;
+      return stored === scope3 || stored === legacyPartitionKey || ["user", "task", "workspace"].includes(scope3) && (stored?.startsWith(`${scope3}:`) ?? false) || scope3 === "user" && (stored === "global" || stored === "global:global");
+    });
     const results = memories.filter((item) => this.body(item).toLowerCase().includes(query)).map((item) => ({ ...item, content: this.body(item) }));
     return { query, results };
   }
@@ -246749,8 +246877,10 @@ var ContextReadGuard = class {
     }
     const scopeSql = `EXISTS (SELECT 1 FROM json_each(?) s WHERE
       json_extract(payload_json,'$.scope')=json_extract(s.value,'$.kind')||':'||json_extract(s.value,'$.id')
+      OR (json_extract(payload_json,'$.scope')=json_extract(s.value,'$.id') AND substr(json_extract(s.value,'$.id'),1,length(json_extract(s.value,'$.kind'))+1)=json_extract(s.value,'$.kind')||':')
       OR (json_extract(s.value,'$.kind')='global' AND json_extract(payload_json,'$.scope')='global')
-      OR (json_extract(payload_json,'$.scope.kind')=json_extract(s.value,'$.kind') AND json_extract(payload_json,'$.scope.id')=json_extract(s.value,'$.id')))`;
+      OR (json_extract(payload_json,'$.scope.kind')=json_extract(s.value,'$.kind') AND json_extract(payload_json,'$.scope.id')=json_extract(s.value,'$.id'))
+      OR (json_extract(payload_json,'$.scope.kind')=json_extract(s.value,'$.kind') AND substr(json_extract(s.value,'$.id'),1,length(json_extract(s.value,'$.kind'))+1)=json_extract(s.value,'$.kind')||':' AND json_extract(payload_json,'$.scope.id')=substr(json_extract(s.value,'$.id'),length(json_extract(s.value,'$.kind'))+2)))`;
     const rows4 = scopes?.length ? store.database.prepare(`WITH relevant AS (
       SELECT kind,id,payload_json FROM records WHERE kind IN ('memory_ledger','knowledge_claim','experience_procedure') AND (${scopeSql})
     ), wanted(kind,id) AS (
@@ -253984,8 +254114,8 @@ var TrustProfileKernel = class {
   }
   list(args = {}) {
     const limit3 = integer21(args.limit, "limit", 100, 1);
-    const scopeKey = args.task_class === void 0 ? null : text(args.task_class, "task_class");
-    const profiles = this.store.list("trust_profile", limit3, (item) => scopeKey === null || item.task_class === scopeKey);
+    const scopeKey2 = args.task_class === void 0 ? null : text(args.task_class, "task_class");
+    const profiles = this.store.list("trust_profile", limit3, (item) => scopeKey2 === null || item.task_class === scopeKey2);
     return { profiles, count: profiles.length };
   }
   get(args) {
@@ -255707,7 +255837,7 @@ var LocalCandidateImportKernel = class {
     }
     await (0, import_promises17.mkdir)((0, import_node_path42.resolve)(root, pathRelative, ".."), { recursive: true });
     await (0, import_promises17.writeFile)(target, content, { encoding: "utf8", flag: "wx", mode: 384 });
-    const imported = this.store.create("wiki_candidate_local_import", importId, { ...identity, identity_digest: digest18(JSON.stringify(identity)), target_uri: target, enabled: false, execution_authority: false, status: "imported" });
+    const imported = this.store.create("wiki_candidate_local_import", importId, { scope: packageRecord.scope, ...identity, identity_digest: digest18(JSON.stringify(identity)), target_uri: target, enabled: false, execution_authority: false, status: "imported" });
     return { import: imported, idempotent: false };
   }
   get(args) {
@@ -256186,6 +256316,12 @@ function recordScope2(value) {
   const [kind4, ...rest] = String(value).split(":");
   return { kind: kind4, id: rest.join(":") };
 }
+function scopeKey(scope3) {
+  return scope3.id.startsWith(`${scope3.kind}:`) ? scope3.id : `${scope3.kind}:${scope3.id}`;
+}
+function matchesScope2(stored, scope3) {
+  return stored === scopeKey(scope3) || stored === `${scope3.kind}:${scope3.id}`;
+}
 var ExperienceContribution = class {
   member = "experience";
   store;
@@ -256205,8 +256341,8 @@ var ExperienceContribution = class {
     const wanted = terms3(request2.query);
     const scopes = request2.scope_stack ?? [{ kind: request2.scope_kind, id: request2.scope_id }];
     const access4 = { principal_id: request2.principal_id, principal_ids: request2.principal_ids, tenant_id: request2.tenant_id, purpose: request2.cognitive_purpose };
-    const scoped = this.store.listScoped("experience_procedure", scopes, 10001, (procedure) => scopes.some((scope3) => procedure.scope === `${scope3.kind}:${scope3.id}`) && scopeAllows(scopeEnvelope(procedure.scope_envelope, recordScope2(procedure.scope)), access4));
-    const hasDraft = this.store.listScoped("experience_graph_draft", scopes, 1, (draft) => scopes.some((scope3) => draft.scope === `${scope3.kind}:${scope3.id}`) && scopeAllows(scopeEnvelope(draft.scope_envelope, recordScope2(draft.scope)), access4)).length > 0;
+    const scoped = this.store.listScoped("experience_procedure", scopes, 10001, (procedure) => scopes.some((scope3) => matchesScope2(procedure.scope, scope3)) && scopeAllows(scopeEnvelope(procedure.scope_envelope, recordScope2(procedure.scope)), access4));
+    const hasDraft = this.store.listScoped("experience_graph_draft", scopes, 1, (draft) => scopes.some((scope3) => matchesScope2(draft.scope, scope3)) && scopeAllows(scopeEnvelope(draft.scope_envelope, recordScope2(draft.scope)), access4)).length > 0;
     const eligible = scoped.map((latest) => activeProcedure(this.store, String(latest.id))).filter((item) => item !== null);
     if (eligible.length > 1e4) throw new Error("Experience candidate budget exceeded; narrow the scope stack");
     const descriptions = new Map(eligible.map((procedure) => [String(procedure.id), this.describe(procedure)]));
@@ -258513,6 +258649,13 @@ function normalizeLspSymbols(input) {
 // capability/craft-codebase/lsp-relations.ts
 var import_node_url5 = require("node:url");
 var import_node_path47 = require("node:path");
+function checkpointPath(path2) {
+  return path2.replaceAll("\\", "/");
+}
+function isCheckpointRelativePath(path2) {
+  const normalized = checkpointPath(path2);
+  return Boolean(normalized) && normalized !== ".." && !normalized.startsWith("../") && !normalized.startsWith("/") && !/^[A-Za-z]:\//u.test(normalized);
+}
 function selectLspRelationSymbols(nodes, limit3, prioritizeCallables = false) {
   if (!Number.isSafeInteger(limit3) || limit3 < 1) return [];
   const byPath = /* @__PURE__ */ new Map();
@@ -258563,13 +258706,13 @@ function collectLspRelations(input) {
   const nodesById = new Map(input.nodes.map((node) => [String(node.id), node]));
   const nodesByPathOffset = /* @__PURE__ */ new Map();
   for (const node of input.nodes) {
-    const path2 = String(node.path), offset = Number(node.span.start_offset);
+    const path2 = checkpointPath(String(node.path)), offset = Number(node.span.start_offset);
     if (!nodesByPathOffset.has(path2)) nodesByPathOffset.set(path2, /* @__PURE__ */ new Map());
     const at = nodesByPathOffset.get(path2);
     if (!at.has(offset)) at.set(offset, node);
   }
   for (const raw of input.documents) {
-    const path2 = String(raw.path), content = String(raw.content), uri = String(raw.uri);
+    const path2 = checkpointPath(String(raw.path)), content = String(raw.content), uri = String(raw.uri);
     const index = textIndex(content), symbols = flatten(raw.symbols, index, nodesByPathOffset.get(path2) ?? /* @__PURE__ */ new Map());
     const info = { path: path2, content, uri, index, symbols };
     byUri.set(uri, info);
@@ -258810,8 +258953,8 @@ function documentForUri(uri, root, byUri, byPath) {
   try {
     const url2 = new URL(uri);
     if (url2.protocol !== "file:") return void 0;
-    const path2 = (0, import_node_path47.relative)(root, (0, import_node_path47.resolve)((0, import_node_url5.fileURLToPath)(url2)));
-    if (!path2 || path2 === ".." || path2.startsWith(`..${import_node_path47.sep}`)) return void 0;
+    const path2 = checkpointPath((0, import_node_path47.relative)(root, (0, import_node_path47.resolve)((0, import_node_url5.fileURLToPath)(url2))));
+    if (!isCheckpointRelativePath(path2)) return void 0;
     return byPath.get(path2);
   } catch {
     return void 0;
@@ -260512,6 +260655,14 @@ var CURRENT_GRAPH_STORAGE = "sharded-v4";
 var PROJECT_GRAPH_STORAGE = "project-sharded-v5";
 var SEARCH_CONTEXT_DECLARATION_KINDS = /* @__PURE__ */ new Set(["function", "method", "class", "interface", "type", "enum", "struct"]);
 var SEARCH_CONTEXT_CONTAINER_KINDS = /* @__PURE__ */ new Set(["class", "interface", "type", "enum", "struct"]);
+function publicationGuard(value) {
+  if (value === void 0) return void 0;
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("publication_guard must be an object");
+  const guard = value;
+  if (!Number.isSafeInteger(guard.workspace_version) || Number(guard.workspace_version) < 1 || typeof guard.checkpoint_id !== "string" || !guard.checkpoint_id.trim() || !Number.isSafeInteger(guard.activation_version) || Number(guard.activation_version) < 1)
+    throw new Error("publication_guard is invalid");
+  return { workspace_version: Number(guard.workspace_version), checkpoint_id: guard.checkpoint_id, activation_version: Number(guard.activation_version) };
+}
 function controlFlowFallback(flow, language2) {
   return flow.result ?? {
     status: "unavailable",
@@ -260765,7 +260916,16 @@ var CodebaseIndexKernel = class {
       diagnostics_count: graph.diagnostics.length,
       relation_analysis: relationAnalysisSummary(ANALYZER, graph.diagnostics, graph.edges)
     };
-    const index = this.persistIndex(identity, indexId, files5.length, analysis, graph.nodes, graph.edges, graph.diagnostics);
+    const index = this.persistIndex(
+      identity,
+      indexId,
+      files5.length,
+      analysis,
+      graph.nodes,
+      graph.edges,
+      graph.diagnostics,
+      publicationGuard(args.publication_guard)
+    );
     return { index: this.indexStatus(index, workspace), idempotent: false };
   }
   /** Normalized adapter boundary: no executable plugins or source bodies enter the store. */
@@ -260885,7 +261045,16 @@ var CodebaseIndexKernel = class {
       allowed_paths: workspace.include_paths,
       relation_analysis: relationAnalysisSummary(analyzer, input.diagnostics, uniqueEdges)
     };
-    const index = this.persistIndex(identity, indexId, files5.size, analysis, nodes, uniqueEdges, Array.isArray(input.diagnostics) ? input.diagnostics : []);
+    const index = this.persistIndex(
+      identity,
+      indexId,
+      files5.size,
+      analysis,
+      nodes,
+      uniqueEdges,
+      Array.isArray(input.diagnostics) ? input.diagnostics : [],
+      publicationGuard(args.publication_guard)
+    );
     return { index: this.indexStatus(index, workspace), idempotent: false };
   }
   /** Governed code candidates, not an accumulated Context member or raw index. */
@@ -261427,7 +261596,7 @@ var CodebaseIndexKernel = class {
   graphRecord(index, kind4, id23) {
     return index.graph_storage === PROJECT_GRAPH_STORAGE ? this.projectGraphStore(index).read(id23) : this.store.get(kind4, id23);
   }
-  persistIndex(identity, indexId, sourceFileCount, analysis, rawNodes, rawEdges, diagnostics) {
+  persistIndex(identity, indexId, sourceFileCount, analysis, rawNodes, rawEdges, diagnostics, guard) {
     const nodes = sorted(rawNodes);
     const edges = sorted(rawEdges);
     if (nodes.length > MAX_GRAPH_NODES2 || edges.length > MAX_GRAPH_EDGES2) throw new Error("Codebase graph exceeds storage budget");
@@ -261568,6 +261737,12 @@ var CodebaseIndexKernel = class {
       );
     }
     return this.store.transaction(() => {
+      if (guard) {
+        const current2 = this.store.get("workspace", String(identity.workspace_id));
+        const activation = this.store.get("codebase_activation", `codebase_activation_${identity.workspace_id}`);
+        if (current2.version !== guard.workspace_version || current2.latest_checkpoint_id !== guard.checkpoint_id || guard.checkpoint_id !== identity.checkpoint_id || activation.status !== "active" || activation.version !== guard.activation_version)
+          throw new Error("Repository snapshot changed before index publication");
+      }
       const existingShards = projectGraphStore ? /* @__PURE__ */ new Map() : new Map(this.store.findMany("codebase_index_shard", shardIds, false).map((record2) => [String(record2.id), record2]));
       const newGraphRecords = immutableGraphRecords.filter((record2) => {
         const existing = existingShards.get(record2.id);
@@ -265500,8 +265675,20 @@ var CognitiveWorkbenchCoordinator = class {
     return this.ports.proposeMemory({ ...args, kind: kind4, source_id: sourceId, scope_kind: args.scope_kind ?? args.scope ?? "user", scope_id: args.scope_id ?? "local" });
   }
   saveClaim(args) {
-    const evidence2 = args.evidence_ids === void 0 ? this.ports.recordEvidence({ source_type: "human", confidence: "bounded", claim: "Studio-authored candidate.", locator: "studio://knowledge" }) : null;
-    return this.ports.saveClaim({ ...args, evidence_ids: args.evidence_ids ?? [evidence2?.id], scope: args.scope ?? "global" });
+    const scope3 = typeof args.scope === "string" ? args.scope : "";
+    if (!scope3) throw new Error("scope must be a non-empty string");
+    scopeFromKey(scope3);
+    return this.ports.store.transaction(() => {
+      const evidence2 = args.evidence_ids === void 0 ? this.ports.recordEvidence({
+        source_type: "human",
+        confidence: "bounded",
+        claim: "Studio-authored candidate.",
+        locator: "studio://knowledge",
+        scope: scope3,
+        metadata: { capability_owner: "knowledge", scope: scope3 }
+      }) : null;
+      return this.ports.saveClaim({ ...args, scope: scope3, evidence_ids: args.evidence_ids ?? [evidence2?.id] });
+    });
   }
 };
 
@@ -266229,15 +266416,17 @@ var CognitiveSearchCoordinator = class {
       if (claim.sensitivity === "restricted" && args.allow_restricted !== true) return [];
       if (!includeCandidates && claim.status !== "reviewed") return [];
       if (claim.status !== "candidate" && claim.status !== "reviewed") return [];
-      if (scope3 !== null && claim.scope !== "global" && claim.scope !== scope3) return [];
-      if (scenarioKey !== null && (!scenarioActive || claim.scenario_key !== scenarioKey && claim.coarse_scenario_key !== scenarioKey)) return [];
+      let claimScope;
       if (scenarioKey !== null) {
-        let claimScope;
         try {
           claimScope = scopeFromKey(String(claim.scope ?? "global"));
         } catch {
           return [];
         }
+      }
+      if (scope3 !== null && claim.scope !== "global" && claim.scope !== scope3) return [];
+      if (scenarioKey !== null && (!scenarioActive || claim.scenario_key !== scenarioKey && claim.coarse_scenario_key !== scenarioKey)) return [];
+      if (scenarioKey !== null) {
         if (scenarioKind !== claimScope.kind || scenarioKind === "project" && scenarioId !== claimScope.id) return [];
       }
       if (claim.valid_until !== void 0 && claim.valid_until !== null && (typeof claim.valid_until !== "string" || !Number.isFinite(Date.parse(claim.valid_until)) || Date.parse(claim.valid_until) < Date.now())) return [];
@@ -269138,7 +269327,7 @@ function installLegacyKnowledgeMigrationMethods(serviceClass) {
     if (args.offline !== true) throw new Error("Legacy knowledge import is offline-only; use scripts/import-legacy-knowledge.ts");
     const migration = this.store.get("legacy_knowledge_migration", String(args.migration_id));
     const sourceId = `legacy_knowledge_source_${String(migration.source_digest).slice(-24)}`;
-    this.knowledgeSourceRegister({ source_id: sourceId, kind: "custom", label: "Offline legacy formal knowledge snapshot", scope_kind: "user", scope_id: "local", locator: `offline://legacy-import/${String(migration.source_digest).slice(-24)}`, content_digest: String(migration.source_digest), trust: "bounded", access: "proposal_only" });
+    this.knowledgeSourceRegister({ source_id: sourceId, kind: "custom", label: "Offline legacy formal knowledge snapshot", scope_kind: "global", scope_id: "global", locator: `offline://legacy-import/${String(migration.source_digest).slice(-24)}`, content_digest: String(migration.source_digest), trust: "bounded", access: "proposal_only" });
     return this.legacyKnowledgeMigration.importCandidates(args, sourceId, (entry2, _source, importedSourceId, candidateId2) => {
       const evidenceId = `legacy_knowledge_evidence_${candidateId2.slice(-24)}`;
       const claimId = `legacy_knowledge_claim_${candidateId2.slice(-24)}`;
@@ -270005,7 +270194,7 @@ var MAX_CONTEXT_FILE_BYTES = 512 * 1024;
 var MAX_CONTEXT_TOTAL_BYTES = 1024 * 1024;
 var git = (root, args, input) => (0, import_node_child_process12.execFileSync)("git", ["-C", root, ...args], { encoding: "utf8", input, timeout: 5e3, maxBuffer: 8 * 1024 * 1024, stdio: ["pipe", "pipe", "ignore"] });
 var fileVersion = (stat4) => [stat4.dev, stat4.ino, stat4.size, stat4.mtimeMs, stat4.ctimeMs].join(":");
-function repositoryPolicyDigest(root) {
+function repositoryPolicyDigest(root, runGit2 = git) {
   root = (0, import_node_fs48.realpathSync)(root);
   const configPath = (0, import_node_path62.join)(root, ".craft-codebase.json");
   let config = "missing";
@@ -270014,12 +270203,12 @@ function repositoryPolicyDigest(root) {
     if (stat4.isSymbolicLink() || !stat4.isFile()) throw new Error("Repository config must be a regular file");
     config = (0, import_node_crypto150.createHash)("sha256").update((0, import_node_fs48.readFileSync)(configPath)).digest("hex");
   }
-  const paths = [...new Set(git(root, ["ls-files", "--cached", "--others", "--exclude-standard", "-z"]).split("\0").filter(Boolean))].sort();
+  const paths = [...new Set(runGit2(root, ["ls-files", "--cached", "--others", "--exclude-standard", "-z"]).split("\0").filter(Boolean))].sort();
   const policyFiles = paths.filter((path2) => path2 === ".gitignore" || path2.endsWith("/.gitignore"));
-  const infoExclude = (0, import_node_path62.resolve)(root, git(root, ["rev-parse", "--git-path", "info/exclude"]).trim());
+  const infoExclude = (0, import_node_path62.resolve)(root, runGit2(root, ["rev-parse", "--git-path", "info/exclude"]).trim());
   const configured = (() => {
     try {
-      return git(root, ["config", "--path", "--get-all", "core.excludesfile"]).split(/\r?\n/u).filter(Boolean);
+      return runGit2(root, ["config", "--path", "--get-all", "core.excludesfile"]).split(/\r?\n/u).filter(Boolean);
     } catch (error) {
       if (error.status === 1) return [];
       throw error;
@@ -270049,17 +270238,17 @@ function hasSymlinkPath(root, path2) {
   }
   return false;
 }
-function repositoryRoot(path2) {
+function repositoryRoot(path2, runGit2 = git) {
   if (typeof path2 !== "string" || !path2.trim()) throw new Error("project_root is required");
   const current2 = (0, import_node_fs48.realpathSync)(path2);
   if (!(0, import_node_fs48.lstatSync)(current2).isDirectory()) throw new Error("project_root must be a directory");
   try {
-    return { root: (0, import_node_fs48.realpathSync)(git(current2, ["rev-parse", "--show-toplevel"]).trim()), isRepository: true };
+    return { root: (0, import_node_fs48.realpathSync)(runGit2(current2, ["rev-parse", "--show-toplevel"]).trim()), isRepository: true };
   } catch {
     return { root: current2, isRepository: false };
   }
 }
-function repositoryFiles(root, _query = "") {
+function repositoryFiles(root, _query = "", runGit2 = git) {
   root = (0, import_node_fs48.realpathSync)(root);
   const configPath = (0, import_node_path62.join)(root, ".craft-codebase.json");
   if ((0, import_node_fs48.existsSync)(configPath) && (0, import_node_fs48.lstatSync)(configPath).isSymbolicLink()) throw new Error("Repository config must be a regular file");
@@ -270069,14 +270258,14 @@ function repositoryFiles(root, _query = "") {
   const excludes = config.exclude_paths ?? [];
   if (!Array.isArray(excludes) || excludes.some((p) => typeof p !== "string" || !p || (0, import_node_path62.isAbsolute)(p) || p.includes("\\") || p.split("/").includes(".."))) throw new Error("exclude_paths must contain repository-relative paths");
   if (config.enabled === false || process.env.CRAFT_CODEBASE_AUTO_INDEX === "0") return { root, state: "disabled", files: [], context_files: [], context_files_omitted: 0, omitted: 0, omitted_by_language: {} };
-  const paths = [...new Set(git(root, ["ls-files", "--cached", "--others", "--exclude-standard", "-z"]).split("\0").filter(Boolean))].sort();
+  const paths = [...new Set(runGit2(root, ["ls-files", "--cached", "--others", "--exclude-standard", "-z"]).split("\0").filter(Boolean))].sort();
   const symlinkPaths = new Set(paths.filter((path2) => {
     const extension2 = (0, import_node_path62.extname)(path2).toLowerCase();
     return EXTENSIONS.has(extension2) && !GENERATED.test(path2) && !excludes.some((p) => path2 === p || path2.startsWith(`${String(p).replace(/\/$/u, "")}/`)) && hasSymlinkPath(root, path2);
   }));
   let ignored = "";
   try {
-    ignored = git(root, ["check-ignore", "--no-index", "-z", "--stdin"], paths.filter((path2) => !symlinkPaths.has(path2)).map((path2) => `${path2}\0`).join(""));
+    ignored = runGit2(root, ["check-ignore", "--no-index", "-z", "--stdin"], paths.filter((path2) => !symlinkPaths.has(path2)).map((path2) => `${path2}\0`).join(""));
   } catch (error) {
     if (error.status !== 1) throw error;
   }
@@ -271016,33 +271205,40 @@ function ensureRepositoryAttempt(service, args, sourceRetry) {
     if (sourceRetry < 1) return ensureRepositoryAttempt(service, args, sourceRetry + 1);
     throw new Error("Repository selection policy changed during index analysis");
   }
-  const publish = () => service.store.transaction(() => {
-    const activation = service.store.find("codebase_activation", `codebase_activation_${workspaceId}`);
-    if (activation?.status === "disabled") return { ...base, status: "disabled", reason: "project_opt_out" };
-    if (selected.state === "disabled") return { ...base, status: "disabled", reason: "project_opt_out" };
-    const old = service.store.find("workspace", workspaceId);
-    if (!old && !includes.length) return { ...base, status: "empty", omitted_files: selected.omitted, omitted_by_language: selected.omitted_by_language };
-    if (!old) service.workspaceOpen({ workspace_id: workspaceId, root_path: root, include_paths: includes, name: root, snapshot_storage: "project_codebase" });
-    else if (JSON.stringify(old.include_paths) !== JSON.stringify(includes) || old.snapshot_storage !== "project_codebase")
-      service.store.save("workspace", workspaceId, { ...payload(old), include_paths: includes, snapshot_storage: "project_codebase" });
-    const freshness = service.workspace.freshness({ workspace_id: workspaceId });
-    const latestCheckpointId = String(service.store.get("workspace", workspaceId).latest_checkpoint_id ?? "");
-    const latestCheckpoint = latestCheckpointId ? service.store.find("workspace_checkpoint", latestCheckpointId) : void 0;
-    const expectedSnapshotRoot2 = (0, import_node_path65.join)(projectStorageDirectory(service.store.paths, root), "codebase", "snapshots", workspaceId, latestCheckpointId);
-    if (freshness.status !== "current" || latestCheckpoint?.snapshot_root !== expectedSnapshotRoot2) {
-      const checkpointArgs = { workspace_id: workspaceId, label: "automatic repository snapshot" };
-      if (service.workspaceCheckpointFromRepositoryFiles) service.workspaceCheckpointFromRepositoryFiles({ ...checkpointArgs, repository_files: [...selected.files, ...workspaceContextFiles] });
-      else service.workspaceCheckpoint(checkpointArgs);
-    }
-    const workspace = service.store.get("workspace", workspaceId);
-    if (!activation) service.codebaseActivate({ workspace_id: workspaceId, actor: "repository-auto" });
-    if (!includes.length) return { ...base, status: "empty", checkpoint_id: workspace.latest_checkpoint_id, omitted_files: selected.omitted, omitted_by_language: selected.omitted_by_language };
-    const checkpointId = String(workspace.latest_checkpoint_id);
-    if (workspaceContextFiles.length) {
-      const checkpoint = service.store.get("workspace_checkpoint", checkpointId);
-      const checkpointDigests = new Map(checkpoint.entries.map((entry2) => [String(entry2.path), String(entry2.digest)]));
-      if (workspaceContextFiles.some((file) => checkpointDigests.get(file.path) !== file.digest)) throw new Error("Go workspace context changed during snapshot analysis");
-    }
+  const publish = () => {
+    const prepared = service.store.transaction(() => {
+      const activation = service.store.find("codebase_activation", `codebase_activation_${workspaceId}`);
+      if (activation?.status === "disabled") return { ...base, status: "disabled", reason: "project_opt_out" };
+      if (selected.state === "disabled") return { ...base, status: "disabled", reason: "project_opt_out" };
+      const old = service.store.find("workspace", workspaceId);
+      if (!old && !includes.length) return { ...base, status: "empty", omitted_files: selected.omitted, omitted_by_language: selected.omitted_by_language };
+      if (!old) service.workspaceOpen({ workspace_id: workspaceId, root_path: root, include_paths: includes, name: root, snapshot_storage: "project_codebase" });
+      else if (JSON.stringify(old.include_paths) !== JSON.stringify(includes) || old.snapshot_storage !== "project_codebase")
+        service.store.save("workspace", workspaceId, { ...payload(old), include_paths: includes, snapshot_storage: "project_codebase" });
+      const freshness = service.workspace.freshness({ workspace_id: workspaceId });
+      const latestCheckpointId = String(service.store.get("workspace", workspaceId).latest_checkpoint_id ?? "");
+      const latestCheckpoint = latestCheckpointId ? service.store.find("workspace_checkpoint", latestCheckpointId) : void 0;
+      const expectedSnapshotRoot2 = (0, import_node_path65.join)(projectStorageDirectory(service.store.paths, root), "codebase", "snapshots", workspaceId, latestCheckpointId);
+      if (freshness.status !== "current" || latestCheckpoint?.snapshot_root !== expectedSnapshotRoot2) {
+        const checkpointArgs = { workspace_id: workspaceId, label: "automatic repository snapshot" };
+        if (service.workspaceCheckpointFromRepositoryFiles) service.workspaceCheckpointFromRepositoryFiles({ ...checkpointArgs, repository_files: [...selected.files, ...workspaceContextFiles] });
+        else service.workspaceCheckpoint(checkpointArgs);
+      }
+      const workspace2 = service.store.get("workspace", workspaceId);
+      if (!activation) service.codebaseActivate({ workspace_id: workspaceId, actor: "repository-auto" });
+      if (!includes.length) return { ...base, status: "empty", checkpoint_id: workspace2.latest_checkpoint_id, omitted_files: selected.omitted, omitted_by_language: selected.omitted_by_language };
+      const checkpointId2 = String(workspace2.latest_checkpoint_id);
+      if (workspaceContextFiles.length) {
+        const checkpoint = service.store.get("workspace_checkpoint", checkpointId2);
+        const checkpointDigests = new Map(checkpoint.entries.map((entry2) => [String(entry2.path), String(entry2.digest)]));
+        if (workspaceContextFiles.some((file) => checkpointDigests.get(file.path) !== file.digest)) throw new Error("Go workspace context changed during snapshot analysis");
+      }
+      const active = service.store.get("codebase_activation", `codebase_activation_${workspaceId}`);
+      return { workspace: workspace2, checkpointId: checkpointId2, activationVersion: Number(active.version) };
+    });
+    const preparedIndex = prepared;
+    if (!preparedIndex.workspace || !preparedIndex.checkpointId || preparedIndex.activationVersion === void 0) return prepared;
+    const { workspace, checkpointId, activationVersion } = preparedIndex;
     const stateId2 = `${workspaceId}_${depth}`;
     const indexId = `repository_index_${stableDigest({
       workspaceId,
@@ -271054,7 +271250,8 @@ function ensureRepositoryAttempt(service, args, sourceRetry) {
       ...typeof priorState?.semantic_retry_after === "string" ? { semantic_retry_after: priorState.semantic_retry_after } : {},
       ...hasSemanticAdapterFailure(priorState) && typeof priorState?.index_id === "string" ? { previous_index_id: priorState.index_id } : {}
     }).slice(-24)}`;
-    const built = analysis ? service.codebaseAnalysisImport({ workspace_id: workspaceId, checkpoint_id: checkpointId, index_id: indexId, analysis }) : service.codebaseIndexBuild({ workspace_id: workspaceId, index_id: indexId, analyzer: "heuristic" });
+    const publication_guard = { workspace_version: workspace.version, checkpoint_id: checkpointId, activation_version: activationVersion };
+    const built = analysis ? service.codebaseAnalysisImport({ workspace_id: workspaceId, checkpoint_id: checkpointId, index_id: indexId, analysis, publication_guard }) : service.codebaseIndexBuild({ workspace_id: workspaceId, index_id: indexId, analyzer: "heuristic", publication_guard });
     const index = built.index;
     const details = index.analysis;
     const rawDiagnostics = analysis?.diagnostics ?? index.diagnostics;
@@ -271070,16 +271267,24 @@ function ensureRepositoryAttempt(service, args, sourceRetry) {
       diagnostic_count: diagnostics.length,
       diagnostics: diagnostics.slice(0, 10)
     };
-    service.store.save("codebase_repository_state", stateId2, {
-      workspace_id: workspaceId,
-      checkpoint_id: checkpointId,
-      policy_version: REPOSITORY_INDEX_POLICY,
-      adapter_config_digest: lspConfig.digest,
-      repository_policy_digest: currentPolicyDigest,
-      index_id: index.id,
-      summary: summary2,
-      ...semanticAdapterFailed ? { semantic_retry_after: new Date(Date.now() + SEMANTIC_RETRY_DELAY_MS).toISOString() } : {},
-      ...depth === "semantic" ? { typescript_path_set_digest: typeScriptPathSetDigest } : {}
+    service.store.transaction(() => {
+      const current2 = service.store.get("workspace", workspaceId);
+      if (current2.version !== workspace.version || current2.latest_checkpoint_id !== checkpointId)
+        throw new Error("Repository snapshot changed before state publication");
+      const active = service.store.get("codebase_activation", `codebase_activation_${workspaceId}`);
+      if (active.status !== "active" || Number(active.version) !== activationVersion)
+        throw new Error("Codebase activation changed before state publication");
+      service.store.save("codebase_repository_state", stateId2, {
+        workspace_id: workspaceId,
+        checkpoint_id: checkpointId,
+        policy_version: REPOSITORY_INDEX_POLICY,
+        adapter_config_digest: lspConfig.digest,
+        repository_policy_digest: currentPolicyDigest,
+        index_id: index.id,
+        summary: summary2,
+        ...semanticAdapterFailed ? { semantic_retry_after: new Date(Date.now() + SEMANTIC_RETRY_DELAY_MS).toISOString() } : {},
+        ...depth === "semantic" ? { typescript_path_set_digest: typeScriptPathSetDigest } : {}
+      });
     });
     if (depth === "semantic" && semanticFileUnits.length === semanticFiles.length) {
       const cacheableUnits = semanticFileUnits.filter((unit) => unit.budget_limited === false);
@@ -271146,7 +271351,7 @@ function ensureRepositoryAttempt(service, args, sourceRetry) {
       omitted_by_language: selected.omitted_by_language,
       summary: summary2
     };
-  });
+  };
   try {
     return publish();
   } catch (error) {
@@ -276236,9 +276441,11 @@ ${task.goal}`.toLowerCase();
   workbenchMemoryCompatSave(args) {
     const memoryId = optionalText6(args.memory_id, "memory_id");
     const previous = memoryId === void 0 ? null : this.store.get("memory_item", memoryId);
+    const rawScope = firstDefined(args.scope, previous?.scope, "user");
+    const scope3 = typeof rawScope === "string" ? rawScope : rawScope && typeof rawScope === "object" && !Array.isArray(rawScope) ? String(rawScope.kind ?? "") : "";
     return this.memoryRemember({
       kind: firstDefined(args.kind, previous?.kind, "fact"),
-      scope: firstDefined(args.scope, previous?.scope, "user"),
+      scope: scope3,
       content: args.content,
       source: "studio_user",
       task_id: firstDefined(args.task_id, previous?.task_id),
@@ -276253,8 +276460,19 @@ ${task.goal}`.toLowerCase();
   }
   workbenchKnowledgeCompatSave(args) {
     const content = assertNoSecret5(document2(args.content, "content"), "content");
-    const evidence2 = this.evidenceRecord({ source_type: "human", confidence: "bounded", claim: "User-authored knowledge record.", locator: "studio:knowledge" });
-    return this.knowledgeClaimSave({ kind: args.kind ?? "fact", content, scope: args.scope ?? "global", tags: args.tags ?? [], evidence_ids: [evidence2.id] });
+    const scope3 = text(args.scope, "scope");
+    scopeFromKey(scope3);
+    return this.store.transaction(() => {
+      const evidence2 = this.evidenceRecord({
+        source_type: "human",
+        confidence: "bounded",
+        claim: "User-authored knowledge record.",
+        locator: "studio:knowledge",
+        scope: scope3,
+        metadata: { capability_owner: "knowledge", scope: scope3 }
+      });
+      return this.knowledgeClaimSave({ kind: args.kind ?? "fact", content, scope: scope3, tags: args.tags ?? [], evidence_ids: [evidence2.id] });
+    });
   }
   workbenchWorkflowCompatSave(args) {
     return this.workflowSave({ workflow_id: args.workflow_id, name: text(args.name, "name"), description: args.description ?? "", inputs: args.inputs ?? [], steps: args.steps ?? [] });
@@ -278903,7 +279121,10 @@ Evidence: ${item.evidence_ids.join(", ")}
       artifact_id: args.artifact_id ?? null,
       locator: args.locator ?? null,
       observed_at: args.observed_at ?? (/* @__PURE__ */ new Date()).toISOString(),
-      metadata: args.metadata ?? {}
+      metadata: args.metadata ?? {},
+      ...args.source_id === void 0 ? {} : { source_id: args.source_id },
+      ...args.fragment_id === void 0 ? {} : { fragment_id: args.fragment_id },
+      ...args.scope === void 0 ? {} : { scope: args.scope }
     });
   }
   saveVersioned(kind4, prefix, args, required5) {

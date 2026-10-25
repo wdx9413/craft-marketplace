@@ -304,7 +304,7 @@ function createFetchTransport(options = {}) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.105";
+var CRAFT_RELEASE_VERSION = "0.12.108";
 
 // common/craft-common-store-local/src/paths.ts
 import { createHash as createHash2, randomUUID } from "node:crypto";
@@ -1890,7 +1890,21 @@ async function listSessionFiles(root) {
   try {
     rootInfo = await lstat(root);
   } catch (error) {
-    if (error.code === "ENOENT") return [];
+    const code = error.code;
+    if (code === "ENOENT" || code === "ENOTDIR") {
+      let parent = dirname4(root);
+      while (parent !== dirname4(parent)) {
+        try {
+          const parentInfo = await lstat(parent);
+          if (parentInfo.isSymbolicLink() || !parentInfo.isDirectory()) throw new Error("Codex sessions root must be a regular directory");
+          break;
+        } catch (parentError) {
+          if (parentError.code !== "ENOENT") throw parentError;
+          parent = dirname4(parent);
+        }
+      }
+      return [];
+    }
     throw error;
   }
   if (rootInfo.isSymbolicLink() || !rootInfo.isDirectory()) throw new Error("Codex sessions root must be a regular directory");
