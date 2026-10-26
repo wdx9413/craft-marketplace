@@ -1,8 +1,142 @@
 // bin/craft-datasec-hook.ts
-import { readFileSync as readFileSync2 } from "node:fs";
-import { homedir } from "node:os";
+import { readFileSync as readFileSync3 } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { homedir as homedir2 } from "node:os";
 import { fileURLToPath } from "node:url";
-import { resolve, join as join2 } from "node:path";
+import { resolve as resolve3, join as join4 } from "node:path";
+
+// common/craft-common-store-local/src/paths.ts
+import { closeSync, existsSync, fsyncSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { basename, dirname, join, resolve } from "node:path";
+function dataRoot(env = process.env) {
+  const configured = env.CRAFT_DATA_DIR?.trim();
+  if (configured) return resolve(configured);
+  const defaultRoot = join(homedir(), ".craft_data");
+  const settingsPath = env.CRAFT_SETTINGS_FILE?.trim() || join(defaultRoot, "settings.json");
+  if (existsSync(settingsPath)) {
+    try {
+      const value = JSON.parse(readFileSync(settingsPath, "utf8"));
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        const candidate = value.dataRoot;
+        if (typeof candidate === "string" && candidate.trim()) return resolve(candidate);
+      }
+    } catch {
+    }
+  }
+  return resolve(defaultRoot);
+}
+function craftPaths(root = dataRoot()) {
+  const resolved = resolve(root);
+  return {
+    root: resolved,
+    configDir: join(resolved, "config"),
+    configFile: join(resolved, "config", "config.json"),
+    settingsFile: join(resolved, "settings.json"),
+    databaseDir: join(resolved, "db"),
+    databaseFile: join(resolved, "db", "craft.db"),
+    legacyDatabaseFile: join(resolved, "craft.db"),
+    indexDir: join(resolved, "index"),
+    indexFile: join(resolved, "index", "capabilities.db"),
+    logsDir: join(resolved, "logs"),
+    cacheDir: join(resolved, "cache"),
+    backupsDir: join(resolved, "backups"),
+    runtimeDir: join(resolved, "runtime"),
+    artifactsDir: join(resolved, "artifacts"),
+    knowledgeDir: join(resolved, "knowledge"),
+    memoryDir: join(resolved, "memory"),
+    sessionsDir: join(resolved, "sessions"),
+    experienceDir: join(resolved, "experience"),
+    knowledgeDatabaseFile: join(resolved, "knowledge", "knowledge.db"),
+    memoryDatabaseFile: join(resolved, "memory", "memory.db"),
+    experienceDatabaseFile: join(resolved, "experience", "experience.db"),
+    experienceProcedureDir: join(resolved, "experience", "procedures"),
+    knowledgeContentDir: join(resolved, "knowledge", "md"),
+    memoryContentDir: join(resolved, "memory", "md"),
+    experienceContentDir: join(resolved, "experience", "md"),
+    // The searchable knowledge projection shares the knowledge domain DB;
+    // its tables are independent from the content-index projection.
+    knowledgeIndex: join(resolved, "knowledge", "knowledge.db")
+  };
+}
+
+// core/interfaces/codex-hook-runtime-diagnostics.ts
+import { createHash } from "node:crypto";
+import { lstatSync as lstatSync2, mkdirSync as mkdirSync2, openSync as openSync2, writeSync, closeSync as closeSync2 } from "node:fs";
+import { join as join2, resolve as resolve2 } from "node:path";
+function safeDirectory(path) {
+  try {
+    mkdirSync2(path, { recursive: true, mode: 448 });
+  } catch (error) {
+    if (error.code !== "EEXIST") throw error;
+  }
+  const stat = lstatSync2(path);
+  if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error("Hook diagnostics path must use regular directories");
+}
+function appendLine(path, value) {
+  const fd = openSync2(path, "a", 384);
+  try {
+    writeSync(fd, `${JSON.stringify(value)}
+`);
+  } finally {
+    closeSync2(fd);
+  }
+}
+function beginHookRuntimeDiagnostic(args) {
+  const root = resolve2(args.data_root);
+  const traceRoot = join2(root, "trace");
+  const hookRoot = join2(traceRoot, "hook-runtime");
+  const directory = join2(hookRoot, "v1");
+  safeDirectory(root);
+  safeDirectory(traceRoot);
+  safeDirectory(hookRoot);
+  safeDirectory(directory);
+  const shard = createHash("sha256").update(args.request_id).digest()[0].toString(16).padStart(2, "0");
+  const path = join2(directory, `${shard}.jsonl`);
+  const existingFile = lstatSync2(path, { throwIfNoEntry: false });
+  if (existingFile) {
+    const stat = existingFile;
+    if (stat.isSymbolicLink() || !stat.isFile()) throw new Error("Hook diagnostics file must be a regular file");
+  }
+  const now = args.now ?? (() => performance.now());
+  const wallClock = args.wall_clock ?? (() => (/* @__PURE__ */ new Date()).toISOString());
+  const started = now();
+  const sessionHash = args.session_id ? createHash("sha256").update(args.session_id).digest("hex") : void 0;
+  const base = {
+    request_id: args.request_id,
+    member: args.member,
+    event: args.event,
+    started_at: wallClock(),
+    ...sessionHash ? { session_hash: sessionHash } : {}
+  };
+  appendLine(path, { ...base, phase: "started" });
+  let finished = false;
+  return { finish(timing = {}) {
+    if (finished) return;
+    finished = true;
+    const duration = now() - started;
+    appendLine(path, {
+      ...base,
+      phase: "finished",
+      finished_at: wallClock(),
+      duration_ms: Math.max(0, Math.round(duration)),
+      ...timing.process_elapsed_ms === void 0 ? {} : { process_elapsed_ms: Math.max(0, Math.round(timing.process_elapsed_ms)) },
+      ...timing.input_read_ms === void 0 ? {} : { input_read_ms: Math.max(0, Math.round(timing.input_read_ms)) },
+      ...timing.input_parse_ms === void 0 ? {} : { input_parse_ms: Math.max(0, Math.round(timing.input_parse_ms)) },
+      ...timing.input_bytes === void 0 ? {} : { input_bytes: Math.max(0, Math.round(timing.input_bytes)) },
+      ...timing.rules_load_ms === void 0 ? {} : { rules_load_ms: Math.max(0, Math.round(timing.rules_load_ms)) },
+      ...timing.store_open_ms === void 0 ? {} : { store_open_ms: Math.max(0, Math.round(timing.store_open_ms)) },
+      ...timing.runtime_import_ms === void 0 ? {} : { runtime_import_ms: Math.max(0, Math.round(timing.runtime_import_ms)) },
+      ...timing.service_open_ms === void 0 ? {} : { service_open_ms: Math.max(0, Math.round(timing.service_open_ms)) },
+      ...timing.handler_ms === void 0 ? {} : { handler_ms: Math.max(0, Math.round(timing.handler_ms)) },
+      ...timing.output_write_ms === void 0 ? {} : { output_write_ms: Math.max(0, Math.round(timing.output_write_ms)) },
+      ...timing.store_close_ms === void 0 ? {} : { store_close_ms: Math.max(0, Math.round(timing.store_close_ms)) },
+      ...timing.outcome ? { outcome: timing.outcome } : {},
+      ...timing.error_code ? { error_code: timing.error_code.slice(0, 80) } : {},
+      ...timing.error_type ? { error_type: timing.error_type.slice(0, 80) } : {}
+    });
+  } };
+}
 
 // capability/craft-datasec/hook.ts
 import { extname } from "node:path";
@@ -69,42 +203,42 @@ var Sanitizer = class {
 };
 
 // capability/craft-datasec/vault.ts
-import { createHash, createHmac, randomBytes } from "node:crypto";
-import { constants, closeSync, fstatSync, linkSync, lstatSync, mkdirSync, mkdtempSync, openSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { createHash as createHash2, createHmac, randomBytes } from "node:crypto";
+import { constants, closeSync as closeSync3, fstatSync, linkSync as linkSync2, lstatSync as lstatSync3, mkdirSync as mkdirSync3, mkdtempSync, openSync as openSync3, readFileSync as readFileSync2, rmSync, writeFileSync as writeFileSync2 } from "node:fs";
+import { join as join3 } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 var TOKEN = /\[CRAFT_DATASEC_[a-z0-9_]+_[a-f0-9]{32}\]/g;
 function privateDirectory(path) {
-  mkdirSync(path, { recursive: true, mode: 448 });
-  const stat = lstatSync(path);
+  mkdirSync3(path, { recursive: true, mode: 448 });
+  const stat = lstatSync3(path);
   if (!stat.isDirectory() || stat.isSymbolicLink() || (stat.mode & 63) !== 0 || stat.uid !== process.getuid()) throw new Error("Unsafe vault directory");
 }
 function openPrivate(path, flags = constants.O_RDONLY) {
-  const fd = openSync(path, flags | constants.O_NOFOLLOW, 384);
+  const fd = openSync3(path, flags | constants.O_NOFOLLOW, 384);
   try {
     const stat = fstatSync(fd);
     if (!stat.isFile() || (stat.mode & 63) !== 0 || stat.uid !== process.getuid()) throw new Error("Unsafe vault file");
     return fd;
   } catch (error) {
-    closeSync(fd);
+    closeSync3(fd);
     throw error;
   }
 }
 function readPrivate(path) {
   const fd = openPrivate(path);
   try {
-    return readFileSync(fd);
+    return readFileSync2(fd);
   } finally {
-    closeSync(fd);
+    closeSync3(fd);
   }
 }
 function publish(directory, name, value) {
-  const temp = mkdtempSync(join(directory, ".write-"));
+  const temp = mkdtempSync(join3(directory, ".write-"));
   try {
-    const source = join(temp, "record");
-    writeFileSync(source, value, { mode: 384 });
+    const source = join3(temp, "record");
+    writeFileSync2(source, value, { mode: 384 });
     try {
-      linkSync(source, join(directory, name));
+      linkSync2(source, join3(directory, name));
     } catch (error) {
       if (error.code !== "EEXIST") throw error;
     }
@@ -122,13 +256,13 @@ var TokenVault = class {
   constructor(root, session) {
     if (!session) throw new Error("Missing session identity");
     privateDirectory(root);
-    this.directory = join(root, createHash("sha256").update(session).digest("hex"));
+    this.directory = join3(root, createHash2("sha256").update(session).digest("hex"));
     privateDirectory(this.directory);
     publish(this.directory, "key", randomBytes(32));
-    this.key = readPrivate(join(this.directory, "key"));
+    this.key = readPrivate(join3(this.directory, "key"));
     if (this.key.length !== 32) throw new Error("Invalid vault key");
-    const file = join(this.directory, "mappings.sqlite");
-    closeSync(openPrivate(file, constants.O_CREAT | constants.O_RDWR));
+    const file = join3(this.directory, "mappings.sqlite");
+    closeSync3(openPrivate(file, constants.O_CREAT | constants.O_RDWR));
     this.database = new DatabaseSync(file);
     try {
       this.database.exec("PRAGMA busy_timeout=1500; CREATE TABLE IF NOT EXISTS mappings (token TEXT PRIMARY KEY, name TEXT NOT NULL, value TEXT NOT NULL) STRICT;");
@@ -249,19 +383,30 @@ function blankResult(value) {
 }
 
 // bin/craft-datasec-hook.ts
-function runDataSecHookCli(args, raw, env = process.env) {
+function runDataSecHookCli(args, raw, env = process.env, onTiming) {
   const [host, event] = args;
   if (!["claude", "codex"].includes(host) || !["PreToolUse", "PostToolUse", "UserPromptSubmit"].includes(event)) {
     return { exitCode: 2, stderr: "craft-datasec: expected <claude|codex> <PreToolUse|PostToolUse|UserPromptSubmit>\n" };
   }
   let input = {};
   try {
+    const parseStarted = performance.now();
     input = JSON.parse(raw);
     if (input === null || typeof input !== "object" || Array.isArray(input)) throw new Error("Invalid event");
+    onTiming?.("input_parse_ms", performance.now() - parseStarted);
+    const rulesStarted = performance.now();
     const config = env.CRAFT_DATASEC_RULES;
-    const rules = config ? JSON.parse(readFileSync2(config, "utf8")) : DEFAULT_RULES;
-    const root = env.CRAFT_DATASEC_DIR ?? join2(homedir(), ".craft-datasec");
-    return { exitCode: 0, stdout: `${JSON.stringify(handleHook(host, event, input, root, rules))}
+    const rules = event === "UserPromptSubmit" ? [] : config ? JSON.parse(readFileSync3(config, "utf8")) : DEFAULT_RULES;
+    onTiming?.("rules_load_ms", performance.now() - rulesStarted);
+    const root = env.CRAFT_DATASEC_DIR ?? join4(homedir2(), ".craft-datasec");
+    const handlerStarted = performance.now();
+    let output;
+    try {
+      output = handleHook(host, event, input, root, rules);
+    } finally {
+      onTiming?.("handler_ms", performance.now() - handlerStarted);
+    }
+    return { exitCode: 0, stdout: `${JSON.stringify(output)}
 ` };
   } catch {
     const fallback = event === "PostToolUse" ? { ...hidden(host, FAILURE, blankResult(input?.tool_response ?? null)), ...host === "claude" ? { continue: false, stopReason: FAILURE } : {} } : handleHook(host, event, {}, "", []);
@@ -270,7 +415,7 @@ function runDataSecHookCli(args, raw, env = process.env) {
   }
 }
 function runIfInvoked(argv1, modulePath, run) {
-  return argv1 && resolve(argv1) === resolve(modulePath) ? run() : null;
+  return argv1 && resolve3(argv1) === resolve3(modulePath) ? run() : null;
 }
 function writeCliResult(result2, stdout, stderr) {
   if (!result2) return;
@@ -278,8 +423,39 @@ function writeCliResult(result2, stdout, stderr) {
   if (result2.stdout) stdout.write(result2.stdout);
   process.exitCode = result2.exitCode;
 }
-var result = runIfInvoked(process.argv[1], fileURLToPath(import.meta.url), () => runDataSecHookCli(process.argv.slice(2), readFileSync2(0, "utf8")));
+var diagnostic;
+var inputReadMs = 0;
+var inputBytes = 0;
+var timings = {};
+var result = runIfInvoked(process.argv[1], fileURLToPath(import.meta.url), () => {
+  const args = process.argv.slice(2), [host, event] = args;
+  if (!(host === "claude" || host === "codex") || !(event === "PreToolUse" || event === "PostToolUse" || event === "UserPromptSubmit")) {
+    return runDataSecHookCli(args, readFileSync3(0, "utf8"));
+  }
+  try {
+    diagnostic = beginHookRuntimeDiagnostic({ data_root: craftPaths().root, request_id: randomUUID(), member: "datasec", event });
+  } catch {
+  }
+  const readStarted = performance.now();
+  const raw = readFileSync3(0, "utf8");
+  inputReadMs = performance.now() - readStarted;
+  inputBytes = Buffer.byteLength(raw);
+  return runDataSecHookCli(args, raw, process.env, (stage, durationMs) => {
+    timings[stage] = durationMs;
+  });
+});
+var outputStarted = performance.now();
 writeCliResult(result, process.stdout, process.stderr);
+diagnostic?.finish({
+  process_elapsed_ms: process.uptime() * 1e3,
+  input_read_ms: inputReadMs,
+  input_bytes: inputBytes,
+  input_parse_ms: timings.input_parse_ms,
+  rules_load_ms: timings.rules_load_ms,
+  handler_ms: timings.handler_ms,
+  output_write_ms: performance.now() - outputStarted,
+  outcome: "completed"
+});
 export {
   runDataSecHookCli,
   runIfInvoked,
