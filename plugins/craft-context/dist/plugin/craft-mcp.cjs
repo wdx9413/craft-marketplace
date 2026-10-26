@@ -220599,6 +220599,20 @@ var CraftStore = class {
     }
     return result;
   }
+  /** Run a bounded read on one SQLite snapshot without reserving the writer. */
+  readSnapshot(operation2) {
+    const database = this.database;
+    if (this.#transactionDepth > 0) return operation2(database);
+    database.exec("BEGIN DEFERRED");
+    try {
+      const result = operation2(database);
+      database.exec("COMMIT");
+      return result;
+    } catch (error) {
+      database.exec("ROLLBACK");
+      throw error;
+    }
+  }
   /** Keep all writes for one Trace on its own WAL writer, while old Traces stay on the legacy database. */
   traceTransaction(traceId, operation2) {
     return this.legacyTrace(traceId) ? this.transaction(() => operation2()) : this.traceShards.transaction(traceId, operation2);
@@ -221710,7 +221724,7 @@ var CraftStore = class {
     const records2 = [];
     for (const row of rows4) {
       const header = row;
-      const record2 = this.find(kind4, String(header.id), Number(header.version), hydrate);
+      const record2 = this.recordFromSnapshot(header, hydrate);
       if (predicate && !predicate(record2)) continue;
       records2.push(record2);
       if (records2.length === bounded4) break;
@@ -227617,7 +227631,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.114";
+var CRAFT_RELEASE_VERSION = "0.12.115";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
@@ -231746,29 +231760,63 @@ var KnowledgeSourceRegistry = class {
       offset = Number(cursor.offset);
     }
     const selected = documents.slice(offset, offset + maxFiles), nextOffset = offset + selected.length;
+    const revisionId = String(args.revision_id ?? `knowledge_source_revision_${String(source.id)}_${revisionDigest.slice(-16)}`);
+    const rootDigest = stableDigest(root);
+    const scopeKey2 = `${source.scope.kind}:${source.scope.id}`;
+    const observationKey = `knowledge-source:${String(source.id)}`;
+    const priorDocuments = this.store.list("knowledge_document", 10001, (doc) => doc.source_id === source.id && doc.root_digest === rootDigest);
+    const priorClaims = this.store.list(
+      "knowledge_claim",
+      1e5,
+      (item) => item.source_id === source.id && Boolean(item.source_revision_id),
+      false,
+      { source_ids: [String(source.id)], document_ids: [] }
+    );
+    const sharedClaims = this.store.list("knowledge_claim", 1e5, (item) => item.status === "candidate" && item.scope === scopeKey2);
+    const sourceSupports = this.store.list("knowledge_claim_support", 1e4, (item) => item.observation_key === observationKey);
+    const priorRevisions = this.store.list(
+      "knowledge_source_revision",
+      1e4,
+      (item) => item.source_id === source.id && item.id !== revisionId && item.locator_digest === rootDigest && item.status === "current"
+    );
+    const sharedClaimsByDigest = /* @__PURE__ */ new Map();
+    for (const claim of sharedClaims) {
+      const key2 = String(claim.content_digest ?? "");
+      let rows4 = sharedClaimsByDigest.get(key2);
+      if (!rows4) {
+        rows4 = /* @__PURE__ */ new Map();
+        sharedClaimsByDigest.set(key2, rows4);
+      }
+      rows4.set(String(claim.id), claim);
+    }
+    const sourceSupportsByClaim = /* @__PURE__ */ new Map();
+    for (const support of sourceSupports) sourceSupportsByClaim.set(String(support.claim_id), support);
     return this.store.transaction(() => {
-      const revisionId = String(args.revision_id ?? `knowledge_source_revision_${String(source.id)}_${revisionDigest.slice(-16)}`);
       const existing = this.store.find("knowledge_source_revision", revisionId);
       if (existing && existing.source_revision_digest !== revisionDigest) throw new Error("Knowledge revision identity conflict");
       const revision2 = existing ?? this.store.create("knowledge_source_revision", revisionId, { source_id: source.id, source_version: source.version, source_revision_digest: revisionDigest, locator_digest: stableDigest(root), file_count: documents.length, status: "current", immutable: true });
       const manifest = new Map(documents.map((doc) => [doc.id, doc]));
       const invalid = /* @__PURE__ */ new Set();
       let unscopedClaimsSkipped = 0;
-      for (const prior of this.store.list("knowledge_document", 10001, (doc) => doc.source_id === source.id && doc.root_digest === stableDigest(root))) {
+      for (const prior of priorDocuments) {
         const current2 = manifest.get(String(prior.id));
         if (!current2 || current2.digest !== prior.content_digest) {
           invalid.add(String(prior.id));
-          this.store.save("knowledge_document", String(prior.id), { ...payload(prior), status: current2 ? "changed" : "deleted" });
+          const latest = this.store.find("knowledge_document", String(prior.id));
+          if (latest && latest.version !== prior.version) throw new Error(`Concurrent update detected for knowledge_document: ${prior.id}`);
+          if (latest) this.store.updateIfVersion("knowledge_document", String(prior.id), Number(prior.version), { ...payload(prior), status: current2 ? "changed" : "deleted" });
         }
       }
-      for (const claim of this.store.list("knowledge_claim", 1e5, (item) => item.source_id === source.id && Boolean(item.source_revision_id), false, { source_ids: [String(source.id)], document_ids: [] })) {
+      for (const claim of priorClaims) {
         const obsolete = claim.document_id ? invalid.has(String(claim.document_id)) : claim.source_revision_id !== revision2.id;
         if (obsolete && ["reviewed", "candidate"].includes(String(claim.status))) {
           if (!knowledgeScenarioScope(claim)) {
             unscopedClaimsSkipped++;
             continue;
           }
-          const stale = this.store.save("knowledge_claim", String(claim.id), { ...payload(claim), status: "stale", revalidation_required: true, stale_since_revision: revision2.id });
+          const latest = this.store.find("knowledge_claim", String(claim.id));
+          if (!latest || latest.version !== claim.version) throw new Error(`Concurrent update detected for knowledge_claim: ${claim.id}`);
+          const stale = this.store.updateIfVersion("knowledge_claim", String(claim.id), Number(claim.version), { ...payload(claim), status: "stale", revalidation_required: true, stale_since_revision: revision2.id });
           this.updateStaleScenarioClaim(stale, source);
         }
       }
@@ -231809,19 +231857,39 @@ var KnowledgeSourceRegistry = class {
           const evidence2 = this.store.find("evidence", evidenceId) ?? this.store.create("evidence", evidenceId, { source_type: "knowledge_fragment", source_id: source.id, source_revision_id: fragment.source_revision_id, fragment_id: fragment.id, locator: fragment.locator, claim: "Source fragment retained for review.", confidence: source.trust === "verified" ? "bounded" : "unverified", content_digest: fragment.content_digest, observed_at: (/* @__PURE__ */ new Date()).toISOString() });
           const claimId = `knowledge_claim_from_${fragmentId}`;
           const identity = { source_id: source.id, source_revision_id: fragment.source_revision_id, document_id: doc.id, document_digest: doc.digest, fragment_id: fragment.id, scope: `${source.scope.kind}:${source.scope.id}`, scope_envelope: source.scope_envelope, kind: "fact", content_digest: fragment.content_digest, evidence_ids: [evidence2.id], valid_until: null };
-          const shared = this.store.list("knowledge_claim", 1e5, (item) => item.status === "candidate" && item.content_digest === fragment.content_digest && item.scope === identity.scope && item.id !== claimId)[0];
+          const shared = [...sharedClaimsByDigest.get(String(fragment.content_digest))?.values() ?? []].find((item) => item.id !== claimId && item.status === "candidate" && item.scope === identity.scope);
           let claim = this.store.find("knowledge_claim", claimId);
           if (!claim && shared) {
-            const sharedEvidenceIds = (Array.isArray(shared.evidence_ids) ? shared.evidence_ids : []).map(String);
-            claim = sharedEvidenceIds.includes(String(evidence2.id)) ? shared : this.store.save("knowledge_claim", String(shared.id), { ...payload(shared), evidence_ids: [.../* @__PURE__ */ new Set([...sharedEvidenceIds, String(evidence2.id)])].sort() });
+            const latest = this.store.find("knowledge_claim", String(shared.id));
+            if (!latest || latest.status !== "candidate" || latest.scope !== identity.scope || latest.content_digest !== fragment.content_digest) {
+              sharedClaimsByDigest.get(String(fragment.content_digest))?.delete(String(shared.id));
+            } else {
+              const sharedEvidenceIds = (Array.isArray(latest.evidence_ids) ? latest.evidence_ids : []).map(String);
+              claim = sharedEvidenceIds.includes(String(evidence2.id)) ? latest : this.store.updateIfVersion(
+                "knowledge_claim",
+                String(latest.id),
+                Number(latest.version),
+                { ...payload(latest), evidence_ids: [.../* @__PURE__ */ new Set([...sharedEvidenceIds, String(evidence2.id)])].sort() }
+              );
+              sharedClaimsByDigest.get(String(fragment.content_digest))?.set(String(claim.id), claim);
+            }
           }
-          if (!claim) claim = this.store.create("knowledge_claim", claimId, { ...identity, content_ref: fragment.content_ref, identity_digest: stableDigest(identity), status: "candidate", review: null, ingest_generated: true, publication_allowed: false });
+          if (!claim) {
+            claim = this.store.create("knowledge_claim", claimId, { ...identity, content_ref: fragment.content_ref, identity_digest: stableDigest(identity), status: "candidate", review: null, ingest_generated: true, publication_allowed: false });
+            let rows4 = sharedClaimsByDigest.get(String(fragment.content_digest));
+            if (!rows4) {
+              rows4 = /* @__PURE__ */ new Map();
+              sharedClaimsByDigest.set(String(fragment.content_digest), rows4);
+            }
+            rows4.set(String(claim.id), claim);
+          }
           if (source.trust === "verified" && ["bounded", "confirmed"].includes(String(evidence2.confidence))) {
-            const observationKey = `knowledge-source:${String(source.id)}`;
             const supportIdentity = { claim_id: claim.id, claim_version: claim.version, evidence_id: evidence2.id, observation_key: observationKey, scope: identity.scope };
             const supportId = `knowledge_support_${stableDigest(supportIdentity).slice(-24)}`;
-            const sourceSupport = this.store.list("knowledge_claim_support", 1e4, (item) => item.claim_id === claim.id && item.observation_key === observationKey)[0];
-            if (!sourceSupport && !this.store.find("knowledge_claim_support", supportId)) this.store.create("knowledge_claim_support", supportId, { ...supportIdentity, identity_digest: stableDigest(supportIdentity), recorded_at: (/* @__PURE__ */ new Date()).toISOString(), source_type: evidence2.source_type, confidence: evidence2.confidence });
+            if (!sourceSupportsByClaim.has(String(claim.id)) && !this.store.find("knowledge_claim_support", supportId)) {
+              const support = this.store.create("knowledge_claim_support", supportId, { ...supportIdentity, identity_digest: stableDigest(supportIdentity), recorded_at: (/* @__PURE__ */ new Date()).toISOString(), source_type: evidence2.source_type, confidence: evidence2.confidence });
+              sourceSupportsByClaim.set(String(claim.id), support);
+            }
           }
           const candidateId2 = `knowledge_ingest_candidate_${fragmentId}`;
           const candidate2 = this.store.find("knowledge_ingest_candidate", candidateId2) ?? this.store.create("knowledge_ingest_candidate", candidateId2, { source_id: source.id, source_revision_id: fragment.source_revision_id, fragment_id: fragment.id, claim_id: claim.id, evidence_id: evidence2.id, scope: identity.scope, status: "candidate", structural_review: "pending", semantic_review: "pending", publication_allowed: false });
@@ -231829,7 +231897,11 @@ var KnowledgeSourceRegistry = class {
           candidates.push(candidate2);
         }
       }
-      for (const prior of this.store.list("knowledge_source_revision", 1e4, (item) => item.source_id === source.id && item.id !== revision2.id && item.locator_digest === stableDigest(root) && item.status === "current")) this.store.save("knowledge_source_revision", String(prior.id), { ...payload(prior), status: "superseded", superseded_by: revision2.id });
+      for (const prior of priorRevisions) {
+        const latest = this.store.find("knowledge_source_revision", String(prior.id));
+        if (!latest || latest.version !== prior.version || latest.status !== "current") throw new Error(`Concurrent update detected for knowledge_source_revision: ${prior.id}`);
+        this.store.updateIfVersion("knowledge_source_revision", String(prior.id), Number(prior.version), { ...payload(prior), status: "superseded", superseded_by: revision2.id });
+      }
       const hasMore = nextOffset < documents.length;
       return {
         status: hasMore ? "partial" : "completed",
@@ -246902,13 +246974,20 @@ var ContextAccessChangedError = class extends Error {
 function assertContextReadCurrent(store, receipt) {
   const refs6 = receipt?.read_refs ?? [];
   if (!refs6.length) return;
-  store.transaction(() => {
+  const verifySnapshot = () => store.readSnapshot(() => {
     for (let offset = 0; offset < refs6.length; offset += 250) {
       const part = refs6.slice(offset, offset + 250);
       const changed = store.database.prepare(`WITH pinned(kind,id,version) AS (VALUES ${part.map(() => "(?,?,?)").join(",")}) SELECT 1 FROM pinned p WHERE COALESCE((SELECT MAX(r.version) FROM records r WHERE r.kind=p.kind AND r.id=p.id),0)<>p.version LIMIT 1`).get(...part.flatMap((ref3) => [ref3.kind, ref3.id, ref3.version]));
       if (changed) throw new ContextAccessChangedError();
     }
   });
+  const dataVersion = () => Number(store.database.prepare("PRAGMA data_version").get().data_version);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const before = dataVersion();
+    verifySnapshot();
+    if (before === dataVersion()) return;
+  }
+  throw new ContextAccessChangedError();
 }
 var ContextReadGuard = class {
   store;
@@ -261117,39 +261196,41 @@ var CodebaseIndexKernel = class {
     return observeOperation(this.store, "codebase", "context_projection", args, () => this.projectContext(args));
   }
   projectContext(args) {
-    return this.store.transaction(() => {
-      const { index, workspace } = this.readyIndex(args);
-      const query = text19(args.query, "query"), limit3 = bounded2(args.limit, "limit", 100);
-      if (args.required_refs !== void 0 && !Array.isArray(args.required_refs)) throw new Error("required_refs must be an array");
-      const required5 = (args.required_refs ?? []).map(requiredContextRef).filter((ref3) => ref3.member === "codebase");
-      const scope3 = args.scope ?? { kind: "workspace", id: workspace.id };
-      const normalize2 = (node) => ({ node_id: node.id, path: node.path, name: node.name, kind: node.kind, language: node.language, selection_reason: node.selection_reason, span: node.span, source_digest: node.source_digest, version: index.version, index_id: index.id, checkpoint_id: index.checkpoint_id });
-      const graph = this.loadGraph(index);
-      const found = codeContextCandidates({ ...graph }, query, limit3);
-      const candidates = [...found.symbols];
-      for (const node of graph.nodes) if (required5.some((ref3) => contextAssetMatches(ref3, contextAssetRef("codebase", normalize2(node), scope3))) && !candidates.some((candidate2) => candidate2.id === node.id)) candidates.unshift(node);
-      const references2 = candidates.map(normalize2);
-      for (const ref3 of required5) if (!references2.some((item) => contextAssetMatches(ref3, contextAssetRef("codebase", item, scope3)))) throw new Error("Required Codebase reference is unavailable");
-      const activation = this.store.get("codebase_activation", String(args.activation_id ?? `codebase_activation_${workspace.id}`));
-      const checkpoint = this.store.get("workspace_checkpoint", String(index.checkpoint_id));
-      const readRefs = [
-        { kind: "codebase_index", id: String(index.id), version: Number(index.version) },
-        { kind: "workspace", id: String(workspace.id), version: Number(workspace.version) },
-        { kind: "workspace_checkpoint", id: String(checkpoint.id), version: Number(checkpoint.version) },
-        { kind: "codebase_activation", id: String(activation.id), version: Number(activation.version) }
-      ];
-      return {
-        workspace_id: workspace.id,
-        index_id: index.id,
-        checkpoint_id: index.checkpoint_id,
-        activation_id: activation.id,
-        candidates: references2,
-        query_omitted_count: found.omitted_count,
-        read_refs: readRefs,
-        configuration_digest: this.repositoryConfigurationDigest(workspace),
-        candidate_only: true
-      };
-    });
+    const { index, workspace } = this.readyIndex(args);
+    const query = text19(args.query, "query"), limit3 = bounded2(args.limit, "limit", 100);
+    if (args.required_refs !== void 0 && !Array.isArray(args.required_refs)) throw new Error("required_refs must be an array");
+    const required5 = (args.required_refs ?? []).map(requiredContextRef).filter((ref3) => ref3.member === "codebase");
+    const scope3 = args.scope ?? { kind: "workspace", id: workspace.id };
+    const normalize2 = (node) => ({ node_id: node.id, path: node.path, name: node.name, kind: node.kind, language: node.language, selection_reason: node.selection_reason, span: node.span, source_digest: node.source_digest, version: index.version, index_id: index.id, checkpoint_id: index.checkpoint_id });
+    const configurationDigest = this.repositoryConfigurationDigest(workspace);
+    const graph = this.loadGraph(index);
+    const found = codeContextCandidates({ ...graph }, query, limit3);
+    const candidates = [...found.symbols];
+    for (const node of graph.nodes) if (required5.some((ref3) => contextAssetMatches(ref3, contextAssetRef("codebase", normalize2(node), scope3))) && !candidates.some((candidate2) => candidate2.id === node.id)) candidates.unshift(node);
+    const references2 = candidates.map(normalize2);
+    for (const ref3 of required5) if (!references2.some((item) => contextAssetMatches(ref3, contextAssetRef("codebase", item, scope3)))) throw new Error("Required Codebase reference is unavailable");
+    const activation = this.store.get("codebase_activation", String(args.activation_id ?? `codebase_activation_${workspace.id}`));
+    const checkpoint = this.store.get("workspace_checkpoint", String(index.checkpoint_id));
+    const readRefs = [
+      { kind: "codebase_index", id: String(index.id), version: Number(index.version) },
+      { kind: "workspace", id: String(workspace.id), version: Number(workspace.version) },
+      { kind: "workspace_checkpoint", id: String(checkpoint.id), version: Number(checkpoint.version) },
+      { kind: "codebase_activation", id: String(activation.id), version: Number(activation.version) }
+    ];
+    const projection = {
+      workspace_id: workspace.id,
+      index_id: index.id,
+      checkpoint_id: index.checkpoint_id,
+      activation_id: activation.id,
+      candidates: references2,
+      query_omitted_count: found.omitted_count,
+      read_refs: readRefs,
+      configuration_digest: configurationDigest,
+      candidate_only: true
+    };
+    assertContextReadCurrent(this.store, projection);
+    if (this.repositoryConfigurationDigest(workspace) !== configurationDigest) throw new Error("Codebase repository configuration changed during projection");
+    return projection;
   }
   /** Revalidate the exact index/activation and selected file digests after shared Context awaits. */
   assertContextProjectionCurrent(projection, selected) {
@@ -270249,7 +270330,7 @@ var MAX_CONTEXT_FILE_BYTES = 512 * 1024;
 var MAX_CONTEXT_TOTAL_BYTES = 1024 * 1024;
 var git = (root, args, input) => (0, import_node_child_process12.execFileSync)("git", ["-C", root, ...args], { encoding: "utf8", input, timeout: 5e3, maxBuffer: 8 * 1024 * 1024, stdio: ["pipe", "pipe", "ignore"] });
 var fileVersion = (stat4) => [stat4.dev, stat4.ino, stat4.size, stat4.mtimeMs, stat4.ctimeMs].join(":");
-function repositoryPolicyDigest(root, runGit2 = git) {
+function repositoryPolicySnapshot(root, runGit2 = git) {
   root = (0, import_node_fs48.realpathSync)(root);
   const configPath = (0, import_node_path62.join)(root, ".craft-codebase.json");
   let config = "missing";
@@ -270279,7 +270360,54 @@ function repositoryPolicyDigest(root, runGit2 = git) {
     }
   };
   const ignores = [.../* @__PURE__ */ new Set([...policyFiles.map((path2) => (0, import_node_path62.join)(root, path2)), infoExclude, ...configured.map((path2) => (0, import_node_path62.resolve)(root, path2)), defaultExclude])].sort().map((path2) => [path2, fileDigest2(path2)]);
-  return (0, import_node_crypto150.createHash)("sha256").update(JSON.stringify({ config, ignores, auto_index: process.env.CRAFT_CODEBASE_AUTO_INDEX ?? null })).digest("hex");
+  const autoIndex = process.env.CRAFT_CODEBASE_AUTO_INDEX ?? null;
+  return {
+    root,
+    digest: (0, import_node_crypto150.createHash)("sha256").update(JSON.stringify({ config, ignores, auto_index: autoIndex })).digest("hex"),
+    config_path: configPath,
+    config_digest: config,
+    ignore_files: ignores,
+    info_exclude_path: infoExclude,
+    configured_excludes: configured.map((path2) => (0, import_node_path62.resolve)(root, path2)).sort(),
+    default_exclude_path: defaultExclude,
+    auto_index: autoIndex
+  };
+}
+function repositoryPolicySnapshotCurrent(snapshot, runGit2 = git) {
+  const root = (0, import_node_fs48.realpathSync)(snapshot.root);
+  if (root !== snapshot.root || (process.env.CRAFT_CODEBASE_AUTO_INDEX ?? null) !== snapshot.auto_index) return false;
+  let config = "missing";
+  if ((0, import_node_fs48.existsSync)(snapshot.config_path)) {
+    const stat4 = (0, import_node_fs48.lstatSync)(snapshot.config_path);
+    if (stat4.isSymbolicLink() || !stat4.isFile()) throw new Error("Repository config must be a regular file");
+    config = (0, import_node_crypto150.createHash)("sha256").update((0, import_node_fs48.readFileSync)(snapshot.config_path)).digest("hex");
+  }
+  if (config !== snapshot.config_digest) return false;
+  const infoExclude = (0, import_node_path62.resolve)(root, runGit2(root, ["rev-parse", "--git-path", "info/exclude"]).trim());
+  const configured = (() => {
+    try {
+      return runGit2(root, ["config", "--path", "--get-all", "core.excludesfile"]).split(/\r?\n/u).filter(Boolean).map((path2) => (0, import_node_path62.resolve)(root, path2)).sort();
+    } catch (error) {
+      if (error.status === 1) return [];
+      throw error;
+    }
+  })();
+  const defaultExclude = (0, import_node_path62.join)(process.env.XDG_CONFIG_HOME ?? (0, import_node_path62.join)((0, import_node_os5.homedir)(), ".config"), "git", "ignore");
+  if (infoExclude !== snapshot.info_exclude_path || JSON.stringify(configured) !== JSON.stringify(snapshot.configured_excludes) || defaultExclude !== snapshot.default_exclude_path) return false;
+  for (const [path2, expectedDigest] of snapshot.ignore_files) {
+    let currentDigest;
+    try {
+      currentDigest = (0, import_node_crypto150.createHash)("sha256").update((0, import_node_fs48.readFileSync)(path2)).digest("hex");
+    } catch (error) {
+      if (error.code === "ENOENT") currentDigest = "missing";
+      else throw error;
+    }
+    if (currentDigest !== expectedDigest) return false;
+  }
+  return true;
+}
+function repositoryPolicyDigest(root, runGit2 = git) {
+  return repositoryPolicySnapshot(root, runGit2).digest;
 }
 function hasSymlinkPath(root, path2) {
   let current2 = root;
@@ -270981,14 +271109,15 @@ function ensureRepositoryAttempt(service, args, sourceRetry) {
   const depth = args.index_depth ?? "basic";
   const stateId = `${workspaceId}_${depth}`;
   const priorState = service.store.find("codebase_repository_state", stateId);
-  const currentPolicyDigest = repositoryPolicyDigest(root);
+  const policySnapshot = repositoryPolicySnapshot(root);
+  const currentPolicyDigest = policySnapshot.digest;
   const warmWorkspace = service.store.find("workspace", workspaceId);
   const priorIndex = priorState ? service.store.find("codebase_index", String(priorState.index_id)) : void 0;
   const priorCheckpointId = String(warmWorkspace?.latest_checkpoint_id || priorState?.checkpoint_id || priorIndex?.checkpoint_id || "");
   const priorCheckpoint = priorCheckpointId ? service.store.find("workspace_checkpoint", priorCheckpointId) : void 0;
   const expectedSnapshotRoot = (0, import_node_path65.join)(projectStorageDirectory(service.store.paths, root), "codebase", "snapshots", workspaceId, priorCheckpointId);
   const checkpointMetadataMatches = priorState?.checkpoint_id === priorCheckpointId || !priorState?.checkpoint_id && priorIndex?.checkpoint_id === priorCheckpointId;
-  if (priorState?.repository_policy_digest === currentPolicyDigest && priorState.policy_version === REPOSITORY_INDEX_POLICY && priorState.adapter_config_digest === lspConfig.digest && checkpointMetadataMatches && priorIndex?.checkpoint_id === priorCheckpointId && warmWorkspace?.snapshot_storage === "project_codebase" && priorCheckpoint?.snapshot_root === expectedSnapshotRoot && priorIndex?.status === "ready" && repositoryStateReusable(priorState) && service.workspace.freshness({ workspace_id: workspaceId }).status === "current" && repositoryPolicyDigest(root) === currentPolicyDigest) {
+  if (priorState?.repository_policy_digest === currentPolicyDigest && priorState.policy_version === REPOSITORY_INDEX_POLICY && priorState.adapter_config_digest === lspConfig.digest && checkpointMetadataMatches && priorIndex?.checkpoint_id === priorCheckpointId && warmWorkspace?.snapshot_storage === "project_codebase" && priorCheckpoint?.snapshot_root === expectedSnapshotRoot && priorIndex?.status === "ready" && repositoryStateReusable(priorState) && service.workspace.freshness({ workspace_id: workspaceId }).status === "current" && repositoryPolicySnapshotCurrent(policySnapshot)) {
     const summary2 = priorState.summary;
     if (!priorState.checkpoint_id) service.store.save("codebase_repository_state", stateId, { ...priorState, checkpoint_id: priorCheckpointId });
     return {
@@ -271020,7 +271149,7 @@ function ensureRepositoryAttempt(service, args, sourceRetry) {
     const checkpointId = String(existingWorkspace.latest_checkpoint_id ?? stateCheckpointId ?? "");
     const prior = service.store.find("codebase_repository_state", `${workspaceId}_${depth}`);
     const cachedIndex = prior ? service.store.find("codebase_index", String(prior.index_id)) : void 0;
-    if (prior?.checkpoint_id === checkpointId && prior.policy_version === REPOSITORY_INDEX_POLICY && prior.adapter_config_digest === lspConfig.digest && prior.repository_policy_digest === currentPolicyDigest && cachedIndex?.status === "ready" && repositoryStateReusable(prior) && repositoryPolicyDigest(root) === currentPolicyDigest) {
+    if (prior?.checkpoint_id === checkpointId && prior.policy_version === REPOSITORY_INDEX_POLICY && prior.adapter_config_digest === lspConfig.digest && prior.repository_policy_digest === currentPolicyDigest && cachedIndex?.status === "ready" && repositoryStateReusable(prior) && repositoryPolicySnapshotCurrent(policySnapshot)) {
       service.store.save("codebase_repository_state", stateId, { ...prior, repository_policy_digest: currentPolicyDigest });
       return { ...base, status: "ready", index_id: prior.index_id, checkpoint_id: checkpointId, index_depth: depth, reused: true, omitted_files: selected.omitted, omitted_by_language: selected.omitted_by_language, summary: prior.summary };
     }
