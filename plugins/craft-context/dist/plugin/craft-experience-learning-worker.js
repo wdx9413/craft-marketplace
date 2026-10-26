@@ -304,7 +304,7 @@ function createFetchTransport(options = {}) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.112";
+var CRAFT_RELEASE_VERSION = "0.12.113";
 
 // common/craft-common-store-local/src/paths.ts
 import { createHash as createHash2, randomUUID } from "node:crypto";

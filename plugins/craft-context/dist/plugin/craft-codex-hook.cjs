@@ -9219,7 +9219,7 @@ var CRAFT_RELEASE_VERSION;
 var init_version = __esm({
   "core/version.ts"() {
     "use strict";
-    CRAFT_RELEASE_VERSION = "0.12.112";
+    CRAFT_RELEASE_VERSION = "0.12.113";
   }
 });
 
@@ -283878,18 +283878,17 @@ function automaticMemoryFact(prompt) {
 function sanitizedExperienceTaskGoal(value) {
   return sanitizeCodexTaskGoal(value);
 }
-function experienceTaskGoalArgs(service, input) {
-  const root = text33(input.cwd), sessionId = text33(input.session_id), turnId = text33(input.turn_id), scope3 = codexProjectScope(root);
+function experienceTaskGoalArgs(service, input, scope3) {
+  const root = text33(input.cwd), sessionId = text33(input.session_id), turnId = text33(input.turn_id);
   if (!root || !sessionId || !turnId || !scope3) return null;
   return { experience_dir: projectExperienceDirectory(service.store, scope3.id, root, true), scope: scope3.id, session_id: sessionId, turn_id: turnId };
 }
-function projectScenarioKey(input, signal, service) {
+function projectScenarioKey(input, signal, service, projectScope) {
   if (signal.kind !== "verification" || signal.outcome === "unknown") return null;
   const root = text33(input.cwd);
-  if (!root) return null;
   const command2 = nestedText(input.tool_input ?? input.toolInput ?? input.input, ["command", "cmd", "script"]);
   try {
-    const scope3 = codexProjectScope(root);
+    const scope3 = projectScope;
     const directory4 = projectExperienceDirectory(service.store, scope3.id, root);
     const path2 = (0, import_node_path72.join)(directory4, "experience-scenarios.json");
     for (const entry2 of [directory4, path2]) {
@@ -283957,14 +283956,14 @@ var init_codex_hook_bridge = __esm({
       constructor(service) {
         this.service = service;
       }
-      record(input, signal) {
-        const scope3 = codexProjectScope(input.cwd);
+      record(input, signal, projectScope) {
+        const scope3 = projectScope === void 0 ? codexProjectScope(input.cwd) : projectScope;
         const turn = this.turn(input);
         if (!scope3 || !turn) return null;
         const journalId = this.journalId(scope3, turn, input);
         const legacyRow = this.service.store.database.prepare("SELECT 1 FROM records WHERE kind='codex_hook_turn' AND id=? LIMIT 1").get(journalId) !== void 0;
         if (process.env.CRAFT_HOOK_MODE === "1" && !legacyRow) {
-          const prior = this.find(input, false);
+          const prior = this.find(input, false, scope3);
           if (prior?.closed_at) return prior;
           const signalId = signal.id;
           return this.service.store.traceTransaction(signalId, () => {
@@ -283981,7 +283980,7 @@ var init_codex_hook_bridge = __esm({
           });
         }
         const write = () => {
-          const existing = this.find(input);
+          const existing = this.find(input, void 0, scope3);
           const currentId = existing ? String(existing.id) : journalId;
           if (existing?.closed_at) return null;
           const priorSignals = Array.isArray(existing?.signals) ? existing.signals : [];
@@ -284013,17 +284012,17 @@ var init_codex_hook_bridge = __esm({
         };
         return legacyRow ? this.service.store.transaction(write) : this.service.store.traceTransaction(journalId, write);
       }
-      bindContextReceipt(input, receipt) {
-        const scope3 = codexProjectScope(input.cwd);
+      bindContextReceipt(input, receipt, projectScope) {
+        const scope3 = projectScope === void 0 ? codexProjectScope(input.cwd) : projectScope;
         const turn = this.turn(input);
         if (!scope3 || !turn) return;
-        const existing = this.find(input, false);
+        const existing = this.find(input, false, scope3);
         const id23 = existing ? String(existing.id) : this.journalId(scope3, turn, input);
         const prior = existing ?? this.findById(id23);
         this.service.store.save("codex_hook_turn", id23, { ...prior ?? { scope: scope3, session_id: text33(input.session_id) ?? "unknown", turn_id: turn, signals: [], has_edit: false, verification_outcome: null, content_stored: false }, trace_id: String(prior?.trace_id ?? id23), context_receipt_id: receipt.id, content_free: true });
       }
-      find(input, includePendingSignals = process.env.CRAFT_HOOK_MODE === "1") {
-        const scope3 = codexProjectScope(input.cwd);
+      find(input, includePendingSignals = process.env.CRAFT_HOOK_MODE === "1", projectScope) {
+        const scope3 = projectScope === void 0 ? codexProjectScope(input.cwd) : projectScope;
         const turn = this.turn(input);
         if (!scope3 || !turn) return null;
         const journalId = this.journalId(scope3, turn, input);
@@ -284073,10 +284072,10 @@ var init_codex_hook_bridge = __esm({
         const legacy = this.service.store.database.prepare("SELECT 1 FROM records WHERE kind='codex_hook_turn' AND id=? LIMIT 1").get(id23) !== void 0;
         return legacy ? this.service.store.find("codex_hook_turn", id23) : this.service.store.traceShards.find("codex_hook_turn", id23, void 0, id23);
       }
-      close(input) {
-        const scope3 = codexProjectScope(input.cwd), turn = this.turn(input);
+      close(input, projectScope) {
+        const scope3 = projectScope === void 0 ? codexProjectScope(input.cwd) : projectScope, turn = this.turn(input);
         if (!scope3 || !turn) return;
-        const existing = this.find(input);
+        const existing = this.find(input, void 0, scope3);
         const journalId = existing ? String(existing.id) : this.journalId(scope3, turn, input);
         if (existing?.closed_at) return;
         const next = { ...existing ? payload(existing) : {
@@ -284119,16 +284118,16 @@ var init_codex_hook_bridge = __esm({
           return source?.scope === scopeKey2 && Array.isArray(observation.evidence_ids) && observation.evidence_ids.some((id23) => evidenceIds2.has(String(id23)));
         })[0] ?? null;
       }
-      finalize(input) {
-        const journal = this.journal.find(input);
+      finalize(input, projectScope) {
+        const resolvedProjectScope = projectScope === void 0 && typeof input.cwd === "string" ? this.service.scopeIdentityResolveProject({ project_root: input.cwd }).identity.canonical_scope : projectScope;
+        const journal = this.journal.find(input, void 0, resolvedProjectScope);
         if (!journal || journal.has_edit !== true || !["passed", "failed"].includes(String(journal.verification_outcome))) return null;
         if (typeof journal.context_receipt_id !== "string") return null;
         const projectRoot = text33(input.cwd);
-        if (projectRoot) {
-          const resolved = this.service.scopeIdentityResolveProject({ project_root: projectRoot }).identity;
+        if (projectRoot && resolvedProjectScope) {
           const receipt = this.service.store.find("context_resolution_receipt", String(journal.context_receipt_id));
           const receiptScope = receipt?.scope;
-          if (receiptScope?.kind === "project" && resolved.canonical_scope && stableDigest(resolved.canonical_scope) !== stableDigest(receiptScope)) throw new Error("Hook project root does not match the Context receipt scope");
+          if (receiptScope?.kind === "project" && stableDigest(resolvedProjectScope) !== stableDigest(receiptScope)) throw new Error("Hook project root does not match the Context receipt scope");
         }
         const prior = this.finalizedTurn(input, journal);
         if (prior) {
@@ -284145,7 +284144,7 @@ var init_codex_hook_bridge = __esm({
           this.service.store.save("codex_hook_turn", String(journal.id), { ...payload(journal), trace_id: String(journal.trace_id ?? journal.id), scenario_key: suppliedScenario, signals: alignedSignals });
         }
         const scenario = suppliedScenario ?? text33(journal.scenario_key);
-        const taskGoalArgs = scenario ? null : experienceTaskGoalArgs(this.service, input);
+        const taskGoalArgs = scenario ? null : experienceTaskGoalArgs(this.service, input, resolvedProjectScope);
         const taskGoal = taskGoalArgs ? readExperienceTaskGoal(taskGoalArgs) : null;
         const signals = journal.signals;
         const lastVerifier = [...signals].reverse().find((signal) => signal.kind === "verification" && typeof signal.verifier === "string");
@@ -284188,13 +284187,14 @@ var init_codex_hook_bridge = __esm({
       async handle(member2, input) {
         const rawEvent = text33(input.hook_event_name);
         const event = rawEvent && ["SessionStart", "SessionEnd", "UserPromptSubmit", "PostToolUse", "Stop"].includes(rawEvent) ? rawEvent : "unknown";
-        if (process.env.CRAFT_HOOK_MODE === "1" && event === "PostToolUse") return await this.dispatch(member2, input);
+        const projectScope = typeof input.cwd === "string" ? this.service.scopeIdentityResolveProject({ project_root: input.cwd }).identity.canonical_scope : null;
+        if (process.env.CRAFT_HOOK_MODE === "1" && event === "PostToolUse") return await this.dispatch(member2, input, projectScope);
         const captured = await new ComponentTraceKernel(this.service.trace, "hook").capture({
           requestId: (0, import_node_crypto158.randomUUID)(),
           component: "craft-hook",
           operation: `handle.${member2}.${event}`,
           input: { member: member2, hook_event: event },
-          handler: () => this.dispatch(member2, input)
+          handler: () => this.dispatch(member2, input, projectScope)
         });
         if (!captured.ok) {
           this.service.store.appendEvent("codex-hook", "codex_hook.failed", { member: member2, error_type: captured.error instanceof Error ? captured.error.name : "unknown" });
@@ -284202,30 +284202,30 @@ var init_codex_hook_bridge = __esm({
         }
         return captured.result ?? {};
       }
-      async dispatch(member2, input) {
+      async dispatch(member2, input, projectScope) {
         const event = text33(input.hook_event_name);
-        input = this.correlateTurn(input, event);
+        input = this.correlateTurn(input, event, projectScope);
         if (member2 === "context") {
           if (event === "SessionStart") return {};
           if (event === "SessionEnd") {
             this.lifecycle("memory", event, input);
             return {};
           }
-          if (event === "UserPromptSubmit") return await this.prompt(member2, input);
-          if (event === "PostToolUse") return this.tool(input);
+          if (event === "UserPromptSubmit") return await this.prompt(member2, input, projectScope);
+          if (event === "PostToolUse") return this.tool(input, projectScope);
           if (event === "Stop") {
-            this.stop("experience", input);
+            this.stop("experience", input, projectScope);
           }
           return {};
         }
         if (event === "SessionStart" || event === "SessionEnd") return this.lifecycle(member2, event, input);
-        if (event === "UserPromptSubmit") return await this.prompt(member2, input);
-        if (event === "PostToolUse" && member2 === "experience") return this.tool(input);
-        if (event === "Stop") return this.stop(member2, input);
+        if (event === "UserPromptSubmit") return await this.prompt(member2, input, projectScope);
+        if (event === "PostToolUse" && member2 === "experience") return this.tool(input, projectScope);
+        if (event === "Stop") return this.stop(member2, input, projectScope);
         return {};
       }
-      correlateTurn(input, event) {
-        const scope3 = codexProjectScope(input.cwd), sessionId = text33(input.session_id);
+      correlateTurn(input, event, scope3) {
+        const sessionId = text33(input.session_id);
         if (!scope3 || !sessionId) return input;
         const sessionKey = `context_hook_session_${stableDigest({ scope: scope3, session_id: sessionId }).slice(-24)}`;
         if (event === "PostToolUse") {
@@ -284257,17 +284257,15 @@ var init_codex_hook_bridge = __esm({
           return turnId ? { ...input, turn_id: turnId } : input;
         });
       }
-      async prompt(member2, input) {
-        const scope3 = codexProjectScope(input.cwd);
+      async prompt(member2, input, scope3) {
         const prompt = text33(input.prompt) ?? text33(input.user_prompt);
         if (!scope3 || !prompt) return {};
         const members3 = member2 === "context" ? CONTEXT_MEMBERS2 : [member2];
-        if (typeof input.cwd === "string") this.service.scopeIdentityResolveProject({ project_root: input.cwd });
         if (members3.includes("experience")) {
           const taskGoal = sanitizedExperienceTaskGoal(prompt);
           if (taskGoal) {
             try {
-              const args = experienceTaskGoalArgs(this.service, input);
+              const args = experienceTaskGoalArgs(this.service, input, scope3);
               if (args) storeExperienceTaskGoal({ ...args, task_goal: taskGoal });
             } catch {
               this.service.store.appendEvent("codex-hook", "codex_hook.failed", { member: "experience", event: "UserPromptSubmit", error_type: "storage_unavailable" });
@@ -284343,7 +284341,7 @@ var init_codex_hook_bridge = __esm({
         const resolvedRefs = Array.isArray(resolved.asset_refs) ? resolved.asset_refs : null;
         const candidateRefs = resolvedRefs ? candidates.map((candidate2) => ({ candidate: candidate2, ref: contextAssetRef(candidate2.member, candidate2.item, scope3) })).filter((entry2) => resolvedRefs.some((ref3) => contextAssetMatches(ref3, entry2.ref))) : null;
         const receipt = resolved.receipt;
-        if (receipt) this.journal.bindContextReceipt(input, receipt);
+        if (receipt) this.journal.bindContextReceipt(input, receipt, scope3);
         return this.service.store.transaction(() => {
           assertContextReadCurrent(this.service.store, receipt);
           let available2 = candidateRefs ?? candidates.map((candidate2) => ({ candidate: candidate2, ref: null }));
@@ -284404,29 +284402,27 @@ var init_codex_hook_bridge = __esm({
           return { additionalContext };
         });
       }
-      tool(input) {
+      tool(input, projectScope) {
         const captured = this.signals.signal(input);
         if (!captured) return {};
-        const root = text33(input.cwd);
-        if (root) this.service.scopeIdentityResolveProject({ project_root: root });
-        const scenario = projectScenarioKey(input, captured, this.service);
+        const scenario = projectScope ? projectScenarioKey(input, captured, this.service, projectScope) : null;
         this.journal.record(input, scenario ? {
           ...captured,
           scenario_key: scenario.scenario_key,
           ...scenario.coarse_scenario_key ? { coarse_scenario_key: scenario.coarse_scenario_key } : {}
-        } : captured);
+        } : captured, projectScope);
         return {};
       }
-      stop(member2, input) {
+      stop(member2, input, projectScope) {
         const finalized = member2 === "experience" ? this.service.store.transaction(() => {
-          const result = this.learning.finalize(input);
-          const goalArgs = experienceTaskGoalArgs(this.service, input);
+          const result = this.learning.finalize(input, projectScope);
+          const goalArgs = experienceTaskGoalArgs(this.service, input, projectScope);
           if (goalArgs) deleteExperienceTaskGoal(goalArgs);
-          this.recordObservedContextUse(input);
-          this.journal.close(input);
+          this.recordObservedContextUse(input, projectScope);
+          this.journal.close(input, projectScope);
           return result;
         }) : null;
-        if (member2 !== "experience") this.recordObservedContextUse(input);
+        if (member2 !== "experience") this.recordObservedContextUse(input, projectScope);
         this.service.activationProofRecord({
           host: hookHost(input),
           component: member2,
@@ -284443,8 +284439,8 @@ var init_codex_hook_bridge = __esm({
         return {};
       }
       /** Record that exact Context assets were shown and the turn's observed outcome, without calling them helpful. */
-      recordObservedContextUse(input) {
-        const journal = this.journal.find(input);
+      recordObservedContextUse(input, projectScope) {
+        const journal = this.journal.find(input, void 0, projectScope);
         if (!journal || typeof journal.context_receipt_id !== "string" || typeof journal.turn_id !== "string") return;
         const turnOutcome = journal.verification_outcome === "passed" || journal.verification_outcome === "failed" ? String(journal.verification_outcome) : "unverified";
         try {
