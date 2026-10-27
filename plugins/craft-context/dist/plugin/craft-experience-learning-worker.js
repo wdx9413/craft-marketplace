@@ -304,7 +304,7 @@ function createFetchTransport(options = {}) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.116";
+var CRAFT_RELEASE_VERSION = "0.12.117";
 
 // common/craft-common-store-local/src/paths.ts
 import { createHash as createHash2, randomUUID } from "node:crypto";
@@ -2606,7 +2606,9 @@ async function runKnowledgeStorageReconcileOnce(client, stateFile = join6(craftP
   const blockedCount = Number(summaryOnly ? result.blocked_count : Array.isArray(result.blocked) ? result.blocked.length : -1);
   const blockedReasons = summaryOnly && hasBlockedReasons ? Object.values(result.blocked_reasons).map(Number) : [];
   if (!["partial", "completed"].includes(String(result.status)) || !Array.isArray(result.blocked) || typeof result.has_more !== "boolean" || !Number.isSafeInteger(result.examined) || Number(result.examined) < 0 || Number(result.examined) > 500 || !Number.isSafeInteger(result.migrated) || Number(result.migrated) < 0 || Number(result.migrated) > Number(result.examined) || !Number.isSafeInteger(result.skipped) || Number(result.skipped) < 0 || Number(result.skipped) > Number(result.examined) || result.phase !== void 0 && !["records", "content"].includes(String(result.phase)) || result.retired_content !== void 0 && (!Number.isSafeInteger(result.retired_content) || Number(result.retired_content) < 0 || Number(result.retired_content) > Number(result.examined)) || !Number.isSafeInteger(blockedCount) || blockedCount < 0 || blockedCount > Number(result.examined) || summaryOnly && (!hasBlockedReasons || result.blocked.length !== 0 || !blockedReasons.every((count) => Number.isSafeInteger(count) && count >= 0) || blockedReasons.reduce((sum, count) => sum + count, 0) !== blockedCount) || !summaryOnly && result.blocked.length !== blockedCount || result.dry_run === true || !result.has_more && result.next_cursor !== null || result.has_more && (typeof result.next_cursor !== "string" || !CURSOR.test(result.next_cursor) || result.next_cursor === cursor)) throw new Error("Knowledge storage migration returned an invalid page");
-  const next = result.has_more ? result.next_cursor : null;
+  const failureKinds = summaryOnly && result.blocked_failure_kinds && typeof result.blocked_failure_kinds === "object" && !Array.isArray(result.blocked_failure_kinds) ? result.blocked_failure_kinds : {};
+  const retryableBlocked = Number(failureKinds.write_lock ?? 0) > 0;
+  const next = retryableBlocked ? cursor : result.has_more ? result.next_cursor : null;
   if (next !== cursor) {
     try {
       const parent = lstatSync6(dirname6(stateFile));
@@ -2621,6 +2623,7 @@ async function runKnowledgeStorageReconcileOnce(client, stateFile = join6(craftP
     examined: result.examined,
     migrated: result.migrated,
     skipped: result.skipped,
+    ...retryableBlocked ? { retryable_blocked: true } : {},
     ...result.phase !== void 0 ? { phase: result.phase } : {},
     ...result.retired_content !== void 0 ? { retired_content: result.retired_content } : {},
     blocked_count: blockedCount,

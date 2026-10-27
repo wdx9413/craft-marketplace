@@ -1863,6 +1863,24 @@ function blockedSummary(blocked, summaryOnly) {
   }
   return summaryOnly ? { blocked: [], blocked_count: blocked.length, blocked_reasons: reasons } : { blocked, blocked_count: blocked.length };
 }
+function knowledgeMigrationFailureKind(error) {
+  const message = error instanceof Error ? error.message : "";
+  return /database is locked|SQLITE_BUSY/u.test(message) ? "write_lock" : /Content reference path is outside the canonical directory/u.test(message) ? "content_path_out_of_scope" : /collision/u.test(message) ? "version_collision" : /no such file|ENOENT/u.test(message) ? "source_missing" : /Project Knowledge storage root is not registered/u.test(message) ? "project_root_missing" : /Project Knowledge storage root is ambiguous/u.test(message) ? "project_root_ambiguous" : /scope/u.test(message) ? "scope_validation" : /content|digest|manifest/u.test(message) ? "content_validation" : "other";
+}
+function blockedFailureKinds(blocked) {
+  const result = {};
+  for (const item of blocked) if (typeof item.failure_kind === "string") {
+    result[item.failure_kind] = (result[item.failure_kind] ?? 0) + 1;
+  }
+  return result;
+}
+function blockedFailurePhases(blocked) {
+  const result = {};
+  for (const item of blocked) if (typeof item.failure_phase === "string") {
+    result[item.failure_phase] = (result[item.failure_phase] ?? 0) + 1;
+  }
+  return result;
+}
 function storedSchemaVersion(database) {
   try {
     const row = database.prepare("SELECT value FROM meta WHERE key='schema_version'").get();
@@ -1874,7 +1892,7 @@ function storedSchemaVersion(database) {
 function tableExists(database, name) {
   return database.prepare("SELECT 1 present FROM sqlite_master WHERE type='table' AND name=? LIMIT 1").get(name) !== void 0;
 }
-function storageFailure(error, database, role, phase) {
+function storageFailure(error, database, role, phase, waitedMs) {
   if (!error || typeof error !== "object") return error;
   const value = error;
   const busy = value.code === "ERR_SQLITE_ERROR" && [5, 6].includes(Number(value.errcode)) || /database (?:is )?(?:locked|busy)|sqlite_busy|sqlite_locked/iu.test(String(value.message ?? ""));
@@ -1886,11 +1904,9 @@ function storageFailure(error, database, role, phase) {
   }
   Object.assign(value, {
     stage: typeof value.stage === "string" ? value.stage : "storage_lock",
-    safeDetails: value.safeDetails && typeof value.safeDetails === "object" ? value.safeDetails : {
-      database_role: role,
-      phase,
-      busy_timeout_ms: busyTimeoutMs,
-      retryable: true
+    safeDetails: {
+      ...value.safeDetails && typeof value.safeDetails === "object" ? value.safeDetails : { database_role: role, phase, busy_timeout_ms: busyTimeoutMs, retryable: true },
+      ...waitedMs === void 0 ? {} : { waited_ms: waitedMs }
     }
   });
   return error;
@@ -1909,13 +1925,14 @@ function ensureCurrentSchema(database) {
   const hasAppliedAt = version3 < 2 || database.prepare("PRAGMA table_info(meta)").all().some((column) => column.name === "applied_at");
   if (version3 !== SCHEMA_VERSION || !hasAppliedAt) applyMigrations(database);
 }
-var import_node_fs9, import_node_crypto10, import_node_sqlite3, import_node_path8, RESERVED_FIELDS, CONTENT_REFERENCE_RECORD_KINDS, MEMORY_PARTITIONED_KINDS, EXPERIENCE_PARTITIONED_KINDS, EVOLUTION_PARTITIONED_KINDS, PARTITION_LABELS, CraftStore;
+var import_node_fs9, import_node_crypto10, import_node_sqlite3, import_node_perf_hooks, import_node_path8, RESERVED_FIELDS, CONTENT_REFERENCE_RECORD_KINDS, MEMORY_PARTITIONED_KINDS, EXPERIENCE_PARTITIONED_KINDS, EVOLUTION_PARTITIONED_KINDS, PARTITION_LABELS, CraftStore;
 var init_store = __esm({
   "common/craft-common-store-local/src/store.ts"() {
     "use strict";
     import_node_fs9 = require("node:fs");
     import_node_crypto10 = require("node:crypto");
     import_node_sqlite3 = require("node:sqlite");
+    import_node_perf_hooks = require("node:perf_hooks");
     init_store_migrations();
     init_paths();
     init_content_store();
@@ -2099,8 +2116,7 @@ var init_store = __esm({
         }
       }
       writeLegacyPartitionBackup(domain, scope3, capabilityRoot, rows4, fileOps, snapshots = []) {
-        const rootStat = (0, import_node_fs9.lstatSync)(capabilityRoot);
-        if (rootStat.isSymbolicLink() || !rootStat.isDirectory()) throw new Error(`${domain} backup root must be a regular directory`);
+        this.ensureCapabilityDirectory(capabilityRoot, domain);
         const backupsDir = (0, import_node_path8.join)(capabilityRoot, "backups");
         (0, import_node_fs9.mkdirSync)(backupsDir, { recursive: true, mode: 448 });
         const backupStat = (0, import_node_fs9.lstatSync)(backupsDir);
@@ -2145,6 +2161,26 @@ var init_store = __esm({
             if ((0, import_node_fs9.readFileSync)(target, "utf8") === content) return;
           }
           throw error;
+        }
+      }
+      /** Create a capability directory beneath the data root without following symlinks. */
+      ensureCapabilityDirectory(directory4, domain) {
+        const root = (0, import_node_path8.resolve)(this.paths.root), target = (0, import_node_path8.resolve)(directory4);
+        if (target === root || !target.startsWith(`${root}${import_node_path8.sep}`)) {
+          throw new Error("Capability directory must remain within the Craft data root");
+        }
+        const rootStat = (0, import_node_fs9.lstatSync)(root);
+        if (rootStat.isSymbolicLink() || !rootStat.isDirectory()) throw new Error("Craft data root must be a regular directory");
+        let current2 = root;
+        for (const part of target.slice(root.length + 1).split(import_node_path8.sep)) {
+          current2 = (0, import_node_path8.join)(current2, part);
+          try {
+            const stat4 = (0, import_node_fs9.lstatSync)(current2);
+            if (stat4.isSymbolicLink() || !stat4.isDirectory()) throw new Error(`${domain} backup root must be a regular directory`);
+          } catch (error) {
+            if (error.code !== "ENOENT") throw error;
+            (0, import_node_fs9.mkdirSync)(current2, { mode: 448 });
+          }
         }
       }
       rebuildDomainIndexes(database) {
@@ -2215,10 +2251,18 @@ var init_store = __esm({
         const pendingStart = this.#pendingMemoryRows.length;
         const deletionStart = this.#pendingMemoryDeletes.length;
         const savepoint = `craft_atomic_${this.#transactionDepth}`;
+        const beginStartedAt = import_node_perf_hooks.performance.now();
         try {
-          database.exec(nested4 ? `SAVEPOINT ${savepoint}` : "BEGIN IMMEDIATE");
+          if (nested4) database.exec(`SAVEPOINT ${savepoint}`);
+          else this.beginImmediate(database, "primary");
         } catch (error) {
-          throw storageFailure(error, database, "primary", nested4 ? "savepoint_begin" : "transaction_begin");
+          throw storageFailure(
+            error,
+            database,
+            "primary",
+            nested4 ? "savepoint_begin" : "transaction_begin",
+            nested4 ? void 0 : Math.max(0, Math.round(import_node_perf_hooks.performance.now() - beginStartedAt))
+          );
         }
         this.#transactionDepth += 1;
         let result;
@@ -3054,6 +3098,7 @@ var init_store = __esm({
         if (!page.length) return this.retireLegacyKnowledgeContent("", limit3, args.dry_run === true, summaryOnly);
         const blocked = [];
         const groups = /* @__PURE__ */ new Map();
+        const pendingPublications = [];
         let skipped = 0, migrated = 0;
         for (const row of page) {
           const payload10 = JSON.parse(String(row.payload_json));
@@ -3067,22 +3112,47 @@ var init_store = __esm({
             const group = groups.get(file) ?? { scope: scope3, rows: [] };
             group.rows.push(row);
             groups.set(file, group);
-          } catch {
-            blocked.push({ kind: row.kind, id: row.id, version: row.version, reason: "storage_scope_unavailable" });
+          } catch (error) {
+            blocked.push({
+              kind: row.kind,
+              id: row.id,
+              version: row.version,
+              reason: "storage_scope_unavailable",
+              failure_kind: knowledgeMigrationFailureKind(error),
+              failure_phase: "scope_resolution"
+            });
           }
         }
+        if (args.dry_run === true) for (const group of groups.values()) {
+          const validRows = [];
+          for (const row of group.rows) {
+            try {
+              this.knowledgeContentMigrationSnapshot(group.scope, row);
+              validRows.push(row);
+            } catch (error) {
+              blocked.push({
+                kind: row.kind,
+                id: row.id,
+                version: row.version,
+                reason: "partition_migration_failed",
+                failure_kind: knowledgeMigrationFailureKind(error),
+                failure_phase: "content_preflight"
+              });
+            }
+          }
+          group.rows = validRows;
+        }
         const migrateGroup = (scope3, groupRows) => {
+          let failure_phase = "partition_path";
           try {
             const file = this.partitionDatabaseFile("knowledge", scope3);
             const snapshots = /* @__PURE__ */ new Map();
+            failure_phase = "content_validation";
             if (scope3.kind === "project") for (const row of groupRows) {
-              const ref4 = JSON.parse(String(row.payload_json)).content_ref;
-              if (ref4?.kind === "knowledge" && (0, import_node_path8.resolve)(ref4.path).startsWith((0, import_node_path8.resolve)(this.paths.knowledgeContentDir) + import_node_path8.sep)) {
-                const { manifest } = this.contentStore.readCompatSync(ref4, `project:${scope3.id}`);
-                if (manifest.scope !== `project:${scope3.id}`) throw new Error("Knowledge migration content scope drifted");
-                snapshots.set(ref4.path, this.legacyKnowledgeSnapshot(ref4.path));
-              }
+              const snapshot = this.knowledgeContentMigrationSnapshot(scope3, row);
+              if (snapshot) snapshots.set(snapshot.path, snapshot);
             }
+            failure_phase = "backup";
             this.writeLegacyPartitionBackup(
               "knowledge",
               scope3,
@@ -3091,7 +3161,9 @@ var init_store = __esm({
               { write: import_node_fs9.writeFileSync, rename: import_node_fs9.renameSync, unlink: import_node_fs9.unlinkSync },
               [...snapshots.values()]
             );
+            failure_phase = "partition_open";
             const partition = this.memoryDatabase(scope3, "knowledge").database;
+            failure_phase = "partition_stage";
             const staged = this.transactionOn(partition, () => groupRows.map((row) => {
               const kind4 = String(row.kind), id24 = String(row.id), version3 = Number(row.version);
               const payload10 = JSON.parse(String(row.payload_json));
@@ -3104,20 +3176,9 @@ var init_store = __esm({
               this.updateMemoryContentIndex(partition, kind4, id24, version3, migratedPayload, String(row.updated_at), "knowledge");
               return { row, header: this.memoryHeader(migratedPayload, scope3, file, "knowledge") };
             }));
-            this.transaction((database) => {
-              for (const { row, header } of staged) {
-                const encoded = JSON.stringify(header);
-                const changed = database.prepare("UPDATE records SET payload_json=? WHERE kind=? AND id=? AND version=? AND payload_json=?").run(encoded, String(row.kind), String(row.id), Number(row.version), String(row.payload_json));
-                if (Number(changed.changes) === 0) {
-                  const current2 = database.prepare("SELECT payload_json FROM records WHERE kind=? AND id=? AND version=?").get(String(row.kind), String(row.id), Number(row.version));
-                  if (current2?.payload_json !== encoded) throw new Error("Knowledge migration changed concurrently");
-                }
-              }
-            });
-            migrated += staged.length;
+            pendingPublications.push(...staged);
           } catch (error) {
-            const message = error instanceof Error ? error.message : "";
-            const failure_kind = /database is locked|SQLITE_BUSY/u.test(message) ? "write_lock" : /Content reference path is outside the canonical directory/u.test(message) ? "content_path_out_of_scope" : /collision/u.test(message) ? "version_collision" : /scope/u.test(message) ? "scope_validation" : /content|digest|manifest/u.test(message) ? "content_validation" : /no such file|ENOENT/u.test(message) ? "source_missing" : "other";
+            const failure_kind = knowledgeMigrationFailureKind(error);
             if (groupRows.length > 1 && ["content_path_out_of_scope", "scope_validation", "content_validation", "source_missing"].includes(failure_kind)) {
               const middle = Math.floor(groupRows.length / 2);
               migrateGroup(scope3, groupRows.slice(0, middle));
@@ -3129,11 +3190,39 @@ var init_store = __esm({
               id: row.id,
               version: row.version,
               reason: "partition_migration_failed",
-              failure_kind
+              failure_kind,
+              failure_phase
             });
           }
         };
-        if (args.dry_run !== true) for (const { scope: scope3, rows: groupRows } of groups.values()) migrateGroup(scope3, groupRows);
+        if (args.dry_run !== true) {
+          for (const { scope: scope3, rows: groupRows } of groups.values()) migrateGroup(scope3, groupRows);
+          if (pendingPublications.length) {
+            try {
+              this.transaction((database) => {
+                for (const { row, header } of pendingPublications) {
+                  const encoded = JSON.stringify(header);
+                  const changed = database.prepare("UPDATE records SET payload_json=? WHERE kind=? AND id=? AND version=? AND payload_json=?").run(encoded, String(row.kind), String(row.id), Number(row.version), String(row.payload_json));
+                  if (Number(changed.changes) === 0) {
+                    const current2 = database.prepare("SELECT payload_json FROM records WHERE kind=? AND id=? AND version=?").get(String(row.kind), String(row.id), Number(row.version));
+                    if (current2?.payload_json !== encoded) throw new Error("Knowledge migration changed concurrently");
+                  }
+                }
+              });
+              migrated += pendingPublications.length;
+            } catch (error) {
+              const failure_kind = knowledgeMigrationFailureKind(error);
+              for (const { row } of pendingPublications) blocked.push({
+                kind: row.kind,
+                id: row.id,
+                version: row.version,
+                reason: "partition_migration_failed",
+                failure_kind,
+                failure_phase: "central_publish"
+              });
+            }
+          }
+        }
         const last = page.at(-1);
         const cursor = Buffer.from(JSON.stringify(hasMore ? [last.kind, last.id, last.version] : ["content_scan", "", 1])).toString("base64url");
         return {
@@ -3144,12 +3233,25 @@ var init_store = __esm({
           migrated,
           skipped,
           ...blockedSummary(blocked, summaryOnly),
+          blocked_failure_kinds: blockedFailureKinds(blocked),
+          blocked_failure_phases: blockedFailurePhases(blocked),
           summary_only: summaryOnly,
           has_more: true,
           next_cursor: cursor,
           dry_run: args.dry_run === true,
           raw_content_stored: false
         };
+      }
+      knowledgeContentMigrationSnapshot(scope3, row) {
+        if (scope3.kind !== "project") return null;
+        const payload10 = JSON.parse(String(row.payload_json));
+        const ref4 = payload10.content_ref;
+        if (ref4?.kind !== "knowledge") return null;
+        const expectedScope = `project:${scope3.id}`;
+        const { manifest } = this.contentStore.readCompatSync(ref4, expectedScope);
+        if (manifest.scope !== expectedScope) throw new Error("Knowledge migration content scope drifted");
+        if (!(0, import_node_path8.resolve)(ref4.path).startsWith(`${(0, import_node_path8.resolve)(this.paths.knowledgeContentDir)}${import_node_path8.sep}`)) return null;
+        return this.legacyKnowledgeSnapshot(ref4.path);
       }
       memoryContentScopeMatches(value, scope3) {
         return value === `${scope3.kind}:${scope3.id}` || value === "global" && scope3.kind === "global" && scope3.id === "global";
@@ -3352,10 +3454,18 @@ var init_store = __esm({
         const previousTimeout = this.#transactionDepth > 0 ? Number(database.prepare("PRAGMA busy_timeout").get().timeout) : void 0;
         if (previousTimeout !== void 0) database.exec("PRAGMA busy_timeout=0;");
         try {
+          const role = database === this.#database ? "primary" : "capability_partition";
+          const beginStartedAt = import_node_perf_hooks.performance.now();
           try {
-            database.exec("BEGIN IMMEDIATE");
+            this.beginImmediate(database, role);
           } catch (error) {
-            throw storageFailure(error, database, database === this.#database ? "primary" : "capability_partition", "transaction_begin");
+            throw storageFailure(
+              error,
+              database,
+              role,
+              "transaction_begin",
+              Math.max(0, Math.round(import_node_perf_hooks.performance.now() - beginStartedAt))
+            );
           }
           try {
             const result = operation2();
@@ -3367,6 +3477,22 @@ var init_store = __esm({
           }
         } finally {
           if (previousTimeout !== void 0) database.exec(`PRAGMA busy_timeout=${previousTimeout};`);
+        }
+      }
+      beginImmediate(database, role) {
+        try {
+          database.exec("BEGIN IMMEDIATE");
+        } catch (error) {
+          const failure = storageFailure(error, database, role, "transaction_begin");
+          const details = failure && typeof failure === "object" ? failure.safeDetails : void 0;
+          if (process.env.CRAFT_HOOK_MODE !== "1" || role !== "primary" || details?.phase !== "transaction_begin" || details.retryable !== true) throw failure;
+          const wait = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT));
+          Atomics.wait(wait, 0, 0, 25);
+          try {
+            database.exec("BEGIN IMMEDIATE");
+          } catch (retryError) {
+            throw storageFailure(retryError, database, role, "transaction_begin");
+          }
         }
       }
       updateMemoryContentIndex(database, kind4, id24, version3, payload10, updatedAt, domain = "memory") {
@@ -9419,7 +9545,7 @@ var CRAFT_RELEASE_VERSION;
 var init_version = __esm({
   "core/version.ts"() {
     "use strict";
-    CRAFT_RELEASE_VERSION = "0.12.116";
+    CRAFT_RELEASE_VERSION = "0.12.117";
   }
 });
 
@@ -40342,7 +40468,7 @@ function verifyManifest(path2, expected) {
 function candidateDirectory(paths, projectRoot, candidateId2) {
   return (0, import_node_path43.join)(ensureProjectStorageDirectory(paths, projectRoot), "evolution", "candidates", candidateId2);
 }
-var import_node_crypto112, import_node_fs33, import_node_path43, EvolutionCandidateWorkspace;
+var import_node_crypto112, import_node_fs33, import_node_path43, MAX_CANDIDATE_CHANGED_PATHS, EvolutionCandidateWorkspace;
 var init_evolution_candidate_workspace = __esm({
   "core/evolution-candidate-workspace.ts"() {
     "use strict";
@@ -40351,6 +40477,7 @@ var init_evolution_candidate_workspace = __esm({
     import_node_path43 = require("node:path");
     init_paths();
     init_digest2();
+    MAX_CANDIDATE_CHANGED_PATHS = 100;
     EvolutionCandidateWorkspace = class {
       store;
       paths;
@@ -40488,6 +40615,8 @@ var init_evolution_candidate_workspace = __esm({
           if (!allowed.some((root) => path2 === root || path2.startsWith(`${root}/`)))
             throw new Error(`Candidate changed a path outside allowed_paths: ${path2}`);
           changed.push(path2);
+          if (changed.length > MAX_CANDIDATE_CHANGED_PATHS)
+            throw new Error(`Candidate exceeds the changed-path limit (${MAX_CANDIDATE_CHANGED_PATHS})`);
         }
         return { candidate_id: manifest.candidate_id, changed_paths: changed, candidate_digest: stableDigest([...files5].sort(([left], [right]) => left.localeCompare(right))) };
       }
@@ -40887,6 +41016,7 @@ var init_evolution_cycle = __esm({
         }
         if (cycle.status !== "active") throw new Error("Evolution Cycle is terminal");
         if (Number(cycle.version) !== requestedVersion) throw new Error("Evolution Cycle version conflict; reread before advancing");
+        this.assertSessionForStage(cycle, stage);
         if (!NEXT[String(cycle.stage)]?.has(stage)) throw new Error(`Invalid Evolution Cycle transition: ${cycle.stage} -> ${stage}`);
         if (stage === "attribute") {
           const failedOutcome = cycle.outcome !== "passed";
@@ -40973,6 +41103,18 @@ var init_evolution_cycle = __esm({
         const workspace = this.store.get("workspace", text3(snapshot.workspace_id, "snapshot.workspace_id"));
         const freshness = this.workspaceState.freshness({ workspace_id: workspace.id });
         if (freshness.status !== "current") throw new Error("Project working tree changed after the Evolution Cycle started; replan and reevaluate the candidate");
+      }
+      assertSessionForStage(cycle, stage) {
+        const sessionId = text3(cycle.session_id, "cycle.session_id");
+        const host = text3(cycle.session_host, "cycle.session_host");
+        const session = this.store.get("host_session", sessionId);
+        const task = object2(cycle.task_ref, "cycle.task_ref");
+        if (session.host_id !== host || session.task_id !== task.id || session.identity_digest !== cycle.session_identity_digest || session.trace_id !== cycle.session_trace_id)
+          throw new Error("Evolution Cycle requires its original Host Session identity for new transitions");
+        if (session.status !== "running" && (session.status !== "terminal" || ["observe", "retrieve", "act"].includes(stage)))
+          throw new Error("Evolution Cycle requires its original live Host Session for execution transitions");
+        const trace = this.store.get("trace", text3(session.trace_id, "host_session.trace_id"));
+        if (trace.task_id !== task.id) throw new Error("Evolution Cycle Host Session Trace belongs to another task");
       }
       assertCheckpointCurrent(cycle) {
         const snapshot = object2(cycle.snapshot, "cycle.snapshot");
@@ -54503,11 +54645,11 @@ ${lanes.join("\n")}
       function tryGetPerformance() {
         if (isNodeLikeSystem()) {
           try {
-            const { performance: performance2 } = require("perf_hooks");
-            if (performance2) {
+            const { performance: performance22 } = require("perf_hooks");
+            if (performance22) {
               return {
                 shouldWriteNativeEvents: false,
-                performance: performance2
+                performance: performance22
               };
             }
           } catch {
@@ -54524,17 +54666,17 @@ ${lanes.join("\n")}
       function tryGetPerformanceHooks() {
         const p = tryGetPerformance();
         if (!p) return void 0;
-        const { shouldWriteNativeEvents, performance: performance2 } = p;
+        const { shouldWriteNativeEvents, performance: performance22 } = p;
         const hooks = {
           shouldWriteNativeEvents,
           performance: void 0,
           performanceTime: void 0
         };
-        if (typeof performance2.timeOrigin === "number" && typeof performance2.now === "function") {
-          hooks.performanceTime = performance2;
+        if (typeof performance22.timeOrigin === "number" && typeof performance22.now === "function") {
+          hooks.performanceTime = performance22;
         }
-        if (hooks.performanceTime && typeof performance2.mark === "function" && typeof performance2.measure === "function" && typeof performance2.clearMarks === "function" && typeof performance2.clearMeasures === "function") {
-          hooks.performance = performance2;
+        if (hooks.performanceTime && typeof performance22.mark === "function" && typeof performance22.measure === "function" && typeof performance22.clearMarks === "function" && typeof performance22.clearMeasures === "function") {
+          hooks.performance = performance22;
         }
         return hooks;
       }
