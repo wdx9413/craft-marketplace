@@ -304,7 +304,7 @@ function createFetchTransport(options = {}) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.118";
+var CRAFT_RELEASE_VERSION = "0.12.119";
 
 // common/craft-common-store-local/src/paths.ts
 import { createHash as createHash2, randomUUID } from "node:crypto";
@@ -681,6 +681,7 @@ var queues = processState[queueKey] ??= /* @__PURE__ */ new Map();
 
 // common/craft-common-store-local/src/store.ts
 import { backup, DatabaseSync as DatabaseSync3 } from "node:sqlite";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 // common/craft-common-store-local/src/trace-shards.ts
 import { DatabaseSync } from "node:sqlite";
@@ -690,11 +691,14 @@ var TRACE_SHARDED_KINDS = /* @__PURE__ */ new Set([...TRACE_KINDS, "codex_hook_t
 // common/craft-common-store-local/src/codebase-shards.ts
 import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 
+// common/craft-common-store-local/src/store.ts
+var contextLockBudget = new AsyncLocalStorage();
+
 // common/craft-common-log/src/operation.ts
-import { AsyncLocalStorage } from "node:async_hooks";
+import { AsyncLocalStorage as AsyncLocalStorage2 } from "node:async_hooks";
 var contextKey = /* @__PURE__ */ Symbol.for("craft.operation.context");
 var processState2 = globalThis;
-var context = processState2[contextKey] ??= new AsyncLocalStorage();
+var context = processState2[contextKey] ??= new AsyncLocalStorage2();
 var object2 = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
 function operationErrorCode(error) {
   const value = object2(error);
@@ -2098,7 +2102,7 @@ async function codexSessionTaskBatch(partition, options = {}, env = process.env)
   const eligibleTasks = allTasks.filter((task) => {
     const contextVerified = task.verification_status === "verified" && Boolean(task.verification_evidence_ids?.length);
     const transcriptVerified = typeof task.verification_artifact_digest === "string" && typeof task.verification_artifact_count === "number" && task.verification_artifact_count > 0;
-    const outcomePassed = task.verification_outcome === "passed" || transcriptVerified;
+    const outcomePassed = task.verification_outcome !== "failed" && (task.verification_outcome === "passed" || transcriptVerified);
     return task.dataset_partition === partition && task.status === "completed" && task.assistant_final_seen && (contextVerified || transcriptVerified) && (partition !== "candidate_generation" || outcomePassed);
   });
   const overlappingTasks = eligibleTasks.filter((task) => task.task_goal_digest && task.project_scope_id && allTasks.some((other) => other.task_id !== task.task_id && other.project_scope_id === task.project_scope_id && other.task_goal_digest === task.task_goal_digest && other.dataset_partition !== task.dataset_partition));
@@ -2113,7 +2117,7 @@ async function codexSessionTaskBatch(partition, options = {}, env = process.env)
       dataset_split_version: task.dataset_split_version,
       task_goal_digest: task.task_goal_digest ?? null,
       verification_evidence_ids: task.verification_evidence_ids ?? [],
-      verification_outcome: task.verification_outcome ?? "passed",
+      verification_outcome: task.verification_outcome ?? null,
       verification_source: task.verification_status === "verified" && task.verification_evidence_ids?.length ? "context_receipt" : "session_test_log",
       verification_artifact_digest: task.verification_artifact_digest ?? null,
       verification_artifact_count: task.verification_artifact_count ?? 0,
@@ -2168,8 +2172,10 @@ async function reconcileCodexSessionTaskEvidence(evidenceValue, options = {}, en
       const goalEvidence = evidenceByTaskGoal.get(`${task.session_id}\0${task.project_scope_id}\0${task.task_goal_digest}`) ?? [];
       if (sameGoalTasks.length === 1 && goalEvidence.length === 1) matches = goalEvidence;
     }
+    if (matches.some((item) => item.host !== void 0 && item.host !== "codex" && item.host !== "codex-cli" || item.project_scope_id !== void 0 && item.project_scope_id !== task.project_scope_id || item.task_goal_digest !== void 0 && item.task_goal_digest !== task.task_goal_digest)) continue;
     const outcomes = new Set(matches.map((item) => item.verification_outcome));
-    if (matches.length === 0 || outcomes.size !== 1) continue;
+    const terminals = new Set(matches.map((item) => item.terminal_identity_digest));
+    if (matches.length === 0 || outcomes.size !== 1 || terminals.size !== 1) continue;
     const selected = matches[0];
     state.tasks[task.task_id] = {
       ...task,
@@ -2205,6 +2211,8 @@ async function readCodexSessionTaskExcerpt(taskIdValue, options, env = process.e
   if (!task || task.status !== "completed" || !contextVerified && !transcriptVerified || !task.assistant_final_seen || task.dataset_partition !== options.expected_partition) {
     return { status: "ineligible", reason: "task_not_verified_or_partition_mismatch", raw_content_stored: false };
   }
+  if (options.expected_partition === "candidate_generation" && task.verification_outcome === "failed")
+    return { status: "ineligible", reason: "task_terminal_outcome_failed", raw_content_stored: false };
   if (task.task_goal_digest && task.project_scope_id && Object.values(state.tasks).some((other) => other.task_id !== task.task_id && other.project_scope_id === task.project_scope_id && other.task_goal_digest === task.task_goal_digest && other.dataset_partition !== task.dataset_partition)) {
     return { status: "ineligible", reason: "cross_partition_task_goal_overlap", raw_content_stored: false };
   }
@@ -2279,7 +2287,7 @@ async function readCodexSessionTaskExcerpt(taskIdValue, options, env = process.e
     dataset_split_version: task.dataset_split_version,
     source_ref: task.source_ref,
     evidence_ids: task.verification_evidence_ids ?? [],
-    verification_outcome: task.verification_outcome ?? (transcriptVerified ? "passed" : void 0),
+    verification_outcome: task.verification_outcome ?? (transcriptVerified ? null : void 0),
     verification_source: contextVerified ? "context_receipt" : "session_test_log",
     task_goal: taskGoal,
     task_result: taskResult,
@@ -2308,6 +2316,7 @@ async function recordSessionVerificationEvidence(client, task, excerpt) {
     task_result: excerpt.task_result,
     verification_artifacts: artifacts,
     sanitized: true,
+    ...["candidate_generation", "held_out"].includes(String(task.dataset_partition)) ? { verify_against_archive: true, dataset_partition: task.dataset_partition } : {},
     ...typeof task.completed_at === "string" ? { observed_at: task.completed_at } : {}
   });
   const evidence = object5(saved.evidence, "session verification Evidence");
@@ -2315,7 +2324,9 @@ async function recordSessionVerificationEvidence(client, task, excerpt) {
   if (typeof saved.source_id !== "string" || typeof saved.fragment_id !== "string" || evidence.fragment_id !== saved.fragment_id || evidence.source_id !== saved.source_id || saved.raw_content_stored !== false || saved.sanitized_content_stored !== true) {
     throw new Error("session verification Evidence did not include its scoped Knowledge fragment");
   }
-  return evidence;
+  const check = saved.transcript_check;
+  const status = check && typeof check === "object" && !Array.isArray(check) ? check.status : void 0;
+  return { ...evidence, transcript_check_status: status === "transcript_matched" || status === "unverified" || status === "unavailable" ? status : "not_reported" };
 }
 
 // deploy/experience-learning/session-knowledge-candidates.ts
@@ -2342,7 +2353,11 @@ function readCandidateState(path) {
     const value = JSON.parse(readFileSync5(path, "utf8"));
     const skips = value.terminal_skips === void 0 ? {} : value.terminal_skips;
     const traces = value.trace_ids_by_task === void 0 ? {} : value.trace_ids_by_task;
-    if (value.schema !== STATE_SCHEMA3 || !Array.isArray(value.processed_task_ids) || value.processed_task_ids.length > 5e4 || value.processed_task_ids.some((id) => typeof id !== "string" || !id.trim() || id.length > 160) || !skips || typeof skips !== "object" || Array.isArray(skips) || Object.keys(skips).length > 5e4 || !traces || typeof traces !== "object" || Array.isArray(traces) || Object.keys(traces).length > 5e4 || Object.entries(traces).some(([taskId, traceId]) => !taskId.trim() || taskId.length > 160 || typeof traceId !== "string" || !/^trace[-_][A-Za-z0-9_-]{1,160}$/u.test(traceId)) || Object.entries(skips).some(([id, raw]) => {
+    const uncertain = value.uncertain_calls === void 0 ? {} : value.uncertain_calls;
+    if (value.schema !== STATE_SCHEMA3 || !Array.isArray(value.processed_task_ids) || value.processed_task_ids.length > 5e4 || value.processed_task_ids.some((id) => typeof id !== "string" || !id.trim() || id.length > 160) || value.last_unavailable_task_id !== void 0 && (typeof value.last_unavailable_task_id !== "string" || !value.last_unavailable_task_id.trim() || value.last_unavailable_task_id.length > 160) || !skips || typeof skips !== "object" || Array.isArray(skips) || Object.keys(skips).length > 5e4 || !traces || typeof traces !== "object" || Array.isArray(traces) || Object.keys(traces).length > 5e4 || !uncertain || typeof uncertain !== "object" || Array.isArray(uncertain) || Object.keys(uncertain).length > 5e4 || Object.entries(uncertain).some(([id, raw]) => {
+      const item = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : null;
+      return !id.trim() || id.length > 160 || !item || typeof item.trace_id !== "string" || !/^trace[-_][A-Za-z0-9_-]{1,160}$/u.test(item.trace_id) || typeof item.input_digest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(item.input_digest);
+    }) || Object.entries(traces).some(([taskId, traceId]) => !taskId.trim() || taskId.length > 160 || typeof traceId !== "string" || !/^trace[-_][A-Za-z0-9_-]{1,160}$/u.test(traceId)) || Object.entries(skips).some(([id, raw]) => {
       const item = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : null;
       return !id.trim() || id.length > 160 || !item || typeof item.source_ref_digest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(item.source_ref_digest) || !["verified_project_evidence_incomplete", "verified_task_excerpt_unavailable", "verifiable_test_result_unavailable"].includes(String(item.reason_code)) || typeof item.recorded_at !== "string" || !Number.isFinite(Date.parse(item.recorded_at));
     })) {
@@ -2351,10 +2366,12 @@ function readCandidateState(path) {
     return {
       processed_task_ids: [...new Set(value.processed_task_ids)],
       terminal_skips: skips,
-      trace_ids_by_task: traces
+      trace_ids_by_task: traces,
+      last_unavailable_task_id: value.last_unavailable_task_id,
+      uncertain_calls: uncertain
     };
   } catch (error) {
-    if (error.code === "ENOENT") return { processed_task_ids: [], terminal_skips: {}, trace_ids_by_task: {} };
+    if (error.code === "ENOENT") return { processed_task_ids: [], terminal_skips: {}, trace_ids_by_task: {}, uncertain_calls: {} };
     throw error;
   }
 }
@@ -2370,6 +2387,8 @@ async function writeCandidateState(path, state) {
     processed_task_ids: state.processed_task_ids.slice(-5e4),
     terminal_skips: Object.fromEntries(Object.entries(state.terminal_skips).slice(-5e4)),
     trace_ids_by_task: Object.fromEntries(Object.entries(state.trace_ids_by_task).slice(-5e4)),
+    last_unavailable_task_id: state.last_unavailable_task_id,
+    uncertain_calls: state.uncertain_calls,
     updated_at: (/* @__PURE__ */ new Date()).toISOString()
   });
 }
@@ -2405,12 +2424,67 @@ function validateCandidate(value) {
   }
   return { kind: value.kind, title: String(value.title).trim(), content: String(value.content).trim(), tags: value.tags };
 }
+async function completedCandidateCall(client, task, call) {
+  try {
+    const taskId = String(task.task_id);
+    const result = await client.call("craft_trace_get", { trace_id: call.trace_id });
+    const trace = object6(result.trace, "candidate Trace"), events = result.events;
+    if (trace.id !== call.trace_id || trace.task_id !== `knowledge:${taskId}` || trace.operation_id !== taskId || trace.status !== "completed" || !Array.isArray(events)) return null;
+    const matching = (kind) => events.filter((event) => event && typeof event === "object" && !Array.isArray(event) && event.trace_id === call.trace_id && event.operation_id === taskId && event.event_kind === kind && event.actor === "knowledge-session-candidate-worker");
+    const request = matching("model.request"), completed = matching("model.completed"), skipped = matching("knowledge.candidate_skipped"), created = matching("knowledge.candidate_created");
+    if (request.length !== 1 || completed.length !== 1 || skipped.length + created.length !== 1) return null;
+    const output = skipped[0] ?? created[0];
+    if (!Array.isArray(request[0].input_refs) || request[0].input_refs.length !== 1 || request[0].input_refs[0] !== call.input_digest || !Array.isArray(output.output_refs) || !Number.isSafeInteger(request[0].sequence) || !Number.isSafeInteger(completed[0].sequence) || !Number.isSafeInteger(output.sequence) || Number(request[0].sequence) >= Number(completed[0].sequence) || Number(completed[0].sequence) >= Number(output.sequence)) return null;
+    if (skipped.length) return output.output_refs.length === 0 ? "skip" : null;
+    const claimId = `knowledge_claim_${stableDigest(taskId).slice(-24)}`;
+    const [claimRef, evidenceId, binding] = output.output_refs;
+    if (output.output_refs.length !== 3 || claimRef !== claimId || typeof evidenceId !== "string" || typeof binding !== "string") return null;
+    const claim = object6((await client.call("craft_knowledge_claim_get", {
+      claim_id: claimId,
+      scope_kind: "project",
+      scope_id: String(task.project_scope_id).slice("project:".length)
+    })).claim, "candidate Claim");
+    if (claim.id !== claimId || claim.scope !== task.project_scope_id || !Number.isSafeInteger(claim.version) || !Array.isArray(claim.evidence_ids) || !claim.evidence_ids.includes(evidenceId) || typeof claim.identity_digest !== "string" || typeof claim.content_digest !== "string") return null;
+    const evidenceResult = await client.call("craft_evidence_get", { evidence_id: evidenceId });
+    const evidence = object6(evidenceResult.evidence ?? evidenceResult, "candidate Evidence");
+    const metadata = evidence.metadata;
+    if (evidence.id !== evidenceId || evidence.source_id !== claim.source_id || metadata?.provenance !== "codex_session_program_verification" || metadata.scope !== task.project_scope_id || metadata.source_session_id !== task.session_id || metadata.task_id !== taskId || metadata.turn_id !== task.turn_id) return null;
+    return binding === stableDigest({
+      claim_id: claim.id,
+      claim_version: claim.version,
+      identity_digest: claim.identity_digest,
+      content_digest: claim.content_digest,
+      scope: claim.scope,
+      evidence_id: evidenceId
+    }) ? "candidate" : null;
+  } catch {
+    return null;
+  }
+}
 async function runSessionKnowledgeCandidateOnce(deps) {
   const path = candidateStatePath(deps), state = readCandidateState(path);
   const batch = await codexSessionTaskBatch("candidate_generation", deps.archive_options, deps.env);
   const tasks = batch.tasks;
-  const task = tasks.find((item) => typeof item.task_id === "string" && !state.processed_task_ids.includes(item.task_id));
+  const pending = tasks.filter((item) => typeof item.task_id === "string" && !state.processed_task_ids.includes(item.task_id));
+  const previous = pending.findIndex((item) => item.task_id === state.last_unavailable_task_id);
+  const task = pending[(previous + 1) % pending.length];
   if (!task) return { status: "idle", processed: 0, verified_candidates_pending: 0, raw_content_stored: false };
+  if (state.uncertain_calls[String(task.task_id)]) {
+    const taskId = String(task.task_id), call = state.uncertain_calls[taskId];
+    const decision = await completedCandidateCall(deps.client, task, call);
+    if (decision) {
+      state.processed_task_ids.push(taskId);
+      state.trace_ids_by_task[taskId] = call.trace_id;
+      delete state.uncertain_calls[taskId];
+      await writeCandidateState(path, state);
+      return { status: "completed_call_reconciled", processed: 1, decision, trace_id: call.trace_id, raw_content_stored: false };
+    }
+    if (state.last_unavailable_task_id !== task.task_id) {
+      state.last_unavailable_task_id = String(task.task_id);
+      await writeCandidateState(path, state);
+    }
+    return { status: "waiting_for_call_reconciliation", processed: 0, reason: "model_result_unknown", raw_content_stored: false };
+  }
   const transcriptEvidence = task.verification_source === "session_test_log";
   const contextEvidenceComplete = Array.isArray(task.verification_evidence_ids) && task.verification_evidence_ids.length > 0 && typeof task.context_receipt_id === "string" && typeof task.verification_ref_digest === "string" && typeof task.terminal_identity_digest === "string";
   const transcriptEvidenceComplete = transcriptEvidence && typeof task.verification_artifact_digest === "string" && Number.isSafeInteger(task.verification_artifact_count) && Number(task.verification_artifact_count) > 0;
@@ -2424,9 +2498,12 @@ async function runSessionKnowledgeCandidateOnce(deps) {
     deps.env
   );
   const excerptEvidenceIds = Array.isArray(excerpt.evidence_ids) ? excerpt.evidence_ids : [];
-  if (excerpt.status !== "ready" || excerpt.session_id !== task.session_id || excerpt.turn_id !== task.turn_id || excerpt.project_scope_id !== task.project_scope_id || excerpt.verification_outcome !== "passed" || excerpt.verification_source !== task.verification_source || JSON.stringify(excerptEvidenceIds) !== JSON.stringify(task.verification_evidence_ids)) {
-    await recordTerminalSkip(path, state, task, "verified_task_excerpt_unavailable");
-    return { status: "skipped", processed: 1, reason: "verified_task_excerpt_unavailable", raw_content_stored: false };
+  if (excerpt.status !== "ready" || excerpt.session_id !== task.session_id || excerpt.turn_id !== task.turn_id || excerpt.project_scope_id !== task.project_scope_id || excerpt.verification_outcome !== task.verification_outcome || excerpt.verification_outcome !== "passed" && !(transcriptEvidence && excerpt.verification_outcome === null) || excerpt.verification_source !== task.verification_source || JSON.stringify(excerptEvidenceIds) !== JSON.stringify(task.verification_evidence_ids)) {
+    if (state.last_unavailable_task_id !== task.task_id) {
+      state.last_unavailable_task_id = String(task.task_id);
+      await writeCandidateState(path, state);
+    }
+    return { status: "waiting_for_consistent_excerpt", processed: 0, reason: "verified_task_excerpt_unavailable", raw_content_stored: false };
   }
   const verificationArtifacts = Array.isArray(excerpt.verification_artifacts) ? excerpt.verification_artifacts : [];
   if (!verificationArtifacts.length) {
@@ -2465,7 +2542,7 @@ async function runSessionKnowledgeCandidateOnce(deps) {
   const taskEvidenceIds = task.verification_evidence_ids;
   const inputDigest = stableDigest({ purpose: "knowledge_session_candidate_generation.v1", task_id: task.task_id, packet });
   const modelFingerprint = stableDigest({ provider: provider.provider, model: profile.model });
-  const system = `\u4ECE\u5DF2\u9A8C\u8BC1\u7684\u9879\u76EE\u4EFB\u52A1\u4E2D\u63D0\u70BC\u4E00\u6761\u53EF\u590D\u7528\u3001\u53EF\u72EC\u7ACB\u6838\u5B9E\u7684\u9879\u76EE\u77E5\u8BC6\u5019\u9009\u3002\u4EC5\u4F9D\u636E\u8F93\u5165\u4E2D\u7684\u4EFB\u52A1\u76EE\u6807\u548C\u7ED3\u679C\uFF0C\u4E0D\u8865\u5145\u672A\u89C2\u5BDF\u5230\u7684\u4E8B\u5B9E\uFF1B\u82E5\u6CA1\u6709\u7A33\u5B9A\u3001\u53EF\u9A8C\u8BC1\u7684\u77E5\u8BC6\uFF0C\u8FD4\u56DE decision=skip\u3002\u8FD4\u56DE\u4E00\u4E2A JSON \u5BF9\u8C61\uFF0C\u5B57\u6BB5\u4E3A decision\u3001kind\u3001title\u3001content\u3001tags\u3002\u6240\u6709\u53EF\u8BFB\u6587\u5B57\u4F7F\u7528\u4E2D\u6587\u3002\u4E0D\u5F97\u5199\u5165\u4F1A\u8BDD\u7EC6\u8282\u3001\u4E2A\u4EBA\u4FE1\u606F\u3001\u5BC6\u94A5\u3001\u8DEF\u5F84\u6216\u4EE3\u7801\u3002\u5019\u9009\u53EA\u4F9B\u540E\u7EED\u72EC\u7ACB\u8BC1\u636E\u8BC4\u5BA1\uFF0C\u4E0D\u4EE3\u8868\u4E8B\u5B9E\u5DF2\u786E\u8BA4\u3002${generatedTextLanguageInstruction(deps.contentLanguage ?? "zh-CN")}`;
+  const system = `\u4ECE\u9879\u76EE\u4EFB\u52A1\u53CA\u5176\u6D4B\u8BD5\u8BB0\u5F55\u4E2D\u63D0\u70BC\u4E00\u6761\u53EF\u590D\u7528\u3001\u53EF\u72EC\u7ACB\u6838\u5B9E\u7684\u9879\u76EE\u77E5\u8BC6\u5019\u9009\u3002verification_outcome \u4E3A null \u8868\u793A\u4EFB\u52A1\u6700\u7EC8\u7ED3\u679C\u672A\u77E5\uFF1B\u5355\u6B21\u6D4B\u8BD5\u901A\u8FC7\u4E0D\u4EE3\u8868\u6574\u4E2A\u4EFB\u52A1\u6210\u529F\u3002\u4EC5\u4F9D\u636E\u8F93\u5165\u4E2D\u7684\u4EFB\u52A1\u76EE\u6807\u548C\u7ED3\u679C\uFF0C\u4E0D\u8865\u5145\u672A\u89C2\u5BDF\u5230\u7684\u4E8B\u5B9E\uFF1B\u82E5\u6CA1\u6709\u7A33\u5B9A\u3001\u53EF\u9A8C\u8BC1\u7684\u77E5\u8BC6\uFF0C\u8FD4\u56DE decision=skip\u3002\u8FD4\u56DE\u4E00\u4E2A JSON \u5BF9\u8C61\uFF0C\u5B57\u6BB5\u4E3A decision\u3001kind\u3001title\u3001content\u3001tags\u3002\u6240\u6709\u53EF\u8BFB\u6587\u5B57\u4F7F\u7528\u4E2D\u6587\u3002\u4E0D\u5F97\u5199\u5165\u4F1A\u8BDD\u7EC6\u8282\u3001\u4E2A\u4EBA\u4FE1\u606F\u3001\u5BC6\u94A5\u3001\u8DEF\u5F84\u6216\u4EE3\u7801\u3002\u5019\u9009\u53EA\u4F9B\u540E\u7EED\u72EC\u7ACB\u8BC1\u636E\u8BC4\u5BA1\uFF0C\u4E0D\u4EE3\u8868\u4E8B\u5B9E\u5DF2\u786E\u8BA4\u3002${generatedTextLanguageInstruction(deps.contentLanguage ?? "zh-CN")}`;
   const messages = [{ role: "system", content: system }, { role: "user", content: JSON.stringify(packet) }];
   if (!deps.transport) return { status: "waiting_for_model", processed: 0, reason: "model_transport_unavailable", raw_content_stored: false };
   const transport = deps.transport;
@@ -2480,6 +2557,7 @@ async function runSessionKnowledgeCandidateOnce(deps) {
   const trace = object6(traceStart.trace, "Knowledge generation Trace");
   const traceId = String(trace.id ?? "");
   if (!traceId) throw new Error("Knowledge generation Trace has no id");
+  if (!/^trace[-_][A-Za-z0-9_-]{1,160}$/u.test(traceId)) throw new Error("Knowledge generation Trace id is invalid");
   await deps.client.call("craft_trace_append", {
     trace_id: traceId,
     event_kind: "model.request",
@@ -2490,12 +2568,16 @@ async function runSessionKnowledgeCandidateOnce(deps) {
     input_refs: [inputDigest],
     model_fingerprint: modelFingerprint,
     data: { purpose: "knowledge_session_candidate_generation", input_digest: inputDigest, source_ref: task.source_ref, content_stored: false },
-    summary: "\u5DF2\u53D1\u9001\u8131\u654F\u4E14\u9A8C\u8BC1\u901A\u8FC7\u7684\u4EFB\u52A1\u6458\u8981\uFF0C\u7528\u4E8E\u751F\u6210 Knowledge \u5019\u9009"
+    summary: "\u51C6\u5907\u53D1\u9001\u8131\u654F\u4EFB\u52A1\u6458\u8981\u548C\u6D4B\u8BD5\u8BB0\u5F55\uFF0C\u7528\u4E8E\u751F\u6210 Knowledge \u5019\u9009"
   });
   const request = buildChatRequest(provider, { model: String(profile.model), messages, max_tokens: Math.min(Number(profile.max_output_tokens ?? 1024), 1024), temperature: 0 });
   if (provider.provider === "codex-cli") request.body.codex_output_schema = OUTPUT_SCHEMA;
   let candidate;
   let claimId = null, verificationEvidenceId = null;
+  let transcriptCheckStatus = "not_reported";
+  let claimBinding = null;
+  state.uncertain_calls[String(task.task_id)] = { trace_id: traceId, input_digest: inputDigest };
+  await writeCandidateState(path, state);
   try {
     const response = await transport.complete(provider, request);
     await deps.client.call("craft_trace_append", {
@@ -2515,6 +2597,7 @@ async function runSessionKnowledgeCandidateOnce(deps) {
       const verificationEvidence = await (deps.record_verification_evidence ?? recordSessionVerificationEvidence)(deps.client, task, excerpt);
       if (!verificationEvidence) throw new Error("verified test Evidence is unavailable");
       verificationEvidenceId = String(verificationEvidence.id);
+      transcriptCheckStatus = verificationEvidence.transcript_check_status;
       const saved = await deps.client.call("craft_knowledge_claim_save", {
         claim_id: `knowledge_claim_${stableDigest(task.task_id).slice(-24)}`,
         kind: candidate.kind,
@@ -2527,6 +2610,16 @@ async function runSessionKnowledgeCandidateOnce(deps) {
       });
       const claim = object6(saved.claim, "saved Knowledge Claim");
       claimId = String(claim.id);
+      if (claim.id !== `knowledge_claim_${stableDigest(task.task_id).slice(-24)}` || claim.scope !== task.project_scope_id || !Number.isSafeInteger(claim.version) || typeof claim.identity_digest !== "string" || typeof claim.content_digest !== "string")
+        throw new Error("saved Knowledge Claim lacks exact revision binding");
+      claimBinding = stableDigest({
+        claim_id: claim.id,
+        claim_version: claim.version,
+        identity_digest: claim.identity_digest,
+        content_digest: claim.content_digest,
+        scope: claim.scope,
+        evidence_id: verificationEvidenceId
+      });
     }
     const resultDigest = stableDigest({
       task_id: task.task_id,
@@ -2543,14 +2636,15 @@ async function runSessionKnowledgeCandidateOnce(deps) {
       source: "craft-knowledge",
       trust: "observed",
       operation_id: String(task.task_id),
-      output_refs: [claimId, verificationEvidenceId].filter((value) => value !== null),
+      output_refs: [claimId, verificationEvidenceId, claimBinding].filter((value) => value !== null),
       model_fingerprint: modelFingerprint,
-      data: { result_digest: resultDigest, claim_id: claimId, evidence_id: verificationEvidenceId, decision: candidate ? "candidate" : "skip" },
+      data: { result_digest: resultDigest, claim_id: claimId, evidence_id: verificationEvidenceId, transcript_check_status: transcriptCheckStatus, decision: candidate ? "candidate" : "skip" },
       summary: candidate ? "\u5DF2\u521B\u5EFA\u5F85\u72EC\u7ACB\u8BC1\u636E\u8BC4\u5BA1\u7684 Knowledge \u5019\u9009" : "\u6A21\u578B\u5224\u5B9A\u8BE5\u4EFB\u52A1\u6CA1\u6709\u7A33\u5B9A Knowledge \u5019\u9009"
     });
     await deps.client.call("craft_trace_finalize", { trace_id: traceId, status: "completed", summary: "Knowledge \u4EFB\u52A1\u5019\u9009\u751F\u6210\u5B8C\u6210" });
     state.processed_task_ids.push(String(task.task_id));
     state.trace_ids_by_task[String(task.task_id)] = traceId;
+    delete state.uncertain_calls[String(task.task_id)];
     await writeCandidateState(path, state);
   } catch (error) {
     await deps.client.call("craft_trace_append", {
@@ -2561,8 +2655,8 @@ async function runSessionKnowledgeCandidateOnce(deps) {
       trust: "observed",
       operation_id: String(task.task_id),
       model_fingerprint: modelFingerprint,
-      data: { failure_kind: safeFailureKind(error), input_digest: inputDigest },
-      summary: "Knowledge \u5019\u9009\u751F\u6210\u672A\u5B8C\u6210\uFF0C\u5C06\u5728\u540E\u7EED\u589E\u91CF\u8F6E\u6B21\u91CD\u8BD5"
+      data: { failure_kind: safeFailureKind(error), input_digest: inputDigest, result_state: "unknown" },
+      summary: "Knowledge \u5019\u9009\u751F\u6210\u672A\u5B8C\u6210\uFF0C\u8C03\u7528\u7ED3\u679C\u5F85\u6838\u5BF9"
     });
     await deps.client.call("craft_trace_finalize", { trace_id: traceId, status: "failed", summary: "Knowledge \u5019\u9009\u751F\u6210\u672A\u5B8C\u6210" });
     throw error;
@@ -2653,10 +2747,20 @@ function readState3(path) {
     if (stat2.isSymbolicLink() || !stat2.isFile() || stat2.size > 8 * 1024 * 1024) throw new Error("Knowledge evaluation state file is invalid");
     const value = JSON.parse(readFileSync7(path, "utf8"));
     const traces = value.trace_ids_by_task === void 0 ? {} : value.trace_ids_by_task;
-    if (value.schema !== SCHEMA3 || !Array.isArray(value.processed_task_ids) || value.processed_task_ids.length > 5e4 || value.processed_task_ids.some((id) => typeof id !== "string" || !id.trim() || id.length > 160) || value.last_attempted_task_id !== void 0 && (typeof value.last_attempted_task_id !== "string" || !value.last_attempted_task_id.trim() || value.last_attempted_task_id.length > 160) || !traces || typeof traces !== "object" || Array.isArray(traces) || Object.keys(traces).length > 5e4 || Object.entries(traces).some(([taskId, traceId]) => !taskId.trim() || taskId.length > 160 || typeof traceId !== "string" || !/^trace[-_][A-Za-z0-9_-]{1,160}$/u.test(traceId))) throw new Error("Knowledge evaluation state is invalid");
-    return { processed_task_ids: [...new Set(value.processed_task_ids)], trace_ids_by_task: traces, last_attempted_task_id: value.last_attempted_task_id };
+    const uncertain = value.uncertain_calls === void 0 ? {} : value.uncertain_calls;
+    if (value.schema !== SCHEMA3 || !Array.isArray(value.processed_task_ids) || value.processed_task_ids.length > 5e4 || value.processed_task_ids.some((id) => typeof id !== "string" || !id.trim() || id.length > 160) || value.last_attempted_task_id !== void 0 && (typeof value.last_attempted_task_id !== "string" || !value.last_attempted_task_id.trim() || value.last_attempted_task_id.length > 160) || value.legacy_unknown_outcomes !== void 0 && (!Number.isSafeInteger(value.legacy_unknown_outcomes) || Number(value.legacy_unknown_outcomes) < 0 || Number(value.legacy_unknown_outcomes) > 5e4) || !traces || typeof traces !== "object" || Array.isArray(traces) || Object.keys(traces).length > 5e4 || !uncertain || typeof uncertain !== "object" || Array.isArray(uncertain) || Object.keys(uncertain).length > 5e4 || Object.entries(uncertain).some(([id, raw]) => {
+      const item = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : null;
+      return !id.trim() || id.length > 160 || !item || typeof item.trace_id !== "string" || !/^trace[-_][A-Za-z0-9_-]{1,160}$/u.test(item.trace_id) || typeof item.input_digest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(item.input_digest);
+    }) || Object.entries(traces).some(([taskId, traceId]) => !taskId.trim() || taskId.length > 160 || typeof traceId !== "string" || !/^trace[-_][A-Za-z0-9_-]{1,160}$/u.test(traceId))) throw new Error("Knowledge evaluation state is invalid");
+    return {
+      processed_task_ids: [...new Set(value.processed_task_ids)],
+      trace_ids_by_task: traces,
+      last_attempted_task_id: value.last_attempted_task_id,
+      legacy_unknown_outcomes: value.legacy_unknown_outcomes,
+      uncertain_calls: uncertain
+    };
   } catch (error) {
-    if (error.code === "ENOENT") return { processed_task_ids: [], trace_ids_by_task: {} };
+    if (error.code === "ENOENT") return { processed_task_ids: [], trace_ids_by_task: {}, uncertain_calls: {} };
     throw error;
   }
 }
@@ -2671,6 +2775,8 @@ async function writeState2(path, state) {
     processed_task_ids: state.processed_task_ids.slice(-5e4),
     trace_ids_by_task: Object.fromEntries(Object.entries(state.trace_ids_by_task).slice(-5e4)),
     last_attempted_task_id: state.last_attempted_task_id,
+    legacy_unknown_outcomes: state.legacy_unknown_outcomes,
+    uncertain_calls: state.uncertain_calls,
     updated_at: (/* @__PURE__ */ new Date()).toISOString()
   });
 }
@@ -2687,16 +2793,75 @@ function safeFailureKind2(error) {
   const name = error instanceof Error ? error.name : "Error";
   return /^[A-Za-z][A-Za-z0-9]{0,31}$/u.test(name) ? name : "Error";
 }
+async function completedEvaluation(client, task, call) {
+  try {
+    const taskId = String(task.task_id);
+    const result = await client.call("craft_trace_get", { trace_id: call.trace_id });
+    const trace = object7(result.trace, "evaluation Trace"), events = result.events;
+    if (trace.id !== call.trace_id || trace.task_id !== `knowledge:${taskId}` || trace.operation_id !== taskId || trace.status !== "completed" || !Array.isArray(events)) return null;
+    const matching = (kind) => events.filter((event) => event && typeof event === "object" && !Array.isArray(event) && event.trace_id === call.trace_id && event.operation_id === taskId && event.event_kind === kind && event.actor === "knowledge-session-evaluation-worker");
+    const request = matching("model.request"), completed = matching("model.completed"), output = matching("knowledge.evaluation_case_candidate");
+    if (request.length !== 1 || completed.length !== 1 || output.length !== 1) return null;
+    if (!Array.isArray(request[0].input_refs) || request[0].input_refs.length !== 1 || request[0].input_refs[0] !== call.input_digest || !Array.isArray(output[0].output_refs) || !Number.isSafeInteger(request[0].sequence) || !Number.isSafeInteger(completed[0].sequence) || !Number.isSafeInteger(output[0].sequence) || request[0].sequence >= completed[0].sequence || completed[0].sequence >= output[0].sequence) return null;
+    const refs = output[0].output_refs;
+    if (!refs.length) return "skip";
+    const [caseId, evidenceId, runId, binding] = refs;
+    if (refs.length !== 4 || typeof caseId !== "string" || !/^knowledge_case_[a-f0-9]{24}$/u.test(caseId) || typeof evidenceId !== "string" || typeof runId !== "string" || typeof binding !== "string") return null;
+    const listed = await client.call("craft_knowledge_evaluation_case_list", { after_id: caseId.slice(0, -1), limit: 1e3 });
+    const cases = Array.isArray(listed.cases) ? listed.cases : [];
+    const item = cases.find((entry) => entry.id === caseId);
+    const run = object7((await client.call("craft_knowledge_evaluation_run_get", { run_id: runId })).run, "evaluation run");
+    if (!item || item.scope !== task.project_scope_id || item.source_session_id !== task.session_id || item.source_task_id !== taskId || item.label_source !== "model_candidate" || item.dataset_partition !== "held_out" || !Array.isArray(item.source_evidence_ids) || !item.source_evidence_ids.includes(evidenceId) || !Number.isSafeInteger(item.version) || typeof item.identity_digest !== "string" || run.id !== runId || run.mode !== "candidate_shadow" || !Number.isSafeInteger(run.version) || typeof run.identity_digest !== "string" || !Array.isArray(run.case_refs) || run.case_refs.length !== 1 || run.case_refs[0].case_id !== caseId || run.case_refs[0].case_version !== item.version || run.case_refs[0].identity_digest !== item.identity_digest || stableDigest(run.candidate_claim_refs) !== stableDigest(item.candidate_claim_refs)) return null;
+    const resultEvidence = await client.call("craft_evidence_get", { evidence_id: evidenceId });
+    const evidence = object7(resultEvidence.evidence ?? resultEvidence, "evaluation Evidence"), metadata = evidence.metadata;
+    if (evidence.id !== evidenceId || metadata?.provenance !== "codex_session_program_verification" || metadata.scope !== task.project_scope_id || metadata.source_session_id !== task.session_id || metadata.task_id !== taskId || metadata.turn_id !== task.turn_id) return null;
+    return binding === stableDigest({
+      case_id: caseId,
+      case_version: item.version,
+      case_identity: item.identity_digest,
+      run_id: runId,
+      run_version: run.version,
+      run_identity: run.identity_digest,
+      evidence_id: evidenceId
+    }) ? "case" : null;
+  } catch {
+    return null;
+  }
+}
 async function runSessionKnowledgeEvaluationOnce(deps) {
   const path = evaluationStatePath(deps), state = readState3(path);
   const batch = await codexSessionTaskBatch("held_out", deps.archive_options, deps.env);
-  const pending = batch.tasks.filter((item) => typeof item.task_id === "string" && !state.processed_task_ids.includes(item.task_id));
+  const processed = new Set(state.processed_task_ids);
+  const legacyUnknown = batch.tasks.filter((item) => typeof item.task_id === "string" && processed.has(item.task_id) && item.verification_outcome === null).length;
+  const diagnosticChanged = (state.legacy_unknown_outcomes ?? 0) !== legacyUnknown;
+  if (diagnosticChanged) state.legacy_unknown_outcomes = legacyUnknown;
+  const pending = batch.tasks.filter((item) => typeof item.task_id === "string" && !processed.has(item.task_id));
   const previous = pending.findIndex((item) => item.task_id === state.last_attempted_task_id);
   const task = pending[(previous + 1) % pending.length];
-  if (!task) return { status: "idle", processed: 0, raw_content_stored: false };
-  if (state.last_attempted_task_id !== task.task_id) {
+  if (!task) {
+    if (diagnosticChanged) await writeState2(path, state);
+    return legacyUnknown ? {
+      status: "waiting_for_legacy_outcome_evidence",
+      processed: 0,
+      legacy_unknown_outcomes: legacyUnknown,
+      raw_content_stored: false
+    } : { status: "idle", processed: 0, raw_content_stored: false };
+  }
+  if (diagnosticChanged || state.last_attempted_task_id !== task.task_id) {
     state.last_attempted_task_id = String(task.task_id);
     await writeState2(path, state);
+  }
+  if (state.uncertain_calls[String(task.task_id)]) {
+    const taskId = String(task.task_id), call = state.uncertain_calls[taskId];
+    const decision = await completedEvaluation(deps.client, task, call);
+    if (decision) {
+      state.processed_task_ids.push(taskId);
+      state.trace_ids_by_task[taskId] = call.trace_id;
+      delete state.uncertain_calls[taskId];
+      await writeState2(path, state);
+      return { status: "completed_call_reconciled", processed: 1, decision, trace_id: call.trace_id, raw_content_stored: false };
+    }
+    return { status: "waiting_for_call_reconciliation", processed: 0, reason: "model_result_unknown", raw_content_stored: false };
   }
   if (typeof task.project_scope_id !== "string" || !/^project:[A-Za-z0-9_-]{1,96}$/u.test(task.project_scope_id)) {
     state.processed_task_ids.push(String(task.task_id));
@@ -2705,11 +2870,15 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
   }
   const excerpt = await (deps.read_excerpt ?? readCodexSessionTaskExcerpt)(task.task_id, { ...deps.archive_options, expected_partition: "held_out" }, deps.env);
   const evidenceIds = Array.isArray(excerpt.evidence_ids) ? excerpt.evidence_ids : [];
-  if (excerpt.status !== "ready" || excerpt.session_id !== task.session_id || excerpt.turn_id !== task.turn_id || excerpt.project_scope_id !== task.project_scope_id || excerpt.verification_source !== task.verification_source || JSON.stringify(evidenceIds) !== JSON.stringify(task.verification_evidence_ids)) {
-    state.processed_task_ids.push(String(task.task_id));
-    await writeState2(path, state);
-    return { status: "skipped", processed: 1, reason: "held_out_excerpt_unavailable", raw_content_stored: false };
+  if (excerpt.status !== "ready" || excerpt.session_id !== task.session_id || excerpt.turn_id !== task.turn_id || excerpt.project_scope_id !== task.project_scope_id || excerpt.verification_source !== task.verification_source || (excerpt.verification_outcome ?? null) !== (task.verification_outcome ?? null) || JSON.stringify(evidenceIds) !== JSON.stringify(task.verification_evidence_ids)) {
+    return { status: "waiting_for_consistent_excerpt", processed: 0, reason: "held_out_excerpt_unavailable", raw_content_stored: false };
   }
+  if (excerpt.verification_outcome == null) return {
+    status: "waiting_for_terminal_outcome",
+    processed: 0,
+    reason: "terminal_task_outcome_unverified",
+    raw_content_stored: false
+  };
   const verificationArtifacts = Array.isArray(excerpt.verification_artifacts) ? excerpt.verification_artifacts : [];
   if (!verificationArtifacts.length) {
     state.processed_task_ids.push(String(task.task_id));
@@ -2763,6 +2932,7 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
   const packet = redactKnowledgeModelText({
     query: excerpt.task_goal,
     task_result: excerpt.task_result,
+    verification_outcome: excerpt.verification_outcome,
     candidate_claims: claims,
     verification_artifacts: verificationArtifacts,
     sanitized: true,
@@ -2783,6 +2953,7 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
   }), "Knowledge evaluation Trace start");
   const traceId = String(object7(started.trace, "Knowledge evaluation Trace").id ?? "");
   if (!traceId) throw new Error("Knowledge evaluation Trace has no id");
+  if (!/^trace[-_][A-Za-z0-9_-]{1,160}$/u.test(traceId)) throw new Error("Knowledge evaluation Trace id is invalid");
   try {
     await deps.client.call("craft_trace_append", {
       trace_id: traceId,
@@ -2794,10 +2965,12 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
       input_refs: [inputDigest],
       model_fingerprint: fingerprint,
       data: { purpose: "knowledge_held_out_label", input_digest: inputDigest, source_ref: task.source_ref, content_stored: false },
-      summary: "\u5DF2\u53D1\u9001\u8131\u654F\u7559\u51FA\u4EFB\u52A1\u548C\u5F53\u524D\u5019\u9009\u6458\u8981\uFF0C\u751F\u6210\u5F85\u5BA1\u8BC4\u6D4B\u6807\u7B7E"
+      summary: "\u51C6\u5907\u53D1\u9001\u8131\u654F\u7559\u51FA\u4EFB\u52A1\u548C\u5F53\u524D\u5019\u9009\u6458\u8981\uFF0C\u751F\u6210\u5F85\u5BA1\u8BC4\u6D4B\u6807\u7B7E"
     });
     const request = buildChatRequest(provider, { model: String(profile.model), messages, max_tokens: Math.min(Number(profile.max_output_tokens ?? 1024), 1024), temperature: 0 });
     if (provider.provider === "codex-cli") request.body.codex_output_schema = OUTPUT_SCHEMA2;
+    state.uncertain_calls[String(task.task_id)] = { trace_id: traceId, input_digest: inputDigest };
+    await writeState2(path, state);
     const response = await deps.transport.complete(provider, request);
     const output = parseOutput(response.text);
     if (!Array.isArray(output.expected_claim_ids) || output.expected_claim_ids.length > 8 || output.expected_claim_ids.some((id) => typeof id !== "string" || !candidateClaimIds.includes(id)) || output.decision === "labeled" && output.expected_claim_ids.length === 0 || output.decision === "skip" && output.expected_claim_ids.length !== 0 || !["labeled", "skip"].includes(String(output.decision))) throw new Error("Knowledge evaluation labels must be selected from current candidate Claims");
@@ -2814,10 +2987,12 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
       summary: "Codex Host \u8FD4\u56DE\u4E86\u7559\u51FA\u8BC4\u6D4B\u6807\u7B7E\u5019\u9009"
     });
     let caseId = null, caseEvidenceId = null, evaluationEligible = null;
+    let runId = null, resultBinding = null, transcriptCheckStatus = "not_reported";
     if (output.decision === "labeled") {
       const verificationEvidence = await recordSessionVerificationEvidence(deps.client, task, excerpt);
       if (!verificationEvidence) throw new Error("held-out test Evidence is unavailable");
       caseEvidenceId = String(verificationEvidence.id);
+      transcriptCheckStatus = verificationEvidence.transcript_check_status;
       const caseIdDigest = stableDigest({ task_id: task.task_id, candidate_claim_refs: candidateClaimRefs });
       const saved = await deps.client.call("craft_knowledge_evaluation_case_save", {
         case_id: `knowledge_case_${caseIdDigest.slice(-24)}`,
@@ -2843,6 +3018,18 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
         top_k: 10
       });
       const runRecord = object7(run.run, "Knowledge evaluation run");
+      if (Number.isSafeInteger(evaluationCase.version) && typeof evaluationCase.identity_digest === "string" && typeof runRecord.id === "string" && Number.isSafeInteger(runRecord.version) && typeof runRecord.identity_digest === "string") {
+        runId = runRecord.id;
+        resultBinding = stableDigest({
+          case_id: caseId,
+          case_version: evaluationCase.version,
+          case_identity: evaluationCase.identity_digest,
+          run_id: runId,
+          run_version: runRecord.version,
+          run_identity: runRecord.identity_digest,
+          evidence_id: caseEvidenceId
+        });
+      }
       const metrics = runRecord.metrics && typeof runRecord.metrics === "object" ? runRecord.metrics : {};
       evaluationEligible = metrics.provenance_eligible === true;
     }
@@ -2862,14 +3049,15 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
       source: "craft-knowledge",
       trust: "observed",
       operation_id: String(task.task_id),
-      output_refs: [caseId, caseEvidenceId].filter((value) => value !== null),
+      output_refs: [caseId, caseEvidenceId, runId, resultBinding].filter((value) => value !== null),
       model_fingerprint: fingerprint,
-      data: { result_digest: resultDigest, case_id: caseId, evidence_id: caseEvidenceId, label_source: "model_candidate", evaluation_eligible: evaluationEligible },
+      data: { result_digest: resultDigest, case_id: caseId, evidence_id: caseEvidenceId, transcript_check_status: transcriptCheckStatus, label_source: "model_candidate", evaluation_eligible: evaluationEligible },
       summary: caseId ? "\u5DF2\u5EFA\u7ACB\u5F85\u4E8C\u6B21\u5BA1\u5B9A\u7684\u7559\u51FA\u8BC4\u6D4B\u6848\u4F8B" : "\u6A21\u578B\u672A\u627E\u5230\u5145\u5206\u5339\u914D\u7684\u5F53\u524D\u5019\u9009"
     });
     await deps.client.call("craft_trace_finalize", { trace_id: traceId, status: "completed", summary: "\u7559\u51FA\u8BC4\u6D4B\u6807\u7B7E\u5019\u9009\u5904\u7406\u5B8C\u6210" });
     state.processed_task_ids.push(String(task.task_id));
     state.trace_ids_by_task[String(task.task_id)] = traceId;
+    delete state.uncertain_calls[String(task.task_id)];
     await writeState2(path, state);
     return {
       status: caseId ? "case_candidate_created" : "case_skipped",
@@ -2891,8 +3079,8 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
       trust: "observed",
       operation_id: String(task.task_id),
       model_fingerprint: fingerprint,
-      data: { failure_kind: safeFailureKind2(error), input_digest: inputDigest },
-      summary: "\u7559\u51FA\u8BC4\u6D4B\u6807\u7B7E\u5904\u7406\u672A\u5B8C\u6210\uFF0C\u5C06\u5728\u540E\u7EED\u589E\u91CF\u8F6E\u6B21\u91CD\u8BD5"
+      data: { failure_kind: safeFailureKind2(error), input_digest: inputDigest, result_state: state.uncertain_calls[String(task.task_id)] ? "unknown" : "not_dispatched" },
+      summary: "\u7559\u51FA\u8BC4\u6D4B\u6807\u7B7E\u5904\u7406\u672A\u5B8C\u6210\uFF0C\u8C03\u7528\u72B6\u6001\u5F85\u6838\u5BF9"
     });
     await deps.client.call("craft_trace_finalize", { trace_id: traceId, status: "failed", summary: "\u7559\u51FA\u8BC4\u6D4B\u6807\u7B7E\u5904\u7406\u672A\u5B8C\u6210" });
     throw error;
@@ -3089,6 +3277,8 @@ async function runSessionKnowledgeAdjudicationOnce(deps, now = (/* @__PURE__ */ 
     if (item.id !== evidenceId || !["confirmed", "program"].includes(String(item.confidence)) || metadata.source_session_id !== current.source_session_id || metadata.task_id !== current.source_task_id) {
       return withMetrics({ status: "waiting_for_verified_evidence", processed: 0, model_calls: 0, raw_content_stored: false });
     }
+    if (metadata.provenance === "codex_session_program_verification")
+      return withMetrics({ status: "waiting_for_outcome_evidence", processed: 0, model_calls: 0, raw_content_stored: false });
     evidence.push({
       evidence_id: item.id,
       source_type: item.source_type,
