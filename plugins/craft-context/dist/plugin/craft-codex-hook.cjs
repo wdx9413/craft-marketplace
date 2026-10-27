@@ -370,7 +370,7 @@ var init_telemetry = __esm({
   "common/craft-common-log/src/telemetry.ts"() {
     "use strict";
     import_node_crypto4 = require("node:crypto");
-    SAFE_KEY = /^(?:reason_code|database_(?:role|phase)|busy_timeout_ms|retryable|(?:[a-z][a-z0-9_]*_)?(?:id|digest|count|bytes|duration_ms|status|stage|provider|model|unit|cost_usd|input_tokens|output_tokens|name))$/u;
+    SAFE_KEY = /^(?:reason_code|database_(?:role|phase)|busy_timeout_ms|waited_ms|retryable|(?:[a-z][a-z0-9_]*_)?(?:id|digest|count|bytes|duration_ms|status|stage|provider|model|unit|cost_usd|input_tokens|output_tokens|name))$/u;
     SECRET = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]/iu;
     CraftTelemetry = class {
       sink;
@@ -4339,6 +4339,9 @@ function storageFailureAttributes(error) {
   const timeout = details.busy_timeout_ms;
   if (typeof timeout === "number" && Number.isSafeInteger(timeout) && timeout >= 0 && timeout <= 6e4)
     attributes.busy_timeout_ms = timeout;
+  const waited = details.waited_ms;
+  if (typeof waited === "number" && Number.isSafeInteger(waited) && waited >= 0 && waited <= 36e5)
+    attributes.waited_ms = waited;
   if (typeof details.retryable === "boolean") attributes.retryable = details.retryable;
   return attributes;
 }
@@ -9545,7 +9548,7 @@ var CRAFT_RELEASE_VERSION;
 var init_version = __esm({
   "core/version.ts"() {
     "use strict";
-    CRAFT_RELEASE_VERSION = "0.12.117";
+    CRAFT_RELEASE_VERSION = "0.12.118";
   }
 });
 
@@ -285364,6 +285367,7 @@ var init_codex_hook_bridge = __esm({
   "core/interfaces/codex-hook-bridge.ts"() {
     "use strict";
     init_component_trace();
+    init_operation();
     import_node_crypto161 = require("node:crypto");
     init_context_access_guard2();
     init_context_assets();
@@ -285619,16 +285623,17 @@ var init_codex_hook_bridge = __esm({
       async handle(member2, input) {
         const rawEvent = text33(input.hook_event_name);
         const event = rawEvent && ["SessionStart", "SessionEnd", "UserPromptSubmit", "PostToolUse", "Stop"].includes(rawEvent) ? rawEvent : "unknown";
-        const projectScope = typeof input.cwd === "string" ? process.env.CRAFT_HOOK_MODE === "1" && event === "PostToolUse" ? codexProjectScope(input.cwd) : this.service.scopeIdentityResolveProject({ project_root: input.cwd }).identity.canonical_scope : null;
-        if (process.env.CRAFT_HOOK_MODE === "1" && event === "PostToolUse") return await this.dispatch(member2, input, projectScope);
+        const resolveProjectScope = () => typeof input.cwd === "string" ? process.env.CRAFT_HOOK_MODE === "1" && event === "PostToolUse" ? codexProjectScope(input.cwd) : this.service.scopeIdentityResolveProject({ project_root: input.cwd }).identity.canonical_scope : null;
+        if (process.env.CRAFT_HOOK_MODE === "1" && event === "PostToolUse") return await this.dispatch(member2, input, resolveProjectScope());
         const captured = await new ComponentTraceKernel(this.service.trace, "hook").capture({
           requestId: (0, import_node_crypto161.randomUUID)(),
           component: "craft-hook",
           operation: `handle.${member2}.${event}`,
           input: { member: member2, hook_event: event },
-          handler: () => this.dispatch(member2, input, projectScope)
+          handler: () => this.dispatch(member2, input, resolveProjectScope())
         });
         if (!captured.ok) {
+          if (process.env.CRAFT_HOOK_MODE === "1" && operationErrorCode(captured.error) === "STORAGE_BUSY") throw captured.error;
           this.service.store.appendEvent("codex-hook", "codex_hook.failed", { member: member2, error_type: captured.error instanceof Error ? captured.error.name : "unknown" });
           return {};
         }
@@ -285978,6 +285983,8 @@ function hookStorageFailureDetails(error, errorCode) {
   if (typeof value.phase === "string" && DATABASE_PHASES.has(value.phase)) result.database_phase = value.phase;
   if (typeof value.busy_timeout_ms === "number" && Number.isSafeInteger(value.busy_timeout_ms) && value.busy_timeout_ms >= 0 && value.busy_timeout_ms <= 6e4)
     result.busy_timeout_ms = value.busy_timeout_ms;
+  if (typeof value.waited_ms === "number" && Number.isSafeInteger(value.waited_ms) && value.waited_ms >= 0 && value.waited_ms <= 36e5)
+    result.waited_ms = value.waited_ms;
   if (typeof value.retryable === "boolean") result.retryable = value.retryable;
   return result;
 }
@@ -286054,6 +286061,7 @@ function beginHookRuntimeDiagnostic(args) {
       ...timing.database_role && DATABASE_ROLES.has(timing.database_role) ? { database_role: timing.database_role } : {},
       ...timing.database_phase && DATABASE_PHASES.has(timing.database_phase) ? { database_phase: timing.database_phase } : {},
       ...Number.isSafeInteger(timing.busy_timeout_ms) && Number(timing.busy_timeout_ms) >= 0 && Number(timing.busy_timeout_ms) <= 6e4 ? { busy_timeout_ms: timing.busy_timeout_ms } : {},
+      ...Number.isSafeInteger(timing.waited_ms) && Number(timing.waited_ms) >= 0 && Number(timing.waited_ms) <= 36e5 ? { waited_ms: timing.waited_ms } : {},
       ...typeof timing.retryable === "boolean" ? { retryable: timing.retryable } : {}
     });
   } };

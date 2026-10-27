@@ -223379,7 +223379,7 @@ var TraceKernel = class {
 
 // common/craft-common-log/src/telemetry.ts
 var import_node_crypto10 = require("node:crypto");
-var SAFE_KEY = /^(?:reason_code|database_(?:role|phase)|busy_timeout_ms|retryable|(?:[a-z][a-z0-9_]*_)?(?:id|digest|count|bytes|duration_ms|status|stage|provider|model|unit|cost_usd|input_tokens|output_tokens|name))$/u;
+var SAFE_KEY = /^(?:reason_code|database_(?:role|phase)|busy_timeout_ms|waited_ms|retryable|(?:[a-z][a-z0-9_]*_)?(?:id|digest|count|bytes|duration_ms|status|stage|provider|model|unit|cost_usd|input_tokens|output_tokens|name))$/u;
 var SECRET2 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]/iu;
 function required2(value, field) {
   if (typeof value !== "string" || !value.trim() || value.length > 256) throw new Error(`${field} must be a non-empty string of at most 256 characters`);
@@ -223714,6 +223714,9 @@ function storageFailureAttributes(error) {
   const timeout = details.busy_timeout_ms;
   if (typeof timeout === "number" && Number.isSafeInteger(timeout) && timeout >= 0 && timeout <= 6e4)
     attributes.busy_timeout_ms = timeout;
+  const waited = details.waited_ms;
+  if (typeof waited === "number" && Number.isSafeInteger(waited) && waited >= 0 && waited <= 36e5)
+    attributes.waited_ms = waited;
   if (typeof details.retryable === "boolean") attributes.retryable = details.retryable;
   return attributes;
 }
@@ -227942,7 +227945,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.117";
+var CRAFT_RELEASE_VERSION = "0.12.118";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [

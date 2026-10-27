@@ -139,6 +139,7 @@ function beginHookRuntimeDiagnostic(args) {
       ...timing.database_role && DATABASE_ROLES.has(timing.database_role) ? { database_role: timing.database_role } : {},
       ...timing.database_phase && DATABASE_PHASES.has(timing.database_phase) ? { database_phase: timing.database_phase } : {},
       ...Number.isSafeInteger(timing.busy_timeout_ms) && Number(timing.busy_timeout_ms) >= 0 && Number(timing.busy_timeout_ms) <= 6e4 ? { busy_timeout_ms: timing.busy_timeout_ms } : {},
+      ...Number.isSafeInteger(timing.waited_ms) && Number(timing.waited_ms) >= 0 && Number(timing.waited_ms) <= 36e5 ? { waited_ms: timing.waited_ms } : {},
       ...typeof timing.retryable === "boolean" ? { retryable: timing.retryable } : {}
     });
   } };
