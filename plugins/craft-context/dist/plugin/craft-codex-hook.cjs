@@ -9593,7 +9593,7 @@ var CRAFT_RELEASE_VERSION;
 var init_version = __esm({
   "core/version.ts"() {
     "use strict";
-    CRAFT_RELEASE_VERSION = "0.12.119";
+    CRAFT_RELEASE_VERSION = "0.12.120";
   }
 });
 
@@ -274708,6 +274708,34 @@ var init_decision_context_gate2 = __esm({
   }
 });
 
+// core/learning-worker-diagnostic.ts
+function learningWorkerDiagnostic(runtimeDir, component2, runtimeVersion) {
+  try {
+    const path2 = (0, import_node_path65.join)(runtimeDir, `learning-worker-${component2}.lock.json`), stat5 = (0, import_node_fs52.lstatSync)(path2);
+    if (stat5.isSymbolicLink() || !stat5.isFile() || stat5.size > 4096) return { status: "unavailable" };
+    const value = JSON.parse((0, import_node_fs52.readFileSync)(path2, "utf8"));
+    if (!value || !Number.isSafeInteger(value.pid) || Number(value.pid) < 1 || typeof value.owner_id !== "string" || !value.owner_id) return { status: "unavailable" };
+    const version3 = typeof value.runtime_version === "string" && /^\d+\.\d+\.\d+$/u.test(value.runtime_version) ? value.runtime_version : null;
+    return {
+      status: "owner_recorded",
+      owner_pid: value.pid,
+      owner_version: version3,
+      version_relation: version3 === null ? "unknown" : version3 === runtimeVersion ? "same" : "different",
+      liveness: "unverified"
+    };
+  } catch (error) {
+    return { status: error.code === "ENOENT" ? "not_observed" : "unavailable" };
+  }
+}
+var import_node_fs52, import_node_path65;
+var init_learning_worker_diagnostic = __esm({
+  "core/learning-worker-diagnostic.ts"() {
+    "use strict";
+    import_node_fs52 = require("node:fs");
+    import_node_path65 = require("node:path");
+  }
+});
+
 // core/component-readiness.ts
 function component(value) {
   if (typeof value !== "string" || !COMPONENTS2.has(value)) {
@@ -274725,11 +274753,11 @@ function countByStatus(store, kind4) {
 }
 function knowledgeEvaluationDiagnostic(directory4) {
   try {
-    const parent = (0, import_node_fs52.lstatSync)(directory4);
+    const parent = (0, import_node_fs53.lstatSync)(directory4);
     if (parent.isSymbolicLink() || !parent.isDirectory()) return { status: "unavailable" };
-    const path2 = (0, import_node_path65.join)(directory4, "session-evaluation-state.json"), stat5 = (0, import_node_fs52.lstatSync)(path2);
+    const path2 = (0, import_node_path66.join)(directory4, "session-evaluation-state.json"), stat5 = (0, import_node_fs53.lstatSync)(path2);
     if (stat5.isSymbolicLink() || !stat5.isFile() || stat5.size > 8 * 1024 * 1024) return { status: "unavailable" };
-    const value = JSON.parse((0, import_node_fs52.readFileSync)(path2, "utf8"));
+    const value = JSON.parse((0, import_node_fs53.readFileSync)(path2, "utf8"));
     if (!value || value.schema !== "craft.knowledge-session-evaluation-state.v1" || value.legacy_unknown_outcomes === void 0)
       return { status: "not_observed" };
     if (!Number.isSafeInteger(value.legacy_unknown_outcomes) || Number(value.legacy_unknown_outcomes) < 0 || Number(value.legacy_unknown_outcomes) > 5e4 || typeof value.updated_at !== "string" || value.updated_at.length > 64 || !Number.isFinite(Date.parse(value.updated_at))) return { status: "unavailable" };
@@ -274758,13 +274786,14 @@ function toolNames(value) {
   });
   return [...new Set(names3)].sort();
 }
-var import_node_fs52, import_node_path65, COMPONENTS2, ComponentReadinessKernel, REQUIRED_TOOLS;
+var import_node_fs53, import_node_path66, COMPONENTS2, ComponentReadinessKernel, REQUIRED_TOOLS;
 var init_component_readiness = __esm({
   "core/component-readiness.ts"() {
     "use strict";
     init_version();
-    import_node_fs52 = require("node:fs");
-    import_node_path65 = require("node:path");
+    import_node_fs53 = require("node:fs");
+    import_node_path66 = require("node:path");
+    init_learning_worker_diagnostic();
     COMPONENTS2 = /* @__PURE__ */ new Set(["knowledge", "memory", "experience"]);
     ComponentReadinessKernel = class {
       store;
@@ -274814,6 +274843,7 @@ var init_component_readiness = __esm({
           observability: {
             data_root: this.store.paths.root,
             ...name === "knowledge" ? { learning_evaluation: knowledgeEvaluationDiagnostic(this.store.paths.knowledgeDir) } : {},
+            ...name === "knowledge" || name === "experience" ? { learning_worker: learningWorkerDiagnostic(this.store.paths.runtimeDir, name, CRAFT_RELEASE_VERSION) } : {},
             trace_retention: this.store.find("maintenance_component", "trace_retention") ?? { status: "not_observed" },
             telemetry_events: this.store.count("telemetry_event"),
             usage_records: this.store.count("usage_ledger"),
@@ -274982,17 +275012,17 @@ var init_quality_profile = __esm({
 
 // capability/craft-codebase/repository-files.ts
 function repositoryPolicySnapshot(root, runGit2 = git) {
-  root = (0, import_node_fs53.realpathSync)(root);
-  const configPath = (0, import_node_path66.join)(root, ".craft-codebase.json");
+  root = (0, import_node_fs54.realpathSync)(root);
+  const configPath = (0, import_node_path67.join)(root, ".craft-codebase.json");
   let config = "missing";
-  if ((0, import_node_fs53.existsSync)(configPath)) {
-    const stat5 = (0, import_node_fs53.lstatSync)(configPath);
+  if ((0, import_node_fs54.existsSync)(configPath)) {
+    const stat5 = (0, import_node_fs54.lstatSync)(configPath);
     if (stat5.isSymbolicLink() || !stat5.isFile()) throw new Error("Repository config must be a regular file");
-    config = (0, import_node_crypto155.createHash)("sha256").update((0, import_node_fs53.readFileSync)(configPath)).digest("hex");
+    config = (0, import_node_crypto155.createHash)("sha256").update((0, import_node_fs54.readFileSync)(configPath)).digest("hex");
   }
   const paths = [...new Set(runGit2(root, ["ls-files", "--cached", "--others", "--exclude-standard", "-z"]).split("\0").filter(Boolean))].sort();
   const policyFiles = paths.filter((path2) => path2 === ".gitignore" || path2.endsWith("/.gitignore"));
-  const infoExclude = (0, import_node_path66.resolve)(root, runGit2(root, ["rev-parse", "--git-path", "info/exclude"]).trim());
+  const infoExclude = (0, import_node_path67.resolve)(root, runGit2(root, ["rev-parse", "--git-path", "info/exclude"]).trim());
   const configured = (() => {
     try {
       return runGit2(root, ["config", "--path", "--get-all", "core.excludesfile"]).split(/\r?\n/u).filter(Boolean);
@@ -275001,16 +275031,16 @@ function repositoryPolicySnapshot(root, runGit2 = git) {
       throw error;
     }
   })();
-  const defaultExclude = (0, import_node_path66.join)(process.env.XDG_CONFIG_HOME ?? (0, import_node_path66.join)((0, import_node_os6.homedir)(), ".config"), "git", "ignore");
+  const defaultExclude = (0, import_node_path67.join)(process.env.XDG_CONFIG_HOME ?? (0, import_node_path67.join)((0, import_node_os6.homedir)(), ".config"), "git", "ignore");
   const fileDigest2 = (path2) => {
     try {
-      return (0, import_node_crypto155.createHash)("sha256").update((0, import_node_fs53.readFileSync)(path2)).digest("hex");
+      return (0, import_node_crypto155.createHash)("sha256").update((0, import_node_fs54.readFileSync)(path2)).digest("hex");
     } catch (error) {
       if (error.code === "ENOENT") return "missing";
       throw error;
     }
   };
-  const ignores = [.../* @__PURE__ */ new Set([...policyFiles.map((path2) => (0, import_node_path66.join)(root, path2)), infoExclude, ...configured.map((path2) => (0, import_node_path66.resolve)(root, path2)), defaultExclude])].sort().map((path2) => [path2, fileDigest2(path2)]);
+  const ignores = [.../* @__PURE__ */ new Set([...policyFiles.map((path2) => (0, import_node_path67.join)(root, path2)), infoExclude, ...configured.map((path2) => (0, import_node_path67.resolve)(root, path2)), defaultExclude])].sort().map((path2) => [path2, fileDigest2(path2)]);
   const autoIndex = process.env.CRAFT_CODEBASE_AUTO_INDEX ?? null;
   return {
     root,
@@ -275019,36 +275049,36 @@ function repositoryPolicySnapshot(root, runGit2 = git) {
     config_digest: config,
     ignore_files: ignores,
     info_exclude_path: infoExclude,
-    configured_excludes: configured.map((path2) => (0, import_node_path66.resolve)(root, path2)).sort(),
+    configured_excludes: configured.map((path2) => (0, import_node_path67.resolve)(root, path2)).sort(),
     default_exclude_path: defaultExclude,
     auto_index: autoIndex
   };
 }
 function repositoryPolicySnapshotCurrent(snapshot, runGit2 = git) {
-  const root = (0, import_node_fs53.realpathSync)(snapshot.root);
+  const root = (0, import_node_fs54.realpathSync)(snapshot.root);
   if (root !== snapshot.root || (process.env.CRAFT_CODEBASE_AUTO_INDEX ?? null) !== snapshot.auto_index) return false;
   let config = "missing";
-  if ((0, import_node_fs53.existsSync)(snapshot.config_path)) {
-    const stat5 = (0, import_node_fs53.lstatSync)(snapshot.config_path);
+  if ((0, import_node_fs54.existsSync)(snapshot.config_path)) {
+    const stat5 = (0, import_node_fs54.lstatSync)(snapshot.config_path);
     if (stat5.isSymbolicLink() || !stat5.isFile()) throw new Error("Repository config must be a regular file");
-    config = (0, import_node_crypto155.createHash)("sha256").update((0, import_node_fs53.readFileSync)(snapshot.config_path)).digest("hex");
+    config = (0, import_node_crypto155.createHash)("sha256").update((0, import_node_fs54.readFileSync)(snapshot.config_path)).digest("hex");
   }
   if (config !== snapshot.config_digest) return false;
-  const infoExclude = (0, import_node_path66.resolve)(root, runGit2(root, ["rev-parse", "--git-path", "info/exclude"]).trim());
+  const infoExclude = (0, import_node_path67.resolve)(root, runGit2(root, ["rev-parse", "--git-path", "info/exclude"]).trim());
   const configured = (() => {
     try {
-      return runGit2(root, ["config", "--path", "--get-all", "core.excludesfile"]).split(/\r?\n/u).filter(Boolean).map((path2) => (0, import_node_path66.resolve)(root, path2)).sort();
+      return runGit2(root, ["config", "--path", "--get-all", "core.excludesfile"]).split(/\r?\n/u).filter(Boolean).map((path2) => (0, import_node_path67.resolve)(root, path2)).sort();
     } catch (error) {
       if (error.status === 1) return [];
       throw error;
     }
   })();
-  const defaultExclude = (0, import_node_path66.join)(process.env.XDG_CONFIG_HOME ?? (0, import_node_path66.join)((0, import_node_os6.homedir)(), ".config"), "git", "ignore");
+  const defaultExclude = (0, import_node_path67.join)(process.env.XDG_CONFIG_HOME ?? (0, import_node_path67.join)((0, import_node_os6.homedir)(), ".config"), "git", "ignore");
   if (infoExclude !== snapshot.info_exclude_path || JSON.stringify(configured) !== JSON.stringify(snapshot.configured_excludes) || defaultExclude !== snapshot.default_exclude_path) return false;
   for (const [path2, expectedDigest] of snapshot.ignore_files) {
     let currentDigest;
     try {
-      currentDigest = (0, import_node_crypto155.createHash)("sha256").update((0, import_node_fs53.readFileSync)(path2)).digest("hex");
+      currentDigest = (0, import_node_crypto155.createHash)("sha256").update((0, import_node_fs54.readFileSync)(path2)).digest("hex");
     } catch (error) {
       if (error.code === "ENOENT") currentDigest = "missing";
       else throw error;
@@ -275063,9 +275093,9 @@ function repositoryPolicyDigest(root, runGit2 = git) {
 function hasSymlinkPath(root, path2) {
   let current2 = root;
   for (const component2 of path2.split("/")) {
-    current2 = (0, import_node_path66.join)(current2, component2);
+    current2 = (0, import_node_path67.join)(current2, component2);
     try {
-      if ((0, import_node_fs53.lstatSync)(current2).isSymbolicLink()) return true;
+      if ((0, import_node_fs54.lstatSync)(current2).isSymbolicLink()) return true;
     } catch {
       return false;
     }
@@ -275074,27 +275104,27 @@ function hasSymlinkPath(root, path2) {
 }
 function repositoryRoot(path2, runGit2 = git) {
   if (typeof path2 !== "string" || !path2.trim()) throw new Error("project_root is required");
-  const current2 = (0, import_node_fs53.realpathSync)(path2);
-  if (!(0, import_node_fs53.lstatSync)(current2).isDirectory()) throw new Error("project_root must be a directory");
+  const current2 = (0, import_node_fs54.realpathSync)(path2);
+  if (!(0, import_node_fs54.lstatSync)(current2).isDirectory()) throw new Error("project_root must be a directory");
   try {
-    return { root: (0, import_node_fs53.realpathSync)(runGit2(current2, ["rev-parse", "--show-toplevel"]).trim()), isRepository: true };
+    return { root: (0, import_node_fs54.realpathSync)(runGit2(current2, ["rev-parse", "--show-toplevel"]).trim()), isRepository: true };
   } catch {
     return { root: current2, isRepository: false };
   }
 }
 function repositoryFiles(root, _query = "", runGit2 = git) {
-  root = (0, import_node_fs53.realpathSync)(root);
-  const configPath = (0, import_node_path66.join)(root, ".craft-codebase.json");
-  if ((0, import_node_fs53.existsSync)(configPath) && (0, import_node_fs53.lstatSync)(configPath).isSymbolicLink()) throw new Error("Repository config must be a regular file");
-  const config = (0, import_node_fs53.existsSync)(configPath) ? JSON.parse((0, import_node_fs53.readFileSync)(configPath, "utf8")) : {};
+  root = (0, import_node_fs54.realpathSync)(root);
+  const configPath = (0, import_node_path67.join)(root, ".craft-codebase.json");
+  if ((0, import_node_fs54.existsSync)(configPath) && (0, import_node_fs54.lstatSync)(configPath).isSymbolicLink()) throw new Error("Repository config must be a regular file");
+  const config = (0, import_node_fs54.existsSync)(configPath) ? JSON.parse((0, import_node_fs54.readFileSync)(configPath, "utf8")) : {};
   if (!config || typeof config !== "object" || Array.isArray(config)) throw new Error("Invalid .craft-codebase.json");
   if (config.enabled !== void 0 && typeof config.enabled !== "boolean") throw new Error("enabled must be boolean");
   const excludes = config.exclude_paths ?? [];
-  if (!Array.isArray(excludes) || excludes.some((p) => typeof p !== "string" || !p || (0, import_node_path66.isAbsolute)(p) || p.includes("\\") || p.split("/").includes(".."))) throw new Error("exclude_paths must contain repository-relative paths");
+  if (!Array.isArray(excludes) || excludes.some((p) => typeof p !== "string" || !p || (0, import_node_path67.isAbsolute)(p) || p.includes("\\") || p.split("/").includes(".."))) throw new Error("exclude_paths must contain repository-relative paths");
   if (config.enabled === false || process.env.CRAFT_CODEBASE_AUTO_INDEX === "0") return { root, state: "disabled", files: [], context_files: [], context_files_omitted: 0, omitted: 0, omitted_by_language: {} };
   const paths = [...new Set(runGit2(root, ["ls-files", "--cached", "--others", "--exclude-standard", "-z"]).split("\0").filter(Boolean))].sort();
   const symlinkPaths = new Set(paths.filter((path2) => {
-    const extension2 = (0, import_node_path66.extname)(path2).toLowerCase();
+    const extension2 = (0, import_node_path67.extname)(path2).toLowerCase();
     return EXTENSIONS.has(extension2) && !GENERATED.test(path2) && !excludes.some((p) => path2 === p || path2.startsWith(`${String(p).replace(/\/$/u, "")}/`)) && hasSymlinkPath(root, path2);
   }));
   let ignored = "";
@@ -275108,17 +275138,17 @@ function repositoryFiles(root, _query = "", runGit2 = git) {
   let contextFilesBytes = 0, context_files_omitted = 0;
   for (const path2 of paths) {
     if (!GO_CONTEXT_FILES.has(path2.split("/").pop()) || ignoredPaths.has(path2) || GENERATED.test(path2) || excludes.some((p) => path2 === p || path2.startsWith(`${String(p).replace(/\/$/u, "")}/`))) continue;
-    const absolute = (0, import_node_path66.join)(root, path2);
-    if (!(0, import_node_fs53.existsSync)(absolute) || hasSymlinkPath(root, path2)) {
+    const absolute = (0, import_node_path67.join)(root, path2);
+    if (!(0, import_node_fs54.existsSync)(absolute) || hasSymlinkPath(root, path2)) {
       context_files_omitted++;
       continue;
     }
-    const stat5 = (0, import_node_fs53.lstatSync)(absolute);
+    const stat5 = (0, import_node_fs54.lstatSync)(absolute);
     if (!stat5.isFile() || stat5.size > MAX_CONTEXT_FILE_BYTES || contextFilesBytes + stat5.size > MAX_CONTEXT_TOTAL_BYTES) {
       context_files_omitted++;
       continue;
     }
-    const content = (0, import_node_fs53.readFileSync)(absolute, "utf8");
+    const content = (0, import_node_fs54.readFileSync)(absolute, "utf8");
     if (content.includes("\0")) {
       context_files_omitted++;
       continue;
@@ -275133,14 +275163,14 @@ function repositoryFiles(root, _query = "", runGit2 = git) {
     omitted_by_language[group] = (omitted_by_language[group] ?? 0) + 1;
   };
   for (const path2 of paths) {
-    const extension2 = (0, import_node_path66.extname)(path2).toLowerCase();
+    const extension2 = (0, import_node_path67.extname)(path2).toLowerCase();
     if (ignoredPaths.has(path2) || !EXTENSIONS.has(extension2) || GENERATED.test(path2) || excludes.some((p) => path2 === p || path2.startsWith(`${String(p).replace(/\/$/u, "")}/`))) continue;
-    const absolute = (0, import_node_path66.join)(root, path2);
-    if (!(0, import_node_fs53.existsSync)(absolute)) {
+    const absolute = (0, import_node_path67.join)(root, path2);
+    if (!(0, import_node_fs54.existsSync)(absolute)) {
       if (symlinkPaths.has(path2)) omit(extension2);
       continue;
     }
-    const stat5 = (0, import_node_fs53.lstatSync)(absolute);
+    const stat5 = (0, import_node_fs54.lstatSync)(absolute);
     if (!stat5.isFile() || hasSymlinkPath(root, path2)) {
       omit(extension2);
       continue;
@@ -275173,7 +275203,7 @@ function repositoryFiles(root, _query = "", runGit2 = git) {
         omit(candidate2.extension);
         continue;
       }
-      const content = (0, import_node_fs53.readFileSync)(candidate2.absolute, "utf8");
+      const content = (0, import_node_fs54.readFileSync)(candidate2.absolute, "utf8");
       if (content.includes("\0")) {
         omit(candidate2.extension);
         continue;
@@ -275190,14 +275220,14 @@ function repositoryFiles(root, _query = "", runGit2 = git) {
   const omitted = Object.values(omitted_by_language).reduce((sum, count3) => sum + count3, 0);
   return { root, state: "ready", files: files5, context_files, context_files_omitted, omitted, omitted_by_language };
 }
-var import_node_child_process12, import_node_crypto155, import_node_fs53, import_node_path66, import_node_os6, LANGUAGE_EXTENSIONS, LANGUAGE_GROUPS, EXTENSIONS, GENERATED, MAX_FILES4, MAX_FILE_BYTES, MAX_TOTAL_BYTES2, GO_CONTEXT_FILES, MAX_CONTEXT_FILE_BYTES, MAX_CONTEXT_TOTAL_BYTES, git, fileVersion;
+var import_node_child_process12, import_node_crypto155, import_node_fs54, import_node_path67, import_node_os6, LANGUAGE_EXTENSIONS, LANGUAGE_GROUPS, EXTENSIONS, GENERATED, MAX_FILES4, MAX_FILE_BYTES, MAX_TOTAL_BYTES2, GO_CONTEXT_FILES, MAX_CONTEXT_FILE_BYTES, MAX_CONTEXT_TOTAL_BYTES, git, fileVersion;
 var init_repository_files = __esm({
   "capability/craft-codebase/repository-files.ts"() {
     "use strict";
     import_node_child_process12 = require("node:child_process");
     import_node_crypto155 = require("node:crypto");
-    import_node_fs53 = require("node:fs");
-    import_node_path66 = require("node:path");
+    import_node_fs54 = require("node:fs");
+    import_node_path67 = require("node:path");
     import_node_os6 = require("node:os");
     LANGUAGE_EXTENSIONS = Object.freeze({
       "typescript-javascript": [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"],
@@ -275505,14 +275535,14 @@ var init_lsp_worker = __esm({
 
 // capability/craft-codebase/lsp-snapshot-files.ts
 function snapshotPath(root, path2) {
-  const target = (0, import_node_path67.resolve)(root, path2);
-  const pathFromRoot = (0, import_node_path67.relative)(root, target);
-  if (pathFromRoot === ".." || pathFromRoot.startsWith(`..${import_node_path67.sep}`) || (0, import_node_path67.isAbsolute)(pathFromRoot)) throw new Error("invalid_snapshot_path");
+  const target = (0, import_node_path68.resolve)(root, path2);
+  const pathFromRoot = (0, import_node_path68.relative)(root, target);
+  if (pathFromRoot === ".." || pathFromRoot.startsWith(`..${import_node_path68.sep}`) || (0, import_node_path68.isAbsolute)(pathFromRoot)) throw new Error("invalid_snapshot_path");
   return target;
 }
 function writeSnapshotFile(target, content) {
-  (0, import_node_fs54.mkdirSync)((0, import_node_path67.dirname)(target), { recursive: true });
-  (0, import_node_fs54.writeFileSync)(target, content, { flag: "wx" });
+  (0, import_node_fs55.mkdirSync)((0, import_node_path68.dirname)(target), { recursive: true });
+  (0, import_node_fs55.writeFileSync)(target, content, { flag: "wx" });
 }
 function stageLspSnapshotFiles(root, files5, contextFiles = []) {
   for (const file of files5) writeSnapshotFile(snapshotPath(root, file.path), file.content);
@@ -275522,37 +275552,37 @@ function stageLspSnapshotFiles(root, files5, contextFiles = []) {
     writeSnapshotFile(target, file.content);
   }
 }
-var import_node_crypto156, import_node_fs54, import_node_path67;
+var import_node_crypto156, import_node_fs55, import_node_path68;
 var init_lsp_snapshot_files = __esm({
   "capability/craft-codebase/lsp-snapshot-files.ts"() {
     "use strict";
     import_node_crypto156 = require("node:crypto");
-    import_node_fs54 = require("node:fs");
-    import_node_path67 = require("node:path");
+    import_node_fs55 = require("node:fs");
+    import_node_path68 = require("node:path");
   }
 });
 
 // capability/craft-codebase/project-analysis-cache.ts
 function ensureRegularDirectory(path2, message) {
-  (0, import_node_fs55.mkdirSync)(path2, { recursive: true, mode: 448 });
-  const stat5 = (0, import_node_fs55.lstatSync)(path2, { throwIfNoEntry: false });
+  (0, import_node_fs56.mkdirSync)(path2, { recursive: true, mode: 448 });
+  const stat5 = (0, import_node_fs56.lstatSync)(path2, { throwIfNoEntry: false });
   if (!stat5 || stat5.isSymbolicLink() || !stat5.isDirectory()) throw new Error(message);
 }
 function ensureDirectory2(path2, paths) {
   let current2 = ensureProjectStorageDirectory(paths, path2);
   for (const part of ["codebase", "indexes"]) {
-    current2 = (0, import_node_path68.join)(current2, part);
+    current2 = (0, import_node_path69.join)(current2, part);
     ensureRegularDirectory(current2, "Project Codebase cache path is unsafe");
   }
   return current2;
 }
-var import_node_crypto157, import_node_fs55, import_node_path68, CACHE_KINDS, CACHE_ID, CACHE_FORMAT, ProjectAnalysisCache;
+var import_node_crypto157, import_node_fs56, import_node_path69, CACHE_KINDS, CACHE_ID, CACHE_FORMAT, ProjectAnalysisCache;
 var init_project_analysis_cache = __esm({
   "capability/craft-codebase/project-analysis-cache.ts"() {
     "use strict";
     import_node_crypto157 = require("node:crypto");
-    import_node_fs55 = require("node:fs");
-    import_node_path68 = require("node:path");
+    import_node_fs56 = require("node:fs");
+    import_node_path69 = require("node:path");
     init_digest();
     init_paths();
     CACHE_KINDS = /* @__PURE__ */ new Set(["codebase_file_analysis", "codebase_semantic_file_analysis", "codebase_python_file_analysis", "codebase_java_file_analysis", "codebase_lsp_file_analysis"]);
@@ -275565,20 +275595,20 @@ var init_project_analysis_cache = __esm({
         if (!/^[A-Za-z0-9_-]{1,128}$/u.test(workspaceId)) throw new Error("Invalid Codebase workspace id");
         this.workspaceId = workspaceId;
         const root = ensureDirectory2(projectRoot, paths);
-        let current2 = (0, import_node_path68.join)(root, workspaceId);
+        let current2 = (0, import_node_path69.join)(root, workspaceId);
         ensureRegularDirectory(current2, "Project Codebase cache path is unsafe");
-        current2 = (0, import_node_path68.join)(current2, "analysis_cache");
+        current2 = (0, import_node_path69.join)(current2, "analysis_cache");
         ensureRegularDirectory(current2, "Project Codebase cache path is unsafe");
         this.directory = current2;
       }
       find(kind4, id24) {
         const path2 = this.path(kind4, id24);
-        const stat5 = (0, import_node_fs55.lstatSync)(path2, { throwIfNoEntry: false });
+        const stat5 = (0, import_node_fs56.lstatSync)(path2, { throwIfNoEntry: false });
         if (!stat5) return null;
         if (stat5.isSymbolicLink() || !stat5.isFile()) throw new Error("Project Codebase cache record is unsafe");
         let value;
         try {
-          value = JSON.parse((0, import_node_fs55.readFileSync)(path2, "utf8"));
+          value = JSON.parse((0, import_node_fs56.readFileSync)(path2, "utf8"));
         } catch {
           return null;
         }
@@ -275591,7 +275621,7 @@ var init_project_analysis_cache = __esm({
         this.assertKind(kind4);
         if (!Number.isSafeInteger(limit3) || limit3 < 1 || limit3 > 1e4) throw new Error("Project Codebase cache limit must be between 1 and 10000");
         const prefix = `${kind4}--`;
-        const names3 = (0, import_node_fs55.readdirSync)(this.directory).filter((name) => name.startsWith(prefix) && name.endsWith(".json")).sort();
+        const names3 = (0, import_node_fs56.readdirSync)(this.directory).filter((name) => name.startsWith(prefix) && name.endsWith(".json")).sort();
         if (names3.length > limit3) throw new Error("Project Codebase cache exceeds requested limit");
         return names3.flatMap((name) => {
           const id24 = name.slice(prefix.length, -5);
@@ -275618,33 +275648,33 @@ var init_project_analysis_cache = __esm({
           payload_digest: stableDigest(nextPayload)
         };
         const temporary = `${path2}.${process.pid}.${(0, import_node_crypto157.randomUUID)()}.tmp`;
-        const fd = (0, import_node_fs55.openSync)(temporary, "wx", 384);
+        const fd = (0, import_node_fs56.openSync)(temporary, "wx", 384);
         try {
-          (0, import_node_fs55.writeFileSync)(fd, `${JSON.stringify(next)}
+          (0, import_node_fs56.writeFileSync)(fd, `${JSON.stringify(next)}
 `, "utf8");
         } finally {
-          (0, import_node_fs55.closeSync)(fd);
+          (0, import_node_fs56.closeSync)(fd);
         }
         try {
-          (0, import_node_fs55.renameSync)(temporary, path2);
+          (0, import_node_fs56.renameSync)(temporary, path2);
         } finally {
-          (0, import_node_fs55.rmSync)(temporary, { force: true });
+          (0, import_node_fs56.rmSync)(temporary, { force: true });
         }
-        (0, import_node_fs55.chmodSync)(path2, 384);
+        (0, import_node_fs56.chmodSync)(path2, 384);
         return { ...next.payload, id: id24, version: next.version };
       }
       remove(kind4, id24) {
         const path2 = this.path(kind4, id24);
-        const stat5 = (0, import_node_fs55.lstatSync)(path2, { throwIfNoEntry: false });
+        const stat5 = (0, import_node_fs56.lstatSync)(path2, { throwIfNoEntry: false });
         if (!stat5) return false;
         if (stat5.isSymbolicLink() || !stat5.isFile()) throw new Error("Project Codebase cache record is unsafe");
-        (0, import_node_fs55.unlinkSync)(path2);
+        (0, import_node_fs56.unlinkSync)(path2);
         return true;
       }
       path(kind4, id24) {
         this.assertKind(kind4);
         if (!CACHE_ID.test(id24)) throw new Error("Invalid Codebase analysis cache id");
-        return (0, import_node_path68.join)(this.directory, `${kind4}--${id24}.json`);
+        return (0, import_node_path69.join)(this.directory, `${kind4}--${id24}.json`);
       }
       assertKind(kind4) {
         if (!CACHE_KINDS.has(kind4)) throw new Error("Unsupported Project Codebase cache kind");
@@ -275679,7 +275709,7 @@ function lspFailureDiagnostic(error) {
   };
 }
 function runConfiguredLsp(adapter, files5, service, repositoryRootPath, contextFiles = []) {
-  const root = (0, import_node_fs56.mkdtempSync)((0, import_node_path69.join)((0, import_node_os7.tmpdir)(), "craft-codebase-lsp-"));
+  const root = (0, import_node_fs57.mkdtempSync)((0, import_node_path70.join)((0, import_node_os7.tmpdir)(), "craft-codebase-lsp-"));
   try {
     stageLspSnapshotFiles(root, files5, contextFiles);
     const request2 = {
@@ -275705,7 +275735,7 @@ function runConfiguredLsp(adapter, files5, service, repositoryRootPath, contextF
       const entry2 = process.argv[1];
       if (!entry2) throw new Error("worker_unavailable");
       const entryArgs = entry2.endsWith(".ts") ? ["--experimental-strip-types", entry2, CODEBASE_LSP_WORKER_FLAG] : [entry2, CODEBASE_LSP_WORKER_FLAG];
-      const env = configuredLspWorkerEnvironment(adapter.language, (0, import_node_path69.join)(projectStorageDirectory(service.store.paths, repositoryRootPath), "codebase"));
+      const env = configuredLspWorkerEnvironment(adapter.language, (0, import_node_path70.join)(projectStorageDirectory(service.store.paths, repositoryRootPath), "codebase"));
       const output = (0, import_node_child_process13.execFileSync)(process.execPath, entryArgs, {
         cwd: root,
         input: JSON.stringify(request2),
@@ -275726,7 +275756,7 @@ function runConfiguredLsp(adapter, files5, service, repositoryRootPath, contextF
     }
     return contextFiles.length ? { ...result, diagnostics: { ...result.diagnostics, workspace_file_digests: contextFiles.map(({ path: path2, digest: digest37 }) => ({ path: path2, digest: digest37 })) } } : result;
   } finally {
-    (0, import_node_fs56.rmSync)(root, { recursive: true, force: true });
+    (0, import_node_fs57.rmSync)(root, { recursive: true, force: true });
   }
 }
 function typeScriptGraph(units, mode, reason) {
@@ -275829,7 +275859,7 @@ function ensureRepositoryAttempt(service, args, sourceRetry) {
   const priorIndex = priorState ? service.store.find("codebase_index", String(priorState.index_id)) : void 0;
   const priorCheckpointId = String(warmWorkspace?.latest_checkpoint_id || priorState?.checkpoint_id || priorIndex?.checkpoint_id || "");
   const priorCheckpoint = priorCheckpointId ? service.store.find("workspace_checkpoint", priorCheckpointId) : void 0;
-  const expectedSnapshotRoot = (0, import_node_path69.join)(projectStorageDirectory(service.store.paths, root), "codebase", "snapshots", workspaceId, priorCheckpointId);
+  const expectedSnapshotRoot = (0, import_node_path70.join)(projectStorageDirectory(service.store.paths, root), "codebase", "snapshots", workspaceId, priorCheckpointId);
   const checkpointMetadataMatches = priorState?.checkpoint_id === priorCheckpointId || !priorState?.checkpoint_id && priorIndex?.checkpoint_id === priorCheckpointId;
   if (priorState?.repository_policy_digest === currentPolicyDigest && priorState.policy_version === REPOSITORY_INDEX_POLICY && priorState.adapter_config_digest === lspConfig.digest && checkpointMetadataMatches && priorIndex?.checkpoint_id === priorCheckpointId && warmWorkspace?.snapshot_storage === "project_codebase" && priorCheckpoint?.snapshot_root === expectedSnapshotRoot && priorIndex?.status === "ready" && repositoryStateReusable(priorState) && service.workspace.freshness({ workspace_id: workspaceId }).status === "current" && repositoryPolicySnapshotCurrent(policySnapshot)) {
     const summary2 = priorState.summary;
@@ -275855,10 +275885,10 @@ function ensureRepositoryAttempt(service, args, sourceRetry) {
   const existingWorkspace = service.store.find("workspace", workspaceId);
   const existingState = service.store.find("codebase_repository_state", `${workspaceId}_${depth}`);
   const stateCheckpointId = existingState ? existingState.checkpoint_id : void 0;
-  const projectCheckpoint = service.store.list("workspace_checkpoint", 1e3, (item) => item.workspace_id === workspaceId).find((item) => item.snapshot_root === (0, import_node_path69.join)(projectStorageDirectory(service.store.paths, root), "codebase", "snapshots", workspaceId, String(item.id)));
+  const projectCheckpoint = service.store.list("workspace_checkpoint", 1e3, (item) => item.workspace_id === workspaceId).find((item) => item.snapshot_root === (0, import_node_path70.join)(projectStorageDirectory(service.store.paths, root), "codebase", "snapshots", workspaceId, String(item.id)));
   const snapshotCheckpointId = String(existingWorkspace?.latest_checkpoint_id || stateCheckpointId || projectCheckpoint?.id || "");
   const existingCheckpoint = snapshotCheckpointId ? service.store.find("workspace_checkpoint", snapshotCheckpointId) : void 0;
-  const expectedExistingSnapshotRoot = (0, import_node_path69.join)(projectStorageDirectory(service.store.paths, root), "codebase", "snapshots", workspaceId, snapshotCheckpointId);
+  const expectedExistingSnapshotRoot = (0, import_node_path70.join)(projectStorageDirectory(service.store.paths, root), "codebase", "snapshots", workspaceId, snapshotCheckpointId);
   if (existingWorkspace && JSON.stringify(existingWorkspace.include_paths) === JSON.stringify(includes) && existingWorkspace.snapshot_storage === "project_codebase" && existingCheckpoint?.snapshot_root === expectedExistingSnapshotRoot && service.workspace.freshness({ workspace_id: workspaceId }).status === "current") {
     const checkpointId = String(existingWorkspace.latest_checkpoint_id ?? stateCheckpointId ?? "");
     const prior = service.store.find("codebase_repository_state", `${workspaceId}_${depth}`);
@@ -276123,7 +276153,7 @@ function ensureRepositoryAttempt(service, args, sourceRetry) {
     const workspaceBeforeSnapshot = preparedIndex.workspace;
     const latestCheckpointIdBeforeSnapshot = String(workspaceBeforeSnapshot.latest_checkpoint_id ?? "");
     const latestCheckpointBeforeSnapshot = latestCheckpointIdBeforeSnapshot ? service.store.find("workspace_checkpoint", latestCheckpointIdBeforeSnapshot) : void 0;
-    const expectedSnapshotRoot2 = (0, import_node_path69.join)(projectStorageDirectory(service.store.paths, root), "codebase", "snapshots", workspaceId, latestCheckpointIdBeforeSnapshot);
+    const expectedSnapshotRoot2 = (0, import_node_path70.join)(projectStorageDirectory(service.store.paths, root), "codebase", "snapshots", workspaceId, latestCheckpointIdBeforeSnapshot);
     const freshness = service.workspace.freshness({ workspace_id: workspaceId });
     if (freshness.status !== "current" || latestCheckpointBeforeSnapshot?.snapshot_root !== expectedSnapshotRoot2) {
       const checkpointArgs = { workspace_id: workspaceId, label: "automatic repository snapshot" };
@@ -276138,7 +276168,7 @@ function ensureRepositoryAttempt(service, args, sourceRetry) {
         const currentCheckpointId = String(currentWorkspace.latest_checkpoint_id ?? "");
         const currentCheckpoint = currentCheckpointId ? service.store.find("workspace_checkpoint", currentCheckpointId) : void 0;
         const currentFreshness = service.workspace.freshness({ workspace_id: workspaceId });
-        if (currentFreshness.status !== "current" || currentCheckpoint?.snapshot_root !== (0, import_node_path69.join)(projectStorageDirectory(service.store.paths, root), "codebase", "snapshots", workspaceId, currentCheckpointId)) throw error;
+        if (currentFreshness.status !== "current" || currentCheckpoint?.snapshot_root !== (0, import_node_path70.join)(projectStorageDirectory(service.store.paths, root), "codebase", "snapshots", workspaceId, currentCheckpointId)) throw error;
       }
     }
     const workspace = service.store.get("workspace", workspaceId);
@@ -276275,7 +276305,7 @@ function ensureRepositoryAttempt(service, args, sourceRetry) {
 function lspCacheId(workspaceId, language2, path2) {
   return `codebase_lsp_file_${stableDigest({ workspaceId, language: language2, path: path2 }).slice(-24)}`;
 }
-var import_node_child_process13, import_node_fs56, import_node_os7, import_node_path69, REPOSITORY_INDEX_POLICY, SEMANTIC_RETRY_DELAY_MS;
+var import_node_child_process13, import_node_fs57, import_node_os7, import_node_path70, REPOSITORY_INDEX_POLICY, SEMANTIC_RETRY_DELAY_MS;
 var init_repository_onboarding = __esm({
   "capability/craft-codebase/repository-onboarding.ts"() {
     "use strict";
@@ -276290,9 +276320,9 @@ var init_repository_onboarding = __esm({
     init_java_incremental();
     init_multi_language_analysis();
     import_node_child_process13 = require("node:child_process");
-    import_node_fs56 = require("node:fs");
+    import_node_fs57 = require("node:fs");
     import_node_os7 = require("node:os");
-    import_node_path69 = require("node:path");
+    import_node_path70 = require("node:path");
     init_lsp_config();
     init_lsp_adapter();
     init_lsp_worker();
@@ -276460,7 +276490,7 @@ function installCodebaseMethods(serviceClass) {
   serviceClass.prototype.codebaseWorkspaceOpen = function(args) {
     const existing = this.store.find("workspace", String(args.workspace_id));
     if (existing) {
-      if (existing.root_path !== (0, import_node_path70.resolve)(String(args.root_path)) || JSON.stringify(existing.include_paths) !== JSON.stringify([...args.include_paths].sort())) throw new Error("Codebase workspace declaration conflict");
+      if (existing.root_path !== (0, import_node_path71.resolve)(String(args.root_path)) || JSON.stringify(existing.include_paths) !== JSON.stringify([...args.include_paths].sort())) throw new Error("Codebase workspace declaration conflict");
       if (!existing.latest_checkpoint_id) return { ...this.workspaceCheckpoint({ workspace_id: args.workspace_id, label: "codebase recovered initial snapshot" }), idempotent: false };
       return { workspace: existing, idempotent: true };
     }
@@ -276529,11 +276559,11 @@ function installCodebaseMethods(serviceClass) {
     return this.codebase.contextSlice(args);
   };
 }
-var import_node_path70;
+var import_node_path71;
 var init_codebase = __esm({
   "core/application/use-cases/codebase.ts"() {
     "use strict";
-    import_node_path70 = require("node:path");
+    import_node_path71 = require("node:path");
     init_repository_context();
   }
 });
@@ -276824,13 +276854,13 @@ function parseEvents2(stdout) {
     failed: events.some((event) => event.type === "turn.failed" || event.type === "error" || typeof event.type === "string" && event.type.startsWith("item.") && !["agent_message", "reasoning"].includes(String(event.item?.type)) && !(event.type === "item.completed" && event.item?.type === "error" && /^Exceeded skills context budget\. All skill descriptions were removed and [0-9]{1,6} additional skills were not included in the model-visible skills list\.$/u.test(String(event.item.message))))
   };
 }
-var import_promises20, import_node_os8, import_node_path71, MODEL, TIMEOUT_MS, OUTPUT_LIMIT2, OUTPUT_SCHEMA_LIMIT, DEFAULT_LEARNING_INPUT_TOKEN_LIMIT, CodexCliModelTransport;
+var import_promises20, import_node_os8, import_node_path72, MODEL, TIMEOUT_MS, OUTPUT_LIMIT2, OUTPUT_SCHEMA_LIMIT, DEFAULT_LEARNING_INPUT_TOKEN_LIMIT, CodexCliModelTransport;
 var init_codex_cli_model_transport = __esm({
   "core/codex-cli-model-transport.ts"() {
     "use strict";
     import_promises20 = require("node:fs/promises");
     import_node_os8 = require("node:os");
-    import_node_path71 = require("node:path");
+    import_node_path72 = require("node:path");
     init_host_driver();
     init_model_gateway();
     init_token_budget();
@@ -276865,8 +276895,8 @@ ${message.content}`).join("\n\n");
           const argv = ["exec", "--ignore-user-config", "--ephemeral", "--sandbox", "read-only", "--skip-git-repo-check"];
           argv.push("-c", "skills.max_context_tokens=1", "-c", "features.shell_tool=false", "-c", "features.view_image=false", "-c", 'web_search="disabled"');
           if (schema2) {
-            schemaDirectory = await (0, import_promises20.mkdtemp)((0, import_node_path71.join)((0, import_node_os8.tmpdir)(), "craft-learning-schema-"));
-            const schemaPath = (0, import_node_path71.join)(schemaDirectory, "output-schema.json");
+            schemaDirectory = await (0, import_promises20.mkdtemp)((0, import_node_path72.join)((0, import_node_os8.tmpdir)(), "craft-learning-schema-"));
+            const schemaPath = (0, import_node_path72.join)(schemaDirectory, "output-schema.json");
             await (0, import_promises20.writeFile)(schemaPath, JSON.stringify(schema2), { encoding: "utf8", flag: "wx", mode: 384 });
             argv.push("--output-schema", schemaPath);
           }
@@ -276923,13 +276953,13 @@ function learningWorkerOwnerAlive(pid, kill = process.kill) {
     return error.code !== "ESRCH";
   }
 }
-async function acquireComponentLock(path2, fileSystem, isOwnerAlive) {
+async function acquireComponentLock(path2, fileSystem, isOwnerAlive, runtimeVersion) {
   const ownerId = (0, import_node_crypto158.randomUUID)();
   const pendingPath2 = `${path2}.creating.${process.pid}.${ownerId}`;
   let handle;
   handle = await fileSystem.open(pendingPath2, "wx", 384);
   try {
-    await handle.writeFile(JSON.stringify({ pid: process.pid, owner_id: ownerId, started_at: (/* @__PURE__ */ new Date()).toISOString() }));
+    await handle.writeFile(JSON.stringify({ pid: process.pid, owner_id: ownerId, started_at: (/* @__PURE__ */ new Date()).toISOString(), ...runtimeVersion ? { runtime_version: runtimeVersion } : {} }));
     await handle.close();
   } catch (error) {
     try {
@@ -276986,7 +277016,7 @@ async function acquireLearningWorkerLocks(runtimeDir, components, dependencies =
   await fileSystem.mkdir(runtimeDir, { recursive: true, mode: 448 });
   const releases = [];
   for (const component2 of [...new Set(components)].sort()) {
-    const release = await acquireComponentLock((0, import_node_path72.join)(runtimeDir, `learning-worker-${component2}.lock.json`), fileSystem, isOwnerAlive);
+    const release = await acquireComponentLock((0, import_node_path73.join)(runtimeDir, `learning-worker-${component2}.lock.json`), fileSystem, isOwnerAlive, dependencies.runtime_version);
     if (!release) {
       await Promise.all(releases.reverse().map((item) => item()));
       return null;
@@ -276997,13 +277027,13 @@ async function acquireLearningWorkerLocks(runtimeDir, components, dependencies =
     await Promise.all(releases.reverse().map((item) => item()));
   };
 }
-var import_node_crypto158, import_promises21, import_node_path72, workerLockFileSystem;
+var import_node_crypto158, import_promises21, import_node_path73, workerLockFileSystem;
 var init_learning_worker_lock = __esm({
   "core/infrastructure/learning-worker-lock.ts"() {
     "use strict";
     import_node_crypto158 = require("node:crypto");
     import_promises21 = require("node:fs/promises");
-    import_node_path72 = require("node:path");
+    import_node_path73 = require("node:path");
     workerLockFileSystem = { link: import_promises21.link, mkdir: import_promises21.mkdir, open: import_promises21.open, readFile: import_promises21.readFile, rename: import_promises21.rename, unlink: import_promises21.unlink };
   }
 });
@@ -277425,7 +277455,7 @@ function validateModelInput(args, id24) {
   if (!/^[A-Z_][A-Z0-9_]*$/i.test(apiKeyEnv)) throw new Error("apiKeyEnv must be a valid environment variable name");
   return { id: id24, name, protocol, baseUrl, model, apiKeyEnv, supportsTools };
 }
-var import_node_crypto160, import_node_fs57, import_promises22, import_node_path73, import_node_url9, VERSION, CONFIDENCE4, TASK_STATUS, TASK_PERMISSION_MODES, VERSIONED_LIFECYCLE, TRIAL_VERDICTS, EVAL_SPLITS2, HARNESS_DIMENSIONS, GRADER_TYPES, GRADE_VERDICTS, EXPERT_TYPES, ACCEPTANCE_METHODS, ACCEPTANCE_RESULTS, DOMAIN_FIELD_TYPES, KNOWLEDGE_RELATIONS, SAFE_INCREMENTAL_STAGES, ROUTE_TERMINAL, ROUTE_RECEIPT_KINDS, ROUTE_RECEIPT_STATUS, HOST_OPERATIONS, RUNTIME_KINDS, RUNTIME_ADAPTER_HOSTS, RUNTIME_RUN_TERMINAL, SECRET_ASSIGNMENT4, DEFAULT_RECEIPT_REQUIREMENTS, CraftService;
+var import_node_crypto160, import_node_fs58, import_promises22, import_node_path74, import_node_url9, VERSION, CONFIDENCE4, TASK_STATUS, TASK_PERMISSION_MODES, VERSIONED_LIFECYCLE, TRIAL_VERDICTS, EVAL_SPLITS2, HARNESS_DIMENSIONS, GRADER_TYPES, GRADE_VERDICTS, EXPERT_TYPES, ACCEPTANCE_METHODS, ACCEPTANCE_RESULTS, DOMAIN_FIELD_TYPES, KNOWLEDGE_RELATIONS, SAFE_INCREMENTAL_STAGES, ROUTE_TERMINAL, ROUTE_RECEIPT_KINDS, ROUTE_RECEIPT_STATUS, HOST_OPERATIONS, RUNTIME_KINDS, RUNTIME_ADAPTER_HOSTS, RUNTIME_RUN_TERMINAL, SECRET_ASSIGNMENT4, DEFAULT_RECEIPT_REQUIREMENTS, CraftService;
 var init_craft_service = __esm({
   "core/application/craft-service.ts"() {
     "use strict";
@@ -277436,9 +277466,9 @@ var init_craft_service = __esm({
     init_knowledge_evaluation_provenance();
     init_procedure_host_control();
     init_procedure_decision();
-    import_node_fs57 = require("node:fs");
+    import_node_fs58 = require("node:fs");
     import_promises22 = require("node:fs/promises");
-    import_node_path73 = require("node:path");
+    import_node_path74 = require("node:path");
     import_node_url9 = require("node:url");
     init_json_schema();
     init_store2();
@@ -280943,9 +280973,9 @@ ${task.goal}`.toLowerCase();
           const response = executed.response;
           const ticketHash = (0, import_node_crypto160.createHash)("sha256").update(String(ticket.id)).digest("hex").slice(0, 24);
           const bindingHash = (0, import_node_crypto160.createHash)("sha256").update(bindingId).digest("hex").slice(0, 24);
-          const inbox = (0, import_node_path73.join)(this.store.paths.runtimeDir, "sandbox-inbox", ticketHash);
+          const inbox = (0, import_node_path74.join)(this.store.paths.runtimeDir, "sandbox-inbox", ticketHash);
           await (0, import_promises22.mkdir)(inbox, { recursive: true });
-          const outputPath = (0, import_node_path73.join)(inbox, `${bindingHash}-${outputName}`);
+          const outputPath = (0, import_node_path74.join)(inbox, `${bindingHash}-${outputName}`);
           const envelope = {
             trust: "untrusted_external_response",
             execution_authority: false,
@@ -282055,7 +282085,7 @@ ${material}
           else {
             const stringValue = text3(value, key2);
             if (field.type === "choice" && !field.options.includes(stringValue)) throw new Error(`${key2} must be one of the declared choices`);
-            if (field.type === "path" && ((0, import_node_path73.isAbsolute)(stringValue) || import_node_path73.win32.isAbsolute(stringValue) || stringValue.split(/[\\/]/).includes(".."))) throw new Error(`${key2} must be a workspace-relative contained path`);
+            if (field.type === "path" && ((0, import_node_path74.isAbsolute)(stringValue) || import_node_path74.win32.isAbsolute(stringValue) || stringValue.split(/[\\/]/).includes(".."))) throw new Error(`${key2} must be a workspace-relative contained path`);
             normalized[key2] = stringValue;
           }
         }
@@ -282358,9 +282388,9 @@ ${material}
           try {
             return this.store.contentStore.readUncheckedSync(String(page.content_ref.path)).body;
           } catch {
-            return (0, import_node_fs57.readFileSync)(String(page.file_path), "utf8");
+            return (0, import_node_fs58.readFileSync)(String(page.file_path), "utf8");
           }
-        })() : (0, import_node_fs57.readFileSync)(String(page.file_path), "utf8");
+        })() : (0, import_node_fs58.readFileSync)(String(page.file_path), "utf8");
         return { page, body: body3 };
       }
       wikiPageList(args) {
@@ -282373,9 +282403,9 @@ ${material}
           try {
             return this.store.contentStore.readUncheckedSync(rawPath).body;
           } catch {
-            return (0, import_node_fs57.readFileSync)(rawPath, "utf8");
+            return (0, import_node_fs58.readFileSync)(rawPath, "utf8");
           }
-        })() : (0, import_node_fs57.readFileSync)(rawPath, "utf8"), "body"), "body");
+        })() : (0, import_node_fs58.readFileSync)(rawPath, "utf8"), "body"), "body");
         if (valueDigest3(body3) === page.body_digest) return { page, changed: false };
         const nextVersion = Number(page.version) + 1;
         const contentRef = this.store.contentStore.writeSync({ kind: "knowledge", record_id: String(page.id), version: nextVersion, scope: String(page.scope ?? "global"), status: "active", sensitivity: "internal", source_id: "builtin.evidence-wiki", body: body3 });
@@ -283223,7 +283253,7 @@ Evidence: ${item.evidence_ids.join(", ")}
         const sandbox = String(args.sandbox ?? "read-only");
         if (!(/* @__PURE__ */ new Set(["read-only", "workspace-write"])).has(sandbox)) throw new Error("Work launch sandbox is unsupported");
         const prompt = text3(args.prompt, "prompt");
-        const workspace = (0, import_node_path73.resolve)(text3(args.workspace, "workspace"));
+        const workspace = (0, import_node_path74.resolve)(text3(args.workspace, "workspace"));
         const deferredStart = args.defer_host_start === true;
         const launchId = args.launch_id === void 0 ? id23("work_launch") : text3(args.launch_id, "launch_id");
         const existing = this.store.find("work_launch", launchId);
@@ -283437,7 +283467,7 @@ Evidence: ${item.evidence_ids.join(", ")}
         return this.evaluationContracts.get(text3(args.contract_id, "contract_id"));
       }
       verifiedWorkLoopWorkbenchPrepare(args) {
-        const root = (0, import_node_path73.resolve)(text3(args.workspace, "workspace"));
+        const root = (0, import_node_path74.resolve)(text3(args.workspace, "workspace"));
         const includePaths2 = uniqueTextArray4(args.include_paths ?? ["."], "include_paths").sort();
         const workspaceId = args.workspace_id === void 0 ? `workspace_loop_${valueDigest3({ root, include_paths: includePaths2 }).slice(-16)}` : text3(args.workspace_id, "workspace_id");
         const existing = this.store.find("workspace", workspaceId);
@@ -283534,7 +283564,7 @@ Evidence: ${item.evidence_ids.join(", ")}
         return this.hostBridge.get(args);
       }
       executionFabricWorkbenchPrepare(args) {
-        const root = (0, import_node_path73.resolve)(text3(args.workspace, "workspace"));
+        const root = (0, import_node_path74.resolve)(text3(args.workspace, "workspace"));
         const includePaths2 = uniqueTextArray4(args.include_paths ?? ["."], "include_paths").sort();
         const workspaceId = args.workspace_id === void 0 ? `workspace_fabric_${valueDigest3(root).slice(-16)}` : text3(args.workspace_id, "workspace_id");
         const existing = this.store.find("workspace", workspaceId);
@@ -285634,30 +285664,30 @@ function goalIdentity(args) {
 }
 function directory3(path2, create) {
   try {
-    const stat5 = (0, import_node_fs58.lstatSync)(path2);
+    const stat5 = (0, import_node_fs59.lstatSync)(path2);
     if (stat5.isSymbolicLink() || !stat5.isDirectory()) throw new Error("Experience task-goal path must contain regular directories");
     return true;
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
     if (!create) return false;
-    (0, import_node_fs58.mkdirSync)(path2, { mode: 448 });
+    (0, import_node_fs59.mkdirSync)(path2, { mode: 448 });
     return true;
   }
 }
 function pendingPath(args, create) {
   const identity = goalIdentity(args);
-  const queueDir = (0, import_node_path74.join)(args.experience_dir, "scenario-classification");
-  const pendingDir = (0, import_node_path74.join)(queueDir, "pending");
+  const queueDir = (0, import_node_path75.join)(args.experience_dir, "scenario-classification");
+  const pendingDir = (0, import_node_path75.join)(queueDir, "pending");
   if (!directory3(args.experience_dir, false)) return null;
   if (!directory3(queueDir, create)) return null;
   if (!directory3(pendingDir, create)) return null;
   const key2 = stableDigest(identity).slice(-32);
-  return (0, import_node_path74.join)(pendingDir, `${key2}.json`);
+  return (0, import_node_path75.join)(pendingDir, `${key2}.json`);
 }
 function readPendingFile(path2) {
-  const stat5 = (0, import_node_fs58.lstatSync)(path2);
+  const stat5 = (0, import_node_fs59.lstatSync)(path2);
   if (stat5.isSymbolicLink() || !stat5.isFile() || stat5.size > 2048) throw new Error("Experience task-goal file is linked, non-regular, or oversized");
-  const value = JSON.parse((0, import_node_fs58.readFileSync)(path2, "utf8"));
+  const value = JSON.parse((0, import_node_fs59.readFileSync)(path2, "utf8"));
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Experience task-goal file is invalid");
   return value;
 }
@@ -285676,27 +285706,27 @@ function storeExperienceTaskGoal(args) {
     task_identity_digest: stableDigest(goalIdentity(args))
   };
   const identityDigest = stableDigest(identity);
-  if ((0, import_node_fs58.existsSync)(path2)) {
+  if ((0, import_node_fs59.existsSync)(path2)) {
     const prior = readPendingFile(path2);
     if (prior.identity_digest !== identityDigest) throw new Error("Experience task-goal idempotency conflict");
     return;
   }
   const tempPath = `${path2}.${(0, import_node_crypto161.randomUUID)().replaceAll("-", "")}.tmp`;
-  const fd = (0, import_node_fs58.openSync)(tempPath, "wx", 384);
+  const fd = (0, import_node_fs59.openSync)(tempPath, "wx", 384);
   try {
-    (0, import_node_fs58.writeFileSync)(fd, JSON.stringify({ ...identity, identity_digest: identityDigest }));
+    (0, import_node_fs59.writeFileSync)(fd, JSON.stringify({ ...identity, identity_digest: identityDigest }));
   } finally {
-    (0, import_node_fs58.closeSync)(fd);
+    (0, import_node_fs59.closeSync)(fd);
   }
   try {
-    (0, import_node_fs58.linkSync)(tempPath, path2);
+    (0, import_node_fs59.linkSync)(tempPath, path2);
   } finally {
-    (0, import_node_fs58.unlinkSync)(tempPath);
+    (0, import_node_fs59.unlinkSync)(tempPath);
   }
 }
 function readExperienceTaskGoal(args) {
   const path2 = pendingPath(args, false);
-  if (!path2 || !(0, import_node_fs58.existsSync)(path2)) return null;
+  if (!path2 || !(0, import_node_fs59.existsSync)(path2)) return null;
   const value = readPendingFile(path2);
   const identity = {
     schema: value.schema,
@@ -285711,18 +285741,18 @@ function readExperienceTaskGoal(args) {
 }
 function deleteExperienceTaskGoal(args) {
   const path2 = pendingPath(args, false);
-  if (!path2 || !(0, import_node_fs58.existsSync)(path2)) return;
-  const stat5 = (0, import_node_fs58.lstatSync)(path2);
+  if (!path2 || !(0, import_node_fs59.existsSync)(path2)) return;
+  const stat5 = (0, import_node_fs59.lstatSync)(path2);
   if (stat5.isSymbolicLink() || !stat5.isFile()) throw new Error("Experience task-goal file is not a regular file");
-  (0, import_node_fs58.unlinkSync)(path2);
+  (0, import_node_fs59.unlinkSync)(path2);
 }
-var import_node_fs58, import_node_crypto161, import_node_path74, SCHEMA4, SECRET25;
+var import_node_fs59, import_node_crypto161, import_node_path75, SCHEMA4, SECRET25;
 var init_experience_task_goals = __esm({
   "core/experience-task-goals.ts"() {
     "use strict";
-    import_node_fs58 = require("node:fs");
+    import_node_fs59 = require("node:fs");
     import_node_crypto161 = require("node:crypto");
-    import_node_path74 = require("node:path");
+    import_node_path75 = require("node:path");
     init_digest2();
     SCHEMA4 = "craft.experience-pending-task-goal.v1";
     SECRET25 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
@@ -285770,7 +285800,7 @@ function hookHost(input) {
 function codexProjectScope(cwd) {
   const value = text33(cwd);
   if (!value) return null;
-  return projectIdentityFromRoot((0, import_node_path75.resolve)(value)).canonical_scope;
+  return projectIdentityFromRoot((0, import_node_path76.resolve)(value)).canonical_scope;
 }
 function explicitMemoryStatement(prompt) {
   const source = text33(prompt);
@@ -285801,13 +285831,13 @@ function projectScenarioKey(input, signal, service, projectScope) {
   try {
     const scope3 = projectScope;
     const directory4 = projectExperienceDirectory(service.store, scope3.id, root);
-    const path2 = (0, import_node_path75.join)(directory4, "experience-scenarios.json");
+    const path2 = (0, import_node_path76.join)(directory4, "experience-scenarios.json");
     for (const entry2 of [directory4, path2]) {
-      const info = (0, import_node_fs59.lstatSync)(entry2);
+      const info = (0, import_node_fs60.lstatSync)(entry2);
       if (info.isSymbolicLink() || entry2 === path2 && !info.isFile()) return null;
       if (entry2 === path2 && info.size > 16384) return null;
     }
-    const parsed2 = JSON.parse((0, import_node_fs59.readFileSync)(path2, "utf8"));
+    const parsed2 = JSON.parse((0, import_node_fs60.readFileSync)(path2, "utf8"));
     if (!parsed2 || typeof parsed2 !== "object" || Array.isArray(parsed2)) return null;
     const catalog = parsed2;
     if (catalog.schema !== "craft.experience-scenario-catalog.v1" || !Array.isArray(catalog.scenarios) || catalog.scenarios.length > 64) return null;
@@ -285838,7 +285868,7 @@ function projectScenarioKey(input, signal, service, projectScope) {
     return null;
   }
 }
-var import_node_crypto162, import_node_crypto163, import_node_fs59, import_node_path75, HOOK_ADDITIONAL_CONTEXT_BUDGET, SECRET26, CONTEXT_MEMBERS2, HookTurnJournal, HookLearningCoordinator, CodexHookBridge;
+var import_node_crypto162, import_node_crypto163, import_node_fs60, import_node_path76, HOOK_ADDITIONAL_CONTEXT_BUDGET, SECRET26, CONTEXT_MEMBERS2, HookTurnJournal, HookLearningCoordinator, CodexHookBridge;
 var init_codex_hook_bridge = __esm({
   "core/interfaces/codex-hook-bridge.ts"() {
     "use strict";
@@ -285848,8 +285878,8 @@ var init_codex_hook_bridge = __esm({
     init_context_access_guard2();
     init_context_assets();
     import_node_crypto163 = require("node:crypto");
-    import_node_fs59 = require("node:fs");
-    import_node_path75 = require("node:path");
+    import_node_fs60 = require("node:fs");
+    import_node_path76 = require("node:path");
     init_scope_identity();
     init_token_budget();
     init_retrieval_excerpt();

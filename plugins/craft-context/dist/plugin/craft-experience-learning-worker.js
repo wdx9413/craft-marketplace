@@ -303,9 +303,6 @@ function createFetchTransport(options = {}) {
   };
 }
 
-// core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.119";
-
 // common/craft-common-store-local/src/paths.ts
 import { createHash as createHash2, randomUUID } from "node:crypto";
 import { chmod, mkdir, open, rename, unlink } from "node:fs/promises";
@@ -853,6 +850,9 @@ async function runKnowledgeSyncOnce(client, options = {}) {
 import { isAbsolute, join as join3, relative, sep } from "node:path";
 import { lstatSync as lstatSync4, readFileSync as readFileSync4, realpathSync as realpathSync2 } from "node:fs";
 import { tmpdir } from "node:os";
+
+// core/version.ts
+var CRAFT_RELEASE_VERSION = "0.12.120";
 
 // core/knowledge-model-redaction.ts
 var SENSITIVE_MODEL_TEXT_PATTERNS = [
@@ -2163,14 +2163,21 @@ async function reconcileCodexSessionTaskEvidence(evidenceValue, options = {}, en
   }
   const path = statePath2(options, env);
   const state = await readState2(path, options.now ?? (/* @__PURE__ */ new Date()).toISOString());
+  const tasks = Object.values(state.tasks);
+  const taskGoalCounts = /* @__PURE__ */ new Map();
+  for (const task of tasks) {
+    if (task.status !== "completed" || !task.user_input_seen || !task.assistant_final_seen || !task.task_goal_digest || !task.project_scope_id) continue;
+    const key2 = `${task.session_id}\0${task.project_scope_id}\0${task.task_goal_digest}`;
+    taskGoalCounts.set(key2, (taskGoalCounts.get(key2) ?? 0) + 1);
+  }
   let verified = 0;
-  for (const task of Object.values(state.tasks)) {
+  for (const task of tasks) {
     if (task.verification_status === "verified") continue;
     let matches = byTurn.get(`${task.session_id}\0${task.turn_id}`) ?? [];
     if (!matches.length && task.task_goal_digest && task.project_scope_id) {
-      const sameGoalTasks = Object.values(state.tasks).filter((candidate) => candidate.session_id === task.session_id && candidate.project_scope_id === task.project_scope_id && candidate.task_goal_digest === task.task_goal_digest && candidate.status === "completed" && candidate.user_input_seen && candidate.assistant_final_seen);
-      const goalEvidence = evidenceByTaskGoal.get(`${task.session_id}\0${task.project_scope_id}\0${task.task_goal_digest}`) ?? [];
-      if (sameGoalTasks.length === 1 && goalEvidence.length === 1) matches = goalEvidence;
+      const goalKey = `${task.session_id}\0${task.project_scope_id}\0${task.task_goal_digest}`;
+      const goalEvidence = evidenceByTaskGoal.get(goalKey) ?? [];
+      if (taskGoalCounts.get(goalKey) === 1 && goalEvidence.length === 1) matches = goalEvidence;
     }
     if (matches.some((item) => item.host !== void 0 && item.host !== "codex" && item.host !== "codex-cli" || item.project_scope_id !== void 0 && item.project_scope_id !== task.project_scope_id || item.task_goal_digest !== void 0 && item.task_goal_digest !== task.task_goal_digest)) continue;
     const outcomes = new Set(matches.map((item) => item.verification_outcome));
@@ -3257,18 +3264,6 @@ async function runSessionKnowledgeAdjudicationOnce(deps, now = (/* @__PURE__ */ 
       raw_content_stored: false
     });
   }
-  const claimRefs = Array.isArray(current.candidate_claim_refs) && current.candidate_claim_refs.length > 0 ? current.candidate_claim_refs : current.expected_claim_ids.map((claim_id) => ({ claim_id }));
-  const claimsAreVersionBound = Array.isArray(current.candidate_claim_refs) && current.candidate_claim_refs.length > 0;
-  const claims = [];
-  for (const ref of claimRefs) {
-    const packetResult = await deps.client.call("craft_knowledge_semantic_review_packet", { claim_id: ref.claim_id });
-    if (packetResult.status !== "ready" || !["candidate", "reviewed"].includes(String(packetResult.claim_status))) return withMetrics({ status: "waiting_for_current_claims", processed: 0, model_calls: 0, raw_content_stored: false });
-    const packet = object8(packetResult.packet, "Knowledge Claim packet"), claim = object8(packet.claim, "Knowledge Claim");
-    if (claim.id !== ref.claim_id || claimsAreVersionBound && (claim.version !== ref.claim_version || claim.content_digest !== ref.content_digest) || typeof claim.content !== "string" || !claim.content.trim()) {
-      return withMetrics({ status: "waiting_for_current_candidates", processed: 0, model_calls: 0, raw_content_stored: false });
-    }
-    claims.push({ claim_id: claim.id, claim_version: claim.version, title: claim.title ?? "", content: claim.content, tags: claim.tags ?? [] });
-  }
   const evidence = [];
   for (const evidenceId of Array.isArray(current.source_evidence_ids) ? current.source_evidence_ids : []) {
     const result = await deps.client.call("craft_evidence_get", { evidence_id: evidenceId });
@@ -3289,6 +3284,18 @@ async function runSessionKnowledgeAdjudicationOnce(deps, now = (/* @__PURE__ */ 
     });
   }
   if (!evidence.length) return withMetrics({ status: "waiting_for_verified_evidence", processed: 0, model_calls: 0, raw_content_stored: false });
+  const claimRefs = Array.isArray(current.candidate_claim_refs) && current.candidate_claim_refs.length > 0 ? current.candidate_claim_refs : current.expected_claim_ids.map((claim_id) => ({ claim_id }));
+  const claimsAreVersionBound = Array.isArray(current.candidate_claim_refs) && current.candidate_claim_refs.length > 0;
+  const claims = [];
+  for (const ref of claimRefs) {
+    const packetResult = await deps.client.call("craft_knowledge_semantic_review_packet", { claim_id: ref.claim_id });
+    if (packetResult.status !== "ready" || !["candidate", "reviewed"].includes(String(packetResult.claim_status))) return withMetrics({ status: "waiting_for_current_claims", processed: 0, model_calls: 0, raw_content_stored: false });
+    const packet = object8(packetResult.packet, "Knowledge Claim packet"), claim = object8(packet.claim, "Knowledge Claim");
+    if (claim.id !== ref.claim_id || claimsAreVersionBound && (claim.version !== ref.claim_version || claim.content_digest !== ref.content_digest) || typeof claim.content !== "string" || !claim.content.trim()) {
+      return withMetrics({ status: "waiting_for_current_candidates", processed: 0, model_calls: 0, raw_content_stored: false });
+    }
+    claims.push({ claim_id: claim.id, claim_version: claim.version, title: claim.title ?? "", content: claim.content, tags: claim.tags ?? [] });
+  }
   const profileResult = await deps.client.call("craft_evaluation_model_profile_ensure_single", { purpose: "knowledge_scenario_classification" });
   if (profileResult.status !== "ready_for_adapter" || !profileResult.profile) return withMetrics({
     status: "waiting_for_model",
@@ -4008,13 +4015,13 @@ function learningWorkerOwnerAlive(pid, kill = process.kill) {
     return error.code !== "ESRCH";
   }
 }
-async function acquireComponentLock(path, fileSystem, isOwnerAlive) {
+async function acquireComponentLock(path, fileSystem, isOwnerAlive, runtimeVersion) {
   const ownerId = randomUUID3();
   const pendingPath = `${path}.creating.${process.pid}.${ownerId}`;
   let handle;
   handle = await fileSystem.open(pendingPath, "wx", 384);
   try {
-    await handle.writeFile(JSON.stringify({ pid: process.pid, owner_id: ownerId, started_at: (/* @__PURE__ */ new Date()).toISOString() }));
+    await handle.writeFile(JSON.stringify({ pid: process.pid, owner_id: ownerId, started_at: (/* @__PURE__ */ new Date()).toISOString(), ...runtimeVersion ? { runtime_version: runtimeVersion } : {} }));
     await handle.close();
   } catch (error) {
     try {
@@ -4071,7 +4078,7 @@ async function acquireLearningWorkerLocks(runtimeDir, components, dependencies =
   await fileSystem.mkdir(runtimeDir, { recursive: true, mode: 448 });
   const releases = [];
   for (const component of [...new Set(components)].sort()) {
-    const release = await acquireComponentLock(join9(runtimeDir, `learning-worker-${component}.lock.json`), fileSystem, isOwnerAlive);
+    const release = await acquireComponentLock(join9(runtimeDir, `learning-worker-${component}.lock.json`), fileSystem, isOwnerAlive, dependencies.runtime_version);
     if (!release) {
       await Promise.all(releases.reverse().map((item) => item()));
       return null;
@@ -4085,7 +4092,7 @@ async function acquireLearningWorkerLocks(runtimeDir, components, dependencies =
 
 // deploy/experience-learning/worker.ts
 async function collectCodexSessionsWithLock(client) {
-  const release = await acquireLearningWorkerLocks(craftPaths(dataRoot()).runtimeDir, ["codex-session-collection"]);
+  const release = await acquireLearningWorkerLocks(craftPaths(dataRoot()).runtimeDir, ["codex-session-collection"], { runtime_version: CRAFT_RELEASE_VERSION });
   if (!release) return { status: "skipped_locked", sessions_processed: 0, raw_content_stored: false };
   try {
     const collection = await runCodexSessionCollectionOnce();
@@ -4658,7 +4665,7 @@ async function main() {
   let releaseWorkerLocks = null;
   if (lockComponents.length) {
     try {
-      releaseWorkerLocks = await acquireLearningWorkerLocks(craftPaths(dataRoot()).runtimeDir, lockComponents);
+      releaseWorkerLocks = await acquireLearningWorkerLocks(craftPaths(dataRoot()).runtimeDir, lockComponents, { runtime_version: CRAFT_RELEASE_VERSION });
     } catch (error) {
       process.stderr.write(`Craft learning worker lock failed (${learningFailureKind(error)}).
 `);
