@@ -92,7 +92,8 @@ function claudeEntries() {
  * never refreshed, so no amount of syncing would have corrected it. Only the full `craft` component
  * has one, and the loop skips what is absent.
  */
-const OWNED = ["plugin.json", "mcp.json", "dist", "skills", "hooks", "assets", ".mcp.json", ".codex-plugin", ".claude-plugin", "README.md", "scripts"];
+// Skill files are maintained in the Marketplace: Craft source excludes them from Git.
+const OWNED = ["plugin.json", "mcp.json", "dist", "hooks", "assets", ".mcp.json", ".codex-plugin", ".claude-plugin", "README.md", "scripts"];
 const generatedCache = (name) => name === "__pycache__" || name.endsWith(".pyc") || name.endsWith(".pyo");
 
 const sourceRevision = () => sourceProvenance(sourceRepo, contract.version, process.env.CRAFT_SOURCE_COMMIT);

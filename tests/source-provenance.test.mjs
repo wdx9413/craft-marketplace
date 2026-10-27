@@ -69,7 +69,7 @@ test("sync --check rejects an untracked source addition and a forged source-tree
     assert.throws(check, /marketplace payload drift: plugins\/craft-memory\/plugin.json/);
     const notes = join(market, "plugins", product.name, "notes.txt"); writeFileSync(notes, "market-owned notes\n");
     execFileSync(process.execPath, [resolve(import.meta.dirname, "../scripts/sync-from-craft.mjs"), join(source, "plugins"), "--apply"], { cwd: market, stdio: "pipe" });
-    assert.equal(existsSync(obsolete), false); assert.equal(readFileSync(notes, "utf8"), "market-owned notes\n"); assert.match(check(), /no files changed/);
+    assert.equal(existsSync(obsolete), true, "marketplace-owned Skills are preserved when the source does not track them"); assert.equal(readFileSync(notes, "utf8"), "market-owned notes\n"); assert.match(check(), /no files changed/);
     assert.equal(existsSync(stalePortable), false);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });

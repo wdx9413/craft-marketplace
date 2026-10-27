@@ -64,6 +64,8 @@ function craftPaths(root = dataRoot()) {
 import { createHash } from "node:crypto";
 import { lstatSync as lstatSync2, mkdirSync as mkdirSync2, openSync as openSync2, writeSync, closeSync as closeSync2 } from "node:fs";
 import { join as join2, resolve as resolve2 } from "node:path";
+var DATABASE_ROLES = /* @__PURE__ */ new Set(["primary", "capability_partition"]);
+var DATABASE_PHASES = /* @__PURE__ */ new Set(["transaction_begin", "transaction_operation", "savepoint_begin", "savepoint_operation"]);
 function safeDirectory(path) {
   try {
     mkdirSync2(path, { recursive: true, mode: 448 });
@@ -133,7 +135,11 @@ function beginHookRuntimeDiagnostic(args) {
       ...timing.store_close_ms === void 0 ? {} : { store_close_ms: Math.max(0, Math.round(timing.store_close_ms)) },
       ...timing.outcome ? { outcome: timing.outcome } : {},
       ...timing.error_code ? { error_code: timing.error_code.slice(0, 80) } : {},
-      ...timing.error_type ? { error_type: timing.error_type.slice(0, 80) } : {}
+      ...timing.error_type ? { error_type: timing.error_type.slice(0, 80) } : {},
+      ...timing.database_role && DATABASE_ROLES.has(timing.database_role) ? { database_role: timing.database_role } : {},
+      ...timing.database_phase && DATABASE_PHASES.has(timing.database_phase) ? { database_phase: timing.database_phase } : {},
+      ...Number.isSafeInteger(timing.busy_timeout_ms) && Number(timing.busy_timeout_ms) >= 0 && Number(timing.busy_timeout_ms) <= 6e4 ? { busy_timeout_ms: timing.busy_timeout_ms } : {},
+      ...typeof timing.retryable === "boolean" ? { retryable: timing.retryable } : {}
     });
   } };
 }
