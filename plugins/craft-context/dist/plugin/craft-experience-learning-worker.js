@@ -852,7 +852,7 @@ import { lstatSync as lstatSync4, readFileSync as readFileSync4, realpathSync as
 import { tmpdir } from "node:os";
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.129";
+var CRAFT_RELEASE_VERSION = "0.12.130";
 
 // core/knowledge-model-redaction.ts
 var SENSITIVE_MODEL_TEXT_PATTERNS = [
@@ -1543,6 +1543,7 @@ function codexTaskGoalDigest(value) {
 // core/codex-session-verification.ts
 var MAX_COMMAND_CHARS = 16e3;
 var MAX_OUTPUT_CHARS = 1e6;
+var MAX_CUSTOM_CALL_IDS = 4096;
 function commandScript(commandValue) {
   if (typeof commandValue === "string") return commandValue;
   if (!Array.isArray(commandValue) || commandValue.length !== 3 || !["/bin/zsh", "/usr/bin/zsh", "/bin/bash", "/usr/bin/bash", "zsh", "bash"].includes(String(commandValue[0])) || commandValue[1] !== "-lc" || typeof commandValue[2] !== "string") return null;
@@ -1608,15 +1609,27 @@ function artifact(runner, command, output, callId) {
 function createCodexSessionVerificationCollector() {
   const calls = /* @__PURE__ */ new Map();
   const outputs = /* @__PURE__ */ new Map();
+  const seenCalls = /* @__PURE__ */ new Set();
+  const seenOutputs = /* @__PURE__ */ new Set();
+  const ambiguous = /* @__PURE__ */ new Set();
+  const structuredCalls = /* @__PURE__ */ new Map();
   const artifacts = [];
-  let stopped = false;
+  let customOverflow = false;
+  let structuredConflict = false;
+  let structuredOverflow = false;
   function add(record) {
-    if (stopped) return;
     if (record.record_type === "event_msg" && record.payload.type === "item_completed") {
       const item = record.payload.item;
       if (item && typeof item === "object" && !Array.isArray(item)) {
         const commandItem = item;
         if (commandItem.type === "CommandExecution") {
+          if (typeof commandItem.id === "string" && commandItem.id.length > 0 && commandItem.id.length <= 160) {
+            const digest = stableDigest(commandItem);
+            const previous = structuredCalls.get(commandItem.id);
+            if (previous !== void 0 && previous !== digest) structuredConflict = true;
+            if (previous === void 0 && structuredCalls.size >= MAX_CUSTOM_CALL_IDS) structuredOverflow = true;
+            else if (previous === void 0) structuredCalls.set(commandItem.id, digest);
+          }
           const command = commandItem.command;
           const script = commandScript(command);
           const runner = testRunner(command);
@@ -1625,29 +1638,53 @@ function createCodexSessionVerificationCollector() {
           const callId2 = commandItem.id;
           if (runner && script && commandItem.status === "completed" && exitCode === 0 && output) {
             const itemArtifact = artifact(runner, script, output, typeof callId2 === "string" ? callId2 : stableDigest({ command, output }));
-            if (itemArtifact) artifacts.push(itemArtifact);
+            if (itemArtifact && artifacts.length < 8 && !artifacts.some((existing) => existing.call_digest === itemArtifact.call_digest)) artifacts.push(itemArtifact);
           }
         }
       }
-      if (artifacts.length === 8) stopped = true;
       return;
     }
     if (record.record_type !== "response_item") return;
+    if (customOverflow) return;
     const payload3 = record.payload;
     const callId = payload3.call_id;
     if (typeof callId !== "string" || !callId.trim() || callId.length > 160) return;
-    if (payload3.type === "custom_tool_call" && payload3.name === "exec") {
+    if (payload3.type === "custom_tool_call" && !seenCalls.has(callId) && seenCalls.size >= MAX_CUSTOM_CALL_IDS || payload3.type === "custom_tool_call_output" && !seenOutputs.has(callId) && seenOutputs.size >= MAX_CUSTOM_CALL_IDS) {
+      customOverflow = true;
+      calls.clear();
+      outputs.clear();
+      seenCalls.clear();
+      seenOutputs.clear();
+      ambiguous.clear();
+      return;
+    }
+    if (payload3.type === "custom_tool_call") {
+      if (seenCalls.has(callId)) {
+        ambiguous.add(callId);
+        return;
+      }
+      seenCalls.add(callId);
+      if (payload3.name !== "exec") return;
       const runner = testRunner(payload3.input);
       if (runner) calls.set(callId, { runner, command_digest: stableDigest(payload3.input) });
     } else if (payload3.type === "custom_tool_call_output") {
+      if (seenOutputs.has(callId)) {
+        ambiguous.add(callId);
+        return;
+      }
+      seenOutputs.add(callId);
       const text2 = outputText(payload3.output);
       if (text2) outputs.set(callId, { digest: stableDigest(text2), passed: /Process exited with code 0\s*$/imu.test(text2) ? ["javascript", "python", "go", "rust", "java-maven", "java-gradle", "dotnet"].filter((runner) => successfulSummary(runner, text2)) : [] });
     }
   }
   function finish() {
+    if (structuredConflict || structuredOverflow) return [];
     for (const [callId, call] of calls) {
+      if (artifacts.length >= 8) break;
+      if (ambiguous.has(callId)) continue;
       const output = outputs.get(callId);
       if (!output || !output.passed.includes(call.runner)) continue;
+      if (artifacts.some((existing) => existing.call_digest === stableDigest(callId))) continue;
       artifacts.push({
         runner: call.runner,
         command_digest: call.command_digest,
@@ -1661,7 +1698,13 @@ function createCodexSessionVerificationCollector() {
     }
     return artifacts;
   }
-  return { add, finish };
+  return {
+    add,
+    finish,
+    customCallsOverflowed: () => customOverflow,
+    structuredCallsConflicted: () => structuredConflict,
+    structuredCallsOverflowed: () => structuredOverflow
+  };
 }
 function extractCodexSessionVerificationArtifacts(records) {
   const collector = createCodexSessionVerificationCollector();
@@ -2318,6 +2361,9 @@ async function readCodexSessionTaskExcerpt(taskIdValue, options, env = process.e
   }
   if (`sha256:${rollingDigest}` !== task.source_ref) return { status: "ineligible", reason: "task_source_digest_mismatch", raw_content_stored: false };
   if (!taskGoal || !taskResult) return { status: "ineligible", reason: "sanitized_task_summary_unavailable", raw_content_stored: false };
+  if (verificationCollector.structuredCallsConflicted()) return { status: "ineligible", reason: "task_structured_call_conflict", raw_content_stored: false };
+  if (verificationCollector.structuredCallsOverflowed()) return { status: "ineligible", reason: "task_structured_call_tracking_limit_exceeded", raw_content_stored: false };
+  if (verificationCollector.customCallsOverflowed()) return { status: "ineligible", reason: "task_custom_call_tracking_limit_exceeded", raw_content_stored: false };
   const verificationArtifacts = verificationCollector.finish();
   if (transcriptVerified && (verificationArtifacts.length !== task.verification_artifact_count || `sha256:${hash2(JSON.stringify(verificationArtifacts))}` !== task.verification_artifact_digest)) {
     return { status: "ineligible", reason: "transcript_test_evidence_digest_mismatch", raw_content_stored: false };

@@ -1,10 +1,10 @@
 {
   "marketplace": "craft-marketplace",
-  "version": "0.12.129",
+  "version": "0.12.130",
   "source_repository": "https://github.com/wdx9413/craft.git",
-  "source_commit": "729054c5af3a1416c6f39bf501c5085bfb0e5988",
+  "source_commit": "6f4ea2a0dccfc0d9ff5d37ea1948859e57cd63b5",
   "source_state": "committed",
-  "source_note": "v0.12.129 payloads were synchronized from a clean checkout of 729054c5af3a1416c6f39bf501c5085bfb0e5988; Git-visible source snapshot sha256:ee92e191eeb8ee825aed925cb33ca536258b5f8eda431e74cf7c666b52241df1. source_commit identifies HEAD, not dirty source contents; this snapshot does not attest the build process.",
+  "source_note": "v0.12.130 payloads were synchronized from a clean checkout of 6f4ea2a0dccfc0d9ff5d37ea1948859e57cd63b5; Git-visible source snapshot sha256:2e9174dad7f4e34997ee7295ceb6cb0190833637e724b7d6270f14ab3de36036. source_commit identifies HEAD, not dirty source contents; this snapshot does not attest the build process.",
   "components": [
     "craft-context",
     "craft-datasec"
@@ -14,5 +14,5 @@
     "craft-datasec"
   ],
   "claude_marketplace": ".claude-plugin/marketplace.json",
-  "source_tree_digest": "sha256:ee92e191eeb8ee825aed925cb33ca536258b5f8eda431e74cf7c666b52241df1"
+  "source_tree_digest": "sha256:2e9174dad7f4e34997ee7295ceb6cb0190833637e724b7d6270f14ab3de36036"
 }
