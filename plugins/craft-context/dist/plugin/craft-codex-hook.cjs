@@ -9661,7 +9661,7 @@ var CRAFT_RELEASE_VERSION;
 var init_version = __esm({
   "core/version.ts"() {
     "use strict";
-    CRAFT_RELEASE_VERSION = "0.12.128";
+    CRAFT_RELEASE_VERSION = "0.12.129";
   }
 });
 
@@ -9743,6 +9743,7 @@ var CONTEXT_TOOL_INTENTS, BOOLEAN_PARAMS, INTEGER_PARAMS, NUMBER_PARAMS, OBJECT_
 var init_tool_schema = __esm({
   "core/mcp/tool-schema.ts"() {
     "use strict";
+    init_context_assets();
     CONTEXT_TOOL_INTENTS = ["recall", "knowledge", "memory", "experience", "code", "code-analysis"];
     BOOLEAN_PARAMS = ["scan", "enabled", "allow_execution", "allow_external_write", "require_held_out", "require_outcome_passed", "retryable", "requires_external_effect", "supports_pause_resume", "supports_evidence_receipts", "generated_code", "requires_credential", "has_compensation", "approved", "start_trial", "untrusted_input", "confirmed_original_runner_stopped", "sanitized", "active", "acceptance_required", "trusted", "unattended", "reobserve_required", "compensation_or_handoff", "require_governance", "accepted", "stale", "crash_recovery", "reobserved", "delivered", "allowed", "allow_restricted", "privacy_reviewed", "complete", "content_stored", "candidate_change", "requires_real_host", "verified", "verify_against_archive"];
     INTEGER_PARAMS = [
@@ -10114,7 +10115,7 @@ var init_tool_schema = __esm({
     };
     objectSchema = (toolName, required5 = [], optional2 = []) => ({
       type: "object",
-      properties: Object.fromEntries([...required5, ...optional2].map((name) => [name, ENUMS_BY_TOOL[toolName]?.[name] ? { type: "string", enum: [...ENUMS_BY_TOOL[toolName][name]] } : TYPES_BY_TOOL[toolName]?.[name] ? { type: TYPES_BY_TOOL[toolName][name] } : schemaFor(name)])),
+      properties: Object.fromEntries([...required5, ...optional2].map((name) => [name, toolName === "craft_context_open" && (name === "max_chars" || name === "max_items") ? { type: "integer", description: `Range: 1 to ${name === "max_chars" ? DEFAULT_CONTEXT_MAX_CHARS : DEFAULT_CONTEXT_MAX_ITEMS}; omit to use the default.` } : ENUMS_BY_TOOL[toolName]?.[name] ? { type: "string", enum: [...ENUMS_BY_TOOL[toolName][name]] } : TYPES_BY_TOOL[toolName]?.[name] ? { type: TYPES_BY_TOOL[toolName][name] } : schemaFor(name)])),
       required: required5,
       additionalProperties: false
     });
@@ -276453,7 +276454,7 @@ async function openContext(service, args) {
     throw new CraftOperationError("LIMIT_EXCEEDED", "budget_validation", "Context budget is invalid", { budget: !Number.isSafeInteger(maxItems) || maxItems < 1 ? "max_items" : "max_chars", max_items: maxItems, max_chars: maxChars, minimum: 1 });
   }
   if (maxItems > DEFAULT_CONTEXT_MAX_ITEMS || maxChars > DEFAULT_CONTEXT_MAX_CHARS) {
-    throw new CraftOperationError("LIMIT_EXCEEDED", "budget_validation", "Context budget exceeds the configured maximum", {
+    throw new CraftOperationError("LIMIT_EXCEEDED", "budget_validation", `Context budget exceeds the configured maximum: max_items <= ${DEFAULT_CONTEXT_MAX_ITEMS}, max_chars <= ${DEFAULT_CONTEXT_MAX_CHARS}; omit these parameters to use defaults`, {
       max_items: maxItems,
       max_chars: maxChars,
       maximum_items: DEFAULT_CONTEXT_MAX_ITEMS,

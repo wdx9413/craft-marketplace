@@ -228057,7 +228057,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.128";
+var CRAFT_RELEASE_VERSION = "0.12.129";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
@@ -228523,7 +228523,7 @@ var TYPES_BY_TOOL = {
 };
 var objectSchema = (toolName, required5 = [], optional2 = []) => ({
   type: "object",
-  properties: Object.fromEntries([...required5, ...optional2].map((name) => [name, ENUMS_BY_TOOL[toolName]?.[name] ? { type: "string", enum: [...ENUMS_BY_TOOL[toolName][name]] } : TYPES_BY_TOOL[toolName]?.[name] ? { type: TYPES_BY_TOOL[toolName][name] } : schemaFor(name)])),
+  properties: Object.fromEntries([...required5, ...optional2].map((name) => [name, toolName === "craft_context_open" && (name === "max_chars" || name === "max_items") ? { type: "integer", description: `Range: 1 to ${name === "max_chars" ? DEFAULT_CONTEXT_MAX_CHARS : DEFAULT_CONTEXT_MAX_ITEMS}; omit to use the default.` } : ENUMS_BY_TOOL[toolName]?.[name] ? { type: "string", enum: [...ENUMS_BY_TOOL[toolName][name]] } : TYPES_BY_TOOL[toolName]?.[name] ? { type: TYPES_BY_TOOL[toolName][name] } : schemaFor(name)])),
   required: required5,
   additionalProperties: false
 });
@@ -273420,7 +273420,7 @@ async function openContext(service, args) {
     throw new CraftOperationError("LIMIT_EXCEEDED", "budget_validation", "Context budget is invalid", { budget: !Number.isSafeInteger(maxItems) || maxItems < 1 ? "max_items" : "max_chars", max_items: maxItems, max_chars: maxChars, minimum: 1 });
   }
   if (maxItems > DEFAULT_CONTEXT_MAX_ITEMS || maxChars > DEFAULT_CONTEXT_MAX_CHARS) {
-    throw new CraftOperationError("LIMIT_EXCEEDED", "budget_validation", "Context budget exceeds the configured maximum", {
+    throw new CraftOperationError("LIMIT_EXCEEDED", "budget_validation", `Context budget exceeds the configured maximum: max_items <= ${DEFAULT_CONTEXT_MAX_ITEMS}, max_chars <= ${DEFAULT_CONTEXT_MAX_CHARS}; omit these parameters to use defaults`, {
       max_items: maxItems,
       max_chars: maxChars,
       maximum_items: DEFAULT_CONTEXT_MAX_ITEMS,
