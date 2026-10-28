@@ -852,7 +852,7 @@ import { lstatSync as lstatSync4, readFileSync as readFileSync4, realpathSync as
 import { tmpdir } from "node:os";
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.124";
+var CRAFT_RELEASE_VERSION = "0.12.125";
 
 // core/knowledge-model-redaction.ts
 var SENSITIVE_MODEL_TEXT_PATTERNS = [
@@ -3492,7 +3492,17 @@ function readAttempt(path, ticketId) {
     if (stored.schema !== ENTRY_SCHEMA || stored.ticket_digest !== entry.ticket_digest || !validFailure(stored.failure)) {
       throw new Error("Experience classification attempt is invalid");
     }
-    return stored.failure;
+    const failure = stored.failure;
+    if (failure.classifier_version === "reconciliation-v1" && (failure.failure_stage !== "reconciliation" || failure.failure_code !== "model_result_unknown")) {
+      throw new Error("Experience reconciliation checkpoint has an invalid status");
+    }
+    if (failure.failure_code === "model_result_unknown" && !failure.reconciliation) {
+      throw new Error("Experience reconciliation checkpoint is missing its identity");
+    }
+    if (failure.reconciliation && (failure.reconciliation.ticket_id !== ticketId || stableDigest(failure.reconciliation) !== failure.attempt_digest)) {
+      throw new Error("Experience reconciliation checkpoint conflicts with its identity");
+    }
+    return failure;
   } catch (error) {
     if (error.code === "ENOENT") return void 0;
     throw error;
@@ -3533,10 +3543,6 @@ function object9(value, name) {
 }
 function array3(value, name) {
   if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
-  return value;
-}
-function digest(value, name) {
-  if (typeof value !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(value)) throw new Error(`${name} must be a SHA-256 digest`);
   return value;
 }
 function projectScopeMatches(value, expectedScope) {
@@ -3599,6 +3605,13 @@ var DeterministicClassificationFailure = class extends Error {
 async function runExperienceScenarioClassificationOnce(deps) {
   let cursor = deps.state_file ? readExperienceClassificationCursor(deps.state_file) : void 0;
   let skipped;
+  let reconciliationPending = false;
+  let checkpointFailed = false;
+  const finish = (result) => reconciliationPending ? {
+    ...result,
+    reconciliation_pending: true,
+    ...checkpointFailed ? { reconciliation_checkpoint_failed: true } : {}
+  } : result;
   for (let page = 0; page < 4; page++) {
     const listed = await deps.client.call("craft_evaluation_model_ticket_list", {
       purpose: "workflow_evolution",
@@ -3612,16 +3625,18 @@ async function runExperienceScenarioClassificationOnce(deps) {
       const target = ticket.target;
       if (ticket.purpose !== "workflow_evolution" || target?.kind !== "experience_scenario_classification_request") continue;
       const result = await runClassificationTicket(deps, ticket);
+      if (result.reason === "resolved_request_reference_stale") reconciliationPending = true;
+      if (result.reconciliation_checkpoint_failed === true) checkpointFailed = true;
       if (Number(result.processed) > 0) {
         if (paged && deps.state_file) await recordExperienceClassificationCursor(deps.state_file, String(ticket.id));
-        return result;
+        return finish(result);
       }
-      if (result.reason === "model_call_budget_exhausted") return result;
+      if (result.reason === "model_call_budget_exhausted") return finish(result);
       skipped ??= result;
     }
     if (!paged || listed.has_more !== true) {
       if (paged && deps.state_file) await recordExperienceClassificationCursor(deps.state_file, "");
-      return skipped ?? { processed: 0, outcomes: [] };
+      return finish(skipped ?? { processed: 0, outcomes: [] });
     }
     if (typeof listed.next_cursor !== "string" || !listed.next_cursor || cursor !== void 0 && Buffer.compare(Buffer.from(listed.next_cursor), Buffer.from(cursor)) <= 0) {
       throw new Error("Experience classification ticket cursor did not advance");
@@ -3629,7 +3644,7 @@ async function runExperienceScenarioClassificationOnce(deps) {
     cursor = listed.next_cursor;
     if (deps.state_file) await recordExperienceClassificationCursor(deps.state_file, cursor);
   }
-  return { processed: 0, skipped: true, reason: "ticket_scan_limit_reached", scan_has_more: true, outcomes: skipped?.outcomes ?? [] };
+  return finish({ processed: 0, skipped: true, reason: "ticket_scan_limit_reached", scan_has_more: true, outcomes: skipped?.outcomes ?? [] });
 }
 async function runClassificationTicket(deps, ticket) {
   const target = object9(ticket.target, "ticket.target");
@@ -3648,8 +3663,58 @@ async function runClassificationTicket(deps, ticket) {
   const request = object9(requestResult.request, "classification request"), taxonomy = object9(requestResult.taxonomy, "Experience taxonomy");
   if (request.status !== "awaiting_model" || Number(request.version) !== Number(target.version)) {
     if (request.status === "classified" || request.status === "unclassified") {
-      await deps.client.call("craft_evaluation_model_ticket_complete", { ticket_id: ticketId, result_digest: digest(request.result_digest, "request.result_digest") });
-      return { processed: 1, outcomes: [{ ticket_id: ticketId, request_id: requestId, status: request.status, idempotent: true }] };
+      if (typeof request.result_digest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(request.result_digest)) {
+        return {
+          processed: 0,
+          skipped: true,
+          reason: "resolved_request_reference_stale",
+          reconciliation_checkpoint_failed: true,
+          outcomes: [{ ticket_id: ticketId, request_id: requestId, status: "model_result_unknown" }]
+        };
+      }
+      const resultDigest = request.result_digest;
+      let checkpointFailed = false;
+      if (deps.state_file) {
+        try {
+          if (!Number.isSafeInteger(target.version) || !Number.isSafeInteger(request.version)) throw new Error("Experience reconciliation versions are invalid");
+          const reconciliationDigest = stableDigest({
+            ticket_id: ticketId,
+            request_id: requestId,
+            scope,
+            target_version: target.version,
+            request_version: request.version,
+            request_status: request.status,
+            result_digest: resultDigest
+          });
+          const reconciliationFile = `${deps.state_file}.reconciliation.${reconciliationDigest.slice(7)}`;
+          if (!shouldSuppressExperienceClassification(reconciliationFile, ticketId, reconciliationDigest, "reconciliation-v1")) {
+            await recordExperienceClassificationFailure(reconciliationFile, ticketId, {
+              attempt_digest: reconciliationDigest,
+              classifier_version: "reconciliation-v1",
+              failure_stage: "reconciliation",
+              failure_code: "model_result_unknown",
+              failed_at: (/* @__PURE__ */ new Date()).toISOString(),
+              reconciliation: {
+                ticket_id: ticketId,
+                request_id: requestId,
+                scope,
+                target_version: Number(target.version),
+                request_version: Number(request.version),
+                request_status: String(request.status),
+                result_digest: resultDigest
+              }
+            });
+          }
+        } catch {
+          checkpointFailed = true;
+        }
+      }
+      return { processed: 0, skipped: true, reason: "resolved_request_reference_stale", outcomes: [{
+        ticket_id: ticketId,
+        request_id: requestId,
+        status: "model_result_unknown",
+        result_digest: resultDigest
+      }], ...checkpointFailed ? { reconciliation_checkpoint_failed: true } : {} };
     }
     return { processed: 0, outcomes: [{ ticket_id: ticketId, request_id: requestId, status: "stale" }] };
   }
@@ -4097,6 +4162,8 @@ function learningTickStatus(result, once) {
   const sessionCollection = result.session_collection && typeof result.session_collection === "object" ? result.session_collection : null;
   const sessionCollectionFailure = typeof sessionCollection?.failure_kind === "string" ? sessionCollection.failure_kind : null;
   const experienceFailure = typeof result.failure_kind === "string" ? result.failure_kind : null;
+  const experienceClassification = result.scenario_classification && typeof result.scenario_classification === "object" ? result.scenario_classification : null;
+  const experienceReconciliation = experienceClassification?.reconciliation_pending === true;
   const knowledge = result.knowledge && typeof result.knowledge === "object" ? result.knowledge : null;
   const knowledgeFailure = typeof knowledge?.failure_kind === "string" ? knowledge.failure_kind : null;
   const classification = knowledge?.classification && typeof knowledge.classification === "object" ? knowledge.classification : null;
@@ -4151,6 +4218,8 @@ function learningTickStatus(result, once) {
 `] : [],
     ...experienceFailure ? [`Craft Experience learning pass failed (${experienceFailure}).
 `] : [],
+    ...experienceReconciliation ? ["Craft Experience classification requires reconciliation (model_result_unknown).\n"] : [],
+    ...experienceClassification?.reconciliation_checkpoint_failed === true ? ["Craft Experience reconciliation checkpoint could not be saved or verified.\n"] : [],
     ...knowledgeFailure ? [`Craft Knowledge learning pass failed (${knowledgeFailure}).
 `] : [],
     ...classificationFailure ? [`Craft Knowledge scenario classification failed (${classificationFailure}).
@@ -4161,7 +4230,7 @@ function learningTickStatus(result, once) {
 `] : [],
     ...sourceIssues
   ].join("");
-  return { diagnostics, exit_code: once && (sessionCollectionFailure !== null || experienceFailure !== null || knowledgeFailure !== null || classificationFailure !== null || classificationSkipped || failedClassifications > 0 || sourceIssues.length > 0) ? 1 : null };
+  return { diagnostics, exit_code: once && (sessionCollectionFailure !== null || experienceFailure !== null || experienceReconciliation || knowledgeFailure !== null || classificationFailure !== null || classificationSkipped || failedClassifications > 0 || sourceIssues.length > 0) ? 1 : null };
 }
 function learningFailureKind(error) {
   return failureKind(error);
