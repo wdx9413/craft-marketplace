@@ -227989,7 +227989,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.120";
+var CRAFT_RELEASE_VERSION = "0.12.121";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
@@ -283394,19 +283394,16 @@ async function startContextLearningWorker(options) {
   if (!Number.isSafeInteger(timeout) || timeout < 1 || timeout > 6e4) throw new Error("shutdown_timeout_ms must be between 1 and 60000");
   const restartBase = options.restart_base_delay_ms ?? 1e3;
   if (!Number.isSafeInteger(restartBase) || restartBase < 1 || restartBase > 3e4) throw new Error("restart_base_delay_ms must be between 1 and 30000");
+  const acquireLocks = options.acquire_locks ?? acquireLearningWorkerLocks;
   let releaseLocks;
   try {
-    releaseLocks = await acquireLearningWorkerLocks(craftPaths(dataRoot(options.env)).runtimeDir, component2.learning.split(","), { runtime_version: CRAFT_RELEASE_VERSION });
+    releaseLocks = await acquireLocks(craftPaths(dataRoot(options.env)).runtimeDir, component2.learning.split(","), { runtime_version: CRAFT_RELEASE_VERSION });
   } catch {
     options.on_failure?.("worker_lock_unavailable");
     return void 0;
   }
-  if (!releaseLocks) {
-    if (options.on_skip) options.on_skip("worker_already_running");
-    else process.stderr.write("Craft learning worker skipped (worker_already_running).\n");
-    return void 0;
-  }
   let child, childEnded = true, stopping = false, restartTimer, restartCount = 0;
+  let lockTimer, lockRetry, lockRetryCount = 0;
   let releasePromise;
   const releaseOwnership = () => releasePromise ??= (async () => {
     try {
@@ -283456,7 +283453,34 @@ async function startContextLearningWorker(options) {
       reportAndRestart(`worker_exit_${String(code)}`);
     });
   };
-  startChild();
+  const scheduleLockRetry = () => {
+    const delay = Math.min(3e4, restartBase * 2 ** Math.min(lockRetryCount, 5));
+    lockRetryCount += 1;
+    lockTimer = setTimeout(() => {
+      lockTimer = void 0;
+      lockRetry = (async () => {
+        try {
+          releaseLocks = await acquireLocks(craftPaths(dataRoot(options.env)).runtimeDir, component2.learning.split(","), { runtime_version: CRAFT_RELEASE_VERSION });
+          if (stopping) {
+            await releaseOwnership();
+            return;
+          }
+          if (releaseLocks) startChild();
+          else scheduleLockRetry();
+        } catch {
+          options.on_failure?.("worker_lock_unavailable");
+          if (!stopping) scheduleLockRetry();
+        }
+      })();
+    }, delay);
+    lockTimer.unref();
+  };
+  if (releaseLocks) startChild();
+  else {
+    if (options.on_skip) options.on_skip("worker_already_running");
+    else process.stderr.write("Craft learning worker waiting (worker_already_running).\n");
+    scheduleLockRetry();
+  }
   return async () => {
     if (stopping) {
       await releasePromise;
@@ -283467,6 +283491,11 @@ async function startContextLearningWorker(options) {
       clearTimeout(restartTimer);
       restartTimer = void 0;
     }
+    if (lockTimer) {
+      clearTimeout(lockTimer);
+      lockTimer = void 0;
+    }
+    await lockRetry;
     try {
       if (child && !childEnded) {
         const current2 = child;
