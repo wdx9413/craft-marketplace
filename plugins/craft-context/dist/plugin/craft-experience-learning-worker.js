@@ -4,7 +4,7 @@
 import { spawn as spawn2 } from "node:child_process";
 import { realpathSync as realpathSync4 } from "node:fs";
 import { createInterface } from "node:readline";
-import { join as join10 } from "node:path";
+import { join as join11 } from "node:path";
 import { pathToFileURL } from "node:url";
 
 // common/craft-common-base/src/scope-policy.ts
@@ -852,7 +852,7 @@ import { lstatSync as lstatSync4, readFileSync as readFileSync4, realpathSync as
 import { tmpdir } from "node:os";
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.123";
+var CRAFT_RELEASE_VERSION = "0.12.124";
 
 // core/knowledge-model-redaction.ts
 var SENSITIVE_MODEL_TEXT_PATTERNS = [
@@ -3434,24 +3434,38 @@ import { randomUUID as randomUUID2 } from "node:crypto";
 
 // deploy/experience-learning/experience-classification-state.ts
 import { lstatSync as lstatSync10, readFileSync as readFileSync10 } from "node:fs";
-import { dirname as dirname10 } from "node:path";
+import { createHash as createHash7 } from "node:crypto";
+import { basename as basename2, dirname as dirname10, join as join8 } from "node:path";
 var SCHEMA6 = "craft.experience-classification-attempts.v1";
+var ENTRY_SCHEMA = "craft.experience-classification-attempt.v2";
 var DIGEST2 = /^sha256:[a-f0-9]{64}$/u;
 var IDENTIFIER = /^[A-Za-z0-9._:-]{1,200}$/u;
 var MAX_ENTRIES2 = 500;
+function validCursor(value) {
+  return typeof value === "string" && value.length <= 65536 && !value.includes("\0");
+}
+function validFailure(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const item = value;
+  return DIGEST2.test(String(item.attempt_digest)) && typeof item.classifier_version === "string" && Boolean(item.classifier_version.trim()) && typeof item.failure_stage === "string" && /^[a-z][a-z0-9_]{0,63}$/u.test(item.failure_stage) && typeof item.failure_code === "string" && /^[a-z][a-z0-9_]{0,63}$/u.test(item.failure_code) && typeof item.failed_at === "string" && Number.isFinite(Date.parse(item.failed_at));
+}
 function readAttempts2(path) {
   try {
     const stat2 = lstatSync10(path);
     if (stat2.isSymbolicLink() || !stat2.isFile()) throw new Error("Experience classification state must be a regular file");
     const state = JSON.parse(readFileSync10(path, "utf8"));
-    if (state.schema !== SCHEMA6 || !state.attempts || typeof state.attempts !== "object" || Array.isArray(state.attempts)) {
+    if (state.schema !== SCHEMA6 || !state.attempts || typeof state.attempts !== "object" || Array.isArray(state.attempts) || state.last_ticket_id !== void 0 && !validCursor(state.last_ticket_id)) {
       throw new Error("Experience classification state is invalid");
     }
     const entries = Object.entries(state.attempts);
-    if (entries.length > MAX_ENTRIES2 || entries.some(([ticketId, value]) => !IDENTIFIER.test(ticketId) || !value || typeof value !== "object" || Array.isArray(value) || !DIGEST2.test(String(value.attempt_digest)) || typeof value.classifier_version !== "string" || !value.classifier_version || typeof value.failure_stage !== "string" || !/^[a-z][a-z0-9_]{0,63}$/u.test(String(value.failure_stage)) || typeof value.failure_code !== "string" || !/^[a-z][a-z0-9_]{0,63}$/u.test(String(value.failure_code)) || typeof value.failed_at !== "string" || !Number.isFinite(Date.parse(String(value.failed_at))))) {
+    if (entries.length > MAX_ENTRIES2 || entries.some(([ticketId, value]) => !IDENTIFIER.test(ticketId) || !validFailure(value))) {
       throw new Error("Experience classification state is invalid");
     }
-    return { schema: SCHEMA6, attempts: Object.fromEntries(entries) };
+    return {
+      schema: SCHEMA6,
+      attempts: Object.fromEntries(entries),
+      ...state.last_ticket_id === void 0 ? {} : { last_ticket_id: state.last_ticket_id }
+    };
   } catch (error) {
     if (error.code === "ENOENT") return { schema: SCHEMA6, attempts: {} };
     throw error;
@@ -3464,20 +3478,50 @@ function checkStateDirectory2(path) {
     if (error.code !== "ENOENT") throw error;
   }
 }
+function attemptFile(path, ticketId) {
+  const hash3 = createHash7("sha256").update(ticketId).digest("hex");
+  return { path: join8(dirname10(path), `${basename2(path)}.entries`, `${hash3}.json`), ticket_digest: `sha256:${hash3}` };
+}
+function readAttempt(path, ticketId) {
+  const entry = attemptFile(path, ticketId);
+  checkStateDirectory2(entry.path);
+  try {
+    const stat2 = lstatSync10(entry.path);
+    if (stat2.isSymbolicLink() || !stat2.isFile()) throw new Error("Experience classification attempt must be a regular file");
+    const stored = JSON.parse(readFileSync10(entry.path, "utf8"));
+    if (stored.schema !== ENTRY_SCHEMA || stored.ticket_digest !== entry.ticket_digest || !validFailure(stored.failure)) {
+      throw new Error("Experience classification attempt is invalid");
+    }
+    return stored.failure;
+  } catch (error) {
+    if (error.code === "ENOENT") return void 0;
+    throw error;
+  }
+}
 function shouldSuppressExperienceClassification(path, ticketId, attemptDigest, classifierVersion) {
   if (!IDENTIFIER.test(ticketId) || !DIGEST2.test(attemptDigest) || typeof classifierVersion !== "string" || !classifierVersion.trim()) {
     throw new Error("Experience classification attempt identity is invalid");
   }
   checkStateDirectory2(path);
-  const failure = readAttempts2(path).attempts[ticketId];
+  const failure = readAttempt(path, ticketId) ?? readAttempts2(path).attempts[ticketId];
   return failure?.attempt_digest === attemptDigest && failure.classifier_version === classifierVersion;
 }
 async function recordExperienceClassificationFailure(path, ticketId, failure) {
-  if (!IDENTIFIER.test(ticketId) || !DIGEST2.test(failure.attempt_digest) || typeof failure.classifier_version !== "string" || !failure.classifier_version.trim() || !/^[a-z][a-z0-9_]{0,63}$/u.test(failure.failure_stage) || !/^[a-z][a-z0-9_]{0,63}$/u.test(failure.failure_code) || !Number.isFinite(Date.parse(failure.failed_at))) throw new Error("Experience classification attempt identity is invalid");
+  if (!IDENTIFIER.test(ticketId) || !validFailure(failure)) throw new Error("Experience classification attempt identity is invalid");
   checkStateDirectory2(path);
-  const current = readAttempts2(path).attempts;
-  const attempts = Object.fromEntries(Object.entries({ ...current, [ticketId]: failure }).sort(([, left], [, right]) => left.failed_at.localeCompare(right.failed_at)).slice(-MAX_ENTRIES2));
-  await atomicPrivateJson(path, { schema: SCHEMA6, attempts });
+  const entry = attemptFile(path, ticketId);
+  checkStateDirectory2(entry.path);
+  await atomicPrivateJson(entry.path, { schema: ENTRY_SCHEMA, ticket_digest: entry.ticket_digest, failure });
+}
+function readExperienceClassificationCursor(path) {
+  checkStateDirectory2(path);
+  return readAttempts2(path).last_ticket_id ?? "";
+}
+async function recordExperienceClassificationCursor(path, ticketId) {
+  if (!validCursor(ticketId)) throw new Error("Experience classification cursor identity is invalid");
+  checkStateDirectory2(path);
+  const state = readAttempts2(path);
+  if ((state.last_ticket_id ?? "") !== ticketId) await atomicPrivateJson(path, { ...state, last_ticket_id: ticketId });
 }
 
 // deploy/experience-learning/experience-scenario-classification.ts
@@ -3553,13 +3597,41 @@ var DeterministicClassificationFailure = class extends Error {
   }
 };
 async function runExperienceScenarioClassificationOnce(deps) {
-  const listed = await deps.client.call("craft_evaluation_model_ticket_list", { purpose: "workflow_evolution", limit: 100 });
-  const tickets = array3(listed.tickets, "tickets").map((value, index) => object9(value, `tickets[${index}]`));
-  const ticket = tickets.find((value) => {
-    const target2 = value.target;
-    return value.purpose === "workflow_evolution" && target2?.kind === "experience_scenario_classification_request";
-  });
-  if (!ticket) return { processed: 0, outcomes: [] };
+  let cursor = deps.state_file ? readExperienceClassificationCursor(deps.state_file) : void 0;
+  let skipped;
+  for (let page = 0; page < 4; page++) {
+    const listed = await deps.client.call("craft_evaluation_model_ticket_list", {
+      purpose: "workflow_evolution",
+      limit: 100,
+      ...cursor === void 0 ? {} : { after_id: cursor }
+    });
+    const tickets = array3(listed.tickets, "tickets").map((value, index) => object9(value, `tickets[${index}]`));
+    const paged = typeof listed.has_more === "boolean";
+    if (cursor !== void 0 && !paged) throw new Error("Experience classification ticket pagination is unavailable");
+    for (const ticket of tickets) {
+      const target = ticket.target;
+      if (ticket.purpose !== "workflow_evolution" || target?.kind !== "experience_scenario_classification_request") continue;
+      const result = await runClassificationTicket(deps, ticket);
+      if (Number(result.processed) > 0) {
+        if (paged && deps.state_file) await recordExperienceClassificationCursor(deps.state_file, String(ticket.id));
+        return result;
+      }
+      if (result.reason === "model_call_budget_exhausted") return result;
+      skipped ??= result;
+    }
+    if (!paged || listed.has_more !== true) {
+      if (paged && deps.state_file) await recordExperienceClassificationCursor(deps.state_file, "");
+      return skipped ?? { processed: 0, outcomes: [] };
+    }
+    if (typeof listed.next_cursor !== "string" || !listed.next_cursor || cursor !== void 0 && Buffer.compare(Buffer.from(listed.next_cursor), Buffer.from(cursor)) <= 0) {
+      throw new Error("Experience classification ticket cursor did not advance");
+    }
+    cursor = listed.next_cursor;
+    if (deps.state_file) await recordExperienceClassificationCursor(deps.state_file, cursor);
+  }
+  return { processed: 0, skipped: true, reason: "ticket_scan_limit_reached", scan_has_more: true, outcomes: skipped?.outcomes ?? [] };
+}
+async function runClassificationTicket(deps, ticket) {
   const target = object9(ticket.target, "ticket.target");
   const ticketId = summary(ticket.id, "ticket.id");
   const requestId = summary(target.id, "ticket.target.id");
@@ -3788,7 +3860,7 @@ async function runExperienceScenarioClassificationOnce(deps) {
 // core/codex-cli-model-transport.ts
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir as tmpdir2 } from "node:os";
-import { join as join8 } from "node:path";
+import { join as join9 } from "node:path";
 
 // core/host-driver.ts
 import { spawn } from "node:child_process";
@@ -3928,8 +4000,8 @@ ${message.content}`).join("\n\n");
       const argv = ["exec", "--ignore-user-config", "--ephemeral", "--sandbox", "read-only", "--skip-git-repo-check"];
       argv.push("-c", "skills.max_context_tokens=1", "-c", "features.shell_tool=false", "-c", "features.view_image=false", "-c", 'web_search="disabled"');
       if (schema) {
-        schemaDirectory = await mkdtemp(join8(tmpdir2(), "craft-learning-schema-"));
-        const schemaPath = join8(schemaDirectory, "output-schema.json");
+        schemaDirectory = await mkdtemp(join9(tmpdir2(), "craft-learning-schema-"));
+        const schemaPath = join9(schemaDirectory, "output-schema.json");
         await writeFile(schemaPath, JSON.stringify(schema), { encoding: "utf8", flag: "wx", mode: 384 });
         argv.push("--output-schema", schemaPath);
       }
@@ -4096,9 +4168,9 @@ function learningFailureKind(error) {
 }
 
 // core/infrastructure/learning-worker-lock.ts
-import { createHash as createHash7, randomUUID as randomUUID3 } from "node:crypto";
+import { createHash as createHash8, randomUUID as randomUUID3 } from "node:crypto";
 import { link, mkdir as mkdir3, open as open3, readFile as readFile3, rename as rename2, unlink as unlink2 } from "node:fs/promises";
-import { join as join9 } from "node:path";
+import { join as join10 } from "node:path";
 var workerLockFileSystem = { link, mkdir: mkdir3, open: open3, readFile: readFile3, rename: rename2, unlink: unlink2 };
 function learningWorkerOwnerAlive(pid, kill = process.kill) {
   try {
@@ -4141,7 +4213,7 @@ async function acquireComponentLock(path, fileSystem, isOwnerAlive, runtimeVersi
       throw new Error("Learning worker lock is invalid; reconciliation required");
     }
     if (isOwnerAlive(previousPid)) return null;
-    const ownerDigest = createHash7("sha256").update(previous.owner_id).digest("hex");
+    const ownerDigest = createHash8("sha256").update(previous.owner_id).digest("hex");
     const recoveredPath = `${path}.recovered.${Date.now()}.${ownerDigest}`;
     await fileSystem.rename(path, recoveredPath);
     const moved = JSON.parse(await fileSystem.readFile(recoveredPath, "utf8"));
@@ -4171,7 +4243,7 @@ async function acquireLearningWorkerLocks(runtimeDir, components, dependencies =
   await fileSystem.mkdir(runtimeDir, { recursive: true, mode: 448 });
   const releases = [];
   for (const component of [...new Set(components)].sort()) {
-    const release = await acquireComponentLock(join9(runtimeDir, `learning-worker-${component}.lock.json`), fileSystem, isOwnerAlive, dependencies.runtime_version);
+    const release = await acquireComponentLock(join10(runtimeDir, `learning-worker-${component}.lock.json`), fileSystem, isOwnerAlive, dependencies.runtime_version);
     if (!release) {
       await Promise.all(releases.reverse().map((item) => item()));
       return null;
@@ -4263,23 +4335,23 @@ async function runLearningTick2(deps, syncKnowledge = false, components = ["expe
   const configuredDeps = {
     ...deps,
     contentLanguage: deps.contentLanguage ?? config?.contentLanguage ?? "zh-CN",
-    experience_classification_state_file: deps.experience_classification_state_file ?? join10(paths.runtimeDir, "experience-classification-attempts.json")
+    experience_classification_state_file: deps.experience_classification_state_file ?? join11(paths.runtimeDir, "experience-classification-attempts.json")
   };
   const includesExperience = components.includes("experience"), includesKnowledge = components.includes("knowledge");
-  const passOrder = includesExperience && includesKnowledge ? await nextLearningPassOrder(deps.learning_pass_cursor_file ?? join10(paths.runtimeDir, "learning-pass-order.json")) : includesKnowledge ? "knowledge_first" : "experience_first";
+  const passOrder = includesExperience && includesKnowledge ? await nextLearningPassOrder(deps.learning_pass_cursor_file ?? join11(paths.runtimeDir, "learning-pass-order.json")) : includesKnowledge ? "knowledge_first" : "experience_first";
   return runLearningTick({
     pass_order: passOrder,
     ...runSessionCollection ? { run_session_collection: runSessionCollection } : {},
     run_experience_pass: () => includesExperience ? runOnce(configuredDeps) : Promise.resolve({ processed: 0, outcomes: [], skipped: true }),
     run_knowledge_pass: async () => {
-      const storage = syncKnowledge ? await runKnowledgeStorageReconcileOnce(deps.client, join10(paths.knowledgeDir, "storage-migration-state.json")) : null;
+      const storage = syncKnowledge ? await runKnowledgeStorageReconcileOnce(deps.client, join11(paths.knowledgeDir, "storage-migration-state.json")) : null;
       const ingestion = syncKnowledge ? {
         ...await runKnowledgeSyncOnce(deps.client),
         ...storage && (Number(storage.examined) > Number(storage.skipped) || storage.has_more === true) ? { storage_reconciliation: storage } : {}
       } : { status: "not_due", processed: 0, content_stored: false, raw_content_stored: false };
       const knowledgeDir = paths.knowledgeDir;
       const stage = await nextKnowledgeLearningStage(
-        deps.knowledge_stage_cursor_file ?? join10(knowledgeDir, "learning-stage-cursor.json"),
+        deps.knowledge_stage_cursor_file ?? join11(knowledgeDir, "learning-stage-cursor.json"),
         runSessionCollection ? void 0 : ["classification"]
       );
       if (stage === "classification") {
@@ -4290,7 +4362,7 @@ async function runLearningTick2(deps, syncKnowledge = false, components = ["expe
             providers: configuredDeps.providers,
             transport: configuredDeps.transport,
             contentLanguage: configuredDeps.contentLanguage,
-            state_file: join10(knowledgeDir, "classification-attempts.json")
+            state_file: join11(knowledgeDir, "classification-attempts.json")
           });
         } catch (error) {
           classification = { status: "failed", failure_kind: learningFailureKind(error) };
@@ -4339,7 +4411,7 @@ async function runLearningTick2(deps, syncKnowledge = false, components = ["expe
       try {
         adjudication = await runSessionKnowledgeAdjudicationOnce({
           ...configuredDeps,
-          knowledge_adjudication_cursor_file: join10(paths.knowledgeDir, "session-adjudication-cursor.json")
+          knowledge_adjudication_cursor_file: join11(paths.knowledgeDir, "session-adjudication-cursor.json")
         });
       } catch (error) {
         adjudication = { status: "failed", failure_kind: learningFailureKind(error), raw_content_stored: false };
@@ -4389,7 +4461,7 @@ function learningPollInterval(baseMs, idlePasses, maximumMs = Math.min(3e5, base
 function learningWorkFound(result) {
   const evaluation = result.evaluation && typeof result.evaluation === "object" ? result.evaluation : null;
   const classification = result.scenario_classification && typeof result.scenario_classification === "object" ? result.scenario_classification : null;
-  return Number(result.processed ?? 0) > 0 || Number(evaluation?.processed ?? 0) > 0 || Number(classification?.processed ?? 0) > 0;
+  return Number(result.processed ?? 0) > 0 || Number(evaluation?.processed ?? 0) > 0 || Number(classification?.processed ?? 0) > 0 || classification?.scan_has_more === true;
 }
 function parseModelJson(value) {
   const source = value.trim().replace(/^```(?:json)?\s*/iu, "").replace(/\s*```$/u, "");

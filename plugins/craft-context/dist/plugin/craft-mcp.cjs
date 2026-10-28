@@ -227989,7 +227989,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.123";
+var CRAFT_RELEASE_VERSION = "0.12.124";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
@@ -228871,7 +228871,7 @@ var TOOL_DEFINITIONS = [
   tool("craft_evaluation_model_profile_list", "List secret-free Evaluation Model Profiles and readiness.", [], true, ["limit"]),
   tool("craft_evaluation_model_profile_ensure_single", "Reuse a sole active profile for one model purpose, or create a deterministic profile only when exactly one local model is configured; ambiguous configuration fails closed.", ["purpose"]),
   tool("craft_evaluation_model_ticket_issue", "Issue one content-free evaluation, Workflow-evolution, Knowledge classification, or sanitized Experience scenario-classification model call contract; only a later compatible Adapter may perform the network call.", ["profile_id", "purpose", "input_ref", "output_contract_ref"], false, ["ticket_id", "campaign_dispatch_id", "workflow_evolution_request_id", "knowledge_claim_id", "experience_scenario_classification_request_id", "experience_scenario_classification_scope", "project_root"]),
-  tool("craft_evaluation_model_ticket_list", "List bounded model tickets for a compatible Adapter; resolved or stale Workflow-evolution requests are omitted.", [], true, ["purpose", "limit"]),
+  tool("craft_evaluation_model_ticket_list", "List bounded model tickets for a compatible Adapter; resolved or stale Workflow-evolution requests are omitted. Supply after_id for stable ID-ordered pages; has_more and next_cursor describe the underlying ticket page.", [], true, ["purpose", "limit", "after_id"]),
   tool("craft_evaluation_model_ticket_complete", "Complete a Knowledge classification ticket only after its result is bound to the exact model Trace; Workflow-evolution tickets require their exact submitted candidate.", ["ticket_id", "result_digest"], false, ["trace_id"]),
   // The Experience product speaks in its own domain language.  The older
   // workflow_evolution MCP family has been retired; its storage and kernels
@@ -257806,7 +257806,10 @@ var EvaluationModelProfileKernel = class {
     const limit3 = integer26(args.limit, "limit", 100, 1, 1e3);
     const purpose = args.purpose === void 0 ? null : text15(args.purpose, "purpose");
     if (purpose !== null && !PURPOSES.has(purpose)) throw new Error("purpose is unsupported");
-    const tickets = this.store.list("evaluation_model_ticket", limit3, (ticket) => {
+    if (args.after_id !== void 0 && (typeof args.after_id !== "string" || args.after_id.length > 65536 || args.after_id.includes("\0"))) {
+      throw new Error("after_id must be a bounded ticket cursor");
+    }
+    const eligible = (ticket) => {
       if (purpose !== null && ticket.purpose !== purpose) return false;
       if (ticket.status !== "ready_for_adapter") return false;
       const target = ticket.target;
@@ -257847,12 +257850,14 @@ var EvaluationModelProfileKernel = class {
       if (target?.kind !== "workflow_evolution_request") return false;
       const request2 = this.store.find("workflow_evolution_request", String(target.id));
       return request2?.lifecycle === "awaiting_model" && Number(request2.version) === Number(target.version);
-    });
+    };
+    const page = args.after_id === void 0 ? null : this.store.listByIdPage("evaluation_model_ticket", args.after_id, limit3);
+    const tickets = page ? page.records.filter(eligible) : this.store.list("evaluation_model_ticket", limit3, eligible);
     return { tickets: tickets.map((ticket) => {
       const profile = this.store.get("evaluation_model_profile", String(ticket.profile_id), Number(ticket.profile_version));
       const readiness = this.readiness(profile);
       return { ...ticket, readiness };
-    }) };
+    }), ...page ? { has_more: page.has_more, next_cursor: page.next_cursor } : {} };
   }
   ticketComplete(args) {
     const ticketId = text15(args.ticket_id, "ticket_id");
