@@ -227989,7 +227989,7 @@ function verifyPinIntact(input) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.125";
+var CRAFT_RELEASE_VERSION = "0.12.126";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
@@ -273912,7 +273912,7 @@ async function acquireComponentLock(path2, fileSystem, isOwnerAlive, runtimeVers
       throw new Error("Learning worker lock changed during recovery");
     }
     await fileSystem.unlink(recoveredPath);
-    return acquireComponentLock(path2, fileSystem, isOwnerAlive);
+    return acquireComponentLock(path2, fileSystem, isOwnerAlive, runtimeVersion);
   }
   try {
     await fileSystem.unlink(pendingPath);
