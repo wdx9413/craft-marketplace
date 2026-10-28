@@ -852,7 +852,7 @@ import { lstatSync as lstatSync4, readFileSync as readFileSync4, realpathSync as
 import { tmpdir } from "node:os";
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.127";
+var CRAFT_RELEASE_VERSION = "0.12.128";
 
 // core/knowledge-model-redaction.ts
 var SENSITIVE_MODEL_TEXT_PATTERNS = [
@@ -1605,11 +1605,13 @@ function artifact(runner, command, output, callId) {
     content_stored: false
   };
 }
-function extractCodexSessionVerificationArtifacts(records) {
+function createCodexSessionVerificationCollector() {
   const calls = /* @__PURE__ */ new Map();
   const outputs = /* @__PURE__ */ new Map();
   const artifacts = [];
-  for (const record of records) {
+  let stopped = false;
+  function add(record) {
+    if (stopped) return;
     if (record.record_type === "event_msg" && record.payload.type === "item_completed") {
       const item = record.payload.item;
       if (item && typeof item === "object" && !Array.isArray(item)) {
@@ -1627,36 +1629,44 @@ function extractCodexSessionVerificationArtifacts(records) {
           }
         }
       }
-      if (artifacts.length === 8) break;
-      continue;
+      if (artifacts.length === 8) stopped = true;
+      return;
     }
-    if (record.record_type !== "response_item") continue;
+    if (record.record_type !== "response_item") return;
     const payload3 = record.payload;
     const callId = payload3.call_id;
-    if (typeof callId !== "string" || !callId.trim() || callId.length > 160) continue;
+    if (typeof callId !== "string" || !callId.trim() || callId.length > 160) return;
     if (payload3.type === "custom_tool_call" && payload3.name === "exec") {
       const runner = testRunner(payload3.input);
       if (runner) calls.set(callId, { runner, command_digest: stableDigest(payload3.input) });
     } else if (payload3.type === "custom_tool_call_output") {
       const text2 = outputText(payload3.output);
-      if (text2) outputs.set(callId, text2);
+      if (text2) outputs.set(callId, { digest: stableDigest(text2), passed: /Process exited with code 0\s*$/imu.test(text2) ? ["javascript", "python", "go", "rust", "java-maven", "java-gradle", "dotnet"].filter((runner) => successfulSummary(runner, text2)) : [] });
     }
   }
-  for (const [callId, call] of calls) {
-    const output = outputs.get(callId);
-    if (!output || !/Process exited with code 0\s*$/imu.test(output) || !successfulSummary(call.runner, output)) continue;
-    artifacts.push({
-      runner: call.runner,
-      command_digest: call.command_digest,
-      result_digest: stableDigest(output),
-      call_digest: stableDigest(callId),
-      exit_code: 0,
-      summary_kind: "tests_passed",
-      content_stored: false
-    });
-    if (artifacts.length === 8) break;
+  function finish() {
+    for (const [callId, call] of calls) {
+      const output = outputs.get(callId);
+      if (!output || !output.passed.includes(call.runner)) continue;
+      artifacts.push({
+        runner: call.runner,
+        command_digest: call.command_digest,
+        result_digest: output.digest,
+        call_digest: stableDigest(callId),
+        exit_code: 0,
+        summary_kind: "tests_passed",
+        content_stored: false
+      });
+      if (artifacts.length === 8) break;
+    }
+    return artifacts;
   }
-  return artifacts;
+  return { add, finish };
+}
+function extractCodexSessionVerificationArtifacts(records) {
+  const collector = createCodexSessionVerificationCollector();
+  for (const record of records) collector.add(record);
+  return collector.finish();
 }
 
 // core/codex-session-archive.ts
@@ -1665,6 +1675,7 @@ var DEFAULT_MAX_FILES = 25;
 var DEFAULT_MAX_BYTES = 20 * 1024 * 1024;
 var MAX_LINE_BYTES = 64 * 1024 * 1024;
 var MAX_TASK_EXCERPT_BYTES = 8 * 1024 * 1024;
+var MAX_TASK_STREAM_BYTES = 128 * 1024 * 1024;
 var SHA256 = /^sha256:[a-f0-9]{64}$/u;
 function hash2(value) {
   return createHash6("sha256").update(value).digest("hex");
@@ -2233,54 +2244,81 @@ async function readCodexSessionTaskExcerpt(taskIdValue, options, env = process.e
   const canonicalSource = await realpath(sourcePath);
   if (!canonicalSource.startsWith(`${canonicalRoot}${sep2}`)) throw new Error("Codex task source escaped the sessions root");
   const info = await lstat(sourcePath);
-  if (info.isSymbolicLink() || !info.isFile() || task.source_end_byte <= task.source_start_byte || task.source_end_byte > info.size || task.source_end_byte - task.source_start_byte > MAX_TASK_EXCERPT_BYTES) {
+  if (info.isSymbolicLink() || !info.isFile() || task.source_end_byte <= task.source_start_byte || task.source_end_byte > info.size || task.source_end_byte - task.source_start_byte > MAX_TASK_STREAM_BYTES) {
     return { status: "ineligible", reason: "task_source_span_invalid_or_oversized", raw_content_stored: false };
   }
-  const buffer = Buffer.alloc(task.source_end_byte - task.source_start_byte);
-  const readRange = rangeReader ?? (async (path, target, start) => {
-    const handle = await open2(path, "r");
+  const spanBytes = task.source_end_byte - task.source_start_byte;
+  const buffer = Buffer.alloc(Math.min(spanBytes, MAX_TASK_EXCERPT_BYTES));
+  async function* lines() {
+    const handle = rangeReader ? null : await open2(sourcePath, "r");
     try {
-      return (await handle.read(target, 0, target.length, start)).bytesRead;
+      if (handle) {
+        const opened = await handle.stat();
+        if (opened.dev !== info.dev || opened.ino !== info.ino || !opened.isFile()) throw new Error("task_source_changed_during_read");
+      }
+      let offset = task.source_start_byte, pending = Buffer.alloc(0);
+      while (offset < task.source_end_byte) {
+        const size = Math.min(buffer.length, task.source_end_byte - offset);
+        const block = buffer.subarray(0, size);
+        const bytesRead = rangeReader ? await rangeReader(sourcePath, block, offset) : (await handle.read(block, 0, size, offset)).bytesRead;
+        if (bytesRead !== size) throw new Error("task_source_changed_during_read");
+        offset += size;
+        const combined = pending.length > 0;
+        const bytes = combined ? Buffer.concat([pending, block]) : block;
+        let start = 0, end;
+        while ((end = bytes.indexOf(10, start)) >= 0) {
+          if (end - start > MAX_LINE_BYTES) throw new Error("task_source_line_oversized");
+          let line = bytes.subarray(start, end);
+          if (line.at(-1) === 13) line = line.subarray(0, -1);
+          yield line.toString("utf8");
+          start = end + 1;
+        }
+        pending = combined ? bytes.subarray(start) : Buffer.from(bytes.subarray(start));
+        if (pending.length > MAX_LINE_BYTES) throw new Error("task_source_line_oversized");
+      }
+      if (pending.length) yield pending.toString("utf8");
     } finally {
-      await handle.close();
+      if (handle) await handle.close();
     }
-  });
-  if (await readRange(sourcePath, buffer, task.source_start_byte) !== buffer.length) {
-    return { status: "ineligible", reason: "task_source_changed_during_read", raw_content_stored: false };
   }
-  const lines = buffer.toString("utf8").split(/\r?\n/u);
   let rollingDigest = hash2(`${task.session_id}\0${task.turn_id}`);
   let taskGoal = null, taskResult = null;
-  const verificationRecords = [];
-  for (const line of lines) {
-    if (!line) continue;
-    const lineBytes = Buffer.from(line);
-    let parsed;
-    try {
-      parsed = JSON.parse(line);
-    } catch {
-      continue;
+  const verificationCollector = createCodexSessionVerificationCollector();
+  try {
+    for await (const line of lines()) {
+      if (!line) continue;
+      const lineBytes = Buffer.from(line);
+      let parsed;
+      try {
+        parsed = JSON.parse(line);
+      } catch {
+        continue;
+      }
+      const record = object4(parsed), payload3 = object4(record?.payload);
+      const recordType = typeof record?.type === "string" ? record.type : "";
+      const payloadType = typeof payload3?.type === "string" ? payload3.type : "";
+      const recordTurnId = typeof payload3?.turn_id === "string" ? payload3.turn_id : task.turn_id;
+      if (recordType === "response_item" && payload3 && (payloadType === "custom_tool_call" || payloadType === "custom_tool_call_output")) {
+        verificationCollector.add({ record_type: "response_item", payload: payload3 });
+      } else if (recordType === "event_msg" && payload3 && recordTurnId === task.turn_id && payloadType === "item_completed") {
+        verificationCollector.add({ record_type: "event_msg", payload: payload3 });
+      }
+      if (recordType && payload3 && recordTurnId === task.turn_id && recordType !== "session_meta" && recordType !== "turn_context" && !(recordType === "event_msg" && payloadType === "task_started")) {
+        rollingDigest = hash2(`${rollingDigest}\0${hash2(lineBytes)}`);
+      }
+      if (record?.type !== "response_item" || !payload3 || payload3.type !== "message") continue;
+      const content = messageText(payload3.content);
+      if (payload3.role === "user" && !taskGoal) taskGoal = sanitizedTaskProse(content, 1e3);
+      if (payload3.role === "assistant" && payload3.phase === "final_answer") taskResult = sanitizedTaskProse(content, 1e3);
     }
-    const record = object4(parsed), payload3 = object4(record?.payload);
-    const recordType = typeof record?.type === "string" ? record.type : "";
-    const payloadType = typeof payload3?.type === "string" ? payload3.type : "";
-    const recordTurnId = typeof payload3?.turn_id === "string" ? payload3.turn_id : task.turn_id;
-    if (recordType === "response_item" && payload3 && (payloadType === "custom_tool_call" || payloadType === "custom_tool_call_output")) {
-      verificationRecords.push({ record_type: "response_item", payload: payload3 });
-    } else if (recordType === "event_msg" && payload3 && recordTurnId === task.turn_id && payloadType === "item_completed") {
-      verificationRecords.push({ record_type: "event_msg", payload: payload3 });
-    }
-    if (recordType && payload3 && recordTurnId === task.turn_id && recordType !== "session_meta" && recordType !== "turn_context" && !(recordType === "event_msg" && payloadType === "task_started")) {
-      rollingDigest = hash2(`${rollingDigest}\0${hash2(lineBytes)}`);
-    }
-    if (record?.type !== "response_item" || !payload3 || payload3.type !== "message") continue;
-    const content = messageText(payload3.content);
-    if (payload3.role === "user" && !taskGoal) taskGoal = sanitizedTaskProse(content, 1e3);
-    if (payload3.role === "assistant" && payload3.phase === "final_answer") taskResult = sanitizedTaskProse(content, 1e3);
+  } catch (error) {
+    if (error instanceof Error && ["task_source_changed_during_read", "task_source_line_oversized"].includes(error.message))
+      return { status: "ineligible", reason: error.message, raw_content_stored: false };
+    throw error;
   }
   if (`sha256:${rollingDigest}` !== task.source_ref) return { status: "ineligible", reason: "task_source_digest_mismatch", raw_content_stored: false };
   if (!taskGoal || !taskResult) return { status: "ineligible", reason: "sanitized_task_summary_unavailable", raw_content_stored: false };
-  const verificationArtifacts = extractCodexSessionVerificationArtifacts(verificationRecords);
+  const verificationArtifacts = verificationCollector.finish();
   if (transcriptVerified && (verificationArtifacts.length !== task.verification_artifact_count || `sha256:${hash2(JSON.stringify(verificationArtifacts))}` !== task.verification_artifact_digest)) {
     return { status: "ineligible", reason: "transcript_test_evidence_digest_mismatch", raw_content_stored: false };
   }
