@@ -852,7 +852,7 @@ import { lstatSync as lstatSync4, readFileSync as readFileSync4, realpathSync as
 import { tmpdir } from "node:os";
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.121";
+var CRAFT_RELEASE_VERSION = "0.12.122";
 
 // core/knowledge-model-redaction.ts
 var SENSITIVE_MODEL_TEXT_PATTERNS = [
@@ -3445,6 +3445,13 @@ function digest(value, name) {
   if (typeof value !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(value)) throw new Error(`${name} must be a SHA-256 digest`);
   return value;
 }
+function projectScopeMatches(value, expectedScope) {
+  if (typeof value === "string") return value === expectedScope;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const project = value;
+  if (project.kind !== "project" || typeof project.id !== "string") return false;
+  return project.id.replace(/^project:/u, "") === expectedScope.replace(/^project:/u, "");
+}
 function summary(value, name) {
   if (typeof value !== "string" || !value.trim() || value.length > 320 || /[\r\n\0]/u.test(value) || SECRET3.test(value)) throw new Error(`${name} must be a bounded sanitized summary`);
   return value.trim();
@@ -3633,7 +3640,7 @@ async function runExperienceScenarioClassificationOnce(deps) {
       const signature = observation?.scenario_signature;
       const catalog = finalize.scenario_catalog;
       const classifiedScene = catalog?.scenario_key === decision.scenario_key && (catalog.status === "candidate" || catalog.status === "active") && Number.isSafeInteger(catalog.catalog_version);
-      if (observation?.id !== context2.observation_id || signature?.schema !== "craft.scenario-signature.v1" || signature.project !== scope || !classifiedScene) {
+      if (observation?.id !== context2.observation_id || signature?.schema !== "craft.scenario-signature.v1" || !projectScopeMatches(signature.project, scope) || !classifiedScene) {
         throw new Error("Experience classification did not bind to the exact verified Observation and catalog entry");
       }
       observationId = String(context2.observation_id);

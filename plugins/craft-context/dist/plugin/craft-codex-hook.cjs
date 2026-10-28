@@ -9593,7 +9593,7 @@ var CRAFT_RELEASE_VERSION;
 var init_version = __esm({
   "core/version.ts"() {
     "use strict";
-    CRAFT_RELEASE_VERSION = "0.12.121";
+    CRAFT_RELEASE_VERSION = "0.12.122";
   }
 });
 
