@@ -1,14 +1,17 @@
 // common/craft-common-store-local/src/store.ts
-import { backup, DatabaseSync as DatabaseSync3 } from "node:sqlite";
+import { backup, DatabaseSync as DatabaseSync4 } from "node:sqlite";
 import { AsyncLocalStorage } from "node:async_hooks";
 
-// common/craft-common-store-local/src/trace-shards.ts
+// common/craft-common-store-local/src/content-store.ts
 import { DatabaseSync } from "node:sqlite";
+
+// common/craft-common-store-local/src/trace-shards.ts
+import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 var TRACE_KINDS = /* @__PURE__ */ new Set(["trace", "trace_event", "trace_feedback", "telemetry_event", "trace_archive"]);
 var TRACE_SHARDED_KINDS = /* @__PURE__ */ new Set([...TRACE_KINDS, "codex_hook_turn", "codex_hook_signal", "context_hook_session"]);
 
 // common/craft-common-store-local/src/codebase-shards.ts
-import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
+import { DatabaseSync as DatabaseSync3 } from "node:sqlite";
 
 // common/craft-common-store-local/src/store.ts
 var contextLockBudget = new AsyncLocalStorage();

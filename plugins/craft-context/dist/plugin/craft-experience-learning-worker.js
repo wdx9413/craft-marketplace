@@ -26,12 +26,12 @@ function stableDigest(value) {
   return stableDigestStreaming(value);
 }
 function stableDigestStreaming(value) {
-  const hash3 = createHash("sha256");
+  const hash2 = createHash("sha256");
   const keyOrderCache = /* @__PURE__ */ new Map();
   let chunks = [];
   let chunkLength = 0;
   const flush = () => {
-    hash3.update(chunks.join(""));
+    hash2.update(chunks.join(""));
     chunks = [];
     chunkLength = 0;
   };
@@ -75,7 +75,7 @@ function stableDigestStreaming(value) {
   };
   if (!write(value)) throw new Error(`canonicalJson cannot serialize ${typeof value}`);
   flush();
-  return `sha256:${hash3.digest("hex")}`;
+  return `sha256:${hash2.digest("hex")}`;
 }
 
 // core/model-gateway.ts
@@ -677,16 +677,19 @@ var processState = globalThis;
 var queues = processState[queueKey] ??= /* @__PURE__ */ new Map();
 
 // common/craft-common-store-local/src/store.ts
-import { backup, DatabaseSync as DatabaseSync3 } from "node:sqlite";
+import { backup, DatabaseSync as DatabaseSync4 } from "node:sqlite";
 import { AsyncLocalStorage } from "node:async_hooks";
 
-// common/craft-common-store-local/src/trace-shards.ts
+// common/craft-common-store-local/src/content-store.ts
 import { DatabaseSync } from "node:sqlite";
+
+// common/craft-common-store-local/src/trace-shards.ts
+import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 var TRACE_KINDS = /* @__PURE__ */ new Set(["trace", "trace_event", "trace_feedback", "telemetry_event", "trace_archive"]);
 var TRACE_SHARDED_KINDS = /* @__PURE__ */ new Set([...TRACE_KINDS, "codex_hook_turn", "codex_hook_signal", "context_hook_session"]);
 
 // common/craft-common-store-local/src/codebase-shards.ts
-import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
+import { DatabaseSync as DatabaseSync3 } from "node:sqlite";
 
 // common/craft-common-store-local/src/store.ts
 var contextLockBudget = new AsyncLocalStorage();
@@ -852,7 +855,7 @@ import { lstatSync as lstatSync4, readFileSync as readFileSync4, realpathSync as
 import { tmpdir } from "node:os";
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.130";
+var CRAFT_RELEASE_VERSION = "0.12.131";
 
 // core/knowledge-model-redaction.ts
 var SENSITIVE_MODEL_TEXT_PATTERNS = [
@@ -1488,6 +1491,7 @@ import { dirname as dirname5, join as join5, resolve as resolve6 } from "node:pa
 
 // core/codex-session-archive.ts
 import { createHash as createHash6 } from "node:crypto";
+import { DatabaseSync as DatabaseSync5 } from "node:sqlite";
 import { lstat, mkdir as mkdir2, open as open2, readFile as readFile2, readdir, realpath, stat } from "node:fs/promises";
 import { homedir as homedir2 } from "node:os";
 import { dirname as dirname4, join as join4, relative as relative2, resolve as resolve5, sep as sep2 } from "node:path";
@@ -1495,11 +1499,8 @@ import { dirname as dirname4, join as join4, relative as relative2, resolve as r
 // core/scope-identity.ts
 import { createHash as createHash4 } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { realpathSync as realpathSync3 } from "node:fs";
+import { realpathSync as realpathSync3, statSync as statSync2 } from "node:fs";
 import { resolve as resolve4 } from "node:path";
-function hash(value) {
-  return createHash4("sha256").update(value).digest("hex").slice(0, 24);
-}
 function normalizeRemote(value) {
   const trimmed = value.trim().replace(/\.git$/u, "");
   const ssh = /^git@([^:]+):(.+)$/u.exec(trimmed);
@@ -1508,20 +1509,26 @@ function normalizeRemote(value) {
 }
 function projectIdentityFromRoot(root, userNamedId) {
   const localPath = resolve4(root);
-  let canonicalPath = localPath;
+  let canonicalPath = realpathSync3(localPath);
+  if (!statSync2(canonicalPath).isDirectory()) throw new Error("project_root must be a directory");
+  const gitOptions = { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 2e3, env: { ...process.env, LC_ALL: "C" } };
   try {
-    canonicalPath = realpathSync3(localPath);
-  } catch {
+    canonicalPath = realpathSync3(execFileSync("git", ["-C", canonicalPath, "rev-parse", "--show-toplevel"], gitOptions).trim());
+  } catch (error) {
+    const failure = error;
+    if (failure.status !== 128 || !failure.stderr?.includes("not a git repository")) throw new Error("PROJECT_ROOT_DISCOVERY_FAILED", { cause: error });
   }
   let remote = null;
   try {
-    remote = execFileSync("git", ["-C", canonicalPath, "config", "--get", "remote.origin.url"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim() || null;
-  } catch {
+    remote = execFileSync("git", ["-C", canonicalPath, "config", "--get", "remote.origin.url"], gitOptions).trim() || null;
+  } catch (error) {
+    if (error.status !== 1) throw new Error("PROJECT_REMOTE_DISCOVERY_FAILED", { cause: error });
   }
-  const basis = remote ? `git:${normalizeRemote(remote)}` : userNamedId ? `named:${userNamedId.trim()}` : `local:${hash(canonicalPath)}`;
+  const canonicalId = `project:${createHash4("sha256").update(canonicalPath).digest("hex")}`;
+  if (userNamedId !== void 0 && userNamedId.trim() !== canonicalId) throw new Error("project_id conflicts with the canonical project root identity");
   return {
-    canonical_scope: { kind: "project", id: `project:${hash(basis)}` },
-    project_kind: remote ? "git_remote" : userNamedId ? "user_named" : "local_fingerprint",
+    canonical_scope: { kind: "project", id: canonicalId },
+    project_kind: "local_fingerprint",
     remote_digest: remote ? stableDigest(normalizeRemote(remote)) : null,
     local_path_alias: canonicalPath
   };
@@ -1544,6 +1551,8 @@ function codexTaskGoalDigest(value) {
 var MAX_COMMAND_CHARS = 16e3;
 var MAX_OUTPUT_CHARS = 1e6;
 var MAX_CUSTOM_CALL_IDS = 4096;
+var DIGEST2 = /^sha256:[a-f0-9]{64}$/u;
+var RUNNERS = ["javascript", "python", "go", "rust", "java-maven", "java-gradle", "dotnet"];
 function commandScript(commandValue) {
   if (typeof commandValue === "string") return commandValue;
   if (!Array.isArray(commandValue) || commandValue.length !== 3 || !["/bin/zsh", "/usr/bin/zsh", "/bin/bash", "/usr/bin/bash", "zsh", "bash"].includes(String(commandValue[0])) || commandValue[1] !== "-lc" || typeof commandValue[2] !== "string") return null;
@@ -1586,13 +1595,39 @@ function outputText(value) {
 }
 function successfulSummary(runner, output) {
   if (/\b[1-9]\d*\s+(?:failed|failures?|errors?)\b|(?:Failures|Errors):\s*[1-9]\d*/iu.test(output)) return false;
-  if (runner === "go") return /^ok\s+\S+/mu.test(output);
+  if (runner === "go") {
+    let passedInPackage = false;
+    for (const line of output.split("\n")) {
+      if (/^--- PASS:\s+\S+/u.test(line)) passedInPackage = true;
+      if (/^ok\s+\S+/u.test(line)) {
+        if (passedInPackage && !/\(cached\)|\[no tests to run\]/u.test(line)) return true;
+        passedInPackage = false;
+      }
+    }
+    const passingTests = /* @__PURE__ */ new Set();
+    const passingPackages = /* @__PURE__ */ new Set();
+    const excludedPackages = /* @__PURE__ */ new Set();
+    for (const line of output.split("\n")) {
+      if (!line.startsWith("{")) continue;
+      let entry;
+      try {
+        entry = JSON.parse(line);
+      } catch {
+        continue;
+      }
+      if (typeof entry.Package === "string" && typeof entry.Output === "string" && /\(cached\)|\[no tests to run\]/u.test(entry.Output)) excludedPackages.add(entry.Package);
+      if (entry.Action !== "pass" || typeof entry.Package !== "string" || !entry.Package) continue;
+      if (typeof entry.Test === "string" && entry.Test) passingTests.add(entry.Package);
+      else if (entry.Test === void 0) passingPackages.add(entry.Package);
+    }
+    return [...passingTests].some((packageName) => passingPackages.has(packageName) && !excludedPackages.has(packageName));
+  }
   if (runner === "rust") return /test result:\s*ok\.\s*[1-9]\d*\s+passed\b/iu.test(output);
-  if (runner === "java-maven") return /Tests run:\s*[1-9]\d*\s*,\s*Failures:\s*0\s*,\s*Errors:\s*0/iu.test(output);
-  if (runner === "java-gradle") return /> Task :[^\r\n]*test[^\r\n]*\r?\n[\s\S]*BUILD SUCCESSFUL/iu.test(output);
+  if (runner === "java-maven") return [...output.matchAll(/Tests run:\s*([1-9]\d*)\s*,\s*Failures:\s*0\s*,\s*Errors:\s*0(?:\s*,\s*Skipped:\s*(\d+))?/giu)].some((match) => Number(match[1]) > Number(match[2] ?? 0));
+  if (runner === "java-gradle") return /BUILD SUCCESSFUL/u.test(output) && [...output.matchAll(/\b([1-9]\d*) tests? completed(?:,\s*(\d+) skipped)?/giu)].some((match) => Number(match[1]) > Number(match[2] ?? 0));
   if (runner === "dotnet") return /Passed:\s*[1-9]\d*/iu.test(output);
   if (runner === "python") return /\b[1-9]\d*\s+passed\b/iu.test(output);
-  return /(?:\bTests?\s+[1-9]\d*\s+passed\b|\bTest Files\s+[1-9]\d*\s+passed\b|^#\s*pass\s+[1-9]\d*\s*$)/imu.test(output);
+  return /(?:\bTests?\s+[1-9]\d*\s+passed\b|^#\s*pass\s+[1-9]\d*\s*$)/imu.test(output);
 }
 function artifact(runner, command, output, callId) {
   if (!successfulSummary(runner, output)) return null;
@@ -1606,7 +1641,7 @@ function artifact(runner, command, output, callId) {
     content_stored: false
   };
 }
-function createCodexSessionVerificationCollector() {
+function createCodexSessionVerificationCollector(saved) {
   const calls = /* @__PURE__ */ new Map();
   const outputs = /* @__PURE__ */ new Map();
   const seenCalls = /* @__PURE__ */ new Set();
@@ -1617,6 +1652,21 @@ function createCodexSessionVerificationCollector() {
   let customOverflow = false;
   let structuredConflict = false;
   let structuredOverflow = false;
+  if (saved) {
+    const pairs = (value) => Array.isArray(value) && value.length <= MAX_CUSTOM_CALL_IDS && value.every((item) => Array.isArray(item) && item.length === 2 && typeof item[0] === "string" && DIGEST2.test(item[0]));
+    const ids = (value) => Array.isArray(value) && value.length <= MAX_CUSTOM_CALL_IDS && value.every((item) => typeof item === "string" && DIGEST2.test(item));
+    if (Object.keys(saved).length !== 10 || !pairs(saved.calls) || !saved.calls.every(([, v]) => v && typeof v === "object" && Object.keys(v).length === 2 && RUNNERS.includes(v.runner) && typeof v.command_digest === "string" && DIGEST2.test(v.command_digest)) || !pairs(saved.outputs) || !saved.outputs.every(([, v]) => v && typeof v === "object" && Object.keys(v).length === 2 && typeof v.digest === "string" && DIGEST2.test(v.digest) && Array.isArray(v.passed) && v.passed.length <= RUNNERS.length && v.passed.every((runner) => RUNNERS.includes(runner))) || !ids(saved.seen_calls) || !ids(saved.seen_outputs) || !ids(saved.ambiguous) || !pairs(saved.structured_calls) || !saved.structured_calls.every(([, digest]) => typeof digest === "string" && DIGEST2.test(digest)) || !Array.isArray(saved.artifacts) || saved.artifacts.length > 8 || !saved.artifacts.every((item) => item && RUNNERS.includes(String(item.runner)) && [item.command_digest, item.result_digest, item.call_digest].every((value) => typeof value === "string" && DIGEST2.test(value)) && item.exit_code === 0 && item.summary_kind === "tests_passed" && item.content_stored === false && Object.keys(item).length === 7) || typeof saved.custom_overflow !== "boolean" || typeof saved.structured_conflict !== "boolean" || typeof saved.structured_overflow !== "boolean") throw new Error("Codex verification collector state is invalid");
+    for (const [key2, value] of saved.calls) calls.set(key2, value);
+    for (const [key2, value] of saved.outputs) outputs.set(key2, value);
+    for (const key2 of saved.seen_calls) seenCalls.add(key2);
+    for (const key2 of saved.seen_outputs) seenOutputs.add(key2);
+    for (const key2 of saved.ambiguous) ambiguous.add(key2);
+    for (const [key2, value] of saved.structured_calls) structuredCalls.set(key2, value);
+    artifacts.push(...saved.artifacts);
+    customOverflow = saved.custom_overflow;
+    structuredConflict = saved.structured_conflict;
+    structuredOverflow = saved.structured_overflow;
+  }
   function add(record) {
     if (record.record_type === "event_msg" && record.payload.type === "item_completed") {
       const item = record.payload.item;
@@ -1625,10 +1675,11 @@ function createCodexSessionVerificationCollector() {
         if (commandItem.type === "CommandExecution") {
           if (typeof commandItem.id === "string" && commandItem.id.length > 0 && commandItem.id.length <= 160) {
             const digest = stableDigest(commandItem);
-            const previous = structuredCalls.get(commandItem.id);
+            const structuredId = stableDigest(commandItem.id);
+            const previous = structuredCalls.get(structuredId);
             if (previous !== void 0 && previous !== digest) structuredConflict = true;
             if (previous === void 0 && structuredCalls.size >= MAX_CUSTOM_CALL_IDS) structuredOverflow = true;
-            else if (previous === void 0) structuredCalls.set(commandItem.id, digest);
+            else if (previous === void 0) structuredCalls.set(structuredId, digest);
           }
           const command = commandItem.command;
           const script = commandScript(command);
@@ -1647,9 +1698,12 @@ function createCodexSessionVerificationCollector() {
     if (record.record_type !== "response_item") return;
     if (customOverflow) return;
     const payload3 = record.payload;
-    const callId = payload3.call_id;
-    if (typeof callId !== "string" || !callId.trim() || callId.length > 160) return;
-    if (payload3.type === "custom_tool_call" && !seenCalls.has(callId) && seenCalls.size >= MAX_CUSTOM_CALL_IDS || payload3.type === "custom_tool_call_output" && !seenOutputs.has(callId) && seenOutputs.size >= MAX_CUSTOM_CALL_IDS) {
+    const rawCallId = payload3.call_id;
+    if (typeof rawCallId !== "string" || !rawCallId.trim() || rawCallId.length > 160) return;
+    const callId = stableDigest(rawCallId);
+    const isCall = payload3.type === "custom_tool_call" || payload3.type === "function_call";
+    const isOutput = payload3.type === "custom_tool_call_output" || payload3.type === "function_call_output";
+    if (isCall && !seenCalls.has(callId) && seenCalls.size >= MAX_CUSTOM_CALL_IDS || isOutput && !seenOutputs.has(callId) && seenOutputs.size >= MAX_CUSTOM_CALL_IDS) {
       customOverflow = true;
       calls.clear();
       outputs.clear();
@@ -1658,23 +1712,37 @@ function createCodexSessionVerificationCollector() {
       ambiguous.clear();
       return;
     }
-    if (payload3.type === "custom_tool_call") {
+    if (isCall) {
       if (seenCalls.has(callId)) {
         ambiguous.add(callId);
         return;
       }
       seenCalls.add(callId);
-      if (payload3.name !== "exec") return;
-      const runner = testRunner(payload3.input);
-      if (runner) calls.set(callId, { runner, command_digest: stableDigest(payload3.input) });
-    } else if (payload3.type === "custom_tool_call_output") {
+      let command = payload3.input;
+      if (payload3.type === "function_call") {
+        if (payload3.name !== "exec_command" || typeof payload3.arguments !== "string" || payload3.arguments.length > MAX_COMMAND_CHARS * 2) return;
+        try {
+          const args = JSON.parse(payload3.arguments);
+          if (!args || typeof args !== "object" || Array.isArray(args)) return;
+          command = args.cmd;
+        } catch {
+          return;
+        }
+      } else if (payload3.name !== "exec") return;
+      const runner = testRunner(command);
+      if (runner) calls.set(callId, { runner, command_digest: stableDigest(command) });
+    } else if (isOutput) {
       if (seenOutputs.has(callId)) {
         ambiguous.add(callId);
         return;
       }
       seenOutputs.add(callId);
       const text2 = outputText(payload3.output);
-      if (text2) outputs.set(callId, { digest: stableDigest(text2), passed: /Process exited with code 0\s*$/imu.test(text2) ? ["javascript", "python", "go", "rust", "java-maven", "java-gradle", "dotnet"].filter((runner) => successfulSummary(runner, text2)) : [] });
+      if (text2) {
+        const exitCodes = [...text2.matchAll(/^Process exited with code (\d+)\s*$/gimu)];
+        const stillRunning = /^(?:Process running with session ID|Script running with cell ID|Session ID:)\s*\S+/imu.test(text2);
+        outputs.set(callId, { digest: stableDigest(text2), passed: !stillRunning && exitCodes.length === 1 && exitCodes[0][1] === "0" ? ["javascript", "python", "go", "rust", "java-maven", "java-gradle", "dotnet"].filter((runner) => successfulSummary(runner, text2)) : [] });
+      }
     }
   }
   function finish() {
@@ -1684,12 +1752,12 @@ function createCodexSessionVerificationCollector() {
       if (ambiguous.has(callId)) continue;
       const output = outputs.get(callId);
       if (!output || !output.passed.includes(call.runner)) continue;
-      if (artifacts.some((existing) => existing.call_digest === stableDigest(callId))) continue;
+      if (artifacts.some((existing) => existing.call_digest === callId)) continue;
       artifacts.push({
         runner: call.runner,
         command_digest: call.command_digest,
         result_digest: output.digest,
-        call_digest: stableDigest(callId),
+        call_digest: callId,
         exit_code: 0,
         summary_kind: "tests_passed",
         content_stored: false
@@ -1698,29 +1766,27 @@ function createCodexSessionVerificationCollector() {
     }
     return artifacts;
   }
+  const snapshot = () => ({ calls: [...calls], outputs: [...outputs], seen_calls: [...seenCalls], seen_outputs: [...seenOutputs], ambiguous: [...ambiguous], structured_calls: [...structuredCalls], artifacts: [...artifacts], custom_overflow: customOverflow, structured_conflict: structuredConflict, structured_overflow: structuredOverflow });
   return {
     add,
     finish,
+    snapshot,
     customCallsOverflowed: () => customOverflow,
     structuredCallsConflicted: () => structuredConflict,
     structuredCallsOverflowed: () => structuredOverflow
   };
 }
-function extractCodexSessionVerificationArtifacts(records) {
-  const collector = createCodexSessionVerificationCollector();
-  for (const record of records) collector.add(record);
-  return collector.finish();
-}
 
 // core/codex-session-archive.ts
-var STATE_SCHEMA2 = "craft.codex-session-collection.v1";
+var STATE_SCHEMA2 = "craft.codex-session-collection.v2";
+var LEGACY_STATE_SCHEMA2 = "craft.codex-session-collection.v1";
 var DEFAULT_MAX_FILES = 25;
 var DEFAULT_MAX_BYTES = 20 * 1024 * 1024;
 var MAX_LINE_BYTES = 64 * 1024 * 1024;
 var MAX_TASK_EXCERPT_BYTES = 8 * 1024 * 1024;
 var MAX_TASK_STREAM_BYTES = 128 * 1024 * 1024;
 var SHA256 = /^sha256:[a-f0-9]{64}$/u;
-function hash2(value) {
+function hash(value) {
   return createHash6("sha256").update(value).digest("hex");
 }
 function object4(value) {
@@ -1732,10 +1798,14 @@ function validLimit(value, fallback, minimum, maximum, name) {
   return result;
 }
 function taskKey(sessionId, turnId) {
-  return `codex_task_${hash2(`${sessionId}\0${turnId}`).slice(0, 32)}`;
+  return `codex_task_${hash(`${sessionId}\0${turnId}`).slice(0, 32)}`;
 }
 function datasetPartition(sessionId) {
-  return Number.parseInt(hash2(sessionId).slice(0, 8), 16) % 5 === 0 ? "held_out" : "candidate_generation";
+  return Number.parseInt(hash(sessionId).slice(0, 8), 16) % 5 === 0 ? "held_out" : "candidate_generation";
+}
+function datasetPartitionV2(sessionId) {
+  if (datasetPartition(sessionId) === "held_out") return "held_out";
+  return Number.parseInt(hash(`development\0${sessionId}`).slice(0, 8), 16) % 4 === 0 ? "development" : "candidate_generation";
 }
 function messageText(value) {
   if (typeof value === "string") return value;
@@ -1753,13 +1823,18 @@ function projectScope(cwd, cache) {
   if (typeof cwd !== "string" || !cwd.trim()) return null;
   const root = resolve5(cwd);
   if (cache.has(root)) return cache.get(root);
-  const identity = projectIdentityFromRoot(root).canonical_scope;
+  let identity;
+  try {
+    identity = projectIdentityFromRoot(root).canonical_scope;
+  } catch {
+    return null;
+  }
   const scope = identity.id;
   cache.set(root, scope);
   return scope;
 }
 function emptyState(now) {
-  return { schema: STATE_SCHEMA2, sources: {}, tasks: {}, updated_at: now };
+  return { schema: STATE_SCHEMA2, sources: {}, tasks: {}, session_partitions: {}, session_split_versions: {}, updated_at: now };
 }
 function recordFromLine(line) {
   if (!line.length) return null;
@@ -1784,14 +1859,14 @@ function activeTurn(state, turnId, offset) {
     task_goal_digest: null,
     source_start_byte: offset,
     source_end_byte: offset,
-    rolling_digest: hash2(`${state.session_id ?? "unknown"}\0${turnId}`),
+    rolling_digest: hash(`${state.session_id ?? "unknown"}\0${turnId}`),
     verification_artifacts: []
   };
 }
 function retainTask(state, task) {
   if (!state.task_ids.includes(task.task_id)) state.task_ids.push(task.task_id);
 }
-function finalizeTurn(sourcePath, state, tasks, turn, archived) {
+function finalizeTurn(sourcePath, state, tasks, partitions, versions, turn, archived) {
   const sessionId = state.session_id;
   if (!sessionId || !turn.user_input_seen) return;
   const taskId = taskKey(sessionId, turn.turn_id);
@@ -1800,8 +1875,9 @@ function finalizeTurn(sourcePath, state, tasks, turn, archived) {
     turn_id: turn.turn_id,
     session_id: sessionId,
     project_scope_id: turn.project_scope_id,
-    dataset_partition: datasetPartition(sessionId),
-    dataset_split_version: "codex-session-split-v1",
+    ...turn.project_scope_id ? { project_identity_version: 1 } : {},
+    dataset_partition: partitions[hash(sessionId)] ??= datasetPartitionV2(sessionId),
+    dataset_split_version: versions[hash(sessionId)] ??= "codex-session-split-v2",
     status: turn.status,
     started_at: turn.started_at,
     completed_at: turn.completed_at,
@@ -1818,15 +1894,39 @@ function finalizeTurn(sourcePath, state, tasks, turn, archived) {
     verification_status: "unverified",
     raw_content_stored: false,
     ...turn.verification_artifacts.length ? {
-      verification_artifact_digest: `sha256:${hash2(JSON.stringify(turn.verification_artifacts))}`,
+      verification_artifact_digest: `sha256:${hash(JSON.stringify(turn.verification_artifacts))}`,
       verification_artifact_count: turn.verification_artifacts.length
-    } : {}
+    } : {},
+    ...turn.verification_transcript_error ? { verification_transcript_error: turn.verification_transcript_error } : {}
   };
   const previous = tasks[taskId];
-  tasks[taskId] = previous?.verification_status === "verified" && previous.source_ref === task.source_ref && previous.project_scope_id === task.project_scope_id ? {
+  const sourceMatches = previous?.source_ref === task.source_ref && previous.project_scope_id === task.project_scope_id;
+  if (previous?.verification_source_recheck) {
+    tasks[taskId] = sourceMatches ? {
+      ...task,
+      verification_status: previous.verification_source_recheck === "verified" ? "verified" : "unverified",
+      verification_evidence_ids: previous.verification_evidence_ids,
+      ...previous.verification_invalidated ? { verification_invalidated: true } : {},
+      ...previous.verification_last_invalidation ? { verification_last_invalidation: previous.verification_last_invalidation } : {},
+      verification_outcome: previous.verification_outcome,
+      context_receipt_id: previous.context_receipt_id,
+      verification_ref_digest: previous.verification_ref_digest,
+      terminal_identity_digest: previous.terminal_identity_digest
+    } : {
+      ...task,
+      verification_conflict: { previous_evidence_ids: [...previous.verification_evidence_ids?.length ? previous.verification_evidence_ids : previous.verification_last_invalidation?.evidence_ids ?? []], conflicting_evidence_ids: [] },
+      ...previous.verification_last_invalidation ? { verification_last_invalidation: previous.verification_last_invalidation } : {}
+    };
+    retainTask(state, task);
+    return;
+  }
+  tasks[taskId] = previous && (previous.verification_conflict !== void 0 || (previous.verification_status === "verified" || previous.verification_invalidated === true) && previous.source_ref === task.source_ref && previous.project_scope_id === task.project_scope_id) ? {
     ...task,
     verification_status: previous.verification_status,
     verification_evidence_ids: previous.verification_evidence_ids,
+    ...previous.verification_invalidated ? { verification_invalidated: true } : {},
+    ...previous.verification_last_invalidation ? { verification_last_invalidation: previous.verification_last_invalidation } : {},
+    ...previous.verification_conflict ? { verification_conflict: previous.verification_conflict } : {},
     verification_outcome: previous.verification_outcome,
     context_receipt_id: previous.context_receipt_id,
     verification_ref_digest: previous.verification_ref_digest,
@@ -1838,7 +1938,7 @@ function finalizeTurn(sourcePath, state, tasks, turn, archived) {
   } : task;
   retainTask(state, task);
 }
-function updateTurn(record, line, offset, sourcePath, state, tasks, scopeCache, archived) {
+function updateTurn(record, line, offset, sourcePath, state, tasks, partitions, versions, scopeCache, archived, verification) {
   if (!record || !record.type) return;
   const payload3 = object4(record.payload);
   if (!payload3) return;
@@ -1859,31 +1959,52 @@ function updateTurn(record, line, offset, sourcePath, state, tasks, scopeCache, 
     if (turnId2) {
       state.active_turn = activeTurn(state, turnId2, offset);
       state.active_turn.project_scope_id = state.project_scope_id;
+      if (verification.turnId !== turnId2) {
+        verification.turnId = turnId2;
+        verification.collector = createCodexSessionVerificationCollector(state.active_turn.verification_collector);
+      }
     }
     return;
   }
   if (recordType === "event_msg" && payloadType === "task_started") {
     const turnId2 = typeof payload3.turn_id === "string" ? payload3.turn_id : "";
     if (!turnId2) return;
-    if (state.active_turn) finalizeTurn(sourcePath, state, tasks, state.active_turn, archived);
+    if (state.active_turn) {
+      state.active_turn.verification_artifacts = verification.collector.finish();
+      finalizeTurn(sourcePath, state, tasks, partitions, versions, state.active_turn, archived);
+    }
     state.active_turn = activeTurn(state, turnId2, offset);
+    verification.turnId = turnId2;
+    verification.collector = createCodexSessionVerificationCollector();
     state.active_turn.started_at = typeof payload3.started_at === "string" ? payload3.started_at : null;
     return;
   }
   const turnId = typeof payload3.turn_id === "string" ? payload3.turn_id : state.active_turn?.turn_id;
-  if (!turnId) return;
+  if (!turnId || !state.active_turn) return;
+  if (state.active_turn.turn_id !== turnId) {
+    const previous = state.session_id ? tasks[taskKey(state.session_id, turnId)] : void 0;
+    if (recordType === "event_msg" && payloadType === "item_completed" && previous && (previous.status === "completed" || previous.status === "aborted") && previous.source_path === sourcePath && previous.source_root === "archived_sessions" === archived && state.task_ids.includes(previous.task_id) && previous.source_end_byte <= state.active_turn.source_start_byte) return;
+    state.active_turn.verification_transcript_error = "task_turn_identity_conflict";
+    return;
+  }
   const turn = activeTurn(state, turnId, offset);
+  verification.collector.add({ record_type: recordType, payload: payload3 });
+  if (verification.collector.structuredCallsConflicted()) turn.verification_transcript_error = "task_structured_call_conflict";
+  else if (verification.collector.structuredCallsOverflowed()) turn.verification_transcript_error = "task_structured_call_tracking_limit_exceeded";
+  else if (verification.collector.customCallsOverflowed()) turn.verification_transcript_error = "task_custom_call_tracking_limit_exceeded";
   turn.project_scope_id = state.project_scope_id;
   turn.source_end_byte = offset + line.byteLength;
-  turn.rolling_digest = hash2(`${turn.rolling_digest}\0${hash2(line)}`);
+  turn.rolling_digest = hash(`${turn.rolling_digest}\0${hash(line)}`);
   if (recordType === "event_msg" && payloadType === "task_complete") {
     turn.status = "completed";
     turn.completed_at = typeof payload3.completed_at === "string" ? payload3.completed_at : null;
-    finalizeTurn(sourcePath, state, tasks, turn, archived);
+    turn.verification_artifacts = verification.collector.finish();
+    finalizeTurn(sourcePath, state, tasks, partitions, versions, turn, archived);
     state.active_turn = null;
   } else if (recordType === "event_msg" && payloadType === "turn_aborted") {
     turn.status = "aborted";
-    finalizeTurn(sourcePath, state, tasks, turn, archived);
+    turn.verification_artifacts = verification.collector.finish();
+    finalizeTurn(sourcePath, state, tasks, partitions, versions, turn, archived);
     state.active_turn = null;
   } else if (recordType === "response_item") {
     if (payloadType === "message" && payload3.role === "user") {
@@ -1894,34 +2015,45 @@ function updateTurn(record, line, offset, sourcePath, state, tasks, scopeCache, 
     if (payloadType === "function_call" || payloadType === "custom_tool_call") turn.tool_call_count++;
     if (payloadType === "function_call_output" || payloadType === "custom_tool_call_output") turn.tool_output_count++;
   }
-  if (recordType === "event_msg" && payloadType === "item_completed") {
-    const artifacts = extractCodexSessionVerificationArtifacts([{ record_type: "event_msg", payload: payload3 }]);
-    for (const artifact2 of artifacts) {
-      if (turn.verification_artifacts.length >= 8) break;
-      if (!turn.verification_artifacts.some((existing) => existing.call_digest === artifact2.call_digest)) turn.verification_artifacts.push(artifact2);
-    }
-  }
   if (state.active_turn?.turn_id === turn.turn_id) state.active_turn = turn;
 }
 function validateState(value, now) {
   const input = object4(value);
-  if (!input || input.schema !== STATE_SCHEMA2 || !object4(input.sources) || !object4(input.tasks)) throw new Error("Codex session collection state is invalid");
+  if (!input || input.schema !== STATE_SCHEMA2 && input.schema !== LEGACY_STATE_SCHEMA2 || !object4(input.sources) || !object4(input.tasks)) throw new Error("Codex session collection state is invalid");
   const sources = {};
   for (const [path, raw] of Object.entries(input.sources)) {
     const source = object4(raw);
-    if (!source || typeof source.size !== "number" || !Number.isSafeInteger(source.size) || source.size < 0 || typeof source.mtime_ms !== "number" || !Number.isFinite(source.mtime_ms) || typeof source.processed_bytes !== "number" || !Number.isSafeInteger(source.processed_bytes) || source.processed_bytes < 0 || source.processed_bytes > source.size || source.session_id !== null && typeof source.session_id !== "string" || source.project_scope_id !== null && typeof source.project_scope_id !== "string" || source.active_turn !== null && !object4(source.active_turn) || source.task_goal_digest_version !== void 0 && source.task_goal_digest_version !== 0 && source.task_goal_digest_version !== 1 || source.verification_artifact_index_version !== void 0 && source.verification_artifact_index_version !== 0 && source.verification_artifact_index_version !== 1 || !Array.isArray(source.task_ids) || source.task_ids.some((id) => typeof id !== "string")) throw new Error("Codex session collection source state is invalid");
+    if (!source || typeof source.size !== "number" || !Number.isSafeInteger(source.size) || source.size < 0 || typeof source.mtime_ms !== "number" || !Number.isFinite(source.mtime_ms) || typeof source.processed_bytes !== "number" || !Number.isSafeInteger(source.processed_bytes) || source.processed_bytes < 0 || source.processed_bytes > source.size || source.session_id !== null && typeof source.session_id !== "string" || source.project_scope_id !== null && typeof source.project_scope_id !== "string" || source.active_turn !== null && !object4(source.active_turn) || source.task_goal_digest_version !== void 0 && source.task_goal_digest_version !== 0 && source.task_goal_digest_version !== 1 || source.verification_artifact_index_version !== void 0 && ![0, 1, 2, 3].includes(Number(source.verification_artifact_index_version)) || source.verification_collector_version !== void 0 && source.verification_collector_version !== 2 || source.project_identity_index_version !== void 0 && source.project_identity_index_version !== 0 && source.project_identity_index_version !== 1 || source.discovery_status !== void 0 && !["discovered", "changed", "not_discovered"].includes(String(source.discovery_status)) || source.force_recheck !== void 0 && source.force_recheck !== true || !Array.isArray(source.task_ids) || source.task_ids.some((id) => typeof id !== "string")) throw new Error("Codex session collection source state is invalid");
     sources[path] = source;
   }
   const tasks = {};
   for (const [id, raw] of Object.entries(input.tasks)) {
     const task = object4(raw);
-    if (!task || task.task_id !== id || typeof task.session_id !== "string" || typeof task.turn_id !== "string" || !["running", "completed", "aborted"].includes(String(task.status)) || typeof task.source_path !== "string" || typeof task.source_ref !== "string" || task.raw_content_stored !== false || task.source_root !== void 0 && task.source_root !== "archived_sessions" || task.verification_status !== "unverified" && task.verification_status !== "verified" || task.task_goal_digest !== void 0 && (typeof task.task_goal_digest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(task.task_goal_digest)) || task.verification_artifact_digest !== void 0 && (typeof task.verification_artifact_digest !== "string" || !SHA256.test(task.verification_artifact_digest)) || task.verification_artifact_count !== void 0 && (!Number.isSafeInteger(task.verification_artifact_count) || Number(task.verification_artifact_count) < 1 || Number(task.verification_artifact_count) > 8) || task.verification_artifact_digest === void 0 !== (task.verification_artifact_count === void 0) || task.verification_evidence_ids !== void 0 && (!Array.isArray(task.verification_evidence_ids) || task.verification_evidence_ids.some((id2) => typeof id2 !== "string"))) throw new Error("Codex session task index is invalid");
+    if (!task || task.task_id !== id || typeof task.session_id !== "string" || typeof task.turn_id !== "string" || !["running", "completed", "aborted"].includes(String(task.status)) || typeof task.source_path !== "string" || typeof task.source_ref !== "string" || task.raw_content_stored !== false || task.dataset_partition !== void 0 && task.dataset_partition !== "candidate_generation" && task.dataset_partition !== "development" && task.dataset_partition !== "held_out" || task.dataset_split_version !== void 0 && task.dataset_split_version !== "codex-session-split-v1" && task.dataset_split_version !== "codex-session-split-v2" || task.dataset_split_version === "codex-session-split-v2" && task.dataset_partition === void 0 || task.dataset_partition === "development" && task.dataset_split_version !== "codex-session-split-v2" || task.source_root !== void 0 && task.source_root !== "archived_sessions" || task.verification_status !== "unverified" && task.verification_status !== "verified" || task.project_identity_version !== void 0 && task.project_identity_version !== 1 || task.task_goal_digest !== void 0 && (typeof task.task_goal_digest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(task.task_goal_digest)) || task.verification_artifact_digest !== void 0 && (typeof task.verification_artifact_digest !== "string" || !SHA256.test(task.verification_artifact_digest)) || task.verification_artifact_count !== void 0 && (!Number.isSafeInteger(task.verification_artifact_count) || Number(task.verification_artifact_count) < 1 || Number(task.verification_artifact_count) > 8) || task.verification_artifact_digest === void 0 !== (task.verification_artifact_count === void 0) || task.verification_transcript_error !== void 0 && !["task_structured_call_conflict", "task_structured_call_tracking_limit_exceeded", "task_custom_call_tracking_limit_exceeded", "task_turn_identity_conflict"].includes(String(task.verification_transcript_error)) || task.verification_conflict !== void 0 && (!object4(task.verification_conflict) || !Array.isArray(task.verification_conflict.previous_evidence_ids) || !Array.isArray(task.verification_conflict.conflicting_evidence_ids) || [...task.verification_conflict.previous_evidence_ids, ...task.verification_conflict.conflicting_evidence_ids].some((id2) => typeof id2 !== "string") || task.verification_conflict.conflicting_observation_ids !== void 0 && (!Array.isArray(task.verification_conflict.conflicting_observation_ids) || task.verification_conflict.conflicting_observation_ids.some((id2) => typeof id2 !== "string"))) || task.verification_invalidated !== void 0 && task.verification_invalidated !== true || task.verification_source_recheck !== void 0 && !["verified", "invalidated"].includes(String(task.verification_source_recheck)) || task.verification_last_invalidation !== void 0 && (!object4(task.verification_last_invalidation) || !["evidence_missing", "identity_mismatch"].includes(String(task.verification_last_invalidation.reason)) || !Array.isArray(task.verification_last_invalidation.evidence_ids) || task.verification_last_invalidation.evidence_ids.some((id2) => typeof id2 !== "string") || task.verification_last_invalidation.context_receipt_id !== null && typeof task.verification_last_invalidation.context_receipt_id !== "string" || ["verification_ref_digest", "terminal_identity_digest"].some((key2) => task.verification_last_invalidation[key2] !== null && (typeof task.verification_last_invalidation[key2] !== "string" || !SHA256.test(String(task.verification_last_invalidation[key2]))))) || task.verification_evidence_ids !== void 0 && (!Array.isArray(task.verification_evidence_ids) || task.verification_evidence_ids.some((id2) => typeof id2 !== "string"))) throw new Error("Codex session task index is invalid");
     const normalized = task;
     tasks[id] = {
       ...normalized,
-      dataset_partition: normalized.dataset_partition === "held_out" ? "held_out" : normalized.dataset_partition === "candidate_generation" ? "candidate_generation" : datasetPartition(normalized.session_id),
-      dataset_split_version: "codex-session-split-v1"
+      dataset_partition: normalized.dataset_partition ?? datasetPartition(normalized.session_id),
+      dataset_split_version: normalized.dataset_split_version ?? "codex-session-split-v1"
     };
+  }
+  const savedPartitions = input.session_partitions === void 0 ? {} : object4(input.session_partitions);
+  if (!savedPartitions || Object.entries(savedPartitions).some(([key2, value2]) => !/^[a-f0-9]{64}$/u.test(key2) || value2 !== "candidate_generation" && value2 !== "development" && value2 !== "held_out")) throw new Error("Codex session dataset partition registry is invalid");
+  const sessionPartitions = { ...savedPartitions };
+  const savedVersions = input.session_split_versions === void 0 ? {} : object4(input.session_split_versions);
+  if (!savedVersions || Object.entries(savedVersions).some(([key2, value2]) => !/^[a-f0-9]{64}$/u.test(key2) || value2 !== "codex-session-split-v1" && value2 !== "codex-session-split-v2")) throw new Error("Codex session dataset version registry is invalid");
+  const sessionVersions = { ...savedVersions };
+  if (Object.keys(sessionVersions).some((key2) => sessionPartitions[key2] === void 0)) throw new Error("Codex session dataset version registry is invalid");
+  for (const key2 of Object.keys(sessionPartitions)) {
+    sessionVersions[key2] ??= "codex-session-split-v1";
+    if (sessionPartitions[key2] === "development" && sessionVersions[key2] !== "codex-session-split-v2") throw new Error("Codex session dataset version conflict; reconciliation required");
+  }
+  for (const task of Object.values(tasks)) {
+    const key2 = hash(task.session_id), previous = sessionPartitions[key2];
+    if (previous !== void 0 && previous !== task.dataset_partition) throw new Error("Codex session dataset partition conflict; reconciliation required");
+    if (sessionVersions[key2] !== void 0 && sessionVersions[key2] !== task.dataset_split_version) throw new Error("Codex session dataset version conflict; reconciliation required");
+    sessionPartitions[key2] = task.dataset_partition;
+    sessionVersions[key2] = task.dataset_split_version;
   }
   const cursor = input.evidence_cursor_session_id;
   if (cursor !== void 0 && (typeof cursor !== "string" || !cursor.trim() || cursor.length > 256 || /[\r\n\0]/u.test(cursor))) {
@@ -1931,6 +2063,8 @@ function validateState(value, now) {
     schema: STATE_SCHEMA2,
     sources,
     tasks,
+    session_partitions: sessionPartitions,
+    session_split_versions: sessionVersions,
     ...typeof cursor === "string" ? { evidence_cursor_session_id: cursor } : {},
     updated_at: typeof input.updated_at === "string" ? input.updated_at : now
   };
@@ -2017,11 +2151,68 @@ function sourceKey(path, archived) {
 function statePath2(options, env) {
   return resolve5(options.state_file ?? join4(craftPaths(dataRoot(env)).runtimeDir, "codex-session-collection.json"));
 }
+async function withSessionIndexWriteLock(options, env, work) {
+  const path = statePath2(options, env);
+  const directory = dirname4(path), lockPath = join4(directory, `codex-session-index-${stableDigest(path).slice(-24)}.lock.db`);
+  await mkdir2(directory, { recursive: true, mode: 448 });
+  const dirInfo = await lstat(directory);
+  if (dirInfo.isSymbolicLink() || !dirInfo.isDirectory()) throw new Error("Codex session index lock directory is unsafe");
+  try {
+    const info = await lstat(lockPath);
+    if (info.isSymbolicLink() || !info.isFile()) throw new Error("Codex session index lock is unsafe");
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+  const database = new DatabaseSync5(lockPath);
+  try {
+    database.exec("PRAGMA busy_timeout=0");
+    try {
+      database.exec("BEGIN IMMEDIATE");
+    } catch (error) {
+      if (!(error instanceof Error) || !/locked|busy/iu.test(error.message)) throw error;
+      const busy = new Error("CODEX_SESSION_INDEX_BUSY: retry the index write", { cause: error });
+      busy.name = "CodexSessionIndexBusy";
+      throw busy;
+    }
+    return await work();
+  } finally {
+    database.close();
+  }
+}
 function removeSourceTasks(state, sourcePath, source, archived) {
-  for (const id of source.task_ids) if (state.tasks[id]?.source_path === sourcePath && state.tasks[id]?.source_root === "archived_sessions" === archived) delete state.tasks[id];
+  for (const id of source.task_ids) {
+    const task = state.tasks[id];
+    if (!task || task.source_path !== sourcePath || task.verification_conflict || task.source_root === "archived_sessions" !== archived) continue;
+    if (task.verification_source_recheck) continue;
+    if (task.verification_status === "verified" || task.verification_invalidated) {
+      state.tasks[id] = { ...task, verification_status: "unverified", verification_source_recheck: task.verification_status === "verified" ? "verified" : "invalidated" };
+    } else delete state.tasks[id];
+  }
   source.task_ids = [];
 }
+async function requestCodexSessionSourceRecheck(taskId, sourceRef2, options = {}, env = process.env) {
+  if (!taskId.trim() || !SHA256.test(sourceRef2)) throw new Error("task_id and source_ref must identify an indexed task revision");
+  return withSessionIndexWriteLock(options, env, async () => {
+    const path = statePath2(options, env), state = await readState2(path, options.now ?? (/* @__PURE__ */ new Date()).toISOString());
+    const task = state.tasks[taskId];
+    if (!task || task.source_ref !== sourceRef2) return { status: "stale_request", raw_content_stored: false };
+    const source = state.sources[sourceKey(task.source_path, task.source_root === "archived_sessions")];
+    if (!source) return { status: "source_unavailable", raw_content_stored: false };
+    if (task.verification_source_recheck) return { status: "already_pending", raw_content_stored: false };
+    if (!source.task_ids.includes(taskId)) source.task_ids.push(taskId);
+    removeSourceTasks(state, task.source_path, source, task.source_root === "archived_sessions");
+    source.force_recheck = true;
+    source.discovery_status = "changed";
+    state.updated_at = options.now ?? (/* @__PURE__ */ new Date()).toISOString();
+    await atomicPrivateJson(path, state);
+    return { status: "scheduled", raw_content_stored: false };
+  });
+}
 function updateFile(bytes, start, sourcePath, source, state, scopeCache, archived) {
+  const verification = {
+    turnId: source.active_turn?.turn_id ?? null,
+    collector: createCodexSessionVerificationCollector(source.active_turn?.verification_collector)
+  };
   let lineStart = 0;
   let malformedLines = 0;
   while (lineStart < bytes.length) {
@@ -2032,14 +2223,18 @@ function updateFile(bytes, start, sourcePath, source, state, scopeCache, archive
     const absoluteOffset = start + lineStart;
     const parsed = recordFromLine(line);
     if (line.length > 0 && parsed === null) malformedLines++;
-    updateTurn(parsed, line, absoluteOffset, sourcePath, source, state.tasks, scopeCache, archived);
+    updateTurn(parsed, line, absoluteOffset, sourcePath, source, state.tasks, state.session_partitions, state.session_split_versions, scopeCache, archived, verification);
     lineStart = lineEnd + 1;
   }
+  if (source.active_turn && source.active_turn.turn_id === verification.turnId) source.active_turn.verification_collector = verification.collector.snapshot();
   return { next_offset: start + lineStart, malformed_lines: malformedLines };
 }
 async function runCodexSessionCollectionOnce(options = {}, env = process.env) {
   const maxFiles = validLimit(options.max_files, DEFAULT_MAX_FILES, 1, 500, "max_files");
   const maxBytes = validLimit(options.max_bytes, DEFAULT_MAX_BYTES, 1024, 128 * 1024 * 1024, "max_bytes");
+  return withSessionIndexWriteLock(options, env, () => collectCodexSessions(options, env, maxFiles, maxBytes));
+}
+async function collectCodexSessions(options, env, maxFiles, maxBytes) {
   const now = options.now ?? (/* @__PURE__ */ new Date()).toISOString();
   const outputPath = statePath2(options, env);
   const state = await readState2(outputPath, now);
@@ -2049,17 +2244,19 @@ async function runCodexSessionCollectionOnce(options = {}, env = process.env) {
   const files = [];
   for (const source of roots) for (const path of await listSessionFiles(source.root)) files.push({ ...source, path });
   const availableSources = new Set(files.map((source) => sourceKey(relative2(source.root, source.path).split(sep2).join("/"), source.archived)));
+  const discoveredVersions = /* @__PURE__ */ new Map();
   const candidates = [];
   for (const { path, root, archived } of files) {
     const info = await stat(path);
     const relativePath = relative2(root, path).split(sep2).join("/");
     const key2 = sourceKey(relativePath, archived);
+    discoveredVersions.set(key2, { size: info.size, mtimeMs: info.mtimeMs });
     const prior = state.sources[key2] ?? null;
     const relocated = prior !== null && prior.task_ids.some((id) => {
       const task = state.tasks[id];
       return task !== void 0 && !availableSources.has(sourceKey(task.source_path, task.source_root === "archived_sessions"));
     });
-    if (prior && !relocated && prior.size === info.size && prior.mtime_ms === info.mtimeMs && prior.processed_bytes >= info.size && prior.task_goal_digest_version === 1 && prior.verification_artifact_index_version === 1) continue;
+    if (prior && !prior.force_recheck && !relocated && prior.size === info.size && prior.mtime_ms === info.mtimeMs && prior.processed_bytes >= info.size && prior.task_goal_digest_version === 1 && prior.verification_artifact_index_version === 3 && prior.project_identity_index_version === 1) continue;
     candidates.push({ path, relativePath, key: key2, archived, relocated, size: info.size, mtimeMs: info.mtimeMs, prior });
   }
   candidates.sort((left, right) => left.mtimeMs - right.mtimeMs || left.key.localeCompare(right.key));
@@ -2068,11 +2265,12 @@ async function runCodexSessionCollectionOnce(options = {}, env = process.env) {
   for (const candidate of candidates.slice(0, maxFiles)) {
     if (bytesLeft <= 0) break;
     const previous = candidate.prior;
-    const sourceChanged = previous !== null && (candidate.size < previous.size || candidate.size === previous.size && candidate.mtimeMs !== previous.mtime_ms);
+    const sourceChanged = previous !== null && (previous.force_recheck === true || candidate.size < previous.size || candidate.size === previous.size && candidate.mtimeMs !== previous.mtime_ms);
     const backfillTaskGoalDigests = previous !== null && previous.task_goal_digest_version === void 0 && !sourceChanged;
-    const backfillVerificationArtifacts = previous !== null && previous.verification_artifact_index_version !== 1 && !sourceChanged;
-    const restartVerificationBackfill = backfillVerificationArtifacts && previous.processed_bytes >= previous.size;
-    const shouldRestart = sourceChanged || backfillTaskGoalDigests || restartVerificationBackfill || candidate.relocated;
+    const backfillVerificationArtifacts = previous !== null && previous.verification_artifact_index_version !== 3 && !sourceChanged;
+    const backfillProjectIdentity = previous !== null && previous.project_identity_index_version === void 0 && !sourceChanged;
+    const restartVerificationBackfill = backfillVerificationArtifacts && (previous.processed_bytes >= previous.size || previous.verification_collector_version !== 2 || previous.verification_artifact_index_version === 2);
+    const shouldRestart = sourceChanged || backfillTaskGoalDigests || restartVerificationBackfill || backfillProjectIdentity || candidate.relocated;
     const current = shouldRestart || !previous ? {
       size: candidate.size,
       mtime_ms: candidate.mtimeMs,
@@ -2082,7 +2280,9 @@ async function runCodexSessionCollectionOnce(options = {}, env = process.env) {
       active_turn: null,
       task_ids: [],
       task_goal_digest_version: backfillTaskGoalDigests ? 0 : 1,
-      verification_artifact_index_version: backfillVerificationArtifacts ? 0 : 1
+      verification_artifact_index_version: 0,
+      verification_collector_version: 2,
+      project_identity_index_version: 0
     } : {
       ...previous,
       size: candidate.size,
@@ -2098,7 +2298,8 @@ async function runCodexSessionCollectionOnce(options = {}, env = process.env) {
     malformedLines += update.malformed_lines;
     current.processed_bytes = nextOffset;
     if (current.processed_bytes >= candidate.size) current.task_goal_digest_version = 1;
-    if (current.processed_bytes >= candidate.size) current.verification_artifact_index_version = 1;
+    if (current.processed_bytes >= candidate.size) current.verification_artifact_index_version = 3;
+    if (current.processed_bytes >= candidate.size) current.project_identity_index_version = 1;
     if (chunk.bytes.length === 0 && nextOffset === oldOffset && oldOffset < candidate.size) {
       current.processed_bytes = oldOffset;
     }
@@ -2107,17 +2308,30 @@ async function runCodexSessionCollectionOnce(options = {}, env = process.env) {
     processedBytes += Math.max(0, current.processed_bytes - oldOffset);
     bytesLeft -= Math.max(1, chunk.bytes.length);
   }
-  state.updated_at = now;
-  await mkdir2(dirname4(outputPath), { recursive: true, mode: 448 });
-  await atomicPrivateJson(outputPath, state);
+  let discoveryChanged = false;
+  for (const [key2, source] of Object.entries(state.sources)) {
+    const discovered = discoveredVersions.get(key2);
+    const status = !discovered ? "not_discovered" : source.size === discovered.size && source.mtime_ms === discovered.mtimeMs ? "discovered" : "changed";
+    if (source.discovery_status !== status) discoveryChanged = true;
+    source.discovery_status = status;
+  }
+  if (processedFiles > 0 || discoveryChanged || Object.keys(state.sources).length === 0) {
+    state.updated_at = now;
+    await mkdir2(dirname4(outputPath), { recursive: true, mode: 448 });
+    await atomicPrivateJson(outputPath, state);
+  }
   const indexed = Object.values(state.tasks);
   const remaining = candidates.filter((candidate) => {
     const source = state.sources[candidate.key];
-    return !source || source.size !== candidate.size || source.mtime_ms !== candidate.mtimeMs || source.processed_bytes < candidate.size;
+    return !source || source.size !== candidate.size || source.mtime_ms !== candidate.mtimeMs || source.processed_bytes < candidate.size || source.task_goal_digest_version !== 1 || source.verification_artifact_index_version !== 3 || source.project_identity_index_version !== 1;
   }).length;
+  const indexedSourcesNotDiscovered = Object.keys(state.sources).filter((key2) => !availableSources.has(key2));
+  const tasksFromUndiscoveredSources = indexed.filter((task) => !availableSources.has(sourceKey(task.source_path, task.source_root === "archived_sessions"))).length;
   return {
-    status: files.length === 0 ? "source_unavailable" : remaining > 0 ? "partial" : "completed",
+    status: files.length === 0 ? "source_unavailable" : remaining > 0 || indexedSourcesNotDiscovered.length > 0 ? "partial" : "completed",
     sessions_seen: files.length,
+    indexed_sources_not_discovered: indexedSourcesNotDiscovered.length,
+    tasks_from_undiscovered_sources: tasksFromUndiscoveredSources,
     sessions_pending: remaining,
     sessions_processed: processedFiles,
     bytes_processed: processedBytes,
@@ -2125,6 +2339,7 @@ async function runCodexSessionCollectionOnce(options = {}, env = process.env) {
     tasks_completed: indexed.filter((task) => task.status === "completed").length,
     tasks_aborted: indexed.filter((task) => task.status === "aborted").length,
     tasks_candidate_generation: indexed.filter((task) => task.dataset_partition === "candidate_generation").length,
+    tasks_development: indexed.filter((task) => task.dataset_partition === "development").length,
     tasks_held_out: indexed.filter((task) => task.dataset_partition === "held_out").length,
     tasks_with_user_input: indexed.filter((task) => task.user_input_seen).length,
     tasks_verified: indexed.filter((task) => task.verification_status === "verified").length,
@@ -2137,30 +2352,55 @@ async function runCodexSessionCollectionOnce(options = {}, env = process.env) {
 async function codexSessionEvidenceBatch(options = {}, env = process.env) {
   const state = await readState2(statePath2(options, env), options.now ?? (/* @__PURE__ */ new Date()).toISOString());
   const tasks = Object.values(state.tasks);
-  const pendingSessionIds = new Set(tasks.filter((task) => task.verification_status === "unverified").map((task) => task.session_id));
+  const pendingTasks = tasks.filter((task) => task.verification_status === "unverified" && !task.verification_conflict && !task.verification_source_recheck);
+  const pendingSessionIds = new Set(pendingTasks.map((task) => task.session_id));
   const allSessionIds = [...new Set(tasks.map((task) => task.session_id))];
   const cursorIndex = state.evidence_cursor_session_id ? allSessionIds.indexOf(state.evidence_cursor_session_id) : -1;
   const rotated = cursorIndex < 0 ? allSessionIds : [...allSessionIds.slice(cursorIndex + 1), ...allSessionIds.slice(0, cursorIndex + 1)];
-  const sessionIds = rotated.filter((sessionId) => pendingSessionIds.has(sessionId)).slice(0, 100);
+  const sessionIds = (options.recheck_verified === false ? rotated.filter((sessionId) => pendingSessionIds.has(sessionId)) : rotated).slice(0, 100);
   return {
     session_ids: sessionIds,
-    tasks_pending: tasks.filter((task) => task.verification_status === "unverified").length,
+    tasks_pending: pendingTasks.length,
+    tasks_source_recheck_pending: tasks.filter((task) => task.verification_source_recheck !== void 0).length,
     sessions_pending: pendingSessionIds.size,
+    tasks_conflicted: tasks.filter((task) => task.verification_conflict !== void 0).length,
     next_evidence_cursor_session_id: sessionIds.at(-1) ?? null
   };
 }
+function hasContextVerification(task) {
+  return task?.verification_status === "verified" && Boolean(task.verification_evidence_ids?.length) && (task.verification_outcome === "passed" || task.verification_outcome === "failed") && typeof task.context_receipt_id === "string" && task.context_receipt_id.trim().length > 0 && typeof task.verification_ref_digest === "string" && /^sha256:[a-f0-9]{64}$/u.test(task.verification_ref_digest) && typeof task.terminal_identity_digest === "string" && /^sha256:[a-f0-9]{64}$/u.test(task.terminal_identity_digest);
+}
+function hasCanonicalProjectIdentity(task) {
+  return task.project_identity_version === 1 && typeof task.project_scope_id === "string" && /^project:[a-f0-9]{64}$/u.test(task.project_scope_id);
+}
 async function codexSessionTaskBatch(partition, options = {}, env = process.env) {
-  if (partition !== "candidate_generation" && partition !== "held_out") throw new Error("partition is unsupported");
+  if (partition !== "candidate_generation" && partition !== "development" && partition !== "held_out") throw new Error("partition is unsupported");
   const state = await readState2(statePath2(options, env), options.now ?? (/* @__PURE__ */ new Date()).toISOString());
   const allTasks = Object.values(state.tasks);
   const eligibleTasks = allTasks.filter((task) => {
-    const contextVerified = task.verification_status === "verified" && Boolean(task.verification_evidence_ids?.length);
+    const source = state.sources[sourceKey(task.source_path, task.source_root === "archived_sessions")];
+    if (!source || source.discovery_status !== "discovered" || source.verification_artifact_index_version !== 3 || source.processed_bytes < source.size) return false;
+    if (!hasCanonicalProjectIdentity(task)) return false;
+    if (task.verification_conflict || task.verification_invalidated || task.verification_source_recheck || task.verification_transcript_error) return false;
+    const contextVerified = hasContextVerification(task);
     const transcriptVerified = typeof task.verification_artifact_digest === "string" && typeof task.verification_artifact_count === "number" && task.verification_artifact_count > 0;
     const outcomePassed = task.verification_outcome !== "failed" && (task.verification_outcome === "passed" || transcriptVerified);
     return task.dataset_partition === partition && task.status === "completed" && task.assistant_final_seen && (contextVerified || transcriptVerified) && (partition !== "candidate_generation" || outcomePassed);
   });
-  const overlappingTasks = eligibleTasks.filter((task) => task.task_goal_digest && task.project_scope_id && allTasks.some((other) => other.task_id !== task.task_id && other.project_scope_id === task.project_scope_id && other.task_goal_digest === task.task_goal_digest && other.dataset_partition !== task.dataset_partition));
-  const tasks = eligibleTasks.filter((task) => !overlappingTasks.includes(task)).sort((left, right) => String(left.completed_at ?? "").localeCompare(String(right.completed_at ?? "")) || left.task_id.localeCompare(right.task_id));
+  const goalPartitions = /* @__PURE__ */ new Map();
+  for (const task of allTasks) {
+    if (!task.task_goal_digest || !task.project_scope_id) continue;
+    const key2 = JSON.stringify([task.project_scope_id, task.task_goal_digest]);
+    const bit = task.dataset_partition === "held_out" ? 2 : task.dataset_partition === "development" ? 4 : 1;
+    goalPartitions.set(key2, (goalPartitions.get(key2) ?? 0) | bit);
+  }
+  const overlappingTasks = eligibleTasks.filter((task) => {
+    if (!task.task_goal_digest || !task.project_scope_id) return false;
+    const bits = goalPartitions.get(JSON.stringify([task.project_scope_id, task.task_goal_digest])) ?? 0;
+    return (bits & bits - 1) !== 0;
+  });
+  const overlappingIds = new Set(overlappingTasks.map((task) => task.task_id));
+  const tasks = eligibleTasks.filter((task) => !overlappingIds.has(task.task_id)).sort((left, right) => String(left.completed_at ?? "").localeCompare(String(right.completed_at ?? "")) || left.task_id.localeCompare(right.task_id));
   return {
     tasks: tasks.map((task) => ({
       task_id: task.task_id,
@@ -2172,7 +2412,7 @@ async function codexSessionTaskBatch(partition, options = {}, env = process.env)
       task_goal_digest: task.task_goal_digest ?? null,
       verification_evidence_ids: task.verification_evidence_ids ?? [],
       verification_outcome: task.verification_outcome ?? null,
-      verification_source: task.verification_status === "verified" && task.verification_evidence_ids?.length ? "context_receipt" : "session_test_log",
+      verification_source: hasContextVerification(task) ? "context_receipt" : "session_test_log",
       verification_artifact_digest: task.verification_artifact_digest ?? null,
       verification_artifact_count: task.verification_artifact_count ?? 0,
       context_receipt_id: task.context_receipt_id ?? null,
@@ -2180,10 +2420,24 @@ async function codexSessionTaskBatch(partition, options = {}, env = process.env)
       terminal_identity_digest: task.terminal_identity_digest ?? null,
       source_ref: task.source_ref,
       completed_at: task.completed_at,
+      source_revalidation_required: true,
       content_stored: false,
       raw_content_stored: false
     })),
+    indexed_partition_tasks: allTasks.filter((task) => task.dataset_partition === partition).length,
+    excluded_verification_index_incomplete: allTasks.filter((task) => {
+      const source = state.sources[sourceKey(task.source_path, task.source_root === "archived_sessions")];
+      return task.dataset_partition === partition && (!source || source.verification_artifact_index_version !== 3 || source.processed_bytes < source.size);
+    }).length,
+    excluded_source_not_current: allTasks.filter((task) => task.dataset_partition === partition && state.sources[sourceKey(task.source_path, task.source_root === "archived_sessions")]?.discovery_status !== "discovered").length,
+    excluded_verification_transcript_error: allTasks.filter((task) => task.dataset_partition === partition && Boolean(task.verification_transcript_error)).length,
+    excluded_project_identity: allTasks.filter((task) => task.dataset_partition === partition && !hasCanonicalProjectIdentity(task)).length,
+    excluded_evidence_conflict: allTasks.filter((task) => task.dataset_partition === partition && Boolean(task.verification_conflict)).length,
+    excluded_invalidated_evidence: allTasks.filter((task) => task.dataset_partition === partition && task.verification_invalidated === true).length,
+    excluded_source_recheck_pending: allTasks.filter((task) => task.dataset_partition === partition && task.verification_source_recheck !== void 0).length,
     excluded_cross_partition_task_goal_overlap: overlappingTasks.length,
+    pending_terminal_outcome: partition === "held_out" ? tasks.filter((task) => task.verification_outcome === void 0).length : 0,
+    excluded_incomplete_context_provenance: allTasks.filter((task) => task.dataset_partition === partition && task.verification_status === "verified" && !hasContextVerification(task) && !(typeof task.verification_artifact_digest === "string" && typeof task.verification_artifact_count === "number" && task.verification_artifact_count > 0)).length,
     content_stored: false,
     raw_content_stored: false
   };
@@ -2192,8 +2446,11 @@ async function commitCodexSessionEvidenceBatch(sessionIdsValue, options = {}, en
   if (!Array.isArray(sessionIdsValue) || sessionIdsValue.length < 1 || sessionIdsValue.length > 100 || sessionIdsValue.some((sessionId) => typeof sessionId !== "string" || !sessionId.trim() || sessionId.length > 256 || /[\r\n\0]/u.test(sessionId))) {
     throw new Error("session_ids must contain 1 to 100 bounded Host session identifiers");
   }
+  if (new Set(sessionIdsValue).size !== sessionIdsValue.length) throw new Error("session_ids must be unique");
+  return withSessionIndexWriteLock(options, env, () => commitSessionEvidenceBatch(sessionIdsValue, options, env));
+}
+async function commitSessionEvidenceBatch(sessionIdsValue, options, env) {
   const sessionIds = sessionIdsValue;
-  if (new Set(sessionIds).size !== sessionIds.length) throw new Error("session_ids must be unique");
   const path = statePath2(options, env), state = await readState2(path, options.now ?? (/* @__PURE__ */ new Date()).toISOString());
   const indexedSessions = new Set(Object.values(state.tasks).map((task) => task.session_id));
   if (sessionIds.some((sessionId) => !indexedSessions.has(sessionId))) throw new Error("session_ids must refer to indexed Host sessions");
@@ -2204,10 +2461,17 @@ async function commitCodexSessionEvidenceBatch(sessionIdsValue, options = {}, en
   return { status: "advanced", sessions_queried: sessionIds.length, cursor_stored: true, raw_content_stored: false };
 }
 async function reconcileCodexSessionTaskEvidence(evidenceValue, options = {}, env = process.env) {
+  if (options.checked_session_ids !== void 0 && (!Array.isArray(options.checked_session_ids) || options.checked_session_ids.some((id) => typeof id !== "string" || !id.trim() || id.length > 256 || /[\r\n\0]/u.test(id)))) {
+    throw new Error("checked_session_ids must contain bounded Host session identifiers");
+  }
+  return withSessionIndexWriteLock(options, env, () => reconcileSessionTaskEvidence(evidenceValue, options, env));
+}
+async function reconcileSessionTaskEvidence(evidenceValue, options, env) {
+  const checkedSessions = new Set(options.checked_session_ids ?? []);
   const evidence = Array.isArray(evidenceValue) ? evidenceValue.filter((item) => Boolean(item) && typeof item === "object" && !Array.isArray(item)) : [];
   const byTurn = /* @__PURE__ */ new Map(), evidenceByTaskGoal = /* @__PURE__ */ new Map();
   for (const item of evidence) {
-    if (item.verified !== true || item.content_stored !== false || typeof item.session_id !== "string" || typeof item.turn_id !== "string" || typeof item.evidence_id !== "string" || typeof item.context_receipt_id !== "string" || typeof item.verification_ref_digest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(item.verification_ref_digest) || typeof item.terminal_identity_digest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(item.terminal_identity_digest) || item.verification_outcome !== "passed" && item.verification_outcome !== "failed") continue;
+    if (!(item.verified === true && (item.verification_outcome === "passed" || item.verification_outcome === "failed") || item.verified === false && item.evidence_conflict === true && item.verification_outcome === "conflict") || item.content_stored !== false || typeof item.session_id !== "string" || typeof item.turn_id !== "string" || typeof item.evidence_id !== "string" || typeof item.context_receipt_id !== "string" || typeof item.verification_ref_digest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(item.verification_ref_digest) || typeof item.terminal_identity_digest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(item.terminal_identity_digest)) continue;
     const key2 = `${item.session_id}\0${item.turn_id}`;
     byTurn.set(key2, [...byTurn.get(key2) ?? [], item]);
     if (typeof item.task_goal_digest === "string" && /^sha256:[a-f0-9]{64}$/u.test(item.task_goal_digest) && typeof item.project_scope_id === "string" && /^project:[A-Za-z0-9_-]{1,96}$/u.test(item.project_scope_id)) {
@@ -2224,22 +2488,82 @@ async function reconcileCodexSessionTaskEvidence(evidenceValue, options = {}, en
     const key2 = `${task.session_id}\0${task.project_scope_id}\0${task.task_goal_digest}`;
     taskGoalCounts.set(key2, (taskGoalCounts.get(key2) ?? 0) + 1);
   }
-  let verified = 0;
+  let verified = 0, conflicted = 0, invalidated = 0;
   for (const task of tasks) {
-    if (task.verification_status === "verified") continue;
+    if (!hasCanonicalProjectIdentity(task)) continue;
+    if (task.verification_conflict || task.verification_source_recheck) continue;
     let matches = byTurn.get(`${task.session_id}\0${task.turn_id}`) ?? [];
     if (!matches.length && task.task_goal_digest && task.project_scope_id) {
       const goalKey = `${task.session_id}\0${task.project_scope_id}\0${task.task_goal_digest}`;
       const goalEvidence = evidenceByTaskGoal.get(goalKey) ?? [];
       if (taskGoalCounts.get(goalKey) === 1 && goalEvidence.length === 1) matches = goalEvidence;
     }
-    if (matches.some((item) => item.host !== void 0 && item.host !== "codex" && item.host !== "codex-cli" || item.project_scope_id !== void 0 && item.project_scope_id !== task.project_scope_id || item.task_goal_digest !== void 0 && item.task_goal_digest !== task.task_goal_digest)) continue;
+    const scopeMismatch = matches.filter((item) => (item.host === void 0 || item.host === "codex" || item.host === "codex-cli") && (item.task_goal_digest === void 0 || item.task_goal_digest === task.task_goal_digest) && item.project_scope_id !== void 0 && item.project_scope_id !== task.project_scope_id);
+    if (scopeMismatch.length) {
+      state.tasks[task.task_id] = { ...task, verification_status: "unverified", verification_conflict: {
+        previous_evidence_ids: [...task.verification_evidence_ids ?? []],
+        conflicting_evidence_ids: [...new Set(scopeMismatch.map((item) => String(item.evidence_id)))].sort()
+      } };
+      conflicted++;
+      continue;
+    }
+    if (matches.some((item) => item.host !== void 0 && item.host !== "codex" && item.host !== "codex-cli" || item.project_scope_id !== void 0 && item.project_scope_id !== task.project_scope_id || item.task_goal_digest !== void 0 && item.task_goal_digest !== task.task_goal_digest)) {
+      if (task.verification_status === "verified" && checkedSessions.has(task.session_id)) {
+        const { context_receipt_id: _receipt, verification_ref_digest: _ref, terminal_identity_digest: _terminal, ...remaining } = task;
+        state.tasks[task.task_id] = {
+          ...remaining,
+          verification_status: "unverified",
+          verification_invalidated: true,
+          verification_evidence_ids: [],
+          verification_last_invalidation: { reason: "identity_mismatch", evidence_ids: [...task.verification_evidence_ids ?? []], context_receipt_id: task.context_receipt_id ?? null, verification_ref_digest: task.verification_ref_digest ?? null, terminal_identity_digest: task.terminal_identity_digest ?? null },
+          verification_outcome: task.verification_outcome === "failed" ? "failed" : void 0
+        };
+        invalidated++;
+      }
+      continue;
+    }
     const outcomes = new Set(matches.map((item) => item.verification_outcome));
     const terminals = new Set(matches.map((item) => item.terminal_identity_digest));
+    const observationIds = [...new Set(matches.flatMap((item) => Array.isArray(item.conflicting_observation_ids) ? item.conflicting_observation_ids.filter((id) => typeof id === "string") : []))].sort();
+    if (task.verification_status !== "verified" && (matches.some((item) => item.evidence_conflict === true) || outcomes.size > 1 || terminals.size > 1)) {
+      state.tasks[task.task_id] = { ...task, verification_conflict: {
+        previous_evidence_ids: [...task.verification_evidence_ids ?? []],
+        conflicting_evidence_ids: [...new Set(matches.map((item) => String(item.evidence_id)))].sort(),
+        ...observationIds.length ? { conflicting_observation_ids: observationIds } : {}
+      } };
+      conflicted++;
+      continue;
+    }
+    if (task.verification_status === "verified") {
+      if (checkedSessions.has(task.session_id) && !matches.some((item) => task.verification_evidence_ids?.includes(String(item.evidence_id)))) {
+        const { context_receipt_id: _receipt, verification_ref_digest: _ref, terminal_identity_digest: _terminal, ...remaining } = task;
+        state.tasks[task.task_id] = {
+          ...remaining,
+          verification_status: "unverified",
+          verification_invalidated: true,
+          verification_evidence_ids: [],
+          verification_last_invalidation: { reason: "evidence_missing", evidence_ids: [...task.verification_evidence_ids ?? []], context_receipt_id: task.context_receipt_id ?? null, verification_ref_digest: task.verification_ref_digest ?? null, terminal_identity_digest: task.terminal_identity_digest ?? null },
+          verification_outcome: task.verification_outcome === "failed" ? "failed" : void 0
+        };
+        invalidated++;
+        continue;
+      }
+      const incompatible = matches.filter((item) => item.verification_outcome !== task.verification_outcome || item.terminal_identity_digest !== task.terminal_identity_digest || item.context_receipt_id !== task.context_receipt_id || item.verification_ref_digest !== task.verification_ref_digest);
+      if (incompatible.length) {
+        state.tasks[task.task_id] = { ...task, verification_status: "unverified", verification_conflict: {
+          previous_evidence_ids: [...task.verification_evidence_ids ?? []],
+          conflicting_evidence_ids: [...new Set(incompatible.map((item) => String(item.evidence_id)))].sort(),
+          ...observationIds.length ? { conflicting_observation_ids: observationIds } : {}
+        } };
+        conflicted++;
+      }
+      continue;
+    }
     if (matches.length === 0 || outcomes.size !== 1 || terminals.size !== 1) continue;
     const selected = matches[0];
+    const { verification_invalidated: _invalidated, ...revalidated } = task;
     state.tasks[task.task_id] = {
-      ...task,
+      ...revalidated,
       verification_status: "verified",
       verification_evidence_ids: matches.map((item) => String(item.evidence_id)).sort(),
       verification_outcome: selected.verification_outcome,
@@ -2249,14 +2573,16 @@ async function reconcileCodexSessionTaskEvidence(evidenceValue, options = {}, en
     };
     verified++;
   }
-  if (verified > 0) {
+  if (verified > 0 || conflicted > 0 || invalidated > 0) {
     state.updated_at = options.now ?? (/* @__PURE__ */ new Date()).toISOString();
     await mkdir2(dirname4(path), { recursive: true, mode: 448 });
     await atomicPrivateJson(path, state);
   }
   return {
-    status: verified > 0 ? "reconciled" : "no_match",
+    status: verified > 0 || conflicted > 0 || invalidated > 0 ? "reconciled" : "no_match",
     tasks_verified: verified,
+    tasks_conflicted: conflicted,
+    tasks_invalidated: invalidated,
     evidence_received: evidence.length,
     raw_content_stored: false,
     state_file: path
@@ -2264,10 +2590,20 @@ async function reconcileCodexSessionTaskEvidence(evidenceValue, options = {}, en
 }
 async function readCodexSessionTaskExcerpt(taskIdValue, options, env = process.env, rangeReader) {
   if (typeof taskIdValue !== "string" || !taskIdValue.trim() || taskIdValue.length > 160) throw new Error("task_id must be a bounded string");
-  if (options.expected_partition !== "candidate_generation" && options.expected_partition !== "held_out") throw new Error("expected_partition is unsupported");
+  if (options.expected_partition !== "candidate_generation" && options.expected_partition !== "development" && options.expected_partition !== "held_out") throw new Error("expected_partition is unsupported");
   const state = await readState2(statePath2(options, env), options.now ?? (/* @__PURE__ */ new Date()).toISOString());
   const task = state.tasks[taskIdValue.trim()];
-  const contextVerified = task?.verification_status === "verified" && Boolean(task.verification_evidence_ids?.length);
+  if (task && (task.source_path.startsWith("/") || task.source_path.split("/").some((part) => !part || part === "." || part === "..")))
+    throw new Error("Codex task source reference is invalid");
+  const sourceState = task ? state.sources[sourceKey(task.source_path, task.source_root === "archived_sessions")] : void 0;
+  if (sourceState && sourceState.discovery_status !== "discovered")
+    return { status: "ineligible", reason: "task_source_not_current", raw_content_stored: false };
+  if (task && !hasCanonicalProjectIdentity(task)) return { status: "ineligible", reason: "task_project_identity_unverified", raw_content_stored: false };
+  if (task?.verification_conflict) return { status: "ineligible", reason: "task_terminal_evidence_conflict", raw_content_stored: false };
+  if (task?.verification_invalidated) return { status: "ineligible", reason: "task_terminal_evidence_invalidated", raw_content_stored: false };
+  if (task?.verification_source_recheck) return { status: "ineligible", reason: "task_source_recheck_pending", raw_content_stored: false };
+  if (task?.dataset_partition === options.expected_partition && task.verification_transcript_error) return { status: "ineligible", reason: task.verification_transcript_error, raw_content_stored: false };
+  const contextVerified = hasContextVerification(task);
   const transcriptVerified = typeof task?.verification_artifact_digest === "string" && typeof task.verification_artifact_count === "number" && task.verification_artifact_count > 0;
   if (!task || task.status !== "completed" || !contextVerified && !transcriptVerified || !task.assistant_final_seen || task.dataset_partition !== options.expected_partition) {
     return { status: "ineligible", reason: "task_not_verified_or_partition_mismatch", raw_content_stored: false };
@@ -2280,12 +2616,12 @@ async function readCodexSessionTaskExcerpt(taskIdValue, options, env = process.e
   const root = task.source_root === "archived_sessions" ? archiveRoot(options, env) : sourceRoot(options, env);
   if (root === null) return { status: "ineligible", reason: "task_source_root_unavailable", raw_content_stored: false };
   const canonicalRoot = await realpath(root);
-  if (task.source_path.startsWith("/") || task.source_path.split("/").some((part) => !part || part === "." || part === "..")) {
-    throw new Error("Codex task source reference is invalid");
-  }
   const sourcePath = resolve5(root, ...task.source_path.split("/"));
   const canonicalSource = await realpath(sourcePath);
   if (!canonicalSource.startsWith(`${canonicalRoot}${sep2}`)) throw new Error("Codex task source escaped the sessions root");
+  const indexedSource = state.sources[sourceKey(task.source_path, task.source_root === "archived_sessions")];
+  if (!indexedSource || indexedSource.discovery_status !== "discovered" || indexedSource.verification_artifact_index_version !== 3 || indexedSource.processed_bytes < indexedSource.size)
+    return { status: "ineligible", reason: "task_verification_index_incomplete", raw_content_stored: false };
   const info = await lstat(sourcePath);
   if (info.isSymbolicLink() || !info.isFile() || task.source_end_byte <= task.source_start_byte || task.source_end_byte > info.size || task.source_end_byte - task.source_start_byte > MAX_TASK_STREAM_BYTES) {
     return { status: "ineligible", reason: "task_source_span_invalid_or_oversized", raw_content_stored: false };
@@ -2324,7 +2660,7 @@ async function readCodexSessionTaskExcerpt(taskIdValue, options, env = process.e
       if (handle) await handle.close();
     }
   }
-  let rollingDigest = hash2(`${task.session_id}\0${task.turn_id}`);
+  let rollingDigest = hash(`${task.session_id}\0${task.turn_id}`);
   let taskGoal = null, taskResult = null;
   const verificationCollector = createCodexSessionVerificationCollector();
   try {
@@ -2341,13 +2677,13 @@ async function readCodexSessionTaskExcerpt(taskIdValue, options, env = process.e
       const recordType = typeof record?.type === "string" ? record.type : "";
       const payloadType = typeof payload3?.type === "string" ? payload3.type : "";
       const recordTurnId = typeof payload3?.turn_id === "string" ? payload3.turn_id : task.turn_id;
-      if (recordType === "response_item" && payload3 && (payloadType === "custom_tool_call" || payloadType === "custom_tool_call_output")) {
+      if (recordType === "response_item" && payload3 && (payloadType === "custom_tool_call" || payloadType === "custom_tool_call_output" || payloadType === "function_call" || payloadType === "function_call_output")) {
         verificationCollector.add({ record_type: "response_item", payload: payload3 });
       } else if (recordType === "event_msg" && payload3 && recordTurnId === task.turn_id && payloadType === "item_completed") {
         verificationCollector.add({ record_type: "event_msg", payload: payload3 });
       }
       if (recordType && payload3 && recordTurnId === task.turn_id && recordType !== "session_meta" && recordType !== "turn_context" && !(recordType === "event_msg" && payloadType === "task_started")) {
-        rollingDigest = hash2(`${rollingDigest}\0${hash2(lineBytes)}`);
+        rollingDigest = hash(`${rollingDigest}\0${hash(lineBytes)}`);
       }
       if (record?.type !== "response_item" || !payload3 || payload3.type !== "message") continue;
       const content = messageText(payload3.content);
@@ -2365,7 +2701,7 @@ async function readCodexSessionTaskExcerpt(taskIdValue, options, env = process.e
   if (verificationCollector.structuredCallsOverflowed()) return { status: "ineligible", reason: "task_structured_call_tracking_limit_exceeded", raw_content_stored: false };
   if (verificationCollector.customCallsOverflowed()) return { status: "ineligible", reason: "task_custom_call_tracking_limit_exceeded", raw_content_stored: false };
   const verificationArtifacts = verificationCollector.finish();
-  if (transcriptVerified && (verificationArtifacts.length !== task.verification_artifact_count || `sha256:${hash2(JSON.stringify(verificationArtifacts))}` !== task.verification_artifact_digest)) {
+  if (transcriptVerified && (verificationArtifacts.length !== task.verification_artifact_count || `sha256:${hash(JSON.stringify(verificationArtifacts))}` !== task.verification_artifact_digest)) {
     return { status: "ineligible", reason: "transcript_test_evidence_digest_mismatch", raw_content_stored: false };
   }
   return {
@@ -2407,7 +2743,7 @@ async function recordSessionVerificationEvidence(client, task, excerpt) {
     task_result: excerpt.task_result,
     verification_artifacts: artifacts,
     sanitized: true,
-    ...["candidate_generation", "held_out"].includes(String(task.dataset_partition)) ? { verify_against_archive: true, dataset_partition: task.dataset_partition } : {},
+    ...["candidate_generation", "development", "held_out"].includes(String(task.dataset_partition)) ? { verify_against_archive: true, dataset_partition: task.dataset_partition } : {},
     ...typeof task.completed_at === "string" ? { observed_at: task.completed_at } : {}
   });
   const evidence = object5(saved.evidence, "session verification Evidence");
@@ -2417,7 +2753,12 @@ async function recordSessionVerificationEvidence(client, task, excerpt) {
   }
   const check = saved.transcript_check;
   const status = check && typeof check === "object" && !Array.isArray(check) ? check.status : void 0;
-  return { ...evidence, transcript_check_status: status === "transcript_matched" || status === "unverified" || status === "unavailable" ? status : "not_reported" };
+  const checkObject = check && typeof check === "object" && !Array.isArray(check) ? check : null;
+  return {
+    ...evidence,
+    transcript_check_status: status === "transcript_matched" || status === "unverified" || status === "unavailable" ? status : "not_reported",
+    ...checkObject && Object.hasOwn(checkObject, "verification_outcome") ? { transcript_check_outcome: checkObject.verification_outcome } : {}
+  };
 }
 
 // deploy/experience-learning/session-knowledge-candidates.ts
@@ -2525,7 +2866,7 @@ async function completedCandidateCall(client, task, call) {
     const request = matching("model.request"), completed = matching("model.completed"), skipped = matching("knowledge.candidate_skipped"), created = matching("knowledge.candidate_created");
     if (request.length !== 1 || completed.length !== 1 || skipped.length + created.length !== 1) return null;
     const output = skipped[0] ?? created[0];
-    if (!Array.isArray(request[0].input_refs) || request[0].input_refs.length !== 1 || request[0].input_refs[0] !== call.input_digest || !Array.isArray(output.output_refs) || !Number.isSafeInteger(request[0].sequence) || !Number.isSafeInteger(completed[0].sequence) || !Number.isSafeInteger(output.sequence) || Number(request[0].sequence) >= Number(completed[0].sequence) || Number(completed[0].sequence) >= Number(output.sequence)) return null;
+    if (request[0].data_digest !== stableDigest({ purpose: "knowledge_session_candidate_generation", input_digest: call.input_digest, source_ref: task.source_ref, content_stored: false }) || !Array.isArray(request[0].input_refs) || request[0].input_refs.length !== 1 || request[0].input_refs[0] !== call.input_digest || !Array.isArray(output.output_refs) || !Number.isSafeInteger(request[0].sequence) || !Number.isSafeInteger(completed[0].sequence) || !Number.isSafeInteger(output.sequence) || Number(request[0].sequence) >= Number(completed[0].sequence) || Number(completed[0].sequence) >= Number(output.sequence)) return null;
     if (skipped.length) return output.output_refs.length === 0 ? "skip" : null;
     const claimId = `knowledge_claim_${stableDigest(taskId).slice(-24)}`;
     const [claimRef, evidenceId, binding] = output.output_refs;
@@ -2556,32 +2897,64 @@ async function runSessionKnowledgeCandidateOnce(deps) {
   const path = candidateStatePath(deps), state = readCandidateState(path);
   const batch = await codexSessionTaskBatch("candidate_generation", deps.archive_options, deps.env);
   const tasks = batch.tasks;
-  const pending = tasks.filter((item) => typeof item.task_id === "string" && !state.processed_task_ids.includes(item.task_id));
+  const recovered = /* @__PURE__ */ new Set();
+  let blockedSkips = 0;
+  for (const task2 of tasks) {
+    const taskId = String(task2.task_id), skip = state.terminal_skips[taskId];
+    if (skip && (state.trace_ids_by_task[taskId] || state.uncertain_calls[taskId])) blockedSkips++;
+    if (skip && !state.trace_ids_by_task[taskId] && !state.uncertain_calls[taskId] && (skip.source_ref_digest !== stableDigest(task2.source_ref) || skip.reason_code === "verifiable_test_result_unavailable" && Number(task2.verification_artifact_count) > 0)) {
+      delete state.terminal_skips[taskId];
+      recovered.add(taskId);
+    }
+  }
+  if (recovered.size) {
+    state.processed_task_ids = state.processed_task_ids.filter((id) => !recovered.has(id));
+    await writeCandidateState(path, state);
+  }
+  const processed = new Set(state.processed_task_ids);
+  const pending = tasks.filter((item) => typeof item.task_id === "string" && !processed.has(item.task_id));
   const previous = pending.findIndex((item) => item.task_id === state.last_unavailable_task_id);
   const task = pending[(previous + 1) % pending.length];
-  if (!task) return { status: "idle", processed: 0, verified_candidates_pending: 0, raw_content_stored: false };
+  if (!task) return blockedSkips ? { status: "waiting_for_skip_reconciliation", processed: 0, blocked_skips: blockedSkips, raw_content_stored: false } : Number(batch.excluded_source_recheck_pending) > 0 ? { status: "waiting_for_source_recheck", processed: 0, source_recheck_pending: batch.excluded_source_recheck_pending, raw_content_stored: false } : { status: "idle", processed: 0, verified_candidates_pending: 0, raw_content_stored: false };
   if (state.uncertain_calls[String(task.task_id)]) {
     const taskId = String(task.task_id), call = state.uncertain_calls[taskId];
     const decision = await completedCandidateCall(deps.client, task, call);
     if (decision) {
+      let current;
+      try {
+        current = await (deps.read_excerpt ?? readCodexSessionTaskExcerpt)(taskId, { ...deps.archive_options, expected_partition: "candidate_generation" }, deps.env);
+      } catch {
+        if (state.last_unavailable_task_id !== taskId) {
+          state.last_unavailable_task_id = taskId;
+          await writeCandidateState(path, state);
+        }
+        return { ...blockedSkips ? { blocked_skips: blockedSkips } : {}, status: "waiting_for_source_revalidation", processed: 0, reason: "archive_unavailable", raw_content_stored: false };
+      }
+      if (current.status !== "ready" || current.source_ref !== task.source_ref || current.session_id !== task.session_id || current.turn_id !== task.turn_id || current.project_scope_id !== task.project_scope_id || (current.verification_outcome ?? null) !== (task.verification_outcome ?? null) || JSON.stringify(current.evidence_ids) !== JSON.stringify(task.verification_evidence_ids)) {
+        if (state.last_unavailable_task_id !== taskId) {
+          state.last_unavailable_task_id = taskId;
+          await writeCandidateState(path, state);
+        }
+        return { ...blockedSkips ? { blocked_skips: blockedSkips } : {}, status: "waiting_for_source_revalidation", processed: 0, reason: "archive_changed", raw_content_stored: false };
+      }
       state.processed_task_ids.push(taskId);
       state.trace_ids_by_task[taskId] = call.trace_id;
       delete state.uncertain_calls[taskId];
       await writeCandidateState(path, state);
-      return { status: "completed_call_reconciled", processed: 1, decision, trace_id: call.trace_id, raw_content_stored: false };
+      return { ...blockedSkips ? { blocked_skips: blockedSkips } : {}, status: "completed_call_reconciled", processed: 1, decision, trace_id: call.trace_id, raw_content_stored: false };
     }
     if (state.last_unavailable_task_id !== task.task_id) {
       state.last_unavailable_task_id = String(task.task_id);
       await writeCandidateState(path, state);
     }
-    return { status: "waiting_for_call_reconciliation", processed: 0, reason: "model_result_unknown", raw_content_stored: false };
+    return { ...blockedSkips ? { blocked_skips: blockedSkips } : {}, status: "waiting_for_call_reconciliation", processed: 0, reason: "model_result_unknown", raw_content_stored: false };
   }
   const transcriptEvidence = task.verification_source === "session_test_log";
   const contextEvidenceComplete = Array.isArray(task.verification_evidence_ids) && task.verification_evidence_ids.length > 0 && typeof task.context_receipt_id === "string" && typeof task.verification_ref_digest === "string" && typeof task.terminal_identity_digest === "string";
   const transcriptEvidenceComplete = transcriptEvidence && typeof task.verification_artifact_digest === "string" && Number.isSafeInteger(task.verification_artifact_count) && Number(task.verification_artifact_count) > 0;
   if (typeof task.project_scope_id !== "string" || !/^project:[A-Za-z0-9_-]{1,96}$/u.test(task.project_scope_id) || !contextEvidenceComplete && !transcriptEvidenceComplete) {
     await recordTerminalSkip(path, state, task, "verified_project_evidence_incomplete");
-    return { status: "skipped", processed: 1, reason: "verified_project_evidence_incomplete", raw_content_stored: false };
+    return { ...blockedSkips ? { blocked_skips: blockedSkips } : {}, status: "skipped", processed: 1, reason: "verified_project_evidence_incomplete", raw_content_stored: false };
   }
   const excerpt = await (deps.read_excerpt ?? readCodexSessionTaskExcerpt)(
     task.task_id,
@@ -2589,37 +2962,48 @@ async function runSessionKnowledgeCandidateOnce(deps) {
     deps.env
   );
   const excerptEvidenceIds = Array.isArray(excerpt.evidence_ids) ? excerpt.evidence_ids : [];
-  if (excerpt.status !== "ready" || excerpt.session_id !== task.session_id || excerpt.turn_id !== task.turn_id || excerpt.project_scope_id !== task.project_scope_id || excerpt.verification_outcome !== task.verification_outcome || excerpt.verification_outcome !== "passed" && !(transcriptEvidence && excerpt.verification_outcome === null) || excerpt.verification_source !== task.verification_source || JSON.stringify(excerptEvidenceIds) !== JSON.stringify(task.verification_evidence_ids)) {
+  if (excerpt.status !== "ready" || excerpt.session_id !== task.session_id || excerpt.turn_id !== task.turn_id || excerpt.source_ref !== task.source_ref || excerpt.project_scope_id !== task.project_scope_id || excerpt.verification_outcome !== task.verification_outcome || excerpt.verification_outcome !== "passed" && !(transcriptEvidence && excerpt.verification_outcome === null) || excerpt.verification_source !== task.verification_source || JSON.stringify(excerptEvidenceIds) !== JSON.stringify(task.verification_evidence_ids)) {
+    if (excerpt.reason === "task_source_digest_mismatch" && typeof task.task_id === "string" && typeof task.source_ref === "string") {
+      try {
+        await requestCodexSessionSourceRecheck(task.task_id, task.source_ref, deps.archive_options, deps.env);
+      } catch {
+      }
+    }
     if (state.last_unavailable_task_id !== task.task_id) {
       state.last_unavailable_task_id = String(task.task_id);
       await writeCandidateState(path, state);
     }
-    return { status: "waiting_for_consistent_excerpt", processed: 0, reason: "verified_task_excerpt_unavailable", raw_content_stored: false };
+    return { ...blockedSkips ? { blocked_skips: blockedSkips } : {}, status: "waiting_for_consistent_excerpt", processed: 0, reason: "verified_task_excerpt_unavailable", raw_content_stored: false };
   }
   const verificationArtifacts = Array.isArray(excerpt.verification_artifacts) ? excerpt.verification_artifacts : [];
   if (!verificationArtifacts.length) {
-    await recordTerminalSkip(path, state, task, "verifiable_test_result_unavailable");
-    return { status: "skipped", processed: 1, reason: "verifiable_test_result_unavailable", raw_content_stored: false };
+    if (state.last_unavailable_task_id !== task.task_id) {
+      state.last_unavailable_task_id = String(task.task_id);
+      await writeCandidateState(path, state);
+    }
+    return { ...blockedSkips ? { blocked_skips: blockedSkips } : {}, status: "waiting_for_verification_artifacts", processed: 0, reason: "verifiable_test_result_unavailable", raw_content_stored: false };
   }
   const profileResult = await deps.client.call("craft_evaluation_model_profile_ensure_single", { purpose: "knowledge_scenario_classification" });
   if (profileResult.status !== "ready_for_adapter") return {
+    ...blockedSkips ? { blocked_skips: blockedSkips } : {},
     status: "waiting_for_model",
     processed: 0,
     reason: String(profileResult.reason || "model_profile_not_ready"),
     raw_content_stored: false
   };
-  if (!profileResult.profile) return { status: "waiting_for_model", processed: 0, reason: "model_profile_unavailable", raw_content_stored: false };
+  if (!profileResult.profile) return { ...blockedSkips ? { blocked_skips: blockedSkips } : {}, status: "waiting_for_model", processed: 0, reason: "model_profile_unavailable", raw_content_stored: false };
   const profile = object6(profileResult.profile, "Knowledge generation profile");
   const detail = await deps.client.call("craft_evaluation_model_profile_get", { profile_id: profile.id, version: profile.version });
   const readiness = object6(detail.readiness, "Knowledge generation profile readiness");
   if (readiness.status !== "ready_for_adapter") return {
+    ...blockedSkips ? { blocked_skips: blockedSkips } : {},
     status: "waiting_for_model",
     processed: 0,
     reason: String(readiness.next_action ?? "model_profile_not_ready"),
     raw_content_stored: false
   };
   const provider = (deps.providers ?? PROVIDER_CATALOG).find((item) => item.provider === profile.provider) ?? (detail.provider ? defineProvider(object6(detail.provider, "Knowledge generation provider")) : void 0);
-  if (!provider) return { status: "waiting_for_model", processed: 0, reason: "provider_unavailable", raw_content_stored: false };
+  if (!provider) return { ...blockedSkips ? { blocked_skips: blockedSkips } : {}, status: "waiting_for_model", processed: 0, reason: "provider_unavailable", raw_content_stored: false };
   const packet = {
     project_scope_id: task.project_scope_id,
     task_goal: excerpt.task_goal,
@@ -2635,9 +3019,9 @@ async function runSessionKnowledgeCandidateOnce(deps) {
   const modelFingerprint = stableDigest({ provider: provider.provider, model: profile.model });
   const system = `\u4ECE\u9879\u76EE\u4EFB\u52A1\u53CA\u5176\u6D4B\u8BD5\u8BB0\u5F55\u4E2D\u63D0\u70BC\u4E00\u6761\u53EF\u590D\u7528\u3001\u53EF\u72EC\u7ACB\u6838\u5B9E\u7684\u9879\u76EE\u77E5\u8BC6\u5019\u9009\u3002verification_outcome \u4E3A null \u8868\u793A\u4EFB\u52A1\u6700\u7EC8\u7ED3\u679C\u672A\u77E5\uFF1B\u5355\u6B21\u6D4B\u8BD5\u901A\u8FC7\u4E0D\u4EE3\u8868\u6574\u4E2A\u4EFB\u52A1\u6210\u529F\u3002\u4EC5\u4F9D\u636E\u8F93\u5165\u4E2D\u7684\u4EFB\u52A1\u76EE\u6807\u548C\u7ED3\u679C\uFF0C\u4E0D\u8865\u5145\u672A\u89C2\u5BDF\u5230\u7684\u4E8B\u5B9E\uFF1B\u82E5\u6CA1\u6709\u7A33\u5B9A\u3001\u53EF\u9A8C\u8BC1\u7684\u77E5\u8BC6\uFF0C\u8FD4\u56DE decision=skip\u3002\u8FD4\u56DE\u4E00\u4E2A JSON \u5BF9\u8C61\uFF0C\u5B57\u6BB5\u4E3A decision\u3001kind\u3001title\u3001content\u3001tags\u3002\u6240\u6709\u53EF\u8BFB\u6587\u5B57\u4F7F\u7528\u4E2D\u6587\u3002\u4E0D\u5F97\u5199\u5165\u4F1A\u8BDD\u7EC6\u8282\u3001\u4E2A\u4EBA\u4FE1\u606F\u3001\u5BC6\u94A5\u3001\u8DEF\u5F84\u6216\u4EE3\u7801\u3002\u5019\u9009\u53EA\u4F9B\u540E\u7EED\u72EC\u7ACB\u8BC1\u636E\u8BC4\u5BA1\uFF0C\u4E0D\u4EE3\u8868\u4E8B\u5B9E\u5DF2\u786E\u8BA4\u3002${generatedTextLanguageInstruction(deps.contentLanguage ?? "zh-CN")}`;
   const messages = [{ role: "system", content: system }, { role: "user", content: JSON.stringify(packet) }];
-  if (!deps.transport) return { status: "waiting_for_model", processed: 0, reason: "model_transport_unavailable", raw_content_stored: false };
+  if (!deps.transport) return { ...blockedSkips ? { blocked_skips: blockedSkips } : {}, status: "waiting_for_model", processed: 0, reason: "model_transport_unavailable", raw_content_stored: false };
   const transport = deps.transport;
-  if (transport.acquireCall && !transport.acquireCall(provider.provider)) return { status: "waiting_for_budget", processed: 0, reason: "model_call_budget_exhausted", raw_content_stored: false };
+  if (transport.acquireCall && !transport.acquireCall(provider.provider)) return { ...blockedSkips ? { blocked_skips: blockedSkips } : {}, status: "waiting_for_budget", processed: 0, reason: "model_call_budget_exhausted", raw_content_stored: false };
   const traceStart = object6(await deps.client.call("craft_trace_start", {
     task_id: `knowledge:${task.task_id}`,
     operation_id: String(task.task_id),
@@ -2666,6 +3050,7 @@ async function runSessionKnowledgeCandidateOnce(deps) {
   let candidate;
   let claimId = null, verificationEvidenceId = null;
   let transcriptCheckStatus = "not_reported";
+  let archiveRejected = false;
   let claimBinding = null;
   state.uncertain_calls[String(task.task_id)] = { trace_id: traceId, input_digest: inputDigest };
   await writeCandidateState(path, state);
@@ -2684,9 +3069,33 @@ async function runSessionKnowledgeCandidateOnce(deps) {
       summary: "Codex Host \u8FD4\u56DE\u4E86\u7ED3\u6784\u5316 Knowledge \u5019\u9009\u7ED3\u679C"
     });
     candidate = validateCandidate(parseModelResult(response.text));
+    if (!candidate) {
+      const latestExcerpt = await (deps.read_excerpt ?? readCodexSessionTaskExcerpt)(
+        task.task_id,
+        { ...deps.archive_options, expected_partition: "candidate_generation" },
+        deps.env
+      );
+      if (latestExcerpt.status !== "ready" || stableDigest(latestExcerpt) !== stableDigest(excerpt)) {
+        archiveRejected = true;
+        throw new Error("session Evidence changed during model execution");
+      }
+    }
     if (candidate) {
       const verificationEvidence = await (deps.record_verification_evidence ?? recordSessionVerificationEvidence)(deps.client, task, excerpt);
       if (!verificationEvidence) throw new Error("verified test Evidence is unavailable");
+      if (verificationEvidence.transcript_check_status !== "transcript_matched" || !Object.hasOwn(verificationEvidence, "transcript_check_outcome") || verificationEvidence.transcript_check_outcome !== (task.verification_outcome ?? null)) {
+        archiveRejected = true;
+        throw new Error("session Evidence archive verification is unavailable or mismatched");
+      }
+      const latestExcerpt = await (deps.read_excerpt ?? readCodexSessionTaskExcerpt)(
+        task.task_id,
+        { ...deps.archive_options, expected_partition: "candidate_generation" },
+        deps.env
+      );
+      if (latestExcerpt.status !== "ready" || stableDigest(latestExcerpt) !== stableDigest(excerpt)) {
+        archiveRejected = true;
+        throw new Error("session Evidence changed during model execution");
+      }
       verificationEvidenceId = String(verificationEvidence.id);
       transcriptCheckStatus = verificationEvidence.transcript_check_status;
       const saved = await deps.client.call("craft_knowledge_claim_save", {
@@ -2738,6 +3147,10 @@ async function runSessionKnowledgeCandidateOnce(deps) {
     delete state.uncertain_calls[String(task.task_id)];
     await writeCandidateState(path, state);
   } catch (error) {
+    if (archiveRejected) {
+      delete state.uncertain_calls[String(task.task_id)];
+      await writeCandidateState(path, state);
+    }
     await deps.client.call("craft_trace_append", {
       trace_id: traceId,
       event_kind: "model.failed",
@@ -2746,13 +3159,14 @@ async function runSessionKnowledgeCandidateOnce(deps) {
       trust: "observed",
       operation_id: String(task.task_id),
       model_fingerprint: modelFingerprint,
-      data: { failure_kind: safeFailureKind(error), input_digest: inputDigest, result_state: "unknown" },
-      summary: "Knowledge \u5019\u9009\u751F\u6210\u672A\u5B8C\u6210\uFF0C\u8C03\u7528\u7ED3\u679C\u5F85\u6838\u5BF9"
+      data: { failure_kind: safeFailureKind(error), input_digest: inputDigest, result_state: archiveRejected ? "discarded" : "unknown" },
+      summary: "Knowledge \u5019\u9009\u751F\u6210\u672A\u5B8C\u6210"
     });
     await deps.client.call("craft_trace_finalize", { trace_id: traceId, status: "failed", summary: "Knowledge \u5019\u9009\u751F\u6210\u672A\u5B8C\u6210" });
     throw error;
   }
   return {
+    ...blockedSkips ? { blocked_skips: blockedSkips } : {},
     status: candidate ? "candidate_created" : "candidate_skipped",
     processed: 1,
     task_id: task.task_id,
@@ -2839,7 +3253,7 @@ function readState3(path) {
     const value = JSON.parse(readFileSync7(path, "utf8"));
     const traces = value.trace_ids_by_task === void 0 ? {} : value.trace_ids_by_task;
     const uncertain = value.uncertain_calls === void 0 ? {} : value.uncertain_calls;
-    if (value.schema !== SCHEMA3 || !Array.isArray(value.processed_task_ids) || value.processed_task_ids.length > 5e4 || value.processed_task_ids.some((id) => typeof id !== "string" || !id.trim() || id.length > 160) || value.last_attempted_task_id !== void 0 && (typeof value.last_attempted_task_id !== "string" || !value.last_attempted_task_id.trim() || value.last_attempted_task_id.length > 160) || value.legacy_unknown_outcomes !== void 0 && (!Number.isSafeInteger(value.legacy_unknown_outcomes) || Number(value.legacy_unknown_outcomes) < 0 || Number(value.legacy_unknown_outcomes) > 5e4) || !traces || typeof traces !== "object" || Array.isArray(traces) || Object.keys(traces).length > 5e4 || !uncertain || typeof uncertain !== "object" || Array.isArray(uncertain) || Object.keys(uncertain).length > 5e4 || Object.entries(uncertain).some(([id, raw]) => {
+    if (value.schema !== SCHEMA3 || !Array.isArray(value.processed_task_ids) || value.processed_task_ids.length > 5e4 || value.processed_task_ids.some((id) => typeof id !== "string" || !id.trim() || id.length > 160) || value.last_attempted_task_id !== void 0 && (typeof value.last_attempted_task_id !== "string" || !value.last_attempted_task_id.trim() || value.last_attempted_task_id.length > 160) || value.legacy_unknown_outcomes !== void 0 && (!Number.isSafeInteger(value.legacy_unknown_outcomes) || Number(value.legacy_unknown_outcomes) < 0 || Number(value.legacy_unknown_outcomes) > 5e4) || value.legacy_untraced_tasks !== void 0 && (!Number.isSafeInteger(value.legacy_untraced_tasks) || Number(value.legacy_untraced_tasks) < 0 || Number(value.legacy_untraced_tasks) > 5e4) || !traces || typeof traces !== "object" || Array.isArray(traces) || Object.keys(traces).length > 5e4 || !uncertain || typeof uncertain !== "object" || Array.isArray(uncertain) || Object.keys(uncertain).length > 5e4 || Object.entries(uncertain).some(([id, raw]) => {
       const item = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : null;
       return !id.trim() || id.length > 160 || !item || typeof item.trace_id !== "string" || !/^trace[-_][A-Za-z0-9_-]{1,160}$/u.test(item.trace_id) || typeof item.input_digest !== "string" || !/^sha256:[a-f0-9]{64}$/u.test(item.input_digest);
     }) || Object.entries(traces).some(([taskId, traceId]) => !taskId.trim() || taskId.length > 160 || typeof traceId !== "string" || !/^trace[-_][A-Za-z0-9_-]{1,160}$/u.test(traceId))) throw new Error("Knowledge evaluation state is invalid");
@@ -2848,6 +3262,7 @@ function readState3(path) {
       trace_ids_by_task: traces,
       last_attempted_task_id: value.last_attempted_task_id,
       legacy_unknown_outcomes: value.legacy_unknown_outcomes,
+      legacy_untraced_tasks: value.legacy_untraced_tasks,
       uncertain_calls: uncertain
     };
   } catch (error) {
@@ -2867,6 +3282,7 @@ async function writeState2(path, state) {
     trace_ids_by_task: Object.fromEntries(Object.entries(state.trace_ids_by_task).slice(-5e4)),
     last_attempted_task_id: state.last_attempted_task_id,
     legacy_unknown_outcomes: state.legacy_unknown_outcomes,
+    legacy_untraced_tasks: state.legacy_untraced_tasks,
     uncertain_calls: state.uncertain_calls,
     updated_at: (/* @__PURE__ */ new Date()).toISOString()
   });
@@ -2893,7 +3309,7 @@ async function completedEvaluation(client, task, call) {
     const matching = (kind) => events.filter((event) => event && typeof event === "object" && !Array.isArray(event) && event.trace_id === call.trace_id && event.operation_id === taskId && event.event_kind === kind && event.actor === "knowledge-session-evaluation-worker");
     const request = matching("model.request"), completed = matching("model.completed"), output = matching("knowledge.evaluation_case_candidate");
     if (request.length !== 1 || completed.length !== 1 || output.length !== 1) return null;
-    if (!Array.isArray(request[0].input_refs) || request[0].input_refs.length !== 1 || request[0].input_refs[0] !== call.input_digest || !Array.isArray(output[0].output_refs) || !Number.isSafeInteger(request[0].sequence) || !Number.isSafeInteger(completed[0].sequence) || !Number.isSafeInteger(output[0].sequence) || request[0].sequence >= completed[0].sequence || completed[0].sequence >= output[0].sequence) return null;
+    if (request[0].data_digest !== stableDigest({ purpose: "knowledge_held_out_label", input_digest: call.input_digest, source_ref: task.source_ref, content_stored: false }) || !Array.isArray(request[0].input_refs) || request[0].input_refs.length !== 1 || request[0].input_refs[0] !== call.input_digest || !Array.isArray(output[0].output_refs) || !Number.isSafeInteger(request[0].sequence) || !Number.isSafeInteger(completed[0].sequence) || !Number.isSafeInteger(output[0].sequence) || request[0].sequence >= completed[0].sequence || completed[0].sequence >= output[0].sequence) return null;
     const refs = output[0].output_refs;
     if (!refs.length) return "skip";
     const [caseId, evidenceId, runId, binding] = refs;
@@ -2924,8 +3340,10 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
   const batch = await codexSessionTaskBatch("held_out", deps.archive_options, deps.env);
   const processed = new Set(state.processed_task_ids);
   const legacyUnknown = batch.tasks.filter((item) => typeof item.task_id === "string" && processed.has(item.task_id) && item.verification_outcome === null).length;
-  const diagnosticChanged = (state.legacy_unknown_outcomes ?? 0) !== legacyUnknown;
+  const legacyUntraced = state.processed_task_ids.filter((id) => !state.trace_ids_by_task[id] && !state.uncertain_calls[id]).length;
+  const diagnosticChanged = (state.legacy_unknown_outcomes ?? 0) !== legacyUnknown || (state.legacy_untraced_tasks ?? 0) !== legacyUntraced;
   if (diagnosticChanged) state.legacy_unknown_outcomes = legacyUnknown;
+  if (diagnosticChanged) state.legacy_untraced_tasks = legacyUntraced;
   const pending = batch.tasks.filter((item) => typeof item.task_id === "string" && !processed.has(item.task_id));
   const previous = pending.findIndex((item) => item.task_id === state.last_attempted_task_id);
   const task = pending[(previous + 1) % pending.length];
@@ -2935,8 +3353,9 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
       status: "waiting_for_legacy_outcome_evidence",
       processed: 0,
       legacy_unknown_outcomes: legacyUnknown,
+      ...legacyUntraced ? { legacy_untraced_tasks: legacyUntraced } : {},
       raw_content_stored: false
-    } : { status: "idle", processed: 0, raw_content_stored: false };
+    } : legacyUntraced ? { status: "waiting_for_legacy_trace_reconciliation", processed: 0, legacy_untraced_tasks: legacyUntraced, raw_content_stored: false } : Number(batch.excluded_source_recheck_pending) > 0 ? { status: "waiting_for_source_recheck", processed: 0, source_recheck_pending: batch.excluded_source_recheck_pending, raw_content_stored: false } : { status: "idle", processed: 0, raw_content_stored: false };
   }
   if (diagnosticChanged || state.last_attempted_task_id !== task.task_id) {
     state.last_attempted_task_id = String(task.task_id);
@@ -2946,6 +3365,15 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
     const taskId = String(task.task_id), call = state.uncertain_calls[taskId];
     const decision = await completedEvaluation(deps.client, task, call);
     if (decision) {
+      let current;
+      try {
+        current = await (deps.read_excerpt ?? readCodexSessionTaskExcerpt)(taskId, { ...deps.archive_options, expected_partition: "held_out" }, deps.env);
+      } catch {
+        return { status: "waiting_for_source_revalidation", processed: 0, reason: "archive_unavailable", raw_content_stored: false };
+      }
+      if (current.status !== "ready" || current.source_ref !== task.source_ref || current.session_id !== task.session_id || current.turn_id !== task.turn_id || current.project_scope_id !== task.project_scope_id || (current.verification_outcome ?? null) !== (task.verification_outcome ?? null) || JSON.stringify(current.evidence_ids) !== JSON.stringify(task.verification_evidence_ids)) {
+        return { status: "waiting_for_source_revalidation", processed: 0, reason: "archive_changed", raw_content_stored: false };
+      }
       state.processed_task_ids.push(taskId);
       state.trace_ids_by_task[taskId] = call.trace_id;
       delete state.uncertain_calls[taskId];
@@ -2961,7 +3389,13 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
   }
   const excerpt = await (deps.read_excerpt ?? readCodexSessionTaskExcerpt)(task.task_id, { ...deps.archive_options, expected_partition: "held_out" }, deps.env);
   const evidenceIds = Array.isArray(excerpt.evidence_ids) ? excerpt.evidence_ids : [];
-  if (excerpt.status !== "ready" || excerpt.session_id !== task.session_id || excerpt.turn_id !== task.turn_id || excerpt.project_scope_id !== task.project_scope_id || excerpt.verification_source !== task.verification_source || (excerpt.verification_outcome ?? null) !== (task.verification_outcome ?? null) || JSON.stringify(evidenceIds) !== JSON.stringify(task.verification_evidence_ids)) {
+  if (excerpt.status !== "ready" || excerpt.session_id !== task.session_id || excerpt.turn_id !== task.turn_id || excerpt.source_ref !== task.source_ref || excerpt.project_scope_id !== task.project_scope_id || excerpt.verification_source !== task.verification_source || (excerpt.verification_outcome ?? null) !== (task.verification_outcome ?? null) || JSON.stringify(evidenceIds) !== JSON.stringify(task.verification_evidence_ids)) {
+    if (excerpt.reason === "task_source_digest_mismatch" && typeof task.task_id === "string" && typeof task.source_ref === "string") {
+      try {
+        await requestCodexSessionSourceRecheck(task.task_id, task.source_ref, deps.archive_options, deps.env);
+      } catch {
+      }
+    }
     return { status: "waiting_for_consistent_excerpt", processed: 0, reason: "held_out_excerpt_unavailable", raw_content_stored: false };
   }
   if (excerpt.verification_outcome == null) return {
@@ -2972,9 +3406,7 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
   };
   const verificationArtifacts = Array.isArray(excerpt.verification_artifacts) ? excerpt.verification_artifacts : [];
   if (!verificationArtifacts.length) {
-    state.processed_task_ids.push(String(task.task_id));
-    await writeState2(path, state);
-    return { status: "skipped", processed: 1, reason: "verifiable_test_result_unavailable", raw_content_stored: false };
+    return { status: "waiting_for_verification_artifacts", processed: 0, reason: "verifiable_test_result_unavailable", raw_content_stored: false };
   }
   const listed = await deps.client.call("craft_knowledge_claim_list", { limit: 1e3, scope_kind: "project", scope_id: task.project_scope_id.slice("project:".length) });
   const candidates = (Array.isArray(listed.claims) ? listed.claims : []).filter((claim) => claim.status === "candidate" && claim.scope === task.project_scope_id).slice(0, 12);
@@ -3045,6 +3477,7 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
   const traceId = String(object7(started.trace, "Knowledge evaluation Trace").id ?? "");
   if (!traceId) throw new Error("Knowledge evaluation Trace has no id");
   if (!/^trace[-_][A-Za-z0-9_-]{1,160}$/u.test(traceId)) throw new Error("Knowledge evaluation Trace id is invalid");
+  let archiveRejected = false;
   try {
     await deps.client.call("craft_trace_append", {
       trace_id: traceId,
@@ -3079,9 +3512,33 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
     });
     let caseId = null, caseEvidenceId = null, evaluationEligible = null;
     let runId = null, resultBinding = null, transcriptCheckStatus = "not_reported";
+    if (output.decision === "skip") {
+      const latestExcerpt = await (deps.read_excerpt ?? readCodexSessionTaskExcerpt)(
+        task.task_id,
+        { ...deps.archive_options, expected_partition: "held_out" },
+        deps.env
+      );
+      if (latestExcerpt.status !== "ready" || stableDigest(latestExcerpt) !== stableDigest(excerpt)) {
+        archiveRejected = true;
+        throw new Error("held-out Evidence changed during model execution");
+      }
+    }
     if (output.decision === "labeled") {
       const verificationEvidence = await recordSessionVerificationEvidence(deps.client, task, excerpt);
       if (!verificationEvidence) throw new Error("held-out test Evidence is unavailable");
+      if (verificationEvidence.transcript_check_status !== "transcript_matched" || !Object.hasOwn(verificationEvidence, "transcript_check_outcome") || verificationEvidence.transcript_check_outcome !== (task.verification_outcome ?? null)) {
+        archiveRejected = true;
+        throw new Error("held-out Evidence archive verification is unavailable or mismatched");
+      }
+      const latestExcerpt = await (deps.read_excerpt ?? readCodexSessionTaskExcerpt)(
+        task.task_id,
+        { ...deps.archive_options, expected_partition: "held_out" },
+        deps.env
+      );
+      if (latestExcerpt.status !== "ready" || stableDigest(latestExcerpt) !== stableDigest(excerpt)) {
+        archiveRejected = true;
+        throw new Error("held-out Evidence changed during model execution");
+      }
       caseEvidenceId = String(verificationEvidence.id);
       transcriptCheckStatus = verificationEvidence.transcript_check_status;
       const caseIdDigest = stableDigest({ task_id: task.task_id, candidate_claim_refs: candidateClaimRefs });
@@ -3162,6 +3619,10 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
       raw_content_stored: false
     };
   } catch (error) {
+    if (archiveRejected) {
+      delete state.uncertain_calls[String(task.task_id)];
+      await writeState2(path, state);
+    }
     await deps.client.call("craft_trace_append", {
       trace_id: traceId,
       event_kind: "model.failed",
@@ -3170,7 +3631,7 @@ async function runSessionKnowledgeEvaluationOnce(deps) {
       trust: "observed",
       operation_id: String(task.task_id),
       model_fingerprint: fingerprint,
-      data: { failure_kind: safeFailureKind2(error), input_digest: inputDigest, result_state: state.uncertain_calls[String(task.task_id)] ? "unknown" : "not_dispatched" },
+      data: { failure_kind: safeFailureKind2(error), input_digest: inputDigest, result_state: archiveRejected ? "discarded" : state.uncertain_calls[String(task.task_id)] ? "unknown" : "not_dispatched" },
       summary: "\u7559\u51FA\u8BC4\u6D4B\u6807\u7B7E\u5904\u7406\u672A\u5B8C\u6210\uFF0C\u8C03\u7528\u72B6\u6001\u5F85\u6838\u5BF9"
     });
     await deps.client.call("craft_trace_finalize", { trace_id: traceId, status: "failed", summary: "\u7559\u51FA\u8BC4\u6D4B\u6807\u7B7E\u5904\u7406\u672A\u5B8C\u6210" });
@@ -3522,7 +3983,7 @@ import { createHash as createHash7 } from "node:crypto";
 import { basename as basename2, dirname as dirname10, join as join8 } from "node:path";
 var SCHEMA6 = "craft.experience-classification-attempts.v1";
 var ENTRY_SCHEMA = "craft.experience-classification-attempt.v2";
-var DIGEST2 = /^sha256:[a-f0-9]{64}$/u;
+var DIGEST3 = /^sha256:[a-f0-9]{64}$/u;
 var IDENTIFIER = /^[A-Za-z0-9._:-]{1,200}$/u;
 var MAX_ENTRIES2 = 500;
 function validCursor(value) {
@@ -3531,7 +3992,7 @@ function validCursor(value) {
 function validFailure(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const item = value;
-  return DIGEST2.test(String(item.attempt_digest)) && typeof item.classifier_version === "string" && Boolean(item.classifier_version.trim()) && typeof item.failure_stage === "string" && /^[a-z][a-z0-9_]{0,63}$/u.test(item.failure_stage) && typeof item.failure_code === "string" && /^[a-z][a-z0-9_]{0,63}$/u.test(item.failure_code) && typeof item.failed_at === "string" && Number.isFinite(Date.parse(item.failed_at)) && (item.trace_id === void 0 || typeof item.trace_id === "string" && IDENTIFIER.test(item.trace_id));
+  return DIGEST3.test(String(item.attempt_digest)) && typeof item.classifier_version === "string" && Boolean(item.classifier_version.trim()) && typeof item.failure_stage === "string" && /^[a-z][a-z0-9_]{0,63}$/u.test(item.failure_stage) && typeof item.failure_code === "string" && /^[a-z][a-z0-9_]{0,63}$/u.test(item.failure_code) && typeof item.failed_at === "string" && Number.isFinite(Date.parse(item.failed_at)) && (item.trace_id === void 0 || typeof item.trace_id === "string" && IDENTIFIER.test(item.trace_id));
 }
 function readAttempts2(path) {
   try {
@@ -3563,8 +4024,8 @@ function checkStateDirectory2(path) {
   }
 }
 function attemptFile(path, ticketId) {
-  const hash3 = createHash7("sha256").update(ticketId).digest("hex");
-  return { path: join8(dirname10(path), `${basename2(path)}.entries`, `${hash3}.json`), ticket_digest: `sha256:${hash3}` };
+  const hash2 = createHash7("sha256").update(ticketId).digest("hex");
+  return { path: join8(dirname10(path), `${basename2(path)}.entries`, `${hash2}.json`), ticket_digest: `sha256:${hash2}` };
 }
 function readAttempt(path, ticketId) {
   const entry = attemptFile(path, ticketId);
@@ -3593,7 +4054,7 @@ function readAttempt(path, ticketId) {
   }
 }
 function experienceClassificationSuppression(path, ticketId, attemptDigest, classifierVersion) {
-  if (!IDENTIFIER.test(ticketId) || !DIGEST2.test(attemptDigest) || typeof classifierVersion !== "string" || !classifierVersion.trim()) {
+  if (!IDENTIFIER.test(ticketId) || !DIGEST3.test(attemptDigest) || typeof classifierVersion !== "string" || !classifierVersion.trim()) {
     throw new Error("Experience classification attempt identity is invalid");
   }
   checkStateDirectory2(path);
@@ -4308,11 +4769,27 @@ async function runLearningTick(deps, syncKnowledge = false) {
 function learningTickStatus(result, once) {
   const sessionCollection = result.session_collection && typeof result.session_collection === "object" ? result.session_collection : null;
   const sessionCollectionFailure = typeof sessionCollection?.failure_kind === "string" ? sessionCollection.failure_kind : null;
+  const sessionEvidenceIncomplete = Boolean(sessionCollection?.evidence_reconciliation && typeof sessionCollection.evidence_reconciliation === "object" && sessionCollection.evidence_reconciliation.status === "partial");
   const experienceFailure = typeof result.failure_kind === "string" ? result.failure_kind : null;
   const experienceClassification = result.scenario_classification && typeof result.scenario_classification === "object" ? result.scenario_classification : null;
   const experienceReconciliation = experienceClassification?.reconciliation_pending === true;
   const knowledge = result.knowledge && typeof result.knowledge === "object" ? result.knowledge : null;
   const knowledgeFailure = typeof knowledge?.failure_kind === "string" ? knowledge.failure_kind : null;
+  const pendingKnowledge = [];
+  for (const [key2, label] of [["task_candidates", "candidate"], ["evaluation_cases", "evaluation"]]) {
+    const value = knowledge?.[key2];
+    if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+    const status = value.status;
+    if (["waiting_for_skip_reconciliation", "waiting_for_source_revalidation", "waiting_for_source_recheck", "waiting_for_consistent_excerpt", "waiting_for_call_reconciliation"].includes(String(status))) {
+      pendingKnowledge.push(`Craft Knowledge ${label} requires reconciliation (${String(status)}).
+`);
+    }
+    const blocked = value.blocked_skips;
+    if (key2 === "task_candidates" && status !== "waiting_for_skip_reconciliation" && Number.isSafeInteger(blocked) && Number(blocked) > 0 && Number(blocked) <= 5e4) {
+      pendingKnowledge.push(`Craft Knowledge candidate has ${Number(blocked)} skipped task(s) requiring reconciliation.
+`);
+    }
+  }
   const classification = knowledge?.classification && typeof knowledge.classification === "object" ? knowledge.classification : null;
   const classificationFailure = classification?.status === "failed" ? typeof classification.failure_kind === "string" && /^[A-Za-z][A-Za-z0-9]{0,31}$/u.test(classification.failure_kind) ? classification.failure_kind : "Error" : null;
   const classificationSkipped = classification?.skipped === true;
@@ -4363,12 +4840,14 @@ function learningTickStatus(result, once) {
   const diagnostics = [
     ...sessionCollectionFailure ? [`Craft Codex session collection failed (${sessionCollectionFailure}).
 `] : [],
+    ...sessionEvidenceIncomplete ? ["Craft Codex session evidence lookup is incomplete; reconciliation and cursor advancement were skipped.\n"] : [],
     ...experienceFailure ? [`Craft Experience learning pass failed (${experienceFailure}).
 `] : [],
     ...experienceReconciliation ? ["Craft Experience classification requires reconciliation (model_result_unknown).\n"] : [],
     ...experienceClassification?.reconciliation_checkpoint_failed === true ? ["Craft Experience reconciliation checkpoint could not be saved or verified.\n"] : [],
     ...knowledgeFailure ? [`Craft Knowledge learning pass failed (${knowledgeFailure}).
 `] : [],
+    ...pendingKnowledge,
     ...classificationFailure ? [`Craft Knowledge scenario classification failed (${classificationFailure}).
 `] : [],
     ...classificationSkip ? [`Craft Knowledge scenario classification skipped (${classificationSkip}); configure one ready model profile to resume.
@@ -4377,7 +4856,7 @@ function learningTickStatus(result, once) {
 `] : [],
     ...sourceIssues
   ].join("");
-  return { diagnostics, exit_code: once && (sessionCollectionFailure !== null || experienceFailure !== null || experienceReconciliation || knowledgeFailure !== null || classificationFailure !== null || classificationSkipped || failedClassifications > 0 || sourceIssues.length > 0) ? 1 : null };
+  return { diagnostics, exit_code: once && (sessionCollectionFailure !== null || sessionEvidenceIncomplete || experienceFailure !== null || experienceReconciliation || knowledgeFailure !== null || pendingKnowledge.length > 0 || classificationFailure !== null || classificationSkipped || failedClassifications > 0 || sourceIssues.length > 0) ? 1 : null };
 }
 function learningFailureKind(error) {
   return failureKind(error);
@@ -4387,6 +4866,7 @@ function learningFailureKind(error) {
 import { createHash as createHash8, randomUUID as randomUUID3 } from "node:crypto";
 import { link, mkdir as mkdir3, open as open3, readFile as readFile3, rename as rename2, unlink as unlink2 } from "node:fs/promises";
 import { join as join10 } from "node:path";
+import { DatabaseSync as DatabaseSync6 } from "node:sqlite";
 var workerLockFileSystem = { link, mkdir: mkdir3, open: open3, readFile: readFile3, rename: rename2, unlink: unlink2 };
 function learningWorkerOwnerAlive(pid, kill = process.kill) {
   try {
@@ -4453,13 +4933,51 @@ async function acquireComponentLock(path, fileSystem, isOwnerAlive, runtimeVersi
     await fileSystem.unlink(path);
   };
 }
+async function acquireGuardedComponentLock(path, fileSystem, isOwnerAlive, runtimeVersion) {
+  const database = new DatabaseSync6(`${path}.guard.sqlite`);
+  try {
+    database.exec("PRAGMA busy_timeout=0");
+    try {
+      database.exec("BEGIN IMMEDIATE");
+    } catch (error) {
+      if (error instanceof Error && /locked|busy/iu.test(error.message)) {
+        database.close();
+        return null;
+      }
+      throw error;
+    }
+    const release = await acquireComponentLock(path, fileSystem, isOwnerAlive, runtimeVersion);
+    if (!release) {
+      database.close();
+      return null;
+    }
+    return async () => {
+      try {
+        await release();
+      } finally {
+        database.close();
+      }
+    };
+  } catch (error) {
+    database.close();
+    throw error;
+  }
+}
 async function acquireLearningWorkerLocks(runtimeDir, components, dependencies = {}) {
   const fileSystem = { ...workerLockFileSystem, ...dependencies.file_system };
   const isOwnerAlive = dependencies.is_process_alive ?? learningWorkerOwnerAlive;
   await fileSystem.mkdir(runtimeDir, { recursive: true, mode: 448 });
   const releases = [];
   for (const component of [...new Set(components)].sort()) {
-    const release = await acquireComponentLock(join10(runtimeDir, `learning-worker-${component}.lock.json`), fileSystem, isOwnerAlive, dependencies.runtime_version);
+    let release;
+    try {
+      release = await acquireGuardedComponentLock(join10(runtimeDir, `learning-worker-${component}.lock.json`), fileSystem, isOwnerAlive, dependencies.runtime_version);
+    } catch (error) {
+      const cleanup = await Promise.allSettled(releases.reverse().map((item) => item()));
+      const failures = cleanup.filter((item) => item.status === "rejected");
+      if (failures.length) throw new AggregateError([error, ...failures.map((item) => item.reason)], "Learning worker lock acquisition and cleanup failed");
+      throw error;
+    }
     if (!release) {
       await Promise.all(releases.reverse().map((item) => item()));
       return null;
@@ -4472,20 +4990,24 @@ async function acquireLearningWorkerLocks(runtimeDir, components, dependencies =
 }
 
 // deploy/experience-learning/worker.ts
-async function collectCodexSessionsWithLock(client) {
+async function collectCodexSessionsWithLock(client, recheckVerified) {
   const release = await acquireLearningWorkerLocks(craftPaths(dataRoot()).runtimeDir, ["codex-session-collection"], { runtime_version: CRAFT_RELEASE_VERSION });
   if (!release) return { status: "skipped_locked", sessions_processed: 0, raw_content_stored: false };
   try {
     const collection = await runCodexSessionCollectionOnce();
-    const batch = await codexSessionEvidenceBatch();
+    const batch = await codexSessionEvidenceBatch({ recheck_verified: recheckVerified });
     const sessionIds = batch.session_ids;
     if (!sessionIds.length) return collection;
     const lookup = await client.call("craft_learning_cycle_task_evidence_list", { session_ids: sessionIds, limit: 1e4 });
-    const reconciliation = await reconcileCodexSessionTaskEvidence(lookup.evidence);
+    const excluded = lookup.excluded_unusable_receipt_count;
+    const evidenceLookup = { excluded_unusable_receipt_count: Number.isSafeInteger(excluded) && Number(excluded) >= 0 ? Number(excluded) : null };
+    if (lookup.partial !== false) return { ...collection, evidence_lookup: evidenceLookup, evidence_reconciliation: { status: "partial", reason: "evidence_lookup_incomplete_or_unknown" }, raw_content_stored: false };
+    const reconciliation = await reconcileCodexSessionTaskEvidence(lookup.evidence, { checked_session_ids: sessionIds });
     const evidenceBatch = await commitCodexSessionEvidenceBatch(sessionIds);
     return {
       ...collection,
       tasks_verified: Number(collection.tasks_verified) + Number(reconciliation.tasks_verified),
+      evidence_lookup: evidenceLookup,
       evidence_reconciliation: reconciliation,
       evidence_batch: evidenceBatch
     };
@@ -4600,7 +5122,7 @@ async function runLearningTick2(deps, syncKnowledge = false, components = ["expe
         }
         return {
           ...ingestion,
-          ...taskCandidates.status !== "idle" && taskCandidates.status !== "skipped" ? { task_candidates: taskCandidates } : {},
+          ...taskCandidates.status !== "idle" && (taskCandidates.status !== "skipped" || Number(taskCandidates.blocked_skips) > 0) ? { task_candidates: taskCandidates } : {},
           ...taskCandidates.status === "failed" ? { failure_kind: taskCandidates.failure_kind } : {}
         };
       }
@@ -4642,7 +5164,7 @@ async function runLearningTick2(deps, syncKnowledge = false, components = ["expe
 }
 function mcpCommandOptions(env = process.env) {
   const command = env.CRAFT_EXPERIENCE_MCP_COMMAND?.trim() || "craft-mcp";
-  let args = ["--surface", "component-context-daily"];
+  let args = ["--surface", "component-context-complete"];
   if (env.CRAFT_EXPERIENCE_MCP_ARGS) {
     const parsed = JSON.parse(env.CRAFT_EXPERIENCE_MCP_ARGS);
     if (!Array.isArray(parsed) || parsed.some((value) => typeof value !== "string")) throw new Error("CRAFT_EXPERIENCE_MCP_ARGS must be a JSON string array");
@@ -5069,6 +5591,7 @@ async function main() {
   let cleanupClient = null;
   let stopping = false;
   let lastKnowledgeSync = 0;
+  let lastVerifiedRecheck = 0;
   let idleExperiencePasses = 0;
   let nextPollMs = pollMs;
   let wakePoll = null;
@@ -5094,13 +5617,16 @@ async function main() {
     await client.initialize();
     do {
       const syncKnowledge = knowledgeEnabled && Date.now() - lastKnowledgeSync >= knowledgePollMs;
+      const recheckVerified = Date.now() - lastVerifiedRecheck >= 3e5;
       const modelTransport = createLearningModelTransport(process.env.CRAFT_LEARNING_MODEL_HOST);
       const result = await runLearningTick2(
         { client, ...modelTransport ? { transport: modelTransport } : {} },
         syncKnowledge,
         components,
-        () => collectCodexSessionsWithLock(client)
+        () => collectCodexSessionsWithLock(client, recheckVerified)
       );
+      const sessionCollection = result.session_collection;
+      if (recheckVerified && sessionCollection && !sessionCollection.failure_kind && sessionCollection.status !== "skipped_locked" && sessionCollection.evidence_reconciliation?.status !== "partial") lastVerifiedRecheck = Date.now();
       const idlePass = Number(experienceEnabled) * Number(!learningWorkFound(result));
       idleExperiencePasses = idlePass * (idleExperiencePasses + 1);
       const experienceNextPollMs = learningPollInterval(experiencePollMs, idleExperiencePasses);

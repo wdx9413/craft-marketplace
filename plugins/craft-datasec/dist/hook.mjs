@@ -215,16 +215,24 @@ import { constants, closeSync as closeSync3, fstatSync, linkSync as linkSync2, l
 import { join as join3 } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 var TOKEN = /\[CRAFT_DATASEC_[a-z0-9_]+_[a-f0-9]{32}\]/g;
+function isPrivateDirectory(stat, platform = process.platform, uid = process.getuid?.()) {
+  if (!stat.isDirectory() || stat.isSymbolicLink()) return false;
+  return platform === "win32" || (stat.mode & 63) === 0 && stat.uid === uid;
+}
+function isPrivateFile(stat, platform = process.platform, uid = process.getuid?.()) {
+  if (!stat.isFile()) return false;
+  return platform === "win32" || (stat.mode & 63) === 0 && stat.uid === uid;
+}
 function privateDirectory(path) {
   mkdirSync3(path, { recursive: true, mode: 448 });
   const stat = lstatSync3(path);
-  if (!stat.isDirectory() || stat.isSymbolicLink() || (stat.mode & 63) !== 0 || stat.uid !== process.getuid()) throw new Error("Unsafe vault directory");
+  if (!isPrivateDirectory(stat)) throw new Error("Unsafe vault directory");
 }
 function openPrivate(path, flags = constants.O_RDONLY) {
   const fd = openSync3(path, flags | constants.O_NOFOLLOW, 384);
   try {
     const stat = fstatSync(fd);
-    if (!stat.isFile() || (stat.mode & 63) !== 0 || stat.uid !== process.getuid()) throw new Error("Unsafe vault file");
+    if (!isPrivateFile(stat)) throw new Error("Unsafe vault file");
     return fd;
   } catch (error) {
     closeSync3(fd);
