@@ -16,7 +16,7 @@ function dataRoot(env = process.env) {
   const settingsPath = env.CRAFT_SETTINGS_FILE?.trim() || join(defaultRoot, "settings.json");
   if (existsSync(settingsPath)) {
     try {
-      const value = JSON.parse(readFileSync(settingsPath, "utf8"));
+      const value = JSON.parse(readFileSync(settingsPath, "utf8").replace(/^\uFEFF/u, ""));
       if (value && typeof value === "object" && !Array.isArray(value)) {
         const candidate = value.dataRoot;
         if (typeof candidate === "string" && candidate.trim()) return resolve(candidate);
@@ -359,11 +359,18 @@ function handleHook(host, event, input, root, rules = DEFAULT_RULES) {
   const getVault = () => vault ??= new TokenVault(root, input.session_id ?? "");
   const apply = () => {
     if (input.hook_event_name !== event) throw new Error("Mismatched hook event");
-    if (event === "UserPromptSubmit") return {};
+    if (event === "UserPromptSubmit") {
+      const detector = new Sanitizer(rules, () => "[REDACTED]");
+      detector.value(input.prompt ?? "");
+      return detector.count ? { decision: "block", reason: "craft-datasec\uFF1A\u6D88\u606F\u5305\u542B\u654F\u611F\u4FE1\u606F\uFF0C\u8BF7\u5148\u8131\u654F\u540E\u518D\u53D1\u9001\u3002" } : {};
+    }
     const sanitizer = new Sanitizer(rules, (name, text) => getVault().token(name, text));
     if (event === "PreToolUse") {
       const args = input.tool_input ?? {};
       const name = input.tool_name ?? "";
+      const detector = new Sanitizer(rules, () => "[REDACTED]");
+      detector.value(args);
+      if (detector.count) return denied("craft-datasec\uFF1A\u5DE5\u5177\u53C2\u6570\u5305\u542B\u654F\u611F\u4FE1\u606F\uFF0C\u8BF7\u5148\u8131\u654F\u540E\u518D\u8C03\u7528\u3002");
       if (name === "Read" && typeof args === "object" && args !== null && !Array.isArray(args) && typeof args.file_path === "string" && BINARY.test(extname(args.file_path))) {
         return denied("craft-datasec\uFF1A\u6B64\u6587\u4EF6\u4E0D\u662F\u53D7\u652F\u6301\u7684\u7EAF\u6587\u672C\uFF0C\u8BF7\u5148\u5728\u672C\u5730\u5BFC\u51FA\u7EAF\u6587\u672C\u5E76\u8131\u654F\u3002");
       }
@@ -385,7 +392,7 @@ function handleHook(host, event, input, root, rules = DEFAULT_RULES) {
       const replacement = input.tool_response ?? null;
       output = { ...hidden(host, FAILURE, blankResult(replacement)), continue: false, stopReason: FAILURE };
     } else if (event === "UserPromptSubmit") {
-      output = {};
+      output = { decision: "block", reason: FAILURE };
     } else {
       output = denied(FAILURE);
     }
@@ -411,7 +418,7 @@ function runDataSecHookCli(args, raw, env = process.env, onTiming) {
     onTiming?.("input_parse_ms", performance.now() - parseStarted);
     const rulesStarted = performance.now();
     const config = env.CRAFT_DATASEC_RULES;
-    const rules = event === "UserPromptSubmit" ? [] : config ? JSON.parse(readFileSync3(config, "utf8")) : DEFAULT_RULES;
+    const rules = config ? JSON.parse(readFileSync3(config, "utf8")) : DEFAULT_RULES;
     onTiming?.("rules_load_ms", performance.now() - rulesStarted);
     const root = env.CRAFT_DATASEC_DIR ?? join4(homedir2(), ".craft-datasec");
     const handlerStarted = performance.now();
