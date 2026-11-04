@@ -152,7 +152,7 @@ import { extname } from "node:path";
 var DEFAULT_RULES = [
   { name: "phone", pattern: String.raw`(?<!\d)(?:\+?86[ -]?)?1[3-9](?:[ -]?\d){9}(?!\d)` },
   { name: "identity", pattern: String.raw`(?<!\d)[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx](?!\d)`, enabled: false },
-  { name: "email", pattern: String.raw`[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}`, flags: "i" },
+  { name: "email", pattern: String.raw`[A-Z0-9][A-Z0-9._%+-]*@[A-Z0-9.-]+\.[A-Z]{2,}`, flags: "i" },
   { name: "ipv4", pattern: String.raw`(?<![\d.])(?:(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?![\d.])`, enabled: false },
   { name: "bank", pattern: String.raw`(?<!\d)(?:62|4|5[1-5])\d{14,17}(?!\d)`, enabled: false },
   { name: "api_key", pattern: String.raw`\b(?:api[_-]?(?:key|secret)|access[_-]?token|secret[_-]?key|authorization)\b["']?\s*[:=]\s*["']?(?:Bearer\s+)?([A-Z0-9_./+=~-]{8,})`, flags: "i", group: 1, enabled: false },
@@ -361,15 +361,11 @@ function restore(value, vault) {
   return value;
 }
 function handleHook(host, event, input, root, rules = DEFAULT_RULES) {
+  if (event === "UserPromptSubmit") return {};
   let vault;
   const getVault = () => vault ??= new TokenVault(root, input.session_id ?? "");
   const apply = () => {
     if (input.hook_event_name !== event) throw new Error("Mismatched hook event");
-    if (event === "UserPromptSubmit") {
-      const detector = new Sanitizer(rules, () => "[REDACTED]");
-      detector.value(input.prompt ?? "");
-      return detector.count ? { decision: "block", reason: "craft-datasec\uFF1A\u6D88\u606F\u5305\u542B\u654F\u611F\u4FE1\u606F\uFF0C\u8BF7\u5148\u8131\u654F\u540E\u518D\u53D1\u9001\u3002" } : {};
-    }
     const sanitizer = new Sanitizer(rules, (name, text) => getVault().token(name, text));
     if (event === "PreToolUse") {
       const args = input.tool_input ?? {};
@@ -397,8 +393,6 @@ function handleHook(host, event, input, root, rules = DEFAULT_RULES) {
     if (event === "PostToolUse") {
       const replacement = input.tool_response ?? null;
       output = { ...hidden(host, FAILURE, blankResult(replacement)), continue: false, stopReason: FAILURE };
-    } else if (event === "UserPromptSubmit") {
-      output = { decision: "block", reason: FAILURE };
     } else {
       output = denied(FAILURE);
     }
@@ -424,7 +418,7 @@ function runDataSecHookCli(args, raw, env = process.env, onTiming) {
     onTiming?.("input_parse_ms", performance.now() - parseStarted);
     const rulesStarted = performance.now();
     const config = env.CRAFT_DATASEC_RULES;
-    const rules = config ? JSON.parse(readFileSync3(config, "utf8")) : enabledBuiltinRules(env.CRAFT_DATASEC_ENABLE_RULES);
+    const rules = event === "UserPromptSubmit" ? [] : config ? JSON.parse(readFileSync3(config, "utf8")) : enabledBuiltinRules(env.CRAFT_DATASEC_ENABLE_RULES);
     onTiming?.("rules_load_ms", performance.now() - rulesStarted);
     const root = env.CRAFT_DATASEC_DIR ?? join4(homedir2(), ".craft-datasec");
     const handlerStarted = performance.now();
