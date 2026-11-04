@@ -1,10 +1,10 @@
 # craft-datasec
 
-独立的本地文本脱敏插件。仅包含同步 hook 和脱敏程序，不加载 Craft Context、知识、记忆、模型或 MCP 服务。当前版本 `0.1.4`。
+独立的本地文本脱敏插件。仅包含同步 hook 和脱敏程序，不加载 Craft Context、知识、记忆、模型或 MCP 服务。当前版本 `0.1.5`。
 
 ## 处理范围
 
-- 工具成功返回的文本：手机号、身份证、邮箱、IPv4、银行卡、API 密钥、密码、JWT、PEM 私钥。姓名规则默认关闭。
+- 默认检测手机号和邮箱；身份证、银行卡、IPv4、API 密钥、密码、JWT、PEM 私钥和姓名规则默认关闭，可按需启用。
 - 扫描 Java、Python、Markdown 等文本，不按源码扩展名跳过。
 - 邮箱保留本地部分的首字符和完整域名，其余本地部分统一显示为 `*`；例如 `w1231321312` + `@123.com` 显示为 `w*` + `@123.com`。邮箱不创建可还原映射。
 - 除邮箱外，同一会话的相同敏感值使用相同占位符；不同会话独立。凭据规则保留字段名，仅替换值。
@@ -68,6 +68,7 @@ Codex 使用 `.codex-plugin/plugin.json` 和 `hooks/codex-hooks.json`。加载�
 
 - `CRAFT_DATASEC_DIR`：独立私有映射目录。
 - `CRAFT_DATASEC_RULES`：受信任的本地规则 JSON 文件路径。使用后完全替换默认规则；不自动读取仓库提供的规则。
+- `CRAFT_DATASEC_ENABLE_RULES`：用逗号分隔要额外启用的内置规则名，例如 `ipv4,password`；默认的 `phone,email` 保持启用。可选名称为 `identity,bank,ipv4,api_key,password,jwt,private_key,chinese_name`。当设置 `CRAFT_DATASEC_RULES` 时，以该自定义文件为准，此变量不生效。未知规则名或空值会使扫描失败并阻断。
 
 规则是数组，每项包含 `name`、JavaScript 正则 `pattern`，以及可选的 `flags`、`group`、`enabled`。`group` 指定只替换某个捕获组，默认替换整个匹配。`email` 规则的匹配内容须是完整邮箱，会按上述方式部分脱敏；其它规则使用可还原占位符。默认规则见 `capability/craft-datasec/rules.ts`。无效规则或全部关闭不会静默放行。自定义正则需要避免回溯过多的表达式。
 

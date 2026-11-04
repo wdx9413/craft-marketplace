@@ -151,16 +151,22 @@ import { extname } from "node:path";
 // capability/craft-datasec/rules.ts
 var DEFAULT_RULES = [
   { name: "phone", pattern: String.raw`(?<!\d)(?:\+?86[ -]?)?1[3-9](?:[ -]?\d){9}(?!\d)` },
-  { name: "identity", pattern: String.raw`(?<!\d)[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx](?!\d)` },
+  { name: "identity", pattern: String.raw`(?<!\d)[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx](?!\d)`, enabled: false },
   { name: "email", pattern: String.raw`[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}`, flags: "i" },
-  { name: "ipv4", pattern: String.raw`(?<![\d.])(?:(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?![\d.])` },
-  { name: "bank", pattern: String.raw`(?<!\d)(?:62|4|5[1-5])\d{14,17}(?!\d)` },
-  { name: "api_key", pattern: String.raw`\b(?:api[_-]?(?:key|secret)|access[_-]?token|secret[_-]?key|authorization)\b["']?\s*[:=]\s*["']?(?:Bearer\s+)?([A-Z0-9_./+=~-]{8,})`, flags: "i", group: 1 },
-  { name: "password", pattern: String.raw`\b(?:password|passwd|pwd)\b["']?\s*[:=]\s*["']?([^\s"'\x60,;}{]{4,})`, flags: "i", group: 1 },
-  { name: "jwt", pattern: String.raw`\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}` },
-  { name: "private_key", pattern: String.raw`-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----` },
+  { name: "ipv4", pattern: String.raw`(?<![\d.])(?:(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?![\d.])`, enabled: false },
+  { name: "bank", pattern: String.raw`(?<!\d)(?:62|4|5[1-5])\d{14,17}(?!\d)`, enabled: false },
+  { name: "api_key", pattern: String.raw`\b(?:api[_-]?(?:key|secret)|access[_-]?token|secret[_-]?key|authorization)\b["']?\s*[:=]\s*["']?(?:Bearer\s+)?([A-Z0-9_./+=~-]{8,})`, flags: "i", group: 1, enabled: false },
+  { name: "password", pattern: String.raw`\b(?:password|passwd|pwd)\b["']?\s*[:=]\s*["']?([^\s"'\x60,;}{]{4,})`, flags: "i", group: 1, enabled: false },
+  { name: "jwt", pattern: String.raw`\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}`, enabled: false },
+  { name: "private_key", pattern: String.raw`-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----`, enabled: false },
   { name: "chinese_name", pattern: String.raw`姓名["'\s:：]+([\p{Script=Han}]{2,4})`, flags: "u", group: 1, enabled: false }
 ];
+function enabledBuiltinRules(names) {
+  if (names === void 0) return DEFAULT_RULES;
+  const requested = names.split(",").map((name) => name.trim()).filter(Boolean);
+  if (!requested.length || requested.some((name) => !DEFAULT_RULES.some((rule) => rule.name === name))) throw new Error("Unknown or empty built-in rule selection");
+  return DEFAULT_RULES.map((rule) => requested.includes(rule.name) ? { ...rule, enabled: true } : rule);
+}
 var Sanitizer = class {
   rules;
   token;
@@ -418,7 +424,7 @@ function runDataSecHookCli(args, raw, env = process.env, onTiming) {
     onTiming?.("input_parse_ms", performance.now() - parseStarted);
     const rulesStarted = performance.now();
     const config = env.CRAFT_DATASEC_RULES;
-    const rules = config ? JSON.parse(readFileSync3(config, "utf8")) : DEFAULT_RULES;
+    const rules = config ? JSON.parse(readFileSync3(config, "utf8")) : enabledBuiltinRules(env.CRAFT_DATASEC_ENABLE_RULES);
     onTiming?.("rules_load_ms", performance.now() - rulesStarted);
     const root = env.CRAFT_DATASEC_DIR ?? join4(homedir2(), ".craft-datasec");
     const handlerStarted = performance.now();
