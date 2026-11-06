@@ -316,7 +316,7 @@ function dataRoot(env = process.env) {
   const settingsPath = env.CRAFT_SETTINGS_FILE?.trim() || join(defaultRoot, "settings.json");
   if (existsSync(settingsPath)) {
     try {
-      const value = JSON.parse(readFileSync(settingsPath, "utf8"));
+      const value = JSON.parse(readFileSync(settingsPath, "utf8").replace(/^\uFEFF/u, ""));
       if (value && typeof value === "object" && !Array.isArray(value)) {
         const candidate = value.dataRoot;
         if (typeof candidate === "string" && candidate.trim()) return resolve(candidate);
@@ -371,9 +371,15 @@ function canonicalCandidatePath(path) {
   const suffix = [];
   while (!lstatSync(current, { throwIfNoEntry: false })) {
     suffix.unshift(basename(current));
-    current = dirname(current);
+    const parent = dirname(current);
+    if (parent === current) break;
+    current = parent;
   }
-  return resolve(realpathSync(current), ...suffix);
+  try {
+    return resolve(realpathSync(current), ...suffix);
+  } catch {
+    return resolve(current, ...suffix);
+  }
 }
 function verifyProjectMapping(directory, identity) {
   const mappingPath = join(directory, "project.json");
@@ -401,6 +407,18 @@ function existingProjectStorageDirectory(paths, projectRoot) {
   verifyProjectMapping(directory, identity);
   return directory;
 }
+async function renamePrivateJsonWithRetry(from, to) {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      await rename(from, to);
+      return;
+    } catch (error) {
+      const code = error.code;
+      if (attempt >= 20 || code !== "EPERM" && code !== "EBUSY" && code !== "EACCES") throw error;
+      await new Promise((resolve9) => setTimeout(resolve9, 20));
+    }
+  }
+}
 async function atomicPrivateJson(path, value, platform = process.platform) {
   const content = `${JSON.stringify(value, null, 2)}
 `;
@@ -419,7 +437,7 @@ async function atomicPrivateJson(path, value, platform = process.platform) {
       throw writeError;
     }
     await handle.close();
-    await rename(temporary, path);
+    await renamePrivateJsonWithRetry(temporary, path);
   } catch (error) {
     try {
       await unlink(temporary);
@@ -855,7 +873,7 @@ import { lstatSync as lstatSync4, readFileSync as readFileSync4, realpathSync as
 import { tmpdir } from "node:os";
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.131";
+var CRAFT_RELEASE_VERSION = "0.12.132";
 
 // core/knowledge-model-redaction.ts
 var SENSITIVE_MODEL_TEXT_PATTERNS = [
@@ -2617,7 +2635,13 @@ async function readCodexSessionTaskExcerpt(taskIdValue, options, env = process.e
   if (root === null) return { status: "ineligible", reason: "task_source_root_unavailable", raw_content_stored: false };
   const canonicalRoot = await realpath(root);
   const sourcePath = resolve5(root, ...task.source_path.split("/"));
-  const canonicalSource = await realpath(sourcePath);
+  let canonicalSource;
+  try {
+    canonicalSource = await realpath(sourcePath);
+  } catch (error) {
+    if (error.code === "ENOENT") return { status: "ineligible", reason: "task_source_span_invalid_or_oversized", raw_content_stored: false };
+    throw error;
+  }
   if (!canonicalSource.startsWith(`${canonicalRoot}${sep2}`)) throw new Error("Codex task source escaped the sessions root");
   const indexedSource = state.sources[sourceKey(task.source_path, task.source_root === "archived_sessions")];
   if (!indexedSource || indexedSource.discovery_status !== "discovered" || indexedSource.verification_artifact_index_version !== 3 || indexedSource.processed_bytes < indexedSource.size)
