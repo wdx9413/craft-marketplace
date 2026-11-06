@@ -873,7 +873,7 @@ import { lstatSync as lstatSync4, readFileSync as readFileSync4, realpathSync as
 import { tmpdir } from "node:os";
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.12.132";
+var CRAFT_RELEASE_VERSION = "0.15.0";
 
 // core/knowledge-model-redaction.ts
 var SENSITIVE_MODEL_TEXT_PATTERNS = [

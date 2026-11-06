@@ -1,4 +1,5 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { join, resolve, sep } from "node:path";
 import { sourceProvenance } from "./source-provenance.mjs";
 
@@ -97,6 +98,25 @@ const OWNED = ["plugin.json", "mcp.json", "dist", "hooks", "assets", ".mcp.json"
 const generatedCache = (name) => name === "__pycache__" || name.endsWith(".pyc") || name.endsWith(".pyo");
 
 const sourceRevision = () => sourceProvenance(sourceRepo, contract.version, process.env.CRAFT_SOURCE_COMMIT);
+const componentSourceCommits = () => {
+  const archivedCommit = process.env.CRAFT_SOURCE_COMMIT;
+  if (archivedCommit !== undefined && !/^[a-f0-9]{40}$/u.test(archivedCommit)) throw new Error("CRAFT_SOURCE_COMMIT must be a full Git SHA");
+  return Object.fromEntries(sourceComponents.map((component) => {
+    const commit = archivedCommit ?? execFileSync("git", ["-C", sourceRepo, "log", "-1", "--format=%H", "--", `plugins/${component}`], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    if (!/^[a-f0-9]{40}$/u.test(commit)) throw new Error(`source commit is unavailable for plugins/${component}`);
+    return [component, commit];
+  }));
+};
+const readmeVersionLine = () => readFileSync(join(marketplaceRoot, "README.md"), "utf8").split(/\r?\n/u).find((line) => /^- Craft version/u.test(line));
+const updateReadmeVersion = () => {
+  const path = join(marketplaceRoot, "README.md");
+  const readme = readFileSync(path, "utf8");
+  const lines = readme.split(/\r?\n/u);
+  const index = lines.findIndex((line) => /^- Craft version/u.test(line));
+  if (index < 0) throw new Error("README.md is missing its Craft version line");
+  lines[index] = `- Craft version：\`${contract.version}\``;
+  writeFileSync(path, lines.join(readme.includes("\r\n") ? "\r\n" : "\n"), "utf8");
+};
 
 const sameFile = (left, right) => existsSync(right)
   && statSync(left).isFile() && statSync(right).isFile()
@@ -139,6 +159,8 @@ const verifyMarketplace = () => {
     || release.source_state !== revision.source_state
     || release.source_tree_digest !== revision.source_tree_digest
     || release.source_note !== revision.source_note) throw new Error("release.json differs from the source distribution contract");
+  if (JSON.stringify(release.component_source_commits) !== JSON.stringify(componentSourceCommits())) throw new Error("release.json component source commit is stale");
+  if (readmeVersionLine() !== `- Craft version：\`${contract.version}\``) throw new Error("README.md Craft version differs from the source distribution contract");
   for (const manifestPath of [".agents/plugins/marketplace.json"]) {
     const manifest = JSON.parse(readFileSync(join(marketplaceRoot, manifestPath), "utf8"));
     if (manifest.version !== contract.version || JSON.stringify(manifest.plugins) !== JSON.stringify(marketplaceEntries())) throw new Error(`${manifestPath} differs from the source distribution contract`);
@@ -210,6 +232,8 @@ claudeMarketplace.version = contract.version;
 claudeMarketplace.plugins = claudeEntries();
 writeFileSync(claudeMarketplacePath, `${JSON.stringify(claudeMarketplace, null, 2)}\n`, "utf8");
 report.push(`updated  .claude-plugin/marketplace.json products -> ${sourceComponents.join(", ")}`);
+updateReadmeVersion();
+report.push(`updated  README.md Craft version -> ${contract.version}`);
 
 // This distribution must contain exactly the explicitly exported components.  The source can
 // retain additional private/internal products without leaking them into either marketplace.
@@ -247,6 +271,8 @@ const release = JSON.parse(readFileSync(releasePath, "utf8"));
 release.components = expected;
 release.claude_components = expected.filter((name) => existsSync(join(marketplaceRoot, "plugins", name, ".claude-plugin")));
 release.version = contract.version;
+release.component_source_commits = componentSourceCommits();
+report.push(`updated  release.json component source commits -> ${expected.map((name) => `${name}@${release.component_source_commits[name].slice(0, 12)}`).join(", ")}`);
 
 /**
  * The checkout these payloads were synchronized from (not a build attestation).

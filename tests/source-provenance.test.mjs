@@ -56,8 +56,13 @@ test("sync --check rejects an untracked source addition and a forged source-tree
     mkdirSync(join(market, "plugins")); cpSync(plugin, join(market, "plugins", product.name), { recursive: true });
     put(join(market, ".agents", "plugins", "marketplace.json"), { version: "0.12.37", plugins: [{ name: product.name, source: { source: "local", path: `./plugins/${product.name}` }, policy: { installation: "AVAILABLE", authentication: "ON_INSTALL" }, category: product.category }] });
     put(join(market, ".claude-plugin", "marketplace.json"), { version: "0.12.37", plugins: [{ name: product.name, description: "fixture", source: `./plugins/${product.name}`, category: "productivity" }] });
-    const writeRelease = (override = {}) => put(join(market, "release.json"), { version: "0.12.37", components: [product.name], claude_components: [product.name], ...sourceProvenance(source, "0.12.37"), ...override });
+    const sourceCommit = execFileSync("git", ["-C", source, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+    const readme = join(market, "README.md"); writeFileSync(readme, "- Craft version：`0.12.37`\n");
+    const writeRelease = (override = {}) => put(join(market, "release.json"), { version: "0.12.37", components: [product.name], claude_components: [product.name], component_source_commits: { [product.name]: sourceCommit }, ...sourceProvenance(source, "0.12.37"), ...override });
     const check = () => execFileSync(process.execPath, [resolve(import.meta.dirname, "../scripts/sync-from-craft.mjs"), join(source, "plugins"), "--check"], { cwd: market, stdio: "pipe", encoding: "utf8" });
+    writeRelease(); assert.match(check(), /no files changed/);
+    writeFileSync(readme, "- Craft version：`0.12.36`\n"); assert.throws(check, /README\.md.*version/u); writeFileSync(readme, "- Craft version：`0.12.37`\n");
+    writeRelease({ component_source_commits: { [product.name]: "b".repeat(40) } }); assert.throws(check, /component source commit/u);
     writeRelease(); assert.match(check(), /no files changed/);
     writeFileSync(join(source, "new-runtime.ts"), "untracked implementation");
     assert.throws(check, /release.json differs/);
@@ -71,5 +76,11 @@ test("sync --check rejects an untracked source addition and a forged source-tree
     execFileSync(process.execPath, [resolve(import.meta.dirname, "../scripts/sync-from-craft.mjs"), join(source, "plugins"), "--apply"], { cwd: market, stdio: "pipe" });
     assert.equal(existsSync(obsolete), true, "marketplace-owned Skills are preserved when the source does not track them"); assert.equal(readFileSync(notes, "utf8"), "market-owned notes\n"); assert.match(check(), /no files changed/);
     assert.equal(existsSync(stalePortable), false);
+    writeFileSync(readme, "- Craft version：`0.12.36`\n");
+    writeRelease({ component_source_commits: { [product.name]: "b".repeat(40) } });
+    execFileSync(process.execPath, [resolve(import.meta.dirname, "../scripts/sync-from-craft.mjs"), join(source, "plugins"), "--apply"], { cwd: market, stdio: "pipe" });
+    assert.equal(readFileSync(readme, "utf8"), "- Craft version：`0.12.37`\n");
+    assert.equal(JSON.parse(readFileSync(join(market, "release.json"), "utf8")).component_source_commits[product.name], sourceCommit);
+    assert.match(check(), /no files changed/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
