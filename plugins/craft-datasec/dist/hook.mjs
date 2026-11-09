@@ -108,6 +108,7 @@ function beginHookRuntimeDiagnostic(args) {
     request_id: args.request_id,
     member: args.member,
     event: args.event,
+    ...args.host ? { host: args.host } : {},
     started_at: wallClock(),
     ...sessionHash ? { session_hash: sessionHash } : {}
   };
@@ -455,7 +456,7 @@ var result = runIfInvoked(process.argv[1], fileURLToPath(import.meta.url), () =>
     return runDataSecHookCli(args, readFileSync3(0, "utf8"));
   }
   try {
-    diagnostic = beginHookRuntimeDiagnostic({ data_root: craftPaths().root, request_id: randomUUID(), member: "datasec", event });
+    diagnostic = beginHookRuntimeDiagnostic({ data_root: craftPaths().root, request_id: randomUUID(), member: "datasec", event, host });
   } catch {
   }
   const readStarted = performance.now();

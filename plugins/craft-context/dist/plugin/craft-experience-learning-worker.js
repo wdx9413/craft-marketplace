@@ -7,304 +7,8 @@ import { createInterface } from "node:readline";
 import { join as join11 } from "node:path";
 import { pathToFileURL } from "node:url";
 
-// common/craft-common-base/src/scope-policy.ts
-var COGNITIVE_SCOPE_KINDS = ["user", "project", "workspace", "task", "session", "team", "organization", "global"];
-
-// common/craft-common-base/src/validation.ts
-function text(value, name) {
-  if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
-  return value.trim();
-}
-var SCOPE_KINDS = new Set(COGNITIVE_SCOPE_KINDS);
-
-// common/craft-common-base/src/digest.ts
-import { createHash } from "node:crypto";
-function digestJson(value) {
-  return `sha256:${createHash("sha256").update(JSON.stringify(value)).digest("hex")}`;
-}
-function stableDigest(value) {
-  return stableDigestStreaming(value);
-}
-function stableDigestStreaming(value) {
-  const hash2 = createHash("sha256");
-  const keyOrderCache = /* @__PURE__ */ new Map();
-  let chunks = [];
-  let chunkLength = 0;
-  const flush = () => {
-    hash2.update(chunks.join(""));
-    chunks = [];
-    chunkLength = 0;
-  };
-  const append = (chunk) => {
-    chunks.push(chunk);
-    chunkLength += chunk.length;
-    if (chunkLength >= 32768) flush();
-  };
-  const write = (item) => {
-    if (Array.isArray(item)) {
-      append("[");
-      for (let index = 0; index < item.length; index++) {
-        if (index) append(",");
-        write(item[index]);
-      }
-      append("]");
-      return true;
-    }
-    if (item && typeof item === "object") {
-      const entries = Object.entries(item);
-      const signature = JSON.stringify(entries.map(([key2]) => key2));
-      let orderedKeys = keyOrderCache.get(signature);
-      if (!orderedKeys) {
-        orderedKeys = entries.map(([key2]) => key2).sort((left, right) => left.localeCompare(right, "zh"));
-        if (keyOrderCache.size < 256) keyOrderCache.set(signature, orderedKeys);
-      }
-      const values = new Map(entries);
-      append("{");
-      orderedKeys.forEach((key2, index) => {
-        if (index) append(",");
-        append(`${JSON.stringify(key2)}:`);
-        if (!write(values.get(key2))) append("undefined");
-      });
-      append("}");
-      return true;
-    }
-    const serialized = JSON.stringify(item);
-    if (serialized === void 0) return false;
-    append(serialized);
-    return true;
-  };
-  if (!write(value)) throw new Error(`canonicalJson cannot serialize ${typeof value}`);
-  flush();
-  return `sha256:${hash2.digest("hex")}`;
-}
-
-// core/model-gateway.ts
-var NO_CONTEXT_CACHE = { mode: "none", requires_exact_prefix: false, usage_fields: "none" };
-var DEEPSEEK_CONTEXT_CACHE = { mode: "automatic_prefix", requires_exact_prefix: true, usage_fields: "deepseek" };
-var PROVIDER_NAME = /^[a-z][a-z0-9-]{0,31}$/u;
-var ENV_NAME = /^[A-Z_][A-Z0-9_]*$/u;
-var TIER_ORDER = ["frontier", "standard", "small"];
-var PROVIDER_CATALOG = [
-  { provider: "codex-cli", label: "Codex CLI Host", protocol: "openai-compatible", base_url: "https://codex-cli-host.invalid", api_key_env: "CODEX_CLI_AUTH_STORE", chat_path: "/host/exec", models: { small: "gpt-6-luna" }, cost_hint: 1, supports_tools: false, host_managed_auth: true, context_cache: NO_CONTEXT_CACHE },
-  { provider: "deepseek", label: "DeepSeek", protocol: "openai-compatible", base_url: "https://api.deepseek.com/v1", api_key_env: "DEEPSEEK_API_KEY", chat_path: "/chat/completions", models: { small: "deepseek-chat", standard: "deepseek-chat", frontier: "deepseek-reasoner" }, cost_hint: 1, supports_tools: true, context_cache: DEEPSEEK_CONTEXT_CACHE },
-  { provider: "volcengine", label: "\u706B\u5C71\u5F15\u64CE\u65B9\u821F", protocol: "openai-compatible", base_url: "https://ark.cn-beijing.volces.com/api/v3", api_key_env: "ARK_API_KEY", chat_path: "/chat/completions", models: { small: "doubao-lite", standard: "doubao-pro", frontier: "doubao-pro-32k" }, cost_hint: 2, supports_tools: true, context_cache: NO_CONTEXT_CACHE },
-  { provider: "qwen", label: "\u901A\u4E49\u5343\u95EE", protocol: "openai-compatible", base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1", api_key_env: "DASHSCOPE_API_KEY", chat_path: "/chat/completions", models: { small: "qwen-turbo", standard: "qwen-plus", frontier: "qwen-max" }, cost_hint: 2, supports_tools: true, context_cache: NO_CONTEXT_CACHE },
-  { provider: "kimi", label: "Kimi (Moonshot)", protocol: "openai-compatible", base_url: "https://api.moonshot.cn/v1", api_key_env: "MOONSHOT_API_KEY", chat_path: "/chat/completions", models: { small: "moonshot-v1-8k", standard: "moonshot-v1-32k", frontier: "moonshot-v1-128k" }, cost_hint: 2, supports_tools: true, context_cache: NO_CONTEXT_CACHE },
-  { provider: "glm", label: "\u667A\u8C31 GLM", protocol: "openai-compatible", base_url: "https://open.bigmodel.cn/api/paas/v4", api_key_env: "ZHIPU_API_KEY", chat_path: "/chat/completions", models: { small: "glm-4-flash", standard: "glm-4-air", frontier: "glm-4-plus" }, cost_hint: 1, supports_tools: true, context_cache: NO_CONTEXT_CACHE },
-  { provider: "minimax", label: "MiniMax", protocol: "openai-compatible", base_url: "https://api.minimax.chat/v1", api_key_env: "MINIMAX_API_KEY", chat_path: "/text/chatcompletion_v2", models: { standard: "abab6.5s-chat", frontier: "abab6.5-chat" }, cost_hint: 2, supports_tools: false, context_cache: NO_CONTEXT_CACHE },
-  { provider: "gpt", label: "OpenAI GPT", protocol: "openai-compatible", base_url: "https://api.openai.com/v1", api_key_env: "OPENAI_API_KEY", chat_path: "/chat/completions", models: { small: "gpt-4o-mini", standard: "gpt-4o", frontier: "gpt-4.1" }, cost_hint: 6, supports_tools: true, context_cache: NO_CONTEXT_CACHE },
-  { provider: "claude", label: "Anthropic Claude", protocol: "anthropic", base_url: "https://api.anthropic.com/v1", api_key_env: "ANTHROPIC_API_KEY", chat_path: "/messages", models: { small: "claude-haiku-4", standard: "claude-sonnet-4", frontier: "claude-opus-4" }, cost_hint: 7, supports_tools: true, context_cache: NO_CONTEXT_CACHE }
-];
-function httpUrl(value, name) {
-  const raw = text(value, name);
-  let url;
-  try {
-    url = new URL(raw);
-  } catch {
-    throw new Error(`${name} must be a valid HTTP(S) URL`);
-  }
-  if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.search || url.hash) {
-    throw new Error(`${name} must be an HTTP(S) URL without credentials or query data`);
-  }
-  return raw.replace(/\/+$/u, "");
-}
-function cacheSpec(provider, baseUrl, value) {
-  if (value === void 0) return provider === "deepseek" || new URL(baseUrl).hostname === "api.deepseek.com" ? DEEPSEEK_CONTEXT_CACHE : NO_CONTEXT_CACHE;
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("context_cache must be an object");
-  const input = value;
-  const mode = text(input.mode, "context_cache.mode");
-  const usageFields = text(input.usage_fields ?? "none", "context_cache.usage_fields");
-  if (mode !== "none" && mode !== "automatic_prefix") throw new Error("context_cache.mode is unsupported");
-  if (usageFields !== "none" && usageFields !== "deepseek") throw new Error("context_cache.usage_fields is unsupported");
-  if (typeof input.requires_exact_prefix !== "boolean") throw new Error("context_cache.requires_exact_prefix must be boolean");
-  return { mode, usage_fields: usageFields, requires_exact_prefix: input.requires_exact_prefix };
-}
-function defineProvider(input) {
-  const provider = text(input.provider, "provider");
-  if (!PROVIDER_NAME.test(provider)) throw new Error(`Unsupported provider name: ${provider}`);
-  const protocol = text(input.protocol, "protocol");
-  if (protocol !== "openai-compatible" && protocol !== "anthropic") throw new Error(`Unsupported provider protocol: ${protocol}`);
-  const apiKeyEnv = text(input.api_key_env, "api_key_env");
-  if (!ENV_NAME.test(apiKeyEnv)) throw new Error("api_key_env must be an uppercase environment-variable name");
-  const rawModels = input.models ?? {};
-  if (typeof rawModels !== "object" || Array.isArray(rawModels)) throw new Error("provider models must be an object");
-  const models = {};
-  for (const tier of TIER_ORDER) {
-    const value = rawModels[tier];
-    if (value !== void 0 && value !== null) models[tier] = text(value, `models.${tier}`);
-  }
-  if (!Object.keys(models).length) throw new Error("provider must declare at least one model tier");
-  const supportsTools = input.supports_tools ?? true;
-  if (typeof supportsTools !== "boolean") throw new Error("supports_tools must be a boolean");
-  const costHint = input.cost_hint === void 0 ? 1 : Number(input.cost_hint);
-  if (!Number.isFinite(costHint) || costHint < 0) throw new Error("cost_hint must be a non-negative number");
-  const baseUrl = httpUrl(input.base_url, "base_url");
-  return {
-    provider,
-    label: input.label === void 0 ? provider : text(input.label, "label"),
-    protocol,
-    base_url: baseUrl,
-    api_key_env: apiKeyEnv,
-    chat_path: input.chat_path === void 0 ? protocol === "anthropic" ? "/messages" : "/chat/completions" : text(input.chat_path, "chat_path"),
-    models,
-    cost_hint: costHint,
-    supports_tools: supportsTools,
-    ...input.host_managed_auth === true ? { host_managed_auth: true } : {},
-    context_cache: cacheSpec(provider, baseUrl, input.context_cache)
-  };
-}
-function buildChatRequest(spec, options) {
-  const model = text(options.model, "model");
-  if (!Array.isArray(options.messages) || !options.messages.length) throw new Error("chat request requires at least one message");
-  const messages = options.messages.map((message, index) => {
-    if (!message || typeof message !== "object") throw new Error(`chat message ${index} must be an object`);
-    if (!["system", "user", "assistant", "tool"].includes(message.role)) throw new Error(`chat message ${index} has an unsupported role`);
-    if (message.content !== null && typeof message.content !== "string") throw new Error(`chat message ${index} content must be a string or null`);
-    return { ...message };
-  });
-  const prefixCount = options.cache_prefix_messages ?? 0;
-  if (!Number.isInteger(prefixCount) || prefixCount < 0 || prefixCount > messages.length) throw new Error("cache_prefix_messages must be between 0 and the message count");
-  const reusablePrefix = messages.slice(0, prefixCount);
-  const cache = spec.context_cache ?? NO_CONTEXT_CACHE;
-  const contextCache = cache.mode === "automatic_prefix" && reusablePrefix.length > 0 ? { mode: "automatic_prefix", eligible: true, prefix_message_count: reusablePrefix.length, prefix_digest: stableDigest(reusablePrefix), reason: null } : {
-    mode: cache.mode,
-    eligible: false,
-    prefix_message_count: reusablePrefix.length,
-    prefix_digest: reusablePrefix.length ? stableDigest(reusablePrefix) : null,
-    reason: cache.mode === "none" ? "provider_cache_unsupported" : "no_reusable_prefix"
-  };
-  const promptChars = messages.reduce((total, message) => total + String(message.content ?? "").length, 0);
-  const promptTokensEstimate = Math.max(1, Math.ceil(promptChars / 4));
-  const headers = { "content-type": "application/json" };
-  let body;
-  if (spec.protocol === "anthropic") {
-    headers["anthropic-version"] = "2023-06-01";
-    const system = messages.filter((message) => message.role === "system").map((message) => message.content ?? "").join("\n\n");
-    body = {
-      model,
-      max_tokens: options.max_tokens ?? 4096,
-      messages: messages.filter((message) => message.role !== "system").map((message) => message.role === "tool" ? { role: "user", content: [{ type: "tool_result", tool_use_id: message.tool_call_id ?? "unknown", content: message.content ?? "" }] } : { ...message, ...message.tool_call_id ? { tool_use_id: message.tool_call_id } : {} }),
-      ...system ? { system } : {},
-      ...options.tools?.length ? { tools: options.tools.map((tool) => ({ name: tool.function.name, description: tool.function.description, input_schema: tool.function.parameters ?? { type: "object" } })) } : {},
-      ...options.stream ? { stream: true } : {}
-    };
-  } else {
-    headers.authorization = `env:${spec.api_key_env}`;
-    body = {
-      model,
-      messages,
-      max_tokens: options.max_tokens ?? 4096,
-      ...options.temperature === void 0 ? {} : { temperature: options.temperature },
-      ...options.tools?.length ? { tools: options.tools } : {},
-      ...options.stream ? { stream: true } : {}
-    };
-  }
-  return { url: `${spec.base_url}${spec.chat_path}`, headers, body, prompt_tokens_estimate: promptTokensEstimate, context_cache: contextCache };
-}
-function parseChatResponse(spec, payload3) {
-  if (!payload3 || typeof payload3 !== "object" || Array.isArray(payload3)) throw new Error("Model response must be an object");
-  const body = payload3;
-  if (spec.protocol === "anthropic") {
-    const blocks = Array.isArray(body.content) ? body.content : [];
-    const text2 = blocks.filter((block) => block.type === "text").map((block) => String(block.text ?? "")).join("");
-    if (!text2) throw new Error("Anthropic response contained no text block");
-    const usage2 = body.usage;
-    const toolCalls2 = blocks.filter((block) => block.type === "tool_use").map((block, index) => ({ id: String(block.id ?? `tool_${index + 1}`), type: "function", function: { name: String(block.name), arguments: JSON.stringify(block.input ?? {}) } }));
-    return {
-      text: text2,
-      model: body.model === void 0 ? null : String(body.model),
-      ...toolCalls2.length ? { tool_calls: toolCalls2 } : {},
-      usage: usage2 ? { input_tokens: Number(usage2.input_tokens ?? 0), output_tokens: Number(usage2.output_tokens ?? 0) } : null
-    };
-  }
-  const choices = Array.isArray(body.choices) ? body.choices : [];
-  const message = choices[0]?.message;
-  if (!message || message.content !== null && typeof message.content !== "string") throw new Error("OpenAI-compatible response contained no message content");
-  const usage = body.usage;
-  const toolCalls = Array.isArray(message.tool_calls) ? message.tool_calls.map((item, index) => {
-    const fn = item.function;
-    return { id: String(item.id ?? `tool_${index + 1}`), type: "function", function: { name: String(fn.name), arguments: typeof fn.arguments === "string" ? fn.arguments : JSON.stringify(fn.arguments ?? {}) } };
-  }) : [];
-  const inputTokens = Number(usage?.prompt_tokens ?? 0);
-  const cachedDetails = usage?.prompt_tokens_details && typeof usage.prompt_tokens_details === "object" && !Array.isArray(usage.prompt_tokens_details) ? usage.prompt_tokens_details : null;
-  const hasCachedFromDetails = typeof cachedDetails?.cached_tokens === "number";
-  const hasDeepSeekCache = typeof usage?.prompt_cache_hit_tokens === "number" || typeof usage?.prompt_cache_miss_tokens === "number" || hasCachedFromDetails;
-  const cache = spec.context_cache ?? NO_CONTEXT_CACHE;
-  const cacheHit = cache.usage_fields === "deepseek" && hasDeepSeekCache ? Number(usage?.prompt_cache_hit_tokens ?? cachedDetails?.cached_tokens ?? (typeof usage?.prompt_cache_miss_tokens === "number" ? 0 : void 0)) : null;
-  const knownCacheHit = cacheHit !== null && Number.isFinite(cacheHit) ? cacheHit : 0;
-  const cacheMiss = cache.usage_fields === "deepseek" && hasDeepSeekCache ? Number(usage?.prompt_cache_miss_tokens ?? Math.max(0, inputTokens - knownCacheHit)) : null;
-  const cacheUsage = cacheHit !== null && cacheMiss !== null && Number.isFinite(cacheHit) && cacheHit >= 0 && Number.isFinite(cacheMiss) && cacheMiss >= 0 ? { cache_hit_tokens: cacheHit, cache_miss_tokens: cacheMiss } : {};
-  return {
-    text: message.content === null ? "" : message.content,
-    model: body.model === void 0 ? null : String(body.model),
-    ...toolCalls.length ? { tool_calls: toolCalls } : {},
-    usage: usage ? { input_tokens: inputTokens, output_tokens: Number(usage.completion_tokens ?? 0), ...cacheUsage } : null
-  };
-}
-function responseError(status, body) {
-  const detail = body.replace(/\s+/gu, " ").trim().slice(0, 300);
-  return new Error(`Model request failed with HTTP ${status}${detail ? `: ${detail}` : ""}`);
-}
-function createFetchTransport(options = {}) {
-  const env = options.env ?? process.env;
-  const fetchImpl = options.fetchImpl ?? fetch;
-  const timeoutMs = options.timeoutMs ?? 6e4;
-  const maxAttempts = options.maxAttempts ?? 3;
-  const maxResponseBytes = options.maxResponseBytes ?? 8 * 1024 * 1024;
-  if (!Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 3e5) throw new Error("timeoutMs must be between 100 and 300000");
-  if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 5) throw new Error("maxAttempts must be between 1 and 5");
-  if (!Number.isInteger(maxResponseBytes) || maxResponseBytes < 1024) throw new Error("maxResponseBytes must be at least 1024");
-  return {
-    complete: async (spec, request) => {
-      if (spec.host_managed_auth) throw new Error(`Model ${spec.provider} requires its Host-managed transport.`);
-      const key2 = env[spec.api_key_env]?.trim();
-      if (!key2) throw new Error(`Model ${spec.provider} is not configured; set ${spec.api_key_env} before running Craft.`);
-      const headers = { "content-type": "application/json" };
-      if (spec.protocol === "anthropic") {
-        headers["x-api-key"] = key2;
-        headers["anthropic-version"] = "2023-06-01";
-      } else {
-        headers.authorization = `Bearer ${key2}`;
-      }
-      let lastError;
-      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeoutMs);
-        let retryable = true;
-        try {
-          const response = await fetchImpl(request.url, { method: "POST", headers, body: JSON.stringify(request.body), signal: controller.signal });
-          const body = await response.text();
-          if (body.length > maxResponseBytes) throw new Error(`Model response exceeded ${maxResponseBytes} bytes`);
-          if (response.ok) {
-            let parsed;
-            try {
-              parsed = JSON.parse(body);
-            } catch {
-              throw new Error("Model response was not valid JSON");
-            }
-            return parseChatResponse(spec, parsed);
-          }
-          lastError = responseError(response.status, body);
-          retryable = [408, 429, 500, 502, 503, 504].includes(response.status);
-          if (!retryable || attempt === maxAttempts) throw lastError;
-          const retryAfter = Number(response.headers.get("retry-after") ?? "0");
-          await new Promise((resolve9) => setTimeout(resolve9, Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter * 1e3, 1e4) : attempt * 250));
-        } catch (error) {
-          lastError = error instanceof Error ? error : new Error(String(error));
-          if (!retryable || attempt === maxAttempts) throw lastError;
-          if (lastError.name === "AbortError") lastError = new Error(`Model request timed out after ${timeoutMs}ms`);
-          await new Promise((resolve9) => setTimeout(resolve9, attempt * 250));
-        } finally {
-          clearTimeout(timer);
-        }
-      }
-      throw lastError;
-    }
-  };
-}
-
 // common/craft-common-store-local/src/paths.ts
-import { createHash as createHash2, randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { chmod, mkdir, open, rename, unlink } from "node:fs/promises";
 import { closeSync, existsSync, fsyncSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -362,7 +66,7 @@ function craftPaths(root = dataRoot()) {
 function projectStorageIdentity(projectRoot) {
   const canonicalRoot = realpathSync(projectRoot);
   if (!statSync(canonicalRoot).isDirectory()) throw new Error("Project storage root must be a directory");
-  const pathHash = createHash2("sha256").update(canonicalRoot).digest("hex");
+  const pathHash = createHash("sha256").update(canonicalRoot).digest("hex");
   const readableName = basename(canonicalRoot).replace(/[^\p{L}\p{N}._-]+/gu, "-").replace(/^[-.]+|[-.]+$/gu, "").slice(0, 48) || "root";
   return { canonical_root: canonicalRoot, path_sha256: pathHash, directory_name: `${readableName}--${pathHash}` };
 }
@@ -447,6 +151,482 @@ async function atomicPrivateJson(path, value, platform = process.platform) {
     throw error;
   }
   if (platform !== "win32") await chmod(path, 384);
+}
+
+// core/settings.ts
+function normalizeModelPricing(value) {
+  if (value === void 0) return void 0;
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("model pricing must be an object");
+  const raw = value;
+  if (typeof raw.version !== "string" || !raw.version.trim()) throw new Error("model pricing version is required");
+  const pricing = { version: raw.version.trim(), input_usd_per_million: raw.input_usd_per_million, output_usd_per_million: raw.output_usd_per_million };
+  if (raw.cached_input_usd_per_million !== void 0) pricing.cached_input_usd_per_million = raw.cached_input_usd_per_million;
+  for (const [key2, rate] of Object.entries(pricing)) if (key2 !== "version" && (typeof rate !== "number" || !Number.isFinite(rate) || rate < 0)) throw new Error("model pricing rates must be non-negative finite numbers");
+  return pricing;
+}
+
+// common/craft-common-base/src/scope-policy.ts
+var COGNITIVE_SCOPE_KINDS = ["user", "project", "workspace", "task", "session", "team", "organization", "global"];
+
+// common/craft-common-base/src/validation.ts
+function text(value, name) {
+  if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
+  return value.trim();
+}
+var SCOPE_KINDS = new Set(COGNITIVE_SCOPE_KINDS);
+
+// common/craft-common-base/src/digest.ts
+import { createHash as createHash2 } from "node:crypto";
+function digestJson(value) {
+  return `sha256:${createHash2("sha256").update(JSON.stringify(value)).digest("hex")}`;
+}
+function stableDigest(value) {
+  return stableDigestStreaming(value);
+}
+function stableDigestStreaming(value) {
+  const hash2 = createHash2("sha256");
+  const keyOrderCache = /* @__PURE__ */ new Map();
+  let chunks = [];
+  let chunkLength = 0;
+  const flush = () => {
+    hash2.update(chunks.join(""));
+    chunks = [];
+    chunkLength = 0;
+  };
+  const append = (chunk) => {
+    chunks.push(chunk);
+    chunkLength += chunk.length;
+    if (chunkLength >= 32768) flush();
+  };
+  const write = (item) => {
+    if (Array.isArray(item)) {
+      append("[");
+      for (let index = 0; index < item.length; index++) {
+        if (index) append(",");
+        write(item[index]);
+      }
+      append("]");
+      return true;
+    }
+    if (item && typeof item === "object") {
+      const entries = Object.entries(item);
+      const signature = JSON.stringify(entries.map(([key2]) => key2));
+      let orderedKeys = keyOrderCache.get(signature);
+      if (!orderedKeys) {
+        orderedKeys = entries.map(([key2]) => key2).sort((left, right) => left.localeCompare(right, "zh"));
+        if (keyOrderCache.size < 256) keyOrderCache.set(signature, orderedKeys);
+      }
+      const values = new Map(entries);
+      append("{");
+      orderedKeys.forEach((key2, index) => {
+        if (index) append(",");
+        append(`${JSON.stringify(key2)}:`);
+        if (!write(values.get(key2))) append("undefined");
+      });
+      append("}");
+      return true;
+    }
+    const serialized = JSON.stringify(item);
+    if (serialized === void 0) return false;
+    append(serialized);
+    return true;
+  };
+  if (!write(value)) throw new Error(`canonicalJson cannot serialize ${typeof value}`);
+  flush();
+  return `sha256:${hash2.digest("hex")}`;
+}
+
+// capability/craft-datasec/rules.ts
+var DEFAULT_RULES = [
+  { name: "phone", pattern: String.raw`(?<!\d)(?:\+?86[ -]?)?1[3-9](?:[ -]?\d){9}(?!\d)` },
+  { name: "identity", pattern: String.raw`(?<!\d)[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx](?!\d)`, enabled: false },
+  { name: "email", pattern: String.raw`[A-Z0-9][A-Z0-9._%+-]*@[A-Z0-9.-]+\.[A-Z]{2,}`, flags: "i" },
+  { name: "ipv4", pattern: String.raw`(?<![\d.])(?:(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?![\d.])`, enabled: false },
+  { name: "bank", pattern: String.raw`(?<!\d)(?:62|4|5[1-5])\d{14,17}(?!\d)`, enabled: false },
+  { name: "api_key", pattern: String.raw`\b(?:api[_-]?(?:key|secret)|access[_-]?token|secret[_-]?key|authorization)\b["']?\s*[:=]\s*["']?(?:Bearer\s+)?([A-Z0-9_./+=~-]{8,})`, flags: "i", group: 1, enabled: false },
+  { name: "password", pattern: String.raw`\b(?:password|passwd|pwd)\b["']?\s*[:=]\s*["']?([^\s"'\x60,;}{]{4,})`, flags: "i", group: 1, enabled: false },
+  { name: "jwt", pattern: String.raw`\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}`, enabled: false },
+  { name: "private_key", pattern: String.raw`-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----`, enabled: false },
+  { name: "chinese_name", pattern: String.raw`姓名["'\s:：]+([\p{Script=Han}]{2,4})`, flags: "u", group: 1, enabled: false }
+];
+var Sanitizer = class {
+  rules;
+  token;
+  count = 0;
+  constructor(rules, token) {
+    this.token = token;
+    this.rules = rules.filter((rule) => rule.enabled !== false).map((rule) => {
+      const group = rule.group ?? 0;
+      if (!/^[a-z][a-z0-9_]{0,31}$/.test(rule.name) || !rule.pattern || !Number.isInteger(group) || group < 0) throw new Error("Invalid rule");
+      return { name: rule.name, regex: new RegExp(rule.pattern, [...new Set(`gd${rule.flags ?? ""}`)].join("")), group };
+    });
+    if (!this.rules.length) throw new Error("No rules enabled");
+  }
+  text(text2) {
+    const protectedRanges = [...text2.matchAll(/\[CRAFT_DATASEC_[a-z0-9_]+_[a-f0-9]{32}\]/g)].map((match) => [match.index, match.index + match[0].length]);
+    const matches = [];
+    for (const rule of this.rules) {
+      for (const match of text2.matchAll(rule.regex)) {
+        const range = match.indices[rule.group];
+        if (range && range[0] < range[1]) matches.push({ start: range[0], end: range[1], name: rule.name });
+      }
+    }
+    matches.sort((a, b) => a.start - b.start || b.end - a.end);
+    let end = 0, result = "";
+    for (const match of matches) {
+      if (match.start < end || protectedRanges.some(([start, stop]) => match.start < stop && match.end > start)) continue;
+      const value = text2.slice(match.start, match.end);
+      if (match.name === "email" && !/^[^@]+@[^@]+$/.test(value)) throw new Error("Invalid email rule match");
+      const replacement = match.name === "email" ? `${value[0]}*@${value.slice(value.indexOf("@") + 1)}` : this.token(match.name, value);
+      result += text2.slice(end, match.start) + replacement;
+      end = match.end;
+      this.count++;
+    }
+    return result + text2.slice(end);
+  }
+  value(value, depth = 0) {
+    if (depth > 64) throw new Error("Result nesting exceeds text redaction limit");
+    if (typeof value === "string") return this.text(value);
+    if (typeof value === "number") {
+      const safe = this.text(String(value));
+      return safe === String(value) ? value : safe;
+    }
+    if (Array.isArray(value)) return value.map((item) => this.value(item, depth + 1));
+    if (value !== null && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key2, item]) => [this.text(key2), this.value(item, depth + 1)]));
+    return value;
+  }
+};
+
+// core/model-egress-security.ts
+var SENSITIVE_PROPERTY = /(?:password|passwd|pwd|token|secret|credential|api[_-]?key|authorization|cookie)/iu;
+function scrubText(value, sanitizer) {
+  return sanitizer.text(value).replace(/((?:api[_-]?key|authorization|cookie|password|secret|credential|token)["']?\s*[:=]\s*["']?(?:bearer\s+)?)([^\s"',;}]+)/giu, "$1[REDACTED]");
+}
+function redactExample(value, depth) {
+  if (depth > 64) throw new Error("Model request nesting exceeds redaction limit");
+  if (typeof value === "string") return "[REDACTED]";
+  if (Array.isArray(value)) return value.map((item) => redactExample(item, depth + 1));
+  if (value !== null && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key2, item]) => [key2, redactExample(item, depth + 1)]));
+  return value;
+}
+function scrubValue(value, sanitizer, depth = 0, sensitive = false, schema = false) {
+  if (depth > 64) throw new Error("Model request nesting exceeds redaction limit");
+  if (typeof value === "string") return sensitive && !schema ? "[REDACTED]" : scrubText(value, sanitizer);
+  if (Array.isArray(value)) return value.map((item) => scrubValue(item, sanitizer, depth + 1, sensitive, schema));
+  if (value !== null && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key2, item]) => {
+    if (schema && key2 === "properties" && item !== null && typeof item === "object" && !Array.isArray(item)) {
+      return [key2, Object.fromEntries(Object.entries(item).map(([property, childSchema2]) => [
+        property,
+        scrubValue(childSchema2, sanitizer, depth + 2, SENSITIVE_PROPERTY.test(property), true)
+      ]))];
+    }
+    if (schema && sensitive && ["default", "example", "examples", "enum", "const"].includes(key2)) return [key2, redactExample(item, depth + 1)];
+    const childSchema = schema || key2 === "parameters" || key2 === "input_schema" || key2 === "codex_output_schema";
+    return [key2, scrubValue(item, sanitizer, depth + 1, sensitive || !schema && SENSITIVE_PROPERTY.test(key2), childSchema)];
+  }));
+  return value;
+}
+function sanitizeModelEgressRequest(spec, request) {
+  if (request.url !== `${spec.base_url}${spec.chat_path}`) throw new Error("Model request destination does not match the configured provider");
+  if (!request.body || typeof request.body !== "object" || Array.isArray(request.body)) throw new Error("Model request body must be an object");
+  const sanitizer = new Sanitizer(DEFAULT_RULES.map((rule) => ({ ...rule, enabled: true })), () => "[REDACTED]");
+  return { ...request, body: scrubValue(request.body, sanitizer) };
+}
+
+// core/model-gateway.ts
+import { setTimeout as delay } from "node:timers/promises";
+var NO_CONTEXT_CACHE = { mode: "none", requires_exact_prefix: false, usage_fields: "none" };
+var DEEPSEEK_CONTEXT_CACHE = { mode: "automatic_prefix", requires_exact_prefix: true, usage_fields: "deepseek" };
+var PROVIDER_NAME = /^[a-z][a-z0-9-]{0,31}$/u;
+var ENV_NAME = /^[A-Z_][A-Z0-9_]*$/u;
+var TIER_ORDER = ["frontier", "standard", "small"];
+var PROVIDER_CATALOG = [
+  { provider: "codex-cli", label: "Codex CLI Host", protocol: "openai-compatible", base_url: "https://codex-cli-host.invalid", api_key_env: "CODEX_CLI_AUTH_STORE", chat_path: "/host/exec", models: { small: "gpt-6-luna" }, cost_hint: 1, supports_tools: false, host_managed_auth: true, context_cache: NO_CONTEXT_CACHE },
+  { provider: "deepseek", label: "DeepSeek", protocol: "openai-compatible", base_url: "https://api.deepseek.com/v1", api_key_env: "DEEPSEEK_API_KEY", chat_path: "/chat/completions", models: { small: "deepseek-chat", standard: "deepseek-chat", frontier: "deepseek-reasoner" }, cost_hint: 1, supports_tools: true, context_cache: DEEPSEEK_CONTEXT_CACHE },
+  { provider: "volcengine", label: "\u706B\u5C71\u5F15\u64CE\u65B9\u821F", protocol: "openai-compatible", base_url: "https://ark.cn-beijing.volces.com/api/v3", api_key_env: "ARK_API_KEY", chat_path: "/chat/completions", models: { small: "doubao-lite", standard: "doubao-pro", frontier: "doubao-pro-32k" }, cost_hint: 2, supports_tools: true, context_cache: NO_CONTEXT_CACHE },
+  { provider: "qwen", label: "\u901A\u4E49\u5343\u95EE", protocol: "openai-compatible", base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1", api_key_env: "DASHSCOPE_API_KEY", chat_path: "/chat/completions", models: { small: "qwen-turbo", standard: "qwen-plus", frontier: "qwen-max" }, cost_hint: 2, supports_tools: true, context_cache: NO_CONTEXT_CACHE },
+  { provider: "kimi", label: "Kimi (Moonshot)", protocol: "openai-compatible", base_url: "https://api.moonshot.cn/v1", api_key_env: "MOONSHOT_API_KEY", chat_path: "/chat/completions", models: { small: "moonshot-v1-8k", standard: "moonshot-v1-32k", frontier: "moonshot-v1-128k" }, cost_hint: 2, supports_tools: true, context_cache: NO_CONTEXT_CACHE },
+  { provider: "glm", label: "\u667A\u8C31 GLM", protocol: "openai-compatible", base_url: "https://open.bigmodel.cn/api/paas/v4", api_key_env: "ZHIPU_API_KEY", chat_path: "/chat/completions", models: { small: "glm-4-flash", standard: "glm-4-air", frontier: "glm-4-plus" }, cost_hint: 1, supports_tools: true, context_cache: NO_CONTEXT_CACHE },
+  { provider: "minimax", label: "MiniMax", protocol: "openai-compatible", base_url: "https://api.minimax.chat/v1", api_key_env: "MINIMAX_API_KEY", chat_path: "/text/chatcompletion_v2", models: { standard: "abab6.5s-chat", frontier: "abab6.5-chat" }, cost_hint: 2, supports_tools: false, context_cache: NO_CONTEXT_CACHE },
+  { provider: "gpt", label: "OpenAI GPT", protocol: "openai-compatible", base_url: "https://api.openai.com/v1", api_key_env: "OPENAI_API_KEY", chat_path: "/chat/completions", models: { small: "gpt-4o-mini", standard: "gpt-4o", frontier: "gpt-4.1" }, cost_hint: 6, supports_tools: true, context_cache: NO_CONTEXT_CACHE },
+  { provider: "claude", label: "Anthropic Claude", protocol: "anthropic", base_url: "https://api.anthropic.com/v1", api_key_env: "ANTHROPIC_API_KEY", chat_path: "/messages", models: { small: "claude-haiku-4", standard: "claude-sonnet-4", frontier: "claude-opus-4" }, cost_hint: 7, supports_tools: true, context_cache: NO_CONTEXT_CACHE }
+];
+function httpUrl(value, name) {
+  const raw = text(value, name);
+  let url;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new Error(`${name} must be a valid HTTP(S) URL`);
+  }
+  if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.search || url.hash) {
+    throw new Error(`${name} must be an HTTP(S) URL without credentials or query data`);
+  }
+  return raw.replace(/\/+$/u, "");
+}
+function cacheSpec(provider, baseUrl, value) {
+  if (value === void 0) return provider === "deepseek" || new URL(baseUrl).hostname === "api.deepseek.com" ? DEEPSEEK_CONTEXT_CACHE : NO_CONTEXT_CACHE;
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("context_cache must be an object");
+  const input = value;
+  const mode = text(input.mode, "context_cache.mode");
+  const usageFields = text(input.usage_fields ?? "none", "context_cache.usage_fields");
+  if (mode !== "none" && mode !== "automatic_prefix") throw new Error("context_cache.mode is unsupported");
+  if (usageFields !== "none" && usageFields !== "deepseek") throw new Error("context_cache.usage_fields is unsupported");
+  if (typeof input.requires_exact_prefix !== "boolean") throw new Error("context_cache.requires_exact_prefix must be boolean");
+  return { mode, usage_fields: usageFields, requires_exact_prefix: input.requires_exact_prefix };
+}
+function defineProvider(input) {
+  const provider = text(input.provider, "provider");
+  if (!PROVIDER_NAME.test(provider)) throw new Error(`Unsupported provider name: ${provider}`);
+  const protocol = text(input.protocol, "protocol");
+  if (protocol !== "openai-compatible" && protocol !== "anthropic") throw new Error(`Unsupported provider protocol: ${protocol}`);
+  const apiKeyEnv = text(input.api_key_env, "api_key_env");
+  if (!ENV_NAME.test(apiKeyEnv)) throw new Error("api_key_env must be an uppercase environment-variable name");
+  const rawModels = input.models ?? {};
+  if (typeof rawModels !== "object" || Array.isArray(rawModels)) throw new Error("provider models must be an object");
+  const models = {};
+  for (const tier of TIER_ORDER) {
+    const value = rawModels[tier];
+    if (value !== void 0 && value !== null) models[tier] = text(value, `models.${tier}`);
+  }
+  if (!Object.keys(models).length) throw new Error("provider must declare at least one model tier");
+  const supportsTools = input.supports_tools ?? true;
+  if (typeof supportsTools !== "boolean") throw new Error("supports_tools must be a boolean");
+  const costHint = input.cost_hint === void 0 ? 1 : Number(input.cost_hint);
+  if (!Number.isFinite(costHint) || costHint < 0) throw new Error("cost_hint must be a non-negative number");
+  const baseUrl = httpUrl(input.base_url, "base_url");
+  let pricing;
+  if (input.pricing !== void 0) {
+    if (!input.pricing || typeof input.pricing !== "object" || Array.isArray(input.pricing)) throw new Error("pricing must be an object");
+    pricing = Object.fromEntries(Object.entries(input.pricing).map(([model, value]) => {
+      if (!Object.values(models).includes(model) || !value || typeof value !== "object" || Array.isArray(value)) throw new Error("pricing must name a configured model and a price object");
+      const price = normalizeModelPricing(value);
+      return [model, price];
+    }));
+  }
+  return {
+    provider,
+    label: input.label === void 0 ? provider : text(input.label, "label"),
+    protocol,
+    base_url: baseUrl,
+    api_key_env: apiKeyEnv,
+    chat_path: input.chat_path === void 0 ? protocol === "anthropic" ? "/messages" : "/chat/completions" : text(input.chat_path, "chat_path"),
+    models,
+    cost_hint: costHint,
+    supports_tools: supportsTools,
+    ...pricing === void 0 ? {} : { pricing },
+    ...input.host_managed_auth === true ? { host_managed_auth: true } : {},
+    context_cache: cacheSpec(provider, baseUrl, input.context_cache)
+  };
+}
+function buildChatRequest(spec, options) {
+  const model = text(options.model, "model");
+  const maxTokens = options.max_tokens ?? 4096;
+  if (!Number.isSafeInteger(maxTokens) || maxTokens < 1) throw new Error("max_tokens must be a positive safe integer");
+  if (!Array.isArray(options.messages) || !options.messages.length) throw new Error("chat request requires at least one message");
+  const sanitizer = new Sanitizer(DEFAULT_RULES.map((rule) => ({ ...rule, enabled: true })), () => "[REDACTED]");
+  const scrub = (value) => sanitizer.text(value).replace(/((?:api[_-]?key|authorization|cookie|password|secret|token)["']?\s*[:=]\s*["']?(?:bearer\s+)?)([^\s"',;}]+)/giu, "$1[REDACTED]");
+  const redactExample2 = (value, depth) => {
+    if (depth > 64) throw new Error("Model request nesting exceeds redaction limit");
+    if (typeof value === "string") return "[REDACTED]";
+    if (Array.isArray(value)) return value.map((item) => redactExample2(item, depth + 1));
+    if (value !== null && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key2, item]) => [key2, redactExample2(item, depth + 1)]));
+    return value;
+  };
+  const scrubJson = (value, depth = 0, sensitiveProperty = false) => {
+    if (depth > 64) throw new Error("Model request nesting exceeds redaction limit");
+    if (typeof value === "string") return scrub(value);
+    if (Array.isArray(value)) return value.map((item) => scrubJson(item, depth + 1, sensitiveProperty));
+    if (value !== null && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key2, item]) => {
+      if (key2 === "properties" && item !== null && typeof item === "object" && !Array.isArray(item)) {
+        return [key2, Object.fromEntries(Object.entries(item).map(([property, schema]) => [
+          property,
+          scrubJson(schema, depth + 2, /(?:password|passwd|pwd|token|secret|api[_-]?key|authorization|cookie)/iu.test(property))
+        ]))];
+      }
+      if (sensitiveProperty && ["default", "example", "examples", "enum", "const"].includes(key2)) return [key2, redactExample2(item, depth + 1)];
+      return [key2, scrubJson(item, depth + 1, sensitiveProperty)];
+    }));
+    return value;
+  };
+  const messages = options.messages.map((message, index) => {
+    if (!message || typeof message !== "object") throw new Error(`chat message ${index} must be an object`);
+    if (!["system", "user", "assistant", "tool"].includes(message.role)) throw new Error(`chat message ${index} has an unsupported role`);
+    if (message.content !== null && typeof message.content !== "string") throw new Error(`chat message ${index} content must be a string or null`);
+    return {
+      ...message,
+      content: message.content === null ? null : scrub(message.content),
+      ...message.tool_calls ? { tool_calls: message.tool_calls.map((call) => ({ ...call, function: { ...call.function, arguments: scrub(call.function.arguments) } })) } : {}
+    };
+  });
+  const prefixCount = options.cache_prefix_messages ?? 0;
+  if (!Number.isInteger(prefixCount) || prefixCount < 0 || prefixCount > messages.length) throw new Error("cache_prefix_messages must be between 0 and the message count");
+  const reusablePrefix = messages.slice(0, prefixCount);
+  const cache = spec.context_cache ?? NO_CONTEXT_CACHE;
+  const contextCache = cache.mode === "automatic_prefix" && reusablePrefix.length > 0 ? { mode: "automatic_prefix", eligible: true, prefix_message_count: reusablePrefix.length, prefix_digest: stableDigest(reusablePrefix), reason: null } : {
+    mode: cache.mode,
+    eligible: false,
+    prefix_message_count: reusablePrefix.length,
+    prefix_digest: reusablePrefix.length ? stableDigest(reusablePrefix) : null,
+    reason: cache.mode === "none" ? "provider_cache_unsupported" : "no_reusable_prefix"
+  };
+  const promptChars = messages.reduce((total, message) => total + String(message.content ?? "").length, 0);
+  const promptTokensEstimate = Math.max(1, Math.ceil(promptChars / 4));
+  const headers = { "content-type": "application/json" };
+  let body;
+  if (spec.protocol === "anthropic") {
+    headers["anthropic-version"] = "2023-06-01";
+    const system = messages.filter((message) => message.role === "system").map((message) => message.content ?? "").join("\n\n");
+    body = {
+      model,
+      max_tokens: maxTokens,
+      messages: messages.filter((message) => message.role !== "system").map((message) => message.role === "tool" ? { role: "user", content: [{ type: "tool_result", tool_use_id: message.tool_call_id ?? "unknown", content: message.content ?? "" }] } : { ...message, ...message.tool_call_id ? { tool_use_id: message.tool_call_id } : {} }),
+      ...system ? { system } : {},
+      ...options.tools?.length ? { tools: options.tools.map((tool) => scrubJson({ name: tool.function.name, description: tool.function.description, input_schema: tool.function.parameters ?? { type: "object" } })) } : {},
+      ...options.stream ? { stream: true } : {}
+    };
+  } else {
+    headers.authorization = `env:${spec.api_key_env}`;
+    body = {
+      model,
+      messages,
+      max_tokens: maxTokens,
+      ...options.temperature === void 0 ? {} : { temperature: options.temperature },
+      ...options.tools?.length ? { tools: scrubJson(options.tools) } : {},
+      ...options.stream ? { stream: true } : {}
+    };
+  }
+  return { url: `${spec.base_url}${spec.chat_path}`, headers, body, prompt_tokens_estimate: promptTokensEstimate, context_cache: contextCache };
+}
+function parseChatResponse(spec, payload3) {
+  if (!payload3 || typeof payload3 !== "object" || Array.isArray(payload3)) throw new Error("Model response must be an object");
+  const body = payload3;
+  if (spec.protocol === "anthropic") {
+    const blocks = Array.isArray(body.content) ? body.content : [];
+    const text2 = blocks.filter((block) => block.type === "text").map((block) => String(block.text ?? "")).join("");
+    if (!text2) throw new Error("Anthropic response contained no text block");
+    const usage2 = body.usage;
+    const toolCalls2 = blocks.filter((block) => block.type === "tool_use").map((block, index) => ({ id: String(block.id ?? `tool_${index + 1}`), type: "function", function: { name: String(block.name), arguments: JSON.stringify(block.input ?? {}) } }));
+    return {
+      text: text2,
+      model: body.model === void 0 ? null : String(body.model),
+      ...toolCalls2.length ? { tool_calls: toolCalls2 } : {},
+      usage: usage2 ? { input_tokens: Number(usage2.input_tokens ?? 0), output_tokens: Number(usage2.output_tokens ?? 0) } : null
+    };
+  }
+  const choices = Array.isArray(body.choices) ? body.choices : [];
+  const message = choices[0]?.message;
+  if (!message || message.content !== null && typeof message.content !== "string") throw new Error("OpenAI-compatible response contained no message content");
+  const usage = body.usage;
+  const toolCalls = Array.isArray(message.tool_calls) ? message.tool_calls.map((item, index) => {
+    const fn = item.function;
+    return { id: String(item.id ?? `tool_${index + 1}`), type: "function", function: { name: String(fn.name), arguments: typeof fn.arguments === "string" ? fn.arguments : JSON.stringify(fn.arguments ?? {}) } };
+  }) : [];
+  const inputTokens = Number(usage?.prompt_tokens ?? 0);
+  const cachedDetails = usage?.prompt_tokens_details && typeof usage.prompt_tokens_details === "object" && !Array.isArray(usage.prompt_tokens_details) ? usage.prompt_tokens_details : null;
+  const hasCachedFromDetails = typeof cachedDetails?.cached_tokens === "number";
+  const hasDeepSeekCache = typeof usage?.prompt_cache_hit_tokens === "number" || typeof usage?.prompt_cache_miss_tokens === "number" || hasCachedFromDetails;
+  const cache = spec.context_cache ?? NO_CONTEXT_CACHE;
+  const cacheHit = cache.usage_fields === "deepseek" && hasDeepSeekCache ? Number(usage?.prompt_cache_hit_tokens ?? cachedDetails?.cached_tokens ?? (typeof usage?.prompt_cache_miss_tokens === "number" ? 0 : void 0)) : null;
+  const knownCacheHit = cacheHit !== null && Number.isFinite(cacheHit) ? cacheHit : 0;
+  const cacheMiss = cache.usage_fields === "deepseek" && hasDeepSeekCache ? Number(usage?.prompt_cache_miss_tokens ?? Math.max(0, inputTokens - knownCacheHit)) : null;
+  const cacheUsage = cacheHit !== null && cacheMiss !== null && Number.isFinite(cacheHit) && cacheHit >= 0 && Number.isFinite(cacheMiss) && cacheMiss >= 0 ? { cache_hit_tokens: cacheHit, cache_miss_tokens: cacheMiss } : {};
+  return {
+    text: message.content === null ? "" : message.content,
+    model: body.model === void 0 ? null : String(body.model),
+    ...toolCalls.length ? { tool_calls: toolCalls } : {},
+    usage: usage ? { input_tokens: inputTokens, output_tokens: Number(usage.completion_tokens ?? 0), ...cacheUsage } : null
+  };
+}
+function responseError(status, body) {
+  const detail = body.replace(/\s+/gu, " ").trim().slice(0, 300);
+  return new Error(`Model request failed with HTTP ${status}${detail ? `: ${detail}` : ""}`);
+}
+var ModelResponseTooLarge = class extends Error {
+};
+async function readModelResponse(response, maxBytes) {
+  if (!response.body) return "";
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let size = 0;
+  let text2 = "";
+  try {
+    for (; ; ) {
+      const chunk = await reader.read();
+      if (chunk.done) return text2 + decoder.decode();
+      size += chunk.value.byteLength;
+      if (size > maxBytes) {
+        void reader.cancel().catch(() => {
+        });
+        throw new ModelResponseTooLarge(`Model response exceeded ${maxBytes} bytes`);
+      }
+      text2 += decoder.decode(chunk.value, { stream: true });
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+function createFetchTransport(options = {}) {
+  const env = options.env ?? process.env;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const timeoutMs = options.timeoutMs ?? 6e4;
+  const maxAttempts = options.maxAttempts ?? 3;
+  const maxResponseBytes = options.maxResponseBytes ?? 8 * 1024 * 1024;
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 3e5) throw new Error("timeoutMs must be between 100 and 300000");
+  if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 5) throw new Error("maxAttempts must be between 1 and 5");
+  if (!Number.isInteger(maxResponseBytes) || maxResponseBytes < 1024) throw new Error("maxResponseBytes must be at least 1024");
+  return {
+    complete: async (spec, request, signal) => {
+      signal?.throwIfAborted();
+      if (spec.host_managed_auth) throw new Error(`Model ${spec.provider} requires its Host-managed transport.`);
+      const outbound = sanitizeModelEgressRequest(spec, request);
+      const key2 = env[spec.api_key_env]?.trim();
+      if (!key2) throw new Error(`Model ${spec.provider} is not configured; set ${spec.api_key_env} before running Craft.`);
+      const headers = { "content-type": "application/json" };
+      if (spec.protocol === "anthropic") {
+        headers["x-api-key"] = key2;
+        headers["anthropic-version"] = "2023-06-01";
+      } else {
+        headers.authorization = `Bearer ${key2}`;
+      }
+      let lastError;
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        signal?.throwIfAborted();
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        let retryable = true;
+        try {
+          const response = await fetchImpl(outbound.url, { method: "POST", headers, body: JSON.stringify(outbound.body), signal: signal ? AbortSignal.any([controller.signal, signal]) : controller.signal });
+          const body = await readModelResponse(response, maxResponseBytes);
+          signal?.throwIfAborted();
+          if (response.ok) {
+            let parsed;
+            try {
+              parsed = JSON.parse(body);
+            } catch {
+              throw new Error("Model response was not valid JSON");
+            }
+            return parseChatResponse(spec, parsed);
+          }
+          lastError = responseError(response.status, body);
+          retryable = [408, 429, 500, 502, 503, 504].includes(response.status);
+          if (!retryable || attempt === maxAttempts) throw lastError;
+          const retryAfter = Number(response.headers.get("retry-after") ?? "0");
+          await delay(Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter * 1e3, 1e4) : attempt * 250, void 0, { signal });
+        } catch (error) {
+          signal?.throwIfAborted();
+          if (error instanceof ModelResponseTooLarge) throw error;
+          lastError = error instanceof Error ? error : new Error(String(error));
+          if (!retryable || attempt === maxAttempts) throw lastError;
+          if (lastError.name === "AbortError") lastError = new Error(`Model request timed out after ${timeoutMs}ms`);
+          await delay(attempt * 250, void 0, { signal });
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+      throw lastError;
+    }
+  };
 }
 
 // core/config.ts
@@ -873,7 +1053,7 @@ import { lstatSync as lstatSync4, readFileSync as readFileSync4, realpathSync as
 import { tmpdir } from "node:os";
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.15.0";
+var CRAFT_RELEASE_VERSION = "0.20.1";
 
 // core/knowledge-model-redaction.ts
 var SENSITIVE_MODEL_TEXT_PATTERNS = [
@@ -3730,11 +3910,11 @@ async function recordKnowledgeAdjudicationFailure(path, caseId, failureKind2, no
   const state = readState4(path), prior = state.retries[caseId];
   if (!prior && Object.keys(state.retries).length >= MAX_RETRIES) throw new Error("Knowledge adjudication retry capacity reached");
   const attempts = Math.min(Number(prior?.attempts ?? 0) + 1, 31);
-  const delay = Math.min(RETRY_BASE_MS * 2 ** Math.min(attempts - 1, 16), RETRY_MAX_MS);
+  const delay2 = Math.min(RETRY_BASE_MS * 2 ** Math.min(attempts - 1, 16), RETRY_MAX_MS);
   const retry = {
     attempts,
     last_failure_at: new Date(nowMs).toISOString(),
-    next_attempt_at: new Date(nowMs + delay).toISOString(),
+    next_attempt_at: new Date(nowMs + delay2).toISOString(),
     failure_kind: failureKind2,
     ...failureCode ? { failure_code: failureCode } : {}
   };
@@ -4560,15 +4740,78 @@ import { tmpdir as tmpdir2 } from "node:os";
 import { join as join9 } from "node:path";
 
 // core/host-driver.ts
-import { spawn } from "node:child_process";
+import { spawn, execFile } from "node:child_process";
+import { win32 } from "node:path";
+var HostProcessCleanupError = class extends Error {
+  constructor(cause) {
+    super("Windows Host process tree cleanup could not be confirmed", { cause });
+    this.name = "HostProcessCleanupError";
+  }
+};
+function stopWindowsHostProcessTree(pid) {
+  if (!Number.isSafeInteger(pid) || pid < 1) return Promise.reject(new Error("Host process id must be a positive safe integer"));
+  return new Promise((resolve9, reject) => {
+    execFile(
+      win32.join(process.env.SystemRoot ?? "C:\\Windows", "System32", "taskkill.exe"),
+      ["/PID", String(pid), "/T", "/F"],
+      { windowsHide: true, timeout: 2e3, maxBuffer: 16384 },
+      (error, stdout, stderr) => {
+        if (!error) {
+          resolve9();
+          return;
+        }
+        const code = error.code;
+        const text2 = `${String(stdout ?? "")}
+${String(stderr ?? "")}
+${error.message}`;
+        if (code === 128 || /not found|not running|no process|not exist/i.test(text2)) {
+          resolve9();
+          return;
+        }
+        reject(error);
+      }
+    );
+  });
+}
 var executeHostProcess = async (request) => new Promise((accept, reject) => {
-  const child = spawn(request.executable, request.argv, { cwd: request.cwd, shell: false, windowsHide: true, stdio: ["pipe", "pipe", "pipe"] });
+  if (request.signal?.aborted) {
+    accept({ exitCode: null, signal: null, stdout: "", stderr: "", timedOut: false, cancelled: true, outputLimited: false });
+    return;
+  }
+  const processGroup = process.platform !== "win32";
+  const child = spawn(request.executable, request.argv, { cwd: request.cwd, shell: false, windowsHide: true, detached: processGroup, stdio: ["pipe", "pipe", "pipe"] });
   let stdout = "";
   let stderr = "";
   let outputLimited = false;
   let timedOut = false;
   let cancelled = false;
   let inputError = null;
+  let forceStop;
+  let windowsTreeStop;
+  let treeStopError = null;
+  const terminate = (signal) => {
+    if (!processGroup && child.pid !== void 0) {
+      windowsTreeStop ??= stopWindowsHostProcessTree(child.pid).catch((error) => {
+        treeStopError = error;
+        child.kill("SIGKILL");
+      });
+      return;
+    }
+    if (child.pid === void 0) {
+      child.kill(signal);
+      return;
+    }
+    try {
+      process.kill(-child.pid, signal);
+    } catch (error) {
+      if (error.code !== "ESRCH") child.kill(signal);
+    }
+  };
+  const stop = () => {
+    clearTimeout(timer);
+    terminate("SIGTERM");
+    if (!forceStop) forceStop = setTimeout(() => terminate("SIGKILL"), 1e3);
+  };
   const append = (current, chunk) => {
     const next = current + chunk.toString("utf8");
     if (Buffer.byteLength(next) <= request.outputLimit) return next;
@@ -4579,33 +4822,41 @@ var executeHostProcess = async (request) => new Promise((accept, reject) => {
   child.stdout.on("data", (chunk) => {
     stdout = append(stdout, chunk);
     observed("stdout", chunk);
+    if (outputLimited) stop();
   });
   child.stderr.on("data", (chunk) => {
     stderr = append(stderr, chunk);
     observed("stderr", chunk);
+    if (outputLimited) stop();
   });
   child.stdin.on("error", (error) => {
     inputError = error;
-    child.kill();
+    stop();
   });
   child.once("error", (error) => {
     clearTimeout(timer);
+    clearTimeout(forceStop);
+    request.signal?.removeEventListener("abort", abort);
     reject(error);
   });
   const timer = setTimeout(() => {
     timedOut = true;
-    child.kill();
+    stop();
   }, request.timeoutMs);
   const abort = () => {
     cancelled = true;
-    child.kill();
+    stop();
   };
   request.signal?.addEventListener("abort", abort, { once: true });
   if (request.signal?.aborted) abort();
-  child.once("close", (exitCode, signal) => {
+  child.once("close", async (exitCode, signal) => {
+    if (forceStop !== void 0 && processGroup) terminate("SIGKILL");
     clearTimeout(timer);
+    clearTimeout(forceStop);
     request.signal?.removeEventListener("abort", abort);
-    if (inputError && !cancelled && !timedOut) reject(inputError);
+    await windowsTreeStop;
+    if (treeStopError) reject(new HostProcessCleanupError(treeStopError));
+    else if (inputError && !cancelled && !timedOut) reject(inputError);
     else accept({ exitCode, signal, stdout, stderr, timedOut, cancelled, outputLimited });
   });
   child.stdin.end(request.stdin);
@@ -4685,13 +4936,15 @@ var CodexCliModelTransport = class {
     this.used = true;
     return true;
   }
-  async complete(spec, request) {
+  async complete(spec, request, signal) {
+    signal?.throwIfAborted();
     if (spec.provider !== "codex-cli" || !spec.host_managed_auth) throw new Error("Codex Host transport received an incompatible provider");
-    if (request.body.model !== MODEL) throw new Error(`Codex Host model must be ${MODEL}`);
-    const prompt = messagesFrom(request).map((message) => `## ${message.role}
+    const outbound = sanitizeModelEgressRequest(spec, request);
+    if (outbound.body.model !== MODEL) throw new Error(`Codex Host model must be ${MODEL}`);
+    const prompt = messagesFrom(outbound).map((message) => `## ${message.role}
 ${message.content}`).join("\n\n");
     if (estimateTokens(prompt) > this.maxInputTokens) throw Object.assign(new Error("Codex Host business input exceeds its estimated token budget"), { code: "ERR_CODEX_INPUT_BUDGET_EXCEEDED" });
-    const schema = outputSchemaFrom(request);
+    const schema = outputSchemaFrom(outbound);
     let schemaDirectory = null;
     try {
       const argv = ["exec", "--ignore-user-config", "--ephemeral", "--sandbox", "read-only", "--skip-git-repo-check"];
@@ -4703,7 +4956,8 @@ ${message.content}`).join("\n\n");
         argv.push("--output-schema", schemaPath);
       }
       argv.push("--model", MODEL, "--json", "-");
-      const result = await this.executor({ executable: "codex", argv, cwd: tmpdir2(), stdin: prompt, timeoutMs: TIMEOUT_MS, outputLimit: OUTPUT_LIMIT });
+      const result = await this.executor({ executable: "codex", argv, cwd: tmpdir2(), stdin: prompt, timeoutMs: TIMEOUT_MS, outputLimit: OUTPUT_LIMIT, signal });
+      signal?.throwIfAborted();
       const parsed = parseEvents(result.stdout);
       const completed = result.exitCode === 0 && result.signal === null && !result.timedOut && !result.cancelled && !result.outputLimited && !parsed.invalid && !parsed.failed && parsed.terminal !== null && parsed.terminalLast && parsed.message !== null;
       if (!completed) throw Object.assign(
@@ -4729,7 +4983,7 @@ function createLearningModelTransport(host, executor) {
       used = true;
       return true;
     },
-    complete: (spec, request) => spec.provider === "codex-cli" ? codex.complete(spec, request) : api.complete(spec, request)
+    complete: (spec, request, signal) => spec.provider === "codex-cli" ? codex.complete(spec, request, signal) : api.complete(spec, request, signal)
   };
 }
 
