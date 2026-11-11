@@ -1,5 +1,6 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
+import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
 import { sourceProvenance } from "./source-provenance.mjs";
 
@@ -96,6 +97,25 @@ function claudeEntries() {
 // Skill files are maintained in the Marketplace: Craft source excludes them from Git.
 const OWNED = ["plugin.json", "mcp.json", "dist", "hooks", "assets", ".mcp.json", ".codex-plugin", ".claude-plugin", "README.md", "scripts"];
 const generatedCache = (name) => name === "__pycache__" || name.endsWith(".pyc") || name.endsWith(".pyo");
+/**
+ * Payload files this marketplace ships that the Craft source does not generate.
+ *
+ * `craft-datasec` publishes an OpenCode adapter (`dist/opencode.mjs`) built by
+ * the Datasec build, not copied from `plugins/`. Replacing the whole `dist`
+ * directory would silently drop it, so it is preserved across a sync and
+ * accepted by verification in addition to the source tree.
+ */
+const MARKETPLACE_OWNED = {
+  "craft-datasec": ["dist/opencode.mjs"],
+};
+const marketplaceOwned = (component) => MARKETPLACE_OWNED[component] ?? [];
+const extraOwnedNames = (owned) => marketplaceOwned(owned.component)
+  .filter((path) => joinedMatches(path, owned.path));
+
+/** Compare a POSIX-style relative payload path against a path built with `join`. */
+function joinedMatches(payloadPath, ownedPath) {
+  return payloadPath.split("/").join(sep) === ownedPath || payloadPath.startsWith(`${ownedPath.split(sep).join("/")}/`);
+}
 
 const sourceRevision = () => sourceProvenance(sourceRepo, contract.version, process.env.CRAFT_SOURCE_COMMIT);
 const componentSourceCommits = () => {
@@ -132,21 +152,73 @@ const sameTree = (left, right) => {
     && leftEntries.every((entry, index) => entry === rightEntries[index] && sameTree(join(left, entry), join(right, entry)));
 };
 
+/**
+ * Compare one OWNED path while accepting marketplace-owned extras beneath it.
+ *
+ * A source-owned file is compared byte-for-byte with no exceptions. A source-owned
+ * directory may contain marketplace-owned payloads (for example Datasec's OpenCode
+ * bundle under `dist/`); those names are overlaid onto a throwaway copy of the
+ * source before the same strict comparison runs.
+ */
+const sameOwnedTree = (left, right, extras = [], owned = "") => {
+  if (!existsSync(left)) return !existsSync(right) || extras.every((path) => !existsSync(right));
+  if (!existsSync(right)) return false;
+  if (sameTree(left, right)) return true;
+  // Only widen the comparison for a real, present marketplace-owned payload.
+  if (extras.length === 0) return false;
+  const payloads = extras.flatMap((relative) => {
+    const parts = relative.split("/"), index = parts.indexOf(owned.split(sep).join("/"));
+    return index < 0 ? [] : [{ relative, name: parts.slice(index + 1).join("/") }];
+  });
+  if (payloads.length === 0) return false;
+  const payloadNames = payloads.map((payload) => payload.name);
+  const parent = mkdtempSync(join(tmpdir(), "craft-marketplace-verify-"));
+  const scratch = join(parent, "tree");
+  try {
+    cpSync(left, scratch, { recursive: true, force: true, filter: (path) => !path.split(sep).some(generatedCache) });
+    for (const payload of payloads) {
+      const source = join(right, payload.name);
+      if (!existsSync(source)) return false;
+      const target = join(scratch, payload.name);
+      mkdirSync(resolve(target, ".."), { recursive: true });
+      cpSync(source, target, { recursive: true, force: true });
+    }
+    const fromScratch = relativeNamesOf(scratch).filter((name) => !payloadNames.includes(name));
+    const fromMarket = relativeNamesOf(right).filter((name) => !payloadNames.includes(name));
+    return JSON.stringify(fromScratch) === JSON.stringify(fromMarket)
+      && fromScratch.every((name) => sameFile(join(scratch, name), join(right, name)));
+  } finally { rmSync(parent, { recursive: true, force: true }); }
+};
+
+function relativeNamesOf(root) {
+  if (statSync(root).isFile()) return [""];
+  return readdirSync(root).filter((entry) => !generatedCache(entry)).flatMap((entry) => {
+    const child = join(root, entry);
+    return statSync(child).isDirectory() ? relativeNamesOf(child).map((name) => (name ? join(entry, name) : entry)) : [entry];
+  }).sort();
+}
+
 const verifyMarketplace = () => {
+  const drift = [];
+  const manifestDrift = [];
   for (const component of sourceComponents) {
     const from = join(sourceRoot, component); const to = join(marketplaceRoot, "plugins", component);
     if (existsSync(join(to, "dsh"))) throw new Error(`plugins/${component}/dsh is a retired DSH payload`);
-    for (const owned of OWNED) {
-      const source = join(from, owned);
-      const target = join(to, owned);
-      if (existsSync(source) ? !sameTree(source, target) : existsSync(target)) throw new Error(`marketplace payload drift: plugins/${component}/${owned}`);
-    }
+    // Manifest drift is checked before payload drift so a stale manifest names
+    // the file a release must fix, even when a payload is also missing.
     const claude = join(to, ".claude-plugin", "plugin.json");
     if (!existsSync(claude)) throw new Error(`missing Claude manifest for ${component}`);
     const manifest = JSON.parse(readFileSync(claude, "utf8"));
     const productVersion = contract.products.find(product => product.name === component).version ?? contract.version;
-    if (manifest.name !== component || manifest.version !== productVersion) throw new Error(`Claude manifest drift for ${component}`);
+    if (manifest.name !== component || manifest.version !== productVersion) manifestDrift.push(`Claude manifest drift for ${component}`);
+    for (const owned of OWNED) {
+      const source = join(from, owned);
+      const target = join(to, owned);
+      if (!sameOwnedTree(source, target, extraOwnedNames({ component, path: owned }), owned)) drift.push(`marketplace payload drift: plugins/${component}/${owned}`);
+    }
   }
+  if (drift.length) throw new Error(drift[0]);
+  if (manifestDrift.length) throw new Error(manifestDrift[0]);
   const published = readdirSync(join(marketplaceRoot, "plugins"), { withFileTypes: true })
     .filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
   if (JSON.stringify(published) !== JSON.stringify(sourceComponents)) throw new Error("marketplace product set differs from distribution contract");
@@ -210,8 +282,26 @@ const sync = (component) => {
       continue;
     }
     mkdirSync(to, { recursive: true });
-    if (statSync(source).isDirectory()) rmSync(target, { recursive: true, force: true });
+    const staged = [];
+    if (statSync(source).isDirectory()) {
+      for (const relative of extraOwnedNames({ component, path: owned })) {
+        const payload = join(to, relative);
+        const suffix = relative.split("/").slice(owned.split(sep).length).join("/");
+        if (!existsSync(payload)) continue;
+        const temporary = join(mkdtempSync(join(tmpdir(), "craft-marketplace-own-")), suffix.replaceAll("/", "_"));
+        mkdirSync(resolve(temporary, ".."), { recursive: true });
+        cpSync(payload, temporary, { force: true });
+        staged.push({ temporary, payload });
+      }
+      rmSync(target, { recursive: true, force: true });
+    }
     cpSync(source, target, { recursive: true, force: true, filter: (path) => !path.split(sep).some(generatedCache) });
+    for (const item of staged) {
+      mkdirSync(resolve(item.payload, ".."), { recursive: true });
+      cpSync(item.temporary, item.payload, { force: true });
+      rmSync(resolve(item.temporary, ".."), { recursive: true, force: true });
+      report.push(`kept     plugins/${component}/${item.payload.slice(join(marketplaceRoot, "plugins", component).length + 1).split(sep).join("/")} (marketplace-owned)`);
+    }
     report.push(`synced   plugins/${component}/${owned}`);
   }
 };

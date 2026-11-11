@@ -33,6 +33,7 @@ function craftPaths(root = dataRoot()) {
     configDir: join(resolved, "config"),
     configFile: join(resolved, "config", "config.json"),
     settingsFile: join(resolved, "settings.json"),
+    secretsFile: join(resolved, "secrets.json"),
     databaseDir: join(resolved, "db"),
     databaseFile: join(resolved, "db", "craft.db"),
     legacyDatabaseFile: join(resolved, "craft.db"),

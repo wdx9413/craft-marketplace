@@ -37,6 +37,7 @@ function craftPaths(root = dataRoot()) {
     configDir: join(resolved, "config"),
     configFile: join(resolved, "config", "config.json"),
     settingsFile: join(resolved, "settings.json"),
+    secretsFile: join(resolved, "secrets.json"),
     databaseDir: join(resolved, "db"),
     databaseFile: join(resolved, "db", "craft.db"),
     legacyDatabaseFile: join(resolved, "craft.db"),
@@ -1053,7 +1054,7 @@ import { lstatSync as lstatSync4, readFileSync as readFileSync4, realpathSync as
 import { tmpdir } from "node:os";
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.20.3";
+var CRAFT_RELEASE_VERSION = "0.20.4";
 
 // core/knowledge-model-redaction.ts
 var SENSITIVE_MODEL_TEXT_PATTERNS = [
