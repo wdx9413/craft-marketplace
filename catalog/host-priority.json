@@ -1,0 +1,17 @@
+{
+  "schema": "craft.plugin-host-priority.v1",
+  "description": "When one plugin supports several Hosts, installation resolves in this order. First available manifest wins; a later Host is a fallback, not a parallel install.",
+  "hosts": ["codex", "claude", "dsh", "pi"],
+  "manifest_paths": {
+    "codex": ".codex-plugin/plugin.json",
+    "claude": ".claude-plugin/plugin.json",
+    "dsh": "dsh/plugin.json",
+    "pi": ".pi-plugin/plugin.json"
+  },
+  "install_commands": {
+    "codex": "codex plugin add <name>@craft-marketplace",
+    "claude": "/plugin install <name>@craft-marketplace",
+    "dsh": "dsh plugin add <name>",
+    "pi": "pi plugin add <name>"
+  }
+}

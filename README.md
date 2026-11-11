@@ -59,3 +59,39 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 发布前应从源码仓库运行打包与 MCP smoke 检查；不要在本仓库手工修改 bundle。
 
 安装 `craft-context` 即可通过统一入口使用四层组件；Host 不需要再安装独立子组件插件。
+
+## 插件聚合与 Host 优先级
+
+本仓库同时是插件聚合市场：把 Craft 自有插件与业界常见插件列到目录里，由用户自行安装；Craft 内核不实现这些外部插件，也不默认执行安装命令。
+
+- `catalog/host-priority.json` 定义固定解析顺序：`codex` → `claude` → `dsh` → `pi`。一个插件若同时支持多种 Host，按第一个可用清单解析一次，避免重复注册 Hook/MCP。
+- `catalog/recommended-plugins.json` 列出推荐插件：`craft-context`、`craft-datasec` 为默认安装；`craft-file-dir-desc` 等为可选源码能力；业界插件包括 computer-use、agent-desktop、github、context7、playwright、linear、notion、slack、sentry 等。
+- `scripts/resolve-plugin-host.mjs` 提供只读解析与推荐目录投影；`node --test tests/resolve-plugin-host.test.mjs` 验证优先级与单清单解析。
+- 支持用户自定义导入 codex/claude/dsh/pi 清单，仍按上述顺序解析；导入的插件不会自动获得执行权。
+
+## 默认自动安装与禁用
+
+Craft 内核启动时读取 `~/.craft_data/settings.json` 的 `capabilities`：
+
+```json
+{
+  "capabilities": {
+    "autoInstall": true,
+    "defaults": ["craft-context", "craft-datasec"],
+    "installed": ["craft-context", "craft-datasec"],
+    "disabled": []
+  }
+}
+```
+
+配置文件里既未安装、也未禁用的默认能力会在启动时自动登记为已安装（只写生命周期记录，不授予执行权），并把结果写回 `installed`。用户禁用/卸载后，能力名写入 `disabled`，自动安装不会再次启用它。
+
+```text
+craft capability list
+craft capability install <id>
+craft capability disable <id>
+craft capability enable <id>
+craft capability uninstall <id>
+```
+
+默认能力清单由内核源码管理，后续可增减；本发布仓只发布 `craft-context`、`craft-datasec` 两个插件包。

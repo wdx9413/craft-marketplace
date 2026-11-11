@@ -1,0 +1,50 @@
+{
+  "schema": "craft.recommended-plugins.v1",
+  "description": "Curated plugin references for the thin Craft kernel. Craft itself does not implement these; it lists external plugins for users to install. Host resolution follows catalog/host-priority.json.",
+  "bundled": [
+    {
+      "name": "craft-context",
+      "description": "Default Craft context entry: Knowledge, Memory, Experience, Codebase with bounded receipts.",
+      "source": "./plugins/craft-context",
+      "hosts": ["codex", "claude"],
+      "default_install": true
+    },
+    {
+      "name": "craft-datasec",
+      "description": "Default local text redaction hook; no Context or MCP dependency.",
+      "source": "./plugins/craft-datasec",
+      "hosts": ["codex", "claude", "dsh"],
+      "default_install": true
+    }
+  ],
+  "craft_optional_source_plugins": [
+    {
+      "name": "craft-file-dir-desc",
+      "description": "Directory semantic descriptions from craft-capability source; source-built plugin, not published in this marketplace package yet.",
+      "source": "craft-capability/capability/craft-file-dir-desc",
+      "hosts": ["codex", "claude"],
+      "default_install": false
+    }
+  ],
+  "industry": [
+    { "name": "computer-use", "description": "Desktop/GUI control", "hosts": ["codex", "claude"], "default_install": false },
+    { "name": "agent-desktop", "description": "Desktop automation agent", "hosts": ["codex", "claude"], "default_install": false },
+    { "name": "github", "description": "GitHub repositories, issues and pull requests", "hosts": ["codex", "claude"], "default_install": false },
+    { "name": "context7", "description": "Up-to-date library documentation", "hosts": ["codex", "claude"], "default_install": false },
+    { "name": "playwright", "description": "Browser automation and end-to-end verification", "hosts": ["codex", "claude"], "default_install": false },
+    { "name": "linear", "description": "Linear issue tracking", "hosts": ["codex", "claude"], "default_install": false },
+    { "name": "notion", "description": "Notion pages and databases", "hosts": ["codex", "claude"], "default_install": false },
+    { "name": "slack", "description": "Slack workspace messaging", "hosts": ["codex", "claude"], "default_install": false },
+    { "name": "sentry", "description": "Error monitoring and issue triage", "hosts": ["codex", "claude"], "default_install": false }
+  ],
+  "custom_import": {
+    "description": "Users may import any external plugin manifest. Resolution order is fixed by host-priority.json; an imported plugin that supports multiple Hosts is installed once, using the first available Host.",
+    "accepted_hosts": ["codex", "claude", "dsh", "pi"],
+    "manifest_paths": {
+      "codex": ".codex-plugin/plugin.json",
+      "claude": ".claude-plugin/plugin.json",
+      "dsh": "dsh/plugin.json",
+      "pi": ".pi-plugin/plugin.json"
+    }
+  }
+}

@@ -2,3 +2,6 @@
 node_modules/
 *.log
 .craft_data/
+
+# Versioned package archives are build outputs; the packaging script is tracked.
+dist/

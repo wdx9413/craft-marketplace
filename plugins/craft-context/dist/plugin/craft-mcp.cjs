@@ -42342,6 +42342,7 @@ function defaultSettings(paths = craftPaths()) {
       onboarding: { completedAt: null, workspaceId: null, skippedAt: null }
     },
     lastProvider: "",
+    capabilities: { autoInstall: true, defaults: ["craft-context", "craft-datasec"], installed: [], disabled: [] },
     runtime: { maxSteps: 32, maxTokens: 12e3 },
     models: [],
     privacy: { telemetry: false },
@@ -42406,9 +42407,28 @@ function normalizeSettings(value, paths = craftPaths()) {
     lastProvider,
     runtime: { maxSteps: number2(runtime.maxSteps, "runtime.maxSteps", 32, 1, 1e4), maxTokens: number2(runtime.maxTokens, "runtime.maxTokens", 12e3, 1, 1e8) },
     models: normalizeModels(input2.models),
+    capabilities: normalizeCapabilities(input2.capabilities),
     privacy: { telemetry: boolean(privacy.telemetry, "privacy.telemetry", false) },
     updatedAt
   };
+}
+function normalizeCapabilities(value) {
+  const input2 = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const autoInstall = input2.autoInstall === void 0 ? true : boolean(input2.autoInstall, "capabilities.autoInstall", true);
+  const defaults = normalizeStringArray(input2.defaults, "capabilities.defaults", ["craft-context", "craft-datasec"]);
+  const installed = normalizeStringArray(input2.installed, "capabilities.installed", []);
+  const disabled = normalizeStringArray(input2.disabled, "capabilities.disabled", []);
+  return { autoInstall, defaults, installed, disabled };
+}
+function normalizeStringArray(value, name, fallback2) {
+  if (value === void 0 || value === null) return fallback2.slice();
+  if (!Array.isArray(value)) throw new Error(`${name} must be an array of capability ids`);
+  const out = /* @__PURE__ */ new Set();
+  for (const item of value) {
+    if (typeof item !== "string" || !item.trim()) throw new Error(`${name} items must be non-empty strings`);
+    out.add(item.trim());
+  }
+  return [...out];
 }
 function syncWrite(path2, value) {
   (0, import_node_fs14.mkdirSync)((0, import_node_path15.dirname)(path2), { recursive: true });
@@ -42437,6 +42457,7 @@ function saveSettingsSync(patch, paths = craftPaths(), now3 = /* @__PURE__ */ ne
     workbench: { ...current2.workbench, ...patch.workbench ?? {} },
     runtime: { ...current2.runtime, ...patch.runtime ?? {} },
     models: patch.models !== void 0 ? patch.models : current2.models,
+    capabilities: { ...current2.capabilities, ...patch.capabilities ?? {} },
     privacy: { ...current2.privacy, ...patch.privacy ?? {} },
     updatedAt: now3.toISOString()
   }, paths);
@@ -53786,7 +53807,7 @@ function positiveLimits(value, name) {
 function digest8(value) {
   return (0, import_node_crypto49.createHash)("sha256").update(JSON.stringify(value)).digest("hex");
 }
-function normalizeCapabilities(value) {
+function normalizeCapabilities2(value) {
   const input2 = object(value, "capabilities");
   const filesystem = text(input2.filesystem, "capabilities.filesystem");
   const network = text(input2.network, "capabilities.network");
@@ -53812,7 +53833,7 @@ var SandboxKernel = class {
     const profileId = args.profile_id === void 0 ? `sandbox_${(0, import_node_crypto49.randomUUID)().replaceAll("-", "")}` : text(args.profile_id, "profile_id");
     const backend = text(args.backend, "backend");
     if (!BACKENDS.has(backend)) throw new Error("Sandbox backend is unsupported");
-    const capabilities = normalizeCapabilities(args.capabilities);
+    const capabilities = normalizeCapabilities2(args.capabilities);
     return this.store.save("sandbox_profile", profileId, {
       name: text(args.name, "name"),
       backend,
@@ -53828,7 +53849,7 @@ var SandboxKernel = class {
     if (!Number.isInteger(version5) || version5 < 1) throw new Error("profile_version must be a positive integer");
     const profile = this.store.get("sandbox_profile", text(args.profile_id, "profile_id"), version5);
     if (profile.lifecycle !== "declared") throw new Error("Only a declared Sandbox Profile can be verified");
-    const observed = normalizeCapabilities(args.observed_capabilities);
+    const observed = normalizeCapabilities2(args.observed_capabilities);
     const evidenceIds2 = strings7(args.evidence_ids, "evidence_ids");
     if (!evidenceIds2.length) throw new Error("Sandbox verification requires evidence_ids");
     for (const evidenceId of evidenceIds2) this.store.get("evidence", evidenceId);
@@ -53912,7 +53933,7 @@ var SandboxKernel = class {
     }
     const status2 = text(args.status, "status");
     if (!(/* @__PURE__ */ new Set(["passed", "failed", "cancelled", "timed_out"])).has(status2)) throw new Error("Sandbox receipt status is unsupported");
-    const observed = normalizeCapabilities(args.observed_capabilities);
+    const observed = normalizeCapabilities2(args.observed_capabilities);
     const boundaryMatches = digest8(observed) === ticket.profile_digest;
     if (status2 === "passed" && !boundaryMatches) throw new Error("A passed Sandbox receipt must prove the exact profile boundaries");
     const evidenceIds2 = strings7(args.evidence_ids, "evidence_ids");
@@ -88128,6 +88149,7 @@ var ServiceFoundation = class {
   a2aDelegation;
   autonomousRuntime;
   capabilityLifecycle;
+  capabilityDefaults;
   memoryConsolidation;
   contentMigration;
   traceReviews;
@@ -88377,6 +88399,8 @@ var ServiceFoundation = class {
     this.a2aDelegation = new A2ADelegationKernel(store);
     this.autonomousRuntime = new AutonomousRuntimeKernel(store);
     this.capabilityLifecycle = new CapabilityLifecycleKernel(store);
+    this.capabilityDefaults = loadSettingsSync(store.paths).capabilities;
+    if (this.capabilityDefaults.autoInstall) this.installCapabilityDefaults();
     this.memoryConsolidation = new MemoryConsolidationKernel(store);
     this.traceReviews = new TraceReviewKernel(store);
     this.memoryMaintenance = new MemoryMaintenanceKernel(store);
@@ -88480,6 +88504,30 @@ var ServiceFoundation = class {
       (run, receipt) => this.finalizeWorkLaunch(run, receipt),
       this.trace
     );
+  }
+  /**
+   * Install the declared default capabilities that are neither installed nor
+   * explicitly disabled in settings. This runs at boot, is idempotent, and
+   * writes only lifecycle records — never grants execution authority.
+   */
+  installCapabilityDefaults() {
+    const { defaults, installed, disabled } = this.capabilityDefaults;
+    const added = [];
+    for (const name of defaults) {
+      if (installed.includes(name) || disabled.includes(name)) continue;
+      this.capabilityLifecycle.register({
+        capability_id: name,
+        name,
+        source: `marketplace:${name}`,
+        effect: "read_only"
+      });
+      this.capabilityLifecycle.install({ capability_id: name });
+      added.push(name);
+    }
+    if (added.length) {
+      const updated = saveSettingsSync({ capabilities: { installed: [...installed, ...added] } }, this.store.paths);
+      this.capabilityDefaults = updated.capabilities;
+    }
   }
 };
 
