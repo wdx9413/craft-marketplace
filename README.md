@@ -103,6 +103,16 @@ Claude CLI、DSH 或其它外部 Agent CLI。`/api/pilot/*` 与领航员派发�
 把执行器收敛为 `craft`；显式传入外部 CLI 名称返回稳定错误 `PILOT_CRAFT_ONLY`。
 其它模式（控制台/工作台/执行配置）仍可管理这些 Host，但领航员不会把任务交给它们。
 
+Craft 默认也不把 Codex / Claude / DSH CLI 当作执行宿主：统一由用户配置模型给
+Craft 内置 runtime 使用。原生驱动仅在 `settings.runtimeDependencies.externalCliDrivers`
+显式开启时装配；外部 CLI 默认只作为插件清单来源被归一化，不执行、不写宿主配置。
+插件来源优先级 `codex > claude > dsh > pi > craft > generic`，多宿主插件只解析一次。
+
+能力对比、plan/goal 现状、MCP/Skill 归属见
+[capability-comparison.md](docs/capability-comparison.md)：`craft run --goal` 与领航员
+仍支持；依赖 Codex CLI 的 plan 模式随默认去依赖而关闭；MCP 工具、Skill 资产与
+插件适配都在 `craft` 内核控制面，不在 `craft-capability`。
+
 ## 推荐插件分层
 
 `catalog/recommended-plugins.json` 按风险分层，目录项只是推荐引用，不是随包内置：
