@@ -74,3 +74,14 @@ Datasec/FileDirDesc）；`craft-common` 放公共包；`craft-eval` 独立评测
 - 不自动把外部 CLI 登录态转成 Craft 模型凭据。
 - 不默认安装桌面控制/远程执行/外发消息插件。
 - 不声称 plan mode 在默认配置下可用，也不把合成测试当成真实 Host 效果证明。
+
+## 7. 图标体系（Workbench 侧）
+
+Workbench 的图标重设计遵循「不用字母、纯 SVG 线性、一个语义一个图标」：
+
+- 左侧图标栏顶部的大写 C 形圆弧标记已删除，产品名只保留在原生窗口标题 / `<title>`；
+- 设置图标从双滑块改为通用齿轮，`sliders` 仍供「执行配置」使用；
+- `craft-logo.svg` 从内嵌 PNG 折纸菱形改为纯 SVG「有界回路」符号（不闭合圆角菱形 +
+  Knowledge/Memory/Experience 三节点），可跟随主题色；
+- 完整规范与语义映射见 `craft-workbench/docs/icon-system.md`（该仓库的目录迁移
+  由用户单独提交，本仓库只归档设计决策）。
