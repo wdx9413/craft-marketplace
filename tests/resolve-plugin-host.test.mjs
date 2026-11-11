@@ -42,3 +42,14 @@ test("recommended catalog resolves bundled defaults via codex first", () => {
   assert.equal(report.plugins.some(plugin => plugin.name === "github"), true);
   assert.equal(report.plugins.some(plugin => plugin.name === "craft-file-dir-desc"), true);
 });
+
+test("high-risk desktop/remote-control plugins are never default installs", () => {
+  const { recommended } = loadCatalog(root);
+  assert.equal(recommended.high_risk_not_default.length >= 3, true);
+  assert.equal(recommended.high_risk_not_default.some(plugin => plugin.default_install === true), false);
+  assert.equal(recommended.recommended.some(plugin => plugin.name === "context7" && plugin.default_install === true), true);
+  assert.equal(recommended.recommended.some(plugin => plugin.name === "agent-browser" && plugin.default_install === true), true);
+  assert.equal(recommended.credentialed_optional.some(plugin => plugin.default_install === true), false);
+  assert.equal(recommended.remote_message.default_install, false);
+  assert.equal(recommended.remote_message.credential_source, "environment variables only");
+});

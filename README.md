@@ -95,3 +95,49 @@ craft capability uninstall <id>
 ```
 
 默认能力清单由内核源码管理，后续可增减；本发布仓只发布 `craft-context`、`craft-datasec` 两个插件包。
+
+## 领航员模式边界
+
+领航员（Workbench `pilot` 模式）**只允许使用 Craft 内置执行器**，不调用 Codex CLI、
+Claude CLI、DSH 或其它外部 Agent CLI。`/api/pilot/*` 与领航员派发路由会在进入内核前
+把执行器收敛为 `craft`；显式传入外部 CLI 名称返回稳定错误 `PILOT_CRAFT_ONLY`。
+其它模式（控制台/工作台/执行配置）仍可管理这些 Host，但领航员不会把任务交给它们。
+
+## 推荐插件分层
+
+`catalog/recommended-plugins.json` 按风险分层，目录项只是推荐引用，不是随包内置：
+
+- `recommended`：通用只读/本地插件，建议安装（context7、github、playwright/agent-browser、
+  playwright-cli、chrome-devtools、serena、lsp、code-review、security-review、
+  frontend-design、hookify、skill-creator、sentry），以及 `cli_tools`（gh/rg/fd/jq/git）。
+- `credentialed_optional`：需要 token 或可写外部服务（notion、slack、linear、vercel、
+  cloudflare、supabase、stripe），默认不装。
+- `high_risk_not_default`：computer-use、agent-desktop、browser-use、remote-control，
+  涉及桌面控制/远程执行/外发消息，永不默认安装，需用户显式授权。
+
+判断依据：只读或本地、不开生产写、不自动发消息、清单里不含凭据的才可以进入默认推荐。
+
+## 远程消息与定时拉取
+
+Craft 已内置「拉取式」远程消息控制：webhook 入口、本地/挂载云目录轮询、
+GitHub 仓库 issue/PR 只读轮询、0-Token 收件箱与脱敏门禁。配置在
+`~/.craft_data/settings.json` 的 `messageSources`：
+
+```json
+{
+  "messageSources": {
+    "enabled": false,
+    "intervalMs": 60000,
+    "dropDirs": [],
+    "githubRepos": [],
+    "githubApiBaseUrl": "https://api.github.com",
+    "githubTokenEnv": "GITHUB_TOKEN",
+    "githubState": "issues"
+  }
+}
+```
+
+- `enabled=true` 后，`craft worker run` 在每个维护 tick 按 `intervalMs` 拉取一次。
+- GitHub 源只发 GET、只读 open issue/PR，token 仅从环境变量读取，不写入 settings 或消息库。
+- 跨重启用 `message_seen` 去重；单源失败按源上报，不影响其它源。
+- 不做外发消息、不写远端对象；需要双向控制时须显式安装并授权外部插件。

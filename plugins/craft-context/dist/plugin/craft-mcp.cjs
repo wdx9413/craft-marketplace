@@ -42343,6 +42343,7 @@ function defaultSettings(paths = craftPaths()) {
     },
     lastProvider: "",
     capabilities: { autoInstall: true, defaults: ["craft-context", "craft-datasec"], installed: [], disabled: [] },
+    messageSources: { enabled: false, intervalMs: 6e4, dropDirs: [], githubRepos: [], githubApiBaseUrl: "https://api.github.com", githubTokenEnv: "GITHUB_TOKEN", githubState: "issues" },
     runtime: { maxSteps: 32, maxTokens: 12e3 },
     models: [],
     privacy: { telemetry: false },
@@ -42408,8 +42409,36 @@ function normalizeSettings(value, paths = craftPaths()) {
     runtime: { maxSteps: number2(runtime.maxSteps, "runtime.maxSteps", 32, 1, 1e4), maxTokens: number2(runtime.maxTokens, "runtime.maxTokens", 12e3, 1, 1e8) },
     models: normalizeModels(input2.models),
     capabilities: normalizeCapabilities(input2.capabilities),
+    messageSources: normalizeMessageSources(input2.messageSources),
     privacy: { telemetry: boolean(privacy.telemetry, "privacy.telemetry", false) },
     updatedAt
+  };
+}
+function normalizeMessageSources(value) {
+  const input2 = value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const state4 = input2.githubState === void 0 ? "issues" : text3(input2.githubState, "messageSources.githubState", "issues");
+  if (!["issues", "pull_requests", "all"].includes(state4)) throw new Error("messageSources.githubState must be issues, pull_requests or all");
+  const apiBaseUrl = input2.githubApiBaseUrl === void 0 ? "https://api.github.com" : text3(input2.githubApiBaseUrl, "messageSources.githubApiBaseUrl", "https://api.github.com");
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(apiBaseUrl);
+  } catch {
+    throw new Error("messageSources.githubApiBaseUrl must be a valid HTTP(S) URL");
+  }
+  if (!["http:", "https:"].includes(parsedUrl.protocol)) throw new Error("messageSources.githubApiBaseUrl must be HTTP(S)");
+  const tokenEnv = input2.githubTokenEnv === void 0 ? "GITHUB_TOKEN" : text3(input2.githubTokenEnv, "messageSources.githubTokenEnv", "GITHUB_TOKEN");
+  if (!/^[A-Z_][A-Z0-9_]*$/u.test(tokenEnv)) throw new Error("messageSources.githubTokenEnv must be an environment variable name");
+  return {
+    enabled: input2.enabled === void 0 ? false : boolean(input2.enabled, "messageSources.enabled", false),
+    intervalMs: number2(input2.intervalMs, "messageSources.intervalMs", 6e4, 1e3, 36e5),
+    dropDirs: normalizeStringArray(input2.dropDirs, "messageSources.dropDirs", []),
+    githubRepos: normalizeStringArray(input2.githubRepos, "messageSources.githubRepos", []).map((repo) => {
+      if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u.test(repo)) throw new Error("messageSources.githubRepos entries must be owner/repo");
+      return repo;
+    }),
+    githubApiBaseUrl: apiBaseUrl.replace(/\/+$/u, ""),
+    githubTokenEnv: tokenEnv,
+    githubState: state4
   };
 }
 function normalizeCapabilities(value) {
@@ -42458,6 +42487,7 @@ function saveSettingsSync(patch, paths = craftPaths(), now3 = /* @__PURE__ */ ne
     runtime: { ...current2.runtime, ...patch.runtime ?? {} },
     models: patch.models !== void 0 ? patch.models : current2.models,
     capabilities: { ...current2.capabilities, ...patch.capabilities ?? {} },
+    messageSources: { ...current2.messageSources, ...patch.messageSources ?? {} },
     privacy: { ...current2.privacy, ...patch.privacy ?? {} },
     updatedAt: now3.toISOString()
   }, paths);
@@ -90759,6 +90789,72 @@ var MessageListener = class {
   }
 };
 
+// core/message-github-source.ts
+var GitHubIssueSourceAdapter = class {
+  id;
+  repo;
+  apiBaseUrl;
+  tokenEnv;
+  state;
+  fetchImpl;
+  env;
+  errors = [];
+  failures = 0;
+  constructor(options) {
+    if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u.test(options.repo)) throw new Error("GitHub repo must be owner/repo");
+    this.repo = options.repo;
+    this.id = `github:${options.repo}`;
+    this.apiBaseUrl = (options.apiBaseUrl ?? "https://api.github.com").replace(/\/+$/u, "");
+    this.tokenEnv = options.tokenEnv ?? "GITHUB_TOKEN";
+    this.state = options.state ?? "issues";
+    this.fetchImpl = options.fetchImpl ?? fetch;
+    this.env = options.env ?? process.env;
+    this.now = options.now ?? (() => (/* @__PURE__ */ new Date()).toISOString());
+    this.maxItems = Math.max(1, Math.min(options.maxItems ?? 30, 100));
+  }
+  now;
+  maxItems;
+  diagnostics() {
+    return { failed: this.failures, errors: [...this.errors] };
+  }
+  async poll() {
+    this.errors = [];
+    this.failures = 0;
+    const token = this.env[this.tokenEnv];
+    if (!token) throw new Error(`GitHub source requires ${this.tokenEnv} in the environment`);
+    const endpoint5 = `${this.apiBaseUrl}/repos/${this.repo}/issues?state=open&per_page=${this.maxItems}`;
+    const response = await this.fetchImpl(endpoint5, {
+      method: "GET",
+      headers: { Accept: "application/vnd.github+json", "User-Agent": "craft-message-source", Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(1e4)
+    });
+    if (!response.ok) throw new Error(`GitHub source returned HTTP ${response.status}`);
+    const raw = await response.text();
+    if (raw.length > 2e6) throw new Error("GitHub source response too large");
+    const parsed2 = JSON.parse(raw);
+    if (!Array.isArray(parsed2)) throw new Error("GitHub source response must be an array");
+    const out = [];
+    for (const entry2 of parsed2) {
+      if (!entry2 || typeof entry2 !== "object" || typeof entry2.number !== "number") continue;
+      const isPull = Boolean(entry2.pull_request);
+      if (this.state === "issues" && isPull) continue;
+      if (this.state === "pull_requests" && !isPull) continue;
+      const title = typeof entry2.title === "string" ? entry2.title.slice(0, 4e3) : "";
+      const body3 = typeof entry2.body === "string" ? entry2.body.slice(0, 4e3) : "";
+      out.push({
+        externalId: `${this.id}#${entry2.number}`,
+        source: "webhook",
+        from: typeof entry2.user?.login === "string" ? entry2.user.login.slice(0, 200) : "github",
+        subject: `${isPull ? "PR" : "Issue"} #${entry2.number}: ${title}`,
+        summary: body3,
+        priority: "normal",
+        receivedAt: typeof entry2.updated_at === "string" ? entry2.updated_at : this.now()
+      });
+    }
+    return out;
+  }
+};
+
 // core/plugin-discovery.ts
 var import_node_crypto161 = require("node:crypto");
 init_store2();
@@ -101790,11 +101886,22 @@ var CraftService = class _CraftService extends ServiceFoundation {
    * 一源失败不影响其余源，错误随报告返回而非抛出。
    */
   async messagePoll(args = {}) {
-    const dropDirs = args.drop_dirs ?? [];
+    const configured = loadSettingsSync(this.store.paths).messageSources;
+    const dropDirs = args.drop_dirs ?? configured.dropDirs;
     const adapters = [];
     for (const entry2 of dropDirs) {
       if (typeof entry2 !== "string" || !entry2.trim()) continue;
       adapters.push(new LocalDropAdapter(entry2.trim()));
+    }
+    const repos = args.github_repos ?? configured.githubRepos;
+    for (const entry2 of repos) {
+      if (typeof entry2 !== "string" || !entry2.trim()) continue;
+      adapters.push(new GitHubIssueSourceAdapter({
+        repo: entry2.trim(),
+        apiBaseUrl: configured.githubApiBaseUrl,
+        tokenEnv: configured.githubTokenEnv,
+        state: configured.githubState
+      }));
     }
     if (adapters.length === 0) return { reports: [], note: "no message sources configured" };
     const seenIds = new Set(this.store.list("message_seen", Number.MAX_SAFE_INTEGER, () => true).map((item) => String(item.id)));

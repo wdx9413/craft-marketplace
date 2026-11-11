@@ -26,17 +26,55 @@
       "default_install": false
     }
   ],
-  "industry": [
-    { "name": "computer-use", "description": "Desktop/GUI control", "hosts": ["codex", "claude"], "default_install": false },
-    { "name": "agent-desktop", "description": "Desktop automation agent", "hosts": ["codex", "claude"], "default_install": false },
-    { "name": "github", "description": "GitHub repositories, issues and pull requests", "hosts": ["codex", "claude"], "default_install": false },
-    { "name": "context7", "description": "Up-to-date library documentation", "hosts": ["codex", "claude"], "default_install": false },
-    { "name": "playwright", "description": "Browser automation and end-to-end verification", "hosts": ["codex", "claude"], "default_install": false },
-    { "name": "linear", "description": "Linear issue tracking", "hosts": ["codex", "claude"], "default_install": false },
-    { "name": "notion", "description": "Notion pages and databases", "hosts": ["codex", "claude"], "default_install": false },
-    { "name": "slack", "description": "Slack workspace messaging", "hosts": ["codex", "claude"], "default_install": false },
-    { "name": "sentry", "description": "Error monitoring and issue triage", "hosts": ["codex", "claude"], "default_install": false }
+  "risk_policy": {
+    "default_install_requires": ["read_only_or_local", "no_production_write", "no_autonomous_messaging", "no_credential_in_manifest"],
+    "never_default_install": ["desktop_control", "remote_code_execution", "outbound_messaging", "payment_or_billing", "credential_write"]
+  },
+  "recommended": [
+    { "name": "context7", "description": "Up-to-date library/framework documentation", "hosts": ["codex", "claude"], "category": "docs", "default_install": true },
+    { "name": "github", "description": "Repositories, issues and pull requests; read-first", "hosts": ["codex", "claude"], "category": "vcs", "default_install": true },
+    { "name": "playwright", "description": "Browser automation and end-to-end verification", "hosts": ["codex", "claude"], "category": "browser", "default_install": true },
+    { "name": "agent-browser", "description": "Headless browser navigation for local verification", "hosts": ["codex", "claude"], "category": "browser", "default_install": true },
+    { "name": "playwright-cli", "description": "Playwright command-line smoke checks", "hosts": ["codex", "claude"], "category": "browser", "default_install": true },
+    { "name": "chrome-devtools", "description": "DOM, console and network inspection", "hosts": ["codex", "claude"], "category": "browser", "default_install": true },
+    { "name": "serena", "description": "Semantic code retrieval and symbol editing (workspace-scoped)", "hosts": ["codex", "claude"], "category": "code", "default_install": true },
+    { "name": "lsp", "description": "Language-server diagnostics and definitions", "hosts": ["codex", "claude"], "category": "code", "default_install": true },
+    { "name": "code-review", "description": "Diff-based review without auto-merge", "hosts": ["codex", "claude"], "category": "quality", "default_install": true },
+    { "name": "security-review", "description": "Dependency and secret-pattern review", "hosts": ["codex", "claude"], "category": "quality", "default_install": true },
+    { "name": "frontend-design", "description": "UI design and accessibility review", "hosts": ["codex", "claude"], "category": "quality", "default_install": true },
+    { "name": "hookify", "description": "Declarative Host hooks without shell execution", "hosts": ["claude"], "category": "config", "default_install": true },
+    { "name": "skill-creator", "description": "Scaffold local Skills from templates", "hosts": ["codex", "claude"], "category": "config", "default_install": true },
+    { "name": "sentry", "description": "Read-only error monitoring and issue triage", "hosts": ["codex", "claude"], "category": "observability", "default_install": true }
   ],
+  "credentialed_optional": [
+    { "name": "notion", "description": "Notion pages and databases (token required)", "hosts": ["codex", "claude"], "default_install": false },
+    { "name": "slack", "description": "Slack workspace messaging (token + outbound scope)", "hosts": ["codex", "claude"], "default_install": false },
+    { "name": "linear", "description": "Linear issue tracking (token required)", "hosts": ["codex", "claude"], "default_install": false },
+    { "name": "vercel", "description": "Deployment inspection", "hosts": ["codex", "claude"], "default_install": false },
+    { "name": "cloudflare", "description": "Workers and DNS inspection", "hosts": ["codex", "claude"], "default_install": false },
+    { "name": "supabase", "description": "Database inspection", "hosts": ["codex", "claude"], "default_install": false },
+    { "name": "stripe", "description": "Billing inspection (never default: financial scope)", "hosts": ["codex", "claude"], "default_install": false }
+  ],
+  "high_risk_not_default": [
+    { "name": "computer-use", "description": "Desktop/GUI control; screen, keyboard and local app access", "hosts": ["codex", "claude"], "risk": "desktop_control", "default_install": false },
+    { "name": "agent-desktop", "description": "Desktop automation agent; can act outside the workspace", "hosts": ["codex", "claude"], "risk": "desktop_control", "default_install": false },
+    { "name": "browser-use", "description": "Autonomous browser actions including form submission", "hosts": ["codex", "claude"], "risk": "outbound_messaging", "default_install": false },
+    { "name": "remote-control", "description": "Remote host command bridge", "hosts": ["codex", "claude", "dsh"], "risk": "remote_code_execution", "default_install": false }
+  ],
+  "cli_tools": [
+    { "name": "gh", "description": "GitHub CLI; read-only subcommands first", "default_install": true },
+    { "name": "rg", "description": "Fast repository search", "default_install": true },
+    { "name": "fd", "description": "Fast file discovery", "default_install": true },
+    { "name": "jq", "description": "JSON inspection without scripting", "default_install": true },
+    { "name": "git", "description": "Version control", "default_install": true }
+  ],
+  "remote_message": {
+    "built_in": ["webhook_ingest", "local_drop_poll", "github_issue_poll", "maintenance_worker_interval"],
+    "description": "Remote message control is a local, pull-only capability: Craft reads a GitHub repo or mounted drop directory on an interval, redacts summaries and stores inbox items. It never sends messages or stores credentials in settings.json. Outbound messaging requires an explicitly authorized plugin.",
+    "credential_source": "environment variables only",
+    "default_install": false
+  },
+  "industry_note": "Recommendations are catalog entries, not bundled payloads. Craft lists them for user installation; host resolution follows catalog/host-priority.json.",
   "custom_import": {
     "description": "Users may import any external plugin manifest. Resolution order is fixed by host-priority.json; an imported plugin that supports multiple Hosts is installed once, using the first available Host.",
     "accepted_hosts": ["codex", "claude", "dsh", "pi"],

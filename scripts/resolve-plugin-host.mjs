@@ -46,7 +46,9 @@ export function resolveRecommended({ root = process.cwd(), catalog = loadCatalog
   const plugins = [
     ...catalog.recommended.bundled,
     ...catalog.recommended.craft_optional_source_plugins,
-    ...catalog.recommended.industry,
+    ...catalog.recommended.recommended,
+    ...catalog.recommended.credentialed_optional,
+    ...catalog.recommended.high_risk_not_default,
   ];
   return {
     host_priority: catalog.priority.hosts,
