@@ -82,5 +82,18 @@
 ## 未做
 
 - 不执行插件代码：manifest-only 插件只登记 adapter / skill / page / mod 声明。
-- 不实现 sandboxed 页面的运行时（只登记声明并返回 milestone）。
-- 不做跨 Host 的实时 UI 同步；适配是安装时的一次性归一化。
+- 不做跨 Host 的实时推送；宿主清单变化通过显式 `resync` 增量收敛（幂等，manifest
+  变更需 `allow_manifest_change`）。
+
+## 已实现（本轮补齐）
+
+- **sandboxed 页面运行时**：插件目录内的静态 `.html`，服务端读取时做路径穿越与
+  512 KiB 大小校验，并注入 CSP（`default-src 'none'`、`connect-src 'none'`）；
+  前端在 `sandbox="allow-scripts"`（无 `allow-same-origin`）的 iframe 中渲染。
+- **hooks 不再连坐**：声明了 `hooks` 的插件只是本导入路径不注册 Hook，页面 / Mod /
+  技能仍正常导入；`runtime_status` 只在完全没有可映射贡献时才是 `unsupported`。
+- **resync**：`POST /api/workbench/plugins/:id/resync` 重新归一化宿主清单，重复执行
+  不重复建 Mod；磁盘 `plugin.json` 与安装快照不同需显式确认。
+- **卸载清理**：卸载插件会删除它创建的 `draft` Mod；已 `active` 的 Mod 保留并标记
+  `plugin_id`，由操作者显式 revoke，避免静默改变已注入的 Worker 上下文。
+- **UI**：插件列表提供「重新同步」；沙箱页面可打开；Mod 列表显示「来自插件 · <id>」。
