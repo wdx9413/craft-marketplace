@@ -1,102 +1,65 @@
-// bin/craft-datasec-hook.ts
-import { readFileSync as readFileSync3 } from "node:fs";
-import { randomUUID } from "node:crypto";
-import { homedir as homedir2 } from "node:os";
-import { fileURLToPath } from "node:url";
-import { resolve as resolve3, join as join4 } from "node:path";
-
-// common/craft-common-store-local/src/paths.ts
-import { closeSync, existsSync, fsyncSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, statSync, unlinkSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { basename, dirname, join, resolve } from "node:path";
-function dataRoot(env = process.env) {
-  const configured = env.CRAFT_DATA_DIR?.trim();
-  if (configured) return resolve(configured);
-  const defaultRoot = join(homedir(), ".craft_data");
-  const settingsPath = env.CRAFT_SETTINGS_FILE?.trim() || join(defaultRoot, "settings.json");
-  if (existsSync(settingsPath)) {
-    try {
-      const value = JSON.parse(readFileSync(settingsPath, "utf8").replace(/^\uFEFF/u, ""));
-      if (value && typeof value === "object" && !Array.isArray(value)) {
-        const candidate = value.dataRoot;
-        if (typeof candidate === "string" && candidate.trim()) return resolve(candidate);
-      }
-    } catch {
-    }
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
   }
-  return resolve(defaultRoot);
-}
-function craftPaths(root = dataRoot()) {
-  const resolved = resolve(root);
-  return {
-    root: resolved,
-    configDir: join(resolved, "config"),
-    configFile: join(resolved, "config", "config.json"),
-    settingsFile: join(resolved, "settings.json"),
-    secretsFile: join(resolved, "secrets.json"),
-    databaseDir: join(resolved, "db"),
-    databaseFile: join(resolved, "db", "craft.db"),
-    legacyDatabaseFile: join(resolved, "craft.db"),
-    indexDir: join(resolved, "index"),
-    indexFile: join(resolved, "index", "capabilities.db"),
-    logsDir: join(resolved, "logs"),
-    cacheDir: join(resolved, "cache"),
-    backupsDir: join(resolved, "backups"),
-    runtimeDir: join(resolved, "runtime"),
-    artifactsDir: join(resolved, "artifacts"),
-    knowledgeDir: join(resolved, "knowledge"),
-    memoryDir: join(resolved, "memory"),
-    sessionsDir: join(resolved, "sessions"),
-    experienceDir: join(resolved, "experience"),
-    knowledgeDatabaseFile: join(resolved, "knowledge", "knowledge.db"),
-    memoryDatabaseFile: join(resolved, "memory", "memory.db"),
-    experienceDatabaseFile: join(resolved, "experience", "experience.db"),
-    experienceProcedureDir: join(resolved, "experience", "procedures"),
-    knowledgeContentDir: join(resolved, "knowledge", "md"),
-    memoryContentDir: join(resolved, "memory", "md"),
-    experienceContentDir: join(resolved, "experience", "md"),
-    // The searchable knowledge projection shares the knowledge domain DB;
-    // its tables are independent from the content-index projection.
-    knowledgeIndex: join(resolved, "knowledge", "knowledge.db")
-  };
-}
+  return to;
+};
+var __reExport = (target, mod, secondTarget) => (__copyProps(target, mod, "default"), secondTarget && __copyProps(secondTarget, mod, "default"));
+
+// bin/craft-datasec-hook.ts
+import { readFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { homedir } from "node:os";
+import { fileURLToPath } from "node:url";
+import { resolve as resolve2, join as join2 } from "node:path";
+
+// core/infrastructure/paths.ts
+var paths_exports = {};
+__reExport(paths_exports, paths_star);
+import * as paths_star from "craft-common-store-local/paths";
 
 // core/interfaces/codex-hook-runtime-diagnostics.ts
 import { createHash } from "node:crypto";
-import { lstatSync as lstatSync2, mkdirSync as mkdirSync2, openSync as openSync2, writeSync, closeSync as closeSync2 } from "node:fs";
-import { join as join2, resolve as resolve2 } from "node:path";
+import { lstatSync, mkdirSync, openSync, writeSync, closeSync } from "node:fs";
+import { join, resolve } from "node:path";
 var DATABASE_ROLES = /* @__PURE__ */ new Set(["primary", "capability_partition"]);
 var DATABASE_PHASES = /* @__PURE__ */ new Set(["transaction_begin", "transaction_operation", "savepoint_begin", "savepoint_operation"]);
 function safeDirectory(path) {
   try {
-    mkdirSync2(path, { recursive: true, mode: 448 });
+    mkdirSync(path, { recursive: true, mode: 448 });
   } catch (error) {
     if (error.code !== "EEXIST") throw error;
   }
-  const stat = lstatSync2(path);
+  const stat = lstatSync(path);
   if (stat.isSymbolicLink() || !stat.isDirectory()) throw new Error("Hook diagnostics path must use regular directories");
 }
 function appendLine(path, value) {
-  const fd = openSync2(path, "a", 384);
+  const fd = openSync(path, "a", 384);
   try {
     writeSync(fd, `${JSON.stringify(value)}
 `);
   } finally {
-    closeSync2(fd);
+    closeSync(fd);
   }
 }
 function beginHookRuntimeDiagnostic(args) {
-  const root = resolve2(args.data_root);
-  const traceRoot = join2(root, "trace");
-  const hookRoot = join2(traceRoot, "hook-runtime");
-  const directory = join2(hookRoot, "v1");
+  const root = resolve(args.data_root);
+  const traceRoot = join(root, "trace");
+  const hookRoot = join(traceRoot, "hook-runtime");
+  const directory = join(hookRoot, "v1");
   safeDirectory(root);
   safeDirectory(traceRoot);
   safeDirectory(hookRoot);
   safeDirectory(directory);
   const shard = createHash("sha256").update(args.request_id).digest()[0].toString(16).padStart(2, "0");
-  const path = join2(directory, `${shard}.jsonl`);
-  const existingFile = lstatSync2(path, { throwIfNoEntry: false });
+  const path = join(directory, `${shard}.jsonl`);
+  const existingFile = lstatSync(path, { throwIfNoEntry: false });
   if (existingFile) {
     const stat = existingFile;
     if (stat.isSymbolicLink() || !stat.isFile()) throw new Error("Hook diagnostics file must be a regular file");
@@ -147,266 +110,9 @@ function beginHookRuntimeDiagnostic(args) {
   } };
 }
 
-// capability/craft-datasec/hook.ts
-import { extname } from "node:path";
-
-// capability/craft-datasec/rules.ts
-var DEFAULT_RULES = [
-  { name: "phone", pattern: String.raw`(?<!\d)(?:\+?86[ -]?)?1[3-9](?:[ -]?\d){9}(?!\d)` },
-  { name: "identity", pattern: String.raw`(?<!\d)[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx](?!\d)`, enabled: false },
-  { name: "email", pattern: String.raw`[A-Z0-9][A-Z0-9._%+-]*@[A-Z0-9.-]+\.[A-Z]{2,}`, flags: "i" },
-  { name: "ipv4", pattern: String.raw`(?<![\d.])(?:(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?![\d.])`, enabled: false },
-  { name: "bank", pattern: String.raw`(?<!\d)(?:62|4|5[1-5])\d{14,17}(?!\d)`, enabled: false },
-  { name: "api_key", pattern: String.raw`\b(?:api[_-]?(?:key|secret)|access[_-]?token|secret[_-]?key|authorization)\b["']?\s*[:=]\s*["']?(?:Bearer\s+)?([A-Z0-9_./+=~-]{8,})`, flags: "i", group: 1, enabled: false },
-  { name: "password", pattern: String.raw`\b(?:password|passwd|pwd)\b["']?\s*[:=]\s*["']?([^\s"'\x60,;}{]{4,})`, flags: "i", group: 1, enabled: false },
-  { name: "jwt", pattern: String.raw`\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}`, enabled: false },
-  { name: "private_key", pattern: String.raw`-----BEGIN (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----[\s\S]*?-----END (?:RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----`, enabled: false },
-  { name: "chinese_name", pattern: String.raw`姓名["'\s:：]+([\p{Script=Han}]{2,4})`, flags: "u", group: 1, enabled: false }
-];
-function enabledBuiltinRules(names) {
-  if (names === void 0) return DEFAULT_RULES;
-  const requested = names.split(",").map((name) => name.trim()).filter(Boolean);
-  if (!requested.length || requested.some((name) => !DEFAULT_RULES.some((rule) => rule.name === name))) throw new Error("Unknown or empty built-in rule selection");
-  return DEFAULT_RULES.map((rule) => requested.includes(rule.name) ? { ...rule, enabled: true } : rule);
-}
-var Sanitizer = class {
-  rules;
-  token;
-  count = 0;
-  constructor(rules, token) {
-    this.token = token;
-    this.rules = rules.filter((rule) => rule.enabled !== false).map((rule) => {
-      const group = rule.group ?? 0;
-      if (!/^[a-z][a-z0-9_]{0,31}$/.test(rule.name) || !rule.pattern || !Number.isInteger(group) || group < 0) throw new Error("Invalid rule");
-      return { name: rule.name, regex: new RegExp(rule.pattern, [...new Set(`gd${rule.flags ?? ""}`)].join("")), group };
-    });
-    if (!this.rules.length) throw new Error("No rules enabled");
-  }
-  text(text) {
-    const protectedRanges = [...text.matchAll(/\[CRAFT_DATASEC_[a-z0-9_]+_[a-f0-9]{32}\]/g)].map((match) => [match.index, match.index + match[0].length]);
-    const matches = [];
-    for (const rule of this.rules) {
-      for (const match of text.matchAll(rule.regex)) {
-        const range = match.indices[rule.group];
-        if (range && range[0] < range[1]) matches.push({ start: range[0], end: range[1], name: rule.name });
-      }
-    }
-    matches.sort((a, b) => a.start - b.start || b.end - a.end);
-    let end = 0, result2 = "";
-    for (const match of matches) {
-      if (match.start < end || protectedRanges.some(([start, stop]) => match.start < stop && match.end > start)) continue;
-      const value = text.slice(match.start, match.end);
-      if (match.name === "email" && !/^[^@]+@[^@]+$/.test(value)) throw new Error("Invalid email rule match");
-      const replacement = match.name === "email" ? `${value[0]}*@${value.slice(value.indexOf("@") + 1)}` : this.token(match.name, value);
-      result2 += text.slice(end, match.start) + replacement;
-      end = match.end;
-      this.count++;
-    }
-    return result2 + text.slice(end);
-  }
-  value(value, depth = 0) {
-    if (depth > 64) throw new Error("Result nesting exceeds text redaction limit");
-    if (typeof value === "string") return this.text(value);
-    if (typeof value === "number") {
-      const safe = this.text(String(value));
-      return safe === String(value) ? value : safe;
-    }
-    if (Array.isArray(value)) return value.map((item) => this.value(item, depth + 1));
-    if (value !== null && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, item]) => [this.text(key), this.value(item, depth + 1)]));
-    return value;
-  }
-};
-
-// capability/craft-datasec/vault.ts
-import { createHash as createHash2, createHmac, randomBytes } from "node:crypto";
-import { constants, closeSync as closeSync3, fstatSync, linkSync as linkSync2, lstatSync as lstatSync3, mkdirSync as mkdirSync3, mkdtempSync, openSync as openSync3, readFileSync as readFileSync2, rmSync, writeFileSync as writeFileSync2 } from "node:fs";
-import { join as join3 } from "node:path";
-import { DatabaseSync } from "node:sqlite";
-var TOKEN = /\[CRAFT_DATASEC_[a-z0-9_]+_[a-f0-9]{32}\]/g;
-function isPrivateDirectory(stat, platform = process.platform, uid = process.getuid?.()) {
-  if (!stat.isDirectory() || stat.isSymbolicLink()) return false;
-  return platform === "win32" || (stat.mode & 63) === 0 && stat.uid === uid;
-}
-function isPrivateFile(stat, platform = process.platform, uid = process.getuid?.()) {
-  if (!stat.isFile()) return false;
-  return platform === "win32" || (stat.mode & 63) === 0 && stat.uid === uid;
-}
-function privateDirectory(path) {
-  mkdirSync3(path, { recursive: true, mode: 448 });
-  const stat = lstatSync3(path);
-  if (!isPrivateDirectory(stat)) throw new Error("Unsafe vault directory");
-}
-function openPrivate(path, flags = constants.O_RDONLY) {
-  const fd = openSync3(path, flags | constants.O_NOFOLLOW, 384);
-  try {
-    const stat = fstatSync(fd);
-    if (!isPrivateFile(stat)) throw new Error("Unsafe vault file");
-    return fd;
-  } catch (error) {
-    closeSync3(fd);
-    throw error;
-  }
-}
-function readPrivate(path) {
-  const fd = openPrivate(path);
-  try {
-    return readFileSync2(fd);
-  } finally {
-    closeSync3(fd);
-  }
-}
-function publish(directory, name, value) {
-  const temp = mkdtempSync(join3(directory, ".write-"));
-  try {
-    const source = join3(temp, "record");
-    writeFileSync2(source, value, { mode: 384 });
-    try {
-      linkSync2(source, join3(directory, name));
-    } catch (error) {
-      if (error.code !== "EEXIST") throw error;
-    }
-  } finally {
-    rmSync(temp, { recursive: true, force: true });
-  }
-}
-var TokenVault = class {
-  directory;
-  key;
-  database;
-  cache = /* @__PURE__ */ new Map();
-  pending = /* @__PURE__ */ new Map();
-  closed = false;
-  constructor(root, session) {
-    if (!session) throw new Error("Missing session identity");
-    privateDirectory(root);
-    this.directory = join3(root, createHash2("sha256").update(session).digest("hex"));
-    privateDirectory(this.directory);
-    publish(this.directory, "key", randomBytes(32));
-    this.key = readPrivate(join3(this.directory, "key"));
-    if (this.key.length !== 32) throw new Error("Invalid vault key");
-    const file = join3(this.directory, "mappings.sqlite");
-    closeSync3(openPrivate(file, constants.O_CREAT | constants.O_RDWR));
-    this.database = new DatabaseSync(file);
-    try {
-      this.database.exec("PRAGMA busy_timeout=1500; CREATE TABLE IF NOT EXISTS mappings (token TEXT PRIMARY KEY, name TEXT NOT NULL, value TEXT NOT NULL) STRICT;");
-    } catch (error) {
-      this.database.close();
-      throw error;
-    }
-  }
-  token(name, value) {
-    const cacheKey = `${name}\0${value}`;
-    const cached = this.cache.get(cacheKey);
-    if (cached) return cached;
-    const digest = createHmac("sha256", this.key).update(`${name}\0${value}`).digest("hex").slice(0, 32);
-    const token = `[CRAFT_DATASEC_${name}_${digest}]`;
-    this.pending.set(token, { name, value });
-    this.cache.set(cacheKey, token);
-    return token;
-  }
-  /** One transaction per hook output, rather than a filesystem write per occurrence. */
-  flush() {
-    if (!this.pending.size) return;
-    this.database.exec("BEGIN IMMEDIATE");
-    try {
-      const insert = this.database.prepare("INSERT OR IGNORE INTO mappings VALUES (?, ?, ?)");
-      for (const [token, record] of this.pending) insert.run(token, record.name, record.value);
-      this.database.exec("COMMIT");
-      this.pending.clear();
-    } catch (error) {
-      this.database.exec("ROLLBACK");
-      throw error;
-    }
-  }
-  close() {
-    if (!this.closed) {
-      this.database.close();
-      this.closed = true;
-    }
-  }
-  restore(text) {
-    const restored = text.replace(TOKEN, (token) => {
-      const record = this.pending.get(token) ?? this.database.prepare("SELECT name, value FROM mappings WHERE token = ?").get(token);
-      if (!record) throw new Error("Unknown mapping");
-      const expected = `[CRAFT_DATASEC_${record.name}_${createHmac("sha256", this.key).update(`${record.name}\0${record.value}`).digest("hex").slice(0, 32)}]`;
-      if (expected !== token) throw new Error("Invalid mapping");
-      return record.value;
-    });
-    if (restored.includes("[CRAFT_DATASEC_")) throw new Error("Unknown placeholder");
-    return restored;
-  }
-};
-
-// capability/craft-datasec/hook.ts
-var FAILURE = "craft-datasec\uFF1A\u672C\u5730\u8131\u654F\u5931\u8D25\uFF0C\u5185\u5BB9\u5DF2\u9690\u85CF\u3002\u8BF7\u68C0\u67E5\u672C\u5730\u89C4\u5219\u548C\u79C1\u6709\u6620\u5C04\u76EE\u5F55\u3002";
-var BINARY = /\.(?:xls[xmb]?|xlt[xm]|pdf|png|jpe?g|gif|webp|bmp|svg|ico|zip|gz|tar|7z|docx?|pptx?|mp[34]|wav)$/i;
-var EDIT = /^(?:Edit|Write|MultiEdit|NotebookEdit|apply_patch)$/;
-function denied(reason) {
-  return { hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: reason } };
-}
-function hidden(host, reason, replacement) {
-  if (host === "claude") return { systemMessage: reason, hookSpecificOutput: { hookEventName: "PostToolUse", updatedToolOutput: replacement } };
-  return { decision: "block", reason: JSON.stringify(replacement), systemMessage: reason };
-}
-function blank(value, depth = 0) {
-  if (depth > 64) return null;
-  if (typeof value === "string") return ["text", "image", "base64", "file", "resource", "tool_result"].includes(value) ? value : "";
-  if (typeof value === "number") return 0;
-  if (Array.isArray(value)) return value.map((item) => blank(item, depth + 1));
-  if (value !== null && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, item], index) => [/^[A-Za-z_$][\w$-]*$/.test(key) ? key : `hidden_${index}`, blank(item, depth + 1)]));
-  return value;
-}
-function restore(value, vault) {
-  if (typeof value === "string") return vault.restore(value);
-  if (Array.isArray(value)) return value.map((item) => restore(item, vault));
-  if (value !== null && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, item]) => [vault.restore(key), restore(item, vault)]));
-  return value;
-}
-function handleHook(host, event, input, root, rules = DEFAULT_RULES) {
-  if (event === "UserPromptSubmit") return {};
-  let vault;
-  const getVault = () => vault ??= new TokenVault(root, input.session_id ?? "");
-  const apply = () => {
-    if (input.hook_event_name !== event) throw new Error("Mismatched hook event");
-    const sanitizer = new Sanitizer(rules, (name, text) => getVault().token(name, text));
-    if (event === "PreToolUse") {
-      const args = input.tool_input ?? {};
-      const name = input.tool_name ?? "";
-      const detector = new Sanitizer(rules, () => "[REDACTED]");
-      detector.value(args);
-      if (detector.count) return denied("craft-datasec\uFF1A\u5DE5\u5177\u53C2\u6570\u5305\u542B\u654F\u611F\u4FE1\u606F\uFF0C\u8BF7\u5148\u8131\u654F\u540E\u518D\u8C03\u7528\u3002");
-      if (name === "Read" && typeof args === "object" && args !== null && !Array.isArray(args) && typeof args.file_path === "string" && BINARY.test(extname(args.file_path))) {
-        return denied("craft-datasec\uFF1A\u6B64\u6587\u4EF6\u4E0D\u662F\u53D7\u652F\u6301\u7684\u7EAF\u6587\u672C\uFF0C\u8BF7\u5148\u5728\u672C\u5730\u5BFC\u51FA\u7EAF\u6587\u672C\u5E76\u8131\u654F\u3002");
-      }
-      if (!JSON.stringify(args).includes("[CRAFT_DATASEC_")) return {};
-      if (!EDIT.test(name)) return denied("craft-datasec\uFF1A\u5360\u4F4D\u7B26\u53EA\u5141\u8BB8\u5728\u672C\u5730\u6587\u4EF6\u7F16\u8F91\u5DE5\u5177\u4E2D\u8FD8\u539F\uFF0C\u4E0D\u80FD\u81EA\u52A8\u7528\u4E8E\u547D\u4EE4\u6216\u8FDC\u7A0B\u8C03\u7528\u3002");
-      return { hookSpecificOutput: { hookEventName: event, permissionDecision: "allow", updatedInput: restore(args, getVault()) } };
-    }
-    if (input.tool_response === void 0) throw new Error("Missing tool result");
-    const safe = sanitizer.value(input.tool_response);
-    if (!sanitizer.count) return {};
-    vault?.flush();
-    return hidden(host, `craft-datasec\uFF1A\u5DF2\u5728\u672C\u5730\u8131\u654F ${sanitizer.count} \u5904\u5185\u5BB9\u3002`, safe);
-  };
-  let output;
-  try {
-    output = apply();
-  } catch {
-    if (event === "PostToolUse") {
-      const replacement = input.tool_response ?? null;
-      output = { ...hidden(host, FAILURE, blankResult(replacement)), continue: false, stopReason: FAILURE };
-    } else {
-      output = denied(FAILURE);
-    }
-  }
-  vault?.close();
-  return output;
-}
-function blankResult(value) {
-  return blank(value);
-}
-
 // bin/craft-datasec-hook.ts
+import { blankResult, FAILURE, handleHook, hidden } from "@craft/capability-datasec/hook";
+import { enabledBuiltinRules } from "@craft/capability-datasec/rules";
 function runDataSecHookCli(args, raw, env = process.env, onTiming) {
   const [host, event] = args;
   if (!["claude", "codex"].includes(host) || !["PreToolUse", "PostToolUse", "UserPromptSubmit"].includes(event)) {
@@ -420,9 +126,9 @@ function runDataSecHookCli(args, raw, env = process.env, onTiming) {
     onTiming?.("input_parse_ms", performance.now() - parseStarted);
     const rulesStarted = performance.now();
     const config = env.CRAFT_DATASEC_RULES;
-    const rules = event === "UserPromptSubmit" ? [] : config ? JSON.parse(readFileSync3(config, "utf8")) : enabledBuiltinRules(env.CRAFT_DATASEC_ENABLE_RULES);
+    const rules = event === "UserPromptSubmit" ? [] : config ? JSON.parse(readFileSync(config, "utf8")) : enabledBuiltinRules(env.CRAFT_DATASEC_ENABLE_RULES);
     onTiming?.("rules_load_ms", performance.now() - rulesStarted);
-    const root = env.CRAFT_DATASEC_DIR ?? join4(homedir2(), ".craft-datasec");
+    const root = env.CRAFT_DATASEC_DIR ?? join2(homedir(), ".craft-datasec");
     const handlerStarted = performance.now();
     let output;
     try {
@@ -439,7 +145,7 @@ function runDataSecHookCli(args, raw, env = process.env, onTiming) {
   }
 }
 function runIfInvoked(argv1, modulePath, run) {
-  return argv1 && resolve3(argv1) === resolve3(modulePath) ? run() : null;
+  return argv1 && resolve2(argv1) === resolve2(modulePath) ? run() : null;
 }
 function writeCliResult(result2, stdout, stderr) {
   if (!result2) return;
@@ -454,14 +160,14 @@ var timings = {};
 var result = runIfInvoked(process.argv[1], fileURLToPath(import.meta.url), () => {
   const args = process.argv.slice(2), [host, event] = args;
   if (!(host === "claude" || host === "codex") || !(event === "PreToolUse" || event === "PostToolUse" || event === "UserPromptSubmit")) {
-    return runDataSecHookCli(args, readFileSync3(0, "utf8"));
+    return runDataSecHookCli(args, readFileSync(0, "utf8"));
   }
   try {
-    diagnostic = beginHookRuntimeDiagnostic({ data_root: craftPaths().root, request_id: randomUUID(), member: "datasec", event, host });
+    diagnostic = beginHookRuntimeDiagnostic({ data_root: (0, paths_exports.craftPaths)().root, request_id: randomUUID(), member: "datasec", event, host });
   } catch {
   }
   const readStarted = performance.now();
-  const raw = readFileSync3(0, "utf8");
+  const raw = readFileSync(0, "utf8");
   inputReadMs = performance.now() - readStarted;
   inputBytes = Buffer.byteLength(raw);
   return runDataSecHookCli(args, raw, process.env, (stage, durationMs) => {
