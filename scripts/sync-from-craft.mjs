@@ -37,7 +37,11 @@ const apply = args.includes("--apply");
 const unsupported = args.filter((arg) => arg.startsWith("--") && arg !== "--apply" && arg !== "--check");
 if (unsupported.length) throw new Error(`unsupported argument(s): ${unsupported.join(", ")}`);
 const sourceArgument = args.find((arg) => !arg.startsWith("--"));
-const sourceRoot = sourceArgument ?? join("..", "craft", "plugins");
+// A marketplace checkout must not depend on a sibling craft repository. The
+// publishing job passes the packed plugins directory explicitly, or an operator
+// points at a verified source archive.
+if (!sourceArgument) throw new Error("Craft plugins directory is required; pass it explicitly instead of relying on a sibling ../craft checkout");
+const sourceRoot = resolve(sourceArgument);
 const marketplaceRoot = process.cwd();
 const sourceRepo = resolve(sourceRoot, "..");
 const contractPath = join(sourceRepo, "distribution-contract.json");
