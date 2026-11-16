@@ -4112,8 +4112,8 @@ var init_store = __esm({
         if (!terms4.length)
           return [];
         return this.list("capability", Number.MAX_SAFE_INTEGER).map((item) => {
-          const text42 = [item.name, item.description, item.search_text ?? item.body].join(" ").toLowerCase();
-          const score = terms4.reduce((total, term) => total + Number(text42.includes(term.toLowerCase())), 0);
+          const text43 = [item.name, item.description, item.search_text ?? item.body].join(" ").toLowerCase();
+          const score = terms4.reduce((total, term) => total + Number(text43.includes(term.toLowerCase())), 0);
           return { ...item, score };
         }).filter((item) => Number(item.score) > 0).sort((left, right) => Number(right.score) - Number(left.score)).slice(0, bounded5);
       }
@@ -5800,14 +5800,14 @@ var require_foldFlowLines = __commonJS({
     var FOLD_FLOW = "flow";
     var FOLD_BLOCK = "block";
     var FOLD_QUOTED = "quoted";
-    function foldFlowLines(text42, indent, mode = "flow", { indentAtStart, lineWidth = 80, minContentWidth = 20, onFold, onOverflow } = {}) {
+    function foldFlowLines(text43, indent, mode = "flow", { indentAtStart, lineWidth = 80, minContentWidth = 20, onFold, onOverflow } = {}) {
       if (!lineWidth || lineWidth < 0)
-        return text42;
+        return text43;
       if (lineWidth < minContentWidth)
         minContentWidth = 0;
       const endStep = Math.max(1 + minContentWidth, 1 + lineWidth - indent.length);
-      if (text42.length <= endStep)
-        return text42;
+      if (text43.length <= endStep)
+        return text43;
       const folds = [];
       const escapedFolds = {};
       let end = lineWidth - indent.length;
@@ -5824,14 +5824,14 @@ var require_foldFlowLines = __commonJS({
       let escStart = -1;
       let escEnd = -1;
       if (mode === FOLD_BLOCK) {
-        i = consumeMoreIndentedLines(text42, i, indent.length);
+        i = consumeMoreIndentedLines(text43, i, indent.length);
         if (i !== -1)
           end = i + endStep;
       }
-      for (let ch; ch = text42[i += 1]; ) {
+      for (let ch; ch = text43[i += 1]; ) {
         if (mode === FOLD_QUOTED && ch === "\\") {
           escStart = i;
-          switch (text42[i + 1]) {
+          switch (text43[i + 1]) {
             case "x":
               i += 3;
               break;
@@ -5848,12 +5848,12 @@ var require_foldFlowLines = __commonJS({
         }
         if (ch === "\n") {
           if (mode === FOLD_BLOCK)
-            i = consumeMoreIndentedLines(text42, i, indent.length);
+            i = consumeMoreIndentedLines(text43, i, indent.length);
           end = i + indent.length + endStep;
           split = void 0;
         } else {
           if (ch === " " && prev && prev !== " " && prev !== "\n" && prev !== "	") {
-            const next = text42[i + 1];
+            const next = text43[i + 1];
             if (next && next !== " " && next !== "\n" && next !== "	")
               split = i;
           }
@@ -5865,12 +5865,12 @@ var require_foldFlowLines = __commonJS({
             } else if (mode === FOLD_QUOTED) {
               while (prev === " " || prev === "	") {
                 prev = ch;
-                ch = text42[i += 1];
+                ch = text43[i += 1];
                 overflow = true;
               }
               const j = i > escEnd + 1 ? i - 2 : escStart - 1;
               if (escapedFolds[j])
-                return text42;
+                return text43;
               folds.push(j);
               escapedFolds[j] = true;
               end = j + endStep;
@@ -5885,39 +5885,39 @@ var require_foldFlowLines = __commonJS({
       if (overflow && onOverflow)
         onOverflow();
       if (folds.length === 0)
-        return text42;
+        return text43;
       if (onFold)
         onFold();
-      let res = text42.slice(0, folds[0]);
+      let res = text43.slice(0, folds[0]);
       for (let i2 = 0; i2 < folds.length; ++i2) {
         const fold = folds[i2];
-        const end2 = folds[i2 + 1] || text42.length;
+        const end2 = folds[i2 + 1] || text43.length;
         if (fold === 0)
           res = `
-${indent}${text42.slice(0, end2)}`;
+${indent}${text43.slice(0, end2)}`;
         else {
           if (mode === FOLD_QUOTED && escapedFolds[fold])
-            res += `${text42[fold]}\\`;
+            res += `${text43[fold]}\\`;
           res += `
-${indent}${text42.slice(fold + 1, end2)}`;
+${indent}${text43.slice(fold + 1, end2)}`;
         }
       }
       return res;
     }
-    function consumeMoreIndentedLines(text42, i, indent) {
+    function consumeMoreIndentedLines(text43, i, indent) {
       let end = i;
       let start2 = i + 1;
-      let ch = text42[start2];
+      let ch = text43[start2];
       while (ch === " " || ch === "	") {
         if (i < start2 + indent) {
-          ch = text42[++i];
+          ch = text43[++i];
         } else {
           do {
-            ch = text42[++i];
+            ch = text43[++i];
           } while (ch && ch !== "\n");
           end = i;
           start2 = i + 1;
-          ch = text42[start2];
+          ch = text43[start2];
         }
       }
       return end;
@@ -17922,7 +17922,7 @@ var init_v4_mini = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
 function isZ4Schema(s) {
   const schema2 = s;
   return !!schema2._zod;
@@ -17985,7 +17985,7 @@ function getLiteralValue(schema2) {
   return void 0;
 }
 var init_zod_compat = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js"() {
     init_v4_mini();
   }
 });
@@ -19221,10 +19221,10 @@ var init_v4 = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/types.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/types.js
 var LATEST_PROTOCOL_VERSION, SUPPORTED_PROTOCOL_VERSIONS, RELATED_TASK_META_KEY, JSONRPC_VERSION, AssertObjectSchema, ProgressTokenSchema, CursorSchema, TaskCreationParamsSchema, TaskMetadataSchema, RelatedTaskMetadataSchema, RequestMetaSchema, BaseRequestParamsSchema, TaskAugmentedRequestParamsSchema, isTaskAugmentedRequestParams, RequestSchema, NotificationsParamsSchema, NotificationSchema, ResultSchema, RequestIdSchema, JSONRPCRequestSchema, isJSONRPCRequest, JSONRPCNotificationSchema, isJSONRPCNotification, JSONRPCResultResponseSchema, isJSONRPCResultResponse, ErrorCode, JSONRPCErrorResponseSchema, isJSONRPCErrorResponse, JSONRPCMessageSchema, JSONRPCResponseSchema, EmptyResultSchema, CancelledNotificationParamsSchema, CancelledNotificationSchema, IconSchema, IconsSchema, BaseMetadataSchema, ImplementationSchema, FormElicitationCapabilitySchema, ElicitationCapabilitySchema, ClientTasksCapabilitySchema, ServerTasksCapabilitySchema, ClientCapabilitiesSchema, InitializeRequestParamsSchema, InitializeRequestSchema, ServerCapabilitiesSchema, InitializeResultSchema, InitializedNotificationSchema, isInitializedNotification, PingRequestSchema, ProgressSchema, ProgressNotificationParamsSchema, ProgressNotificationSchema, PaginatedRequestParamsSchema, PaginatedRequestSchema, PaginatedResultSchema, TaskStatusSchema, TaskSchema, CreateTaskResultSchema, TaskStatusNotificationParamsSchema, TaskStatusNotificationSchema, GetTaskRequestSchema, GetTaskResultSchema, GetTaskPayloadRequestSchema, GetTaskPayloadResultSchema, ListTasksRequestSchema, ListTasksResultSchema, CancelTaskRequestSchema, CancelTaskResultSchema, ResourceContentsSchema, TextResourceContentsSchema, Base64Schema, BlobResourceContentsSchema, RoleSchema, AnnotationsSchema, ResourceSchema, ResourceTemplateSchema, ListResourcesRequestSchema, ListResourcesResultSchema, ListResourceTemplatesRequestSchema, ListResourceTemplatesResultSchema, ResourceRequestParamsSchema, ReadResourceRequestParamsSchema, ReadResourceRequestSchema, ReadResourceResultSchema, ResourceListChangedNotificationSchema, SubscribeRequestParamsSchema, SubscribeRequestSchema, UnsubscribeRequestParamsSchema, UnsubscribeRequestSchema, ResourceUpdatedNotificationParamsSchema, ResourceUpdatedNotificationSchema, PromptArgumentSchema, PromptSchema, ListPromptsRequestSchema, ListPromptsResultSchema, GetPromptRequestParamsSchema, GetPromptRequestSchema, TextContentSchema, ImageContentSchema, AudioContentSchema, ToolUseContentSchema, EmbeddedResourceSchema, ResourceLinkSchema, ContentBlockSchema, PromptMessageSchema, GetPromptResultSchema, PromptListChangedNotificationSchema, ToolAnnotationsSchema, ToolExecutionSchema, ToolSchema, ListToolsRequestSchema, ListToolsResultSchema, CallToolResultSchema, CompatibilityCallToolResultSchema, CallToolRequestParamsSchema, CallToolRequestSchema, ToolListChangedNotificationSchema, ListChangedOptionsBaseSchema, LoggingLevelSchema, SetLevelRequestParamsSchema, SetLevelRequestSchema, LoggingMessageNotificationParamsSchema, LoggingMessageNotificationSchema, ModelHintSchema, ModelPreferencesSchema, ToolChoiceSchema, ToolResultContentSchema, SamplingContentSchema, SamplingMessageContentBlockSchema, SamplingMessageSchema, CreateMessageRequestParamsSchema, CreateMessageRequestSchema, CreateMessageResultSchema, CreateMessageResultWithToolsSchema, BooleanSchemaSchema, StringSchemaSchema, NumberSchemaSchema, UntitledSingleSelectEnumSchemaSchema, TitledSingleSelectEnumSchemaSchema, LegacyTitledEnumSchemaSchema, SingleSelectEnumSchemaSchema, UntitledMultiSelectEnumSchemaSchema, TitledMultiSelectEnumSchemaSchema, MultiSelectEnumSchemaSchema, EnumSchemaSchema, PrimitiveSchemaDefinitionSchema, ElicitRequestFormParamsSchema, ElicitRequestURLParamsSchema, ElicitRequestParamsSchema, ElicitRequestSchema, ElicitationCompleteNotificationParamsSchema, ElicitationCompleteNotificationSchema, ElicitResultSchema, ResourceTemplateReferenceSchema, PromptReferenceSchema, CompleteRequestParamsSchema, CompleteRequestSchema, CompleteResultSchema, RootSchema, ListRootsRequestSchema, ListRootsResultSchema, RootsListChangedNotificationSchema, ClientRequestSchema, ClientNotificationSchema, ClientResultSchema, ServerRequestSchema, ServerNotificationSchema, ServerResultSchema, McpError, UrlElicitationRequiredError;
 var init_types = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/types.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/types.js"() {
     init_v4();
     LATEST_PROTOCOL_VERSION = "2025-11-25";
     SUPPORTED_PROTOCOL_VERSIONS = [LATEST_PROTOCOL_VERSION, "2025-06-18", "2025-03-26", "2024-11-05", "2024-10-07"];
@@ -20746,12 +20746,12 @@ var init_types = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js
 function isTerminal(status2) {
   return status2 === "completed" || status2 === "failed" || status2 === "cancelled";
 }
 var init_interfaces = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js"() {
   }
 });
 
@@ -21103,7 +21103,7 @@ var init_esm = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-json-schema-compat.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-json-schema-compat.js
 function getMethodLiteral(schema2) {
   const shape = getObjectShape(schema2);
   const methodSchema = shape?.method;
@@ -21124,13 +21124,13 @@ function parseWithCompat(schema2, data) {
   return result2.data;
 }
 var init_zod_json_schema_compat = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-json-schema-compat.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-json-schema-compat.js"() {
     init_zod_compat();
     init_esm();
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js
 function isPlainObject2(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
@@ -21152,7 +21152,7 @@ function mergeCapabilities(base, additional) {
 }
 var DEFAULT_REQUEST_TIMEOUT_MSEC, Protocol;
 var init_protocol = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js"() {
     init_zod_compat();
     init_types();
     init_interfaces();
@@ -26764,7 +26764,7 @@ var require_core = __commonJS({
       errorsText(errors = this.errors, { separator = ", ", dataVar = "data" } = {}) {
         if (!errors || errors.length === 0)
           return "No errors";
-        return errors.map((e) => `${dataVar}${e.instancePath} ${e.message}`).reduce((text42, msg) => text42 + separator + msg);
+        return errors.map((e) => `${dataVar}${e.instancePath} ${e.message}`).reduce((text43, msg) => text43 + separator + msg);
       }
       $dataMetaSchema(metaSchema, keywordsJsonPointers) {
         const rules = this.RULES.all;
@@ -29338,7 +29338,7 @@ var require_dist2 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/validation/ajv-provider.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/validation/ajv-provider.js
 function createDefaultAjvInstance() {
   const ajv = new import_ajv.default({
     strict: false,
@@ -29352,7 +29352,7 @@ function createDefaultAjvInstance() {
 }
 var import_ajv, import_ajv_formats, AjvJsonSchemaValidator;
 var init_ajv_provider = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/validation/ajv-provider.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/validation/ajv-provider.js"() {
     import_ajv = __toESM(require_ajv(), 1);
     import_ajv_formats = __toESM(require_dist2(), 1);
     AjvJsonSchemaValidator = class {
@@ -29411,10 +29411,10 @@ var init_ajv_provider = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/client.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/client.js
 var ExperimentalClientTasks;
 var init_client = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/client.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/client.js"() {
     init_types();
     ExperimentalClientTasks = class {
       constructor(_client) {
@@ -29571,7 +29571,7 @@ var init_client = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/helpers.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/helpers.js
 function assertToolsCallTaskCapability(requests, method, entityName) {
   if (!requests) {
     throw new Error(`${entityName} does not support task creation (required for ${method})`);
@@ -29606,11 +29606,11 @@ function assertClientRequestTaskCapability(requests, method, entityName) {
   }
 }
 var init_helpers = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/helpers.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/helpers.js"() {
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js
 var client_exports = {};
 __export(client_exports, {
   Client: () => Client,
@@ -29659,7 +29659,7 @@ function getSupportedElicitationModes(capabilities) {
 }
 var Client;
 var init_client2 = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js"() {
     init_protocol();
     init_types();
     init_ajv_provider();
@@ -30634,7 +30634,7 @@ var require_cross_spawn = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/stdio.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/stdio.js
 function deserializeMessage(line2) {
   return JSONRPCMessageSchema.parse(JSON.parse(line2));
 }
@@ -30643,7 +30643,7 @@ function serializeMessage(message) {
 }
 var STDIO_DEFAULT_MAX_BUFFER_SIZE, ReadBuffer;
 var init_stdio = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/stdio.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/stdio.js"() {
     init_types();
     STDIO_DEFAULT_MAX_BUFFER_SIZE = 10 * 1024 * 1024;
     ReadBuffer = class {
@@ -30677,7 +30677,7 @@ var init_stdio = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/client/stdio.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/client/stdio.js
 var stdio_exports = {};
 __export(stdio_exports, {
   DEFAULT_INHERITED_ENV_VARS: () => DEFAULT_INHERITED_ENV_VARS,
@@ -30700,7 +30700,7 @@ function getDefaultEnvironment() {
 }
 var import_cross_spawn, import_node_process2, import_node_stream2, DEFAULT_INHERITED_ENV_VARS, StdioClientTransport;
 var init_stdio2 = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/client/stdio.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/client/stdio.js"() {
     import_cross_spawn = __toESM(require_cross_spawn(), 1);
     import_node_process2 = __toESM(require("node:process"), 1);
     import_node_stream2 = require("node:stream");
@@ -30967,7 +30967,7 @@ var require_content_type = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/mediaType.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/mediaType.js
 function mediaTypeEssence(header) {
   if (!header) {
     return void 0;
@@ -30984,12 +30984,12 @@ function mediaTypeEssence(header) {
 }
 var import_content_type;
 var init_mediaType = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/mediaType.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/mediaType.js"() {
     import_content_type = __toESM(require_content_type(), 1);
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/transport.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/transport.js
 function normalizeHeaders(headers) {
   if (!headers)
     return {};
@@ -31076,7 +31076,7 @@ function unfollowedRedirect(response, requestUrl) {
 }
 var MAX_REDIRECTS, REDIRECT_STATUSES, followingFetches;
 var init_transport = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/transport.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/transport.js"() {
     MAX_REDIRECTS = 5;
     REDIRECT_STATUSES = [301, 302, 303, 307, 308];
     followingFetches = /* @__PURE__ */ new WeakSet();
@@ -31126,10 +31126,10 @@ var init_index_node = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth.js
 var SafeUrlSchema, OAuthProtectedResourceMetadataSchema, OAuthMetadataSchema, OpenIdProviderMetadataSchema, OpenIdProviderDiscoveryMetadataSchema, OAuthTokensSchema, OAuthErrorResponseSchema, OptionalSafeUrlSchema, OAuthClientMetadataSchema, OAuthClientInformationSchema, OAuthClientInformationFullSchema, OAuthClientRegistrationErrorSchema, OAuthTokenRevocationRequestSchema;
 var init_auth = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth.js"() {
     init_v4();
     SafeUrlSchema = url2().superRefine((val, ctx) => {
       if (!URL.canParse(val)) {
@@ -31286,7 +31286,7 @@ var init_auth = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth-utils.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth-utils.js
 function resourceUrlFromServerUrl(url3) {
   const resourceURL = typeof url3 === "string" ? new URL(url3) : new URL(url3.href);
   resourceURL.hash = "";
@@ -31306,14 +31306,14 @@ function checkResourceAllowed({ requestedResource, configuredResource }) {
   return requestedPath.startsWith(configuredPath);
 }
 var init_auth_utils = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth-utils.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth-utils.js"() {
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/server/auth/errors.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/server/auth/errors.js
 var OAuthError, InvalidRequestError, InvalidClientError, InvalidGrantError, UnauthorizedClientError, UnsupportedGrantTypeError, InvalidScopeError, AccessDeniedError, ServerError, TemporarilyUnavailableError, UnsupportedResponseTypeError, UnsupportedTokenTypeError, InvalidTokenError, MethodNotAllowedError, TooManyRequestsError, InvalidClientMetadataError, InsufficientScopeError, InvalidTargetError, OAUTH_ERRORS;
 var init_errors3 = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/server/auth/errors.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/server/auth/errors.js"() {
     OAuthError = class extends Error {
       constructor(message, errorUri) {
         super(message);
@@ -31410,7 +31410,7 @@ var init_errors3 = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/client/auth.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/client/auth.js
 function isClientAuthMethod(method) {
   return ["client_secret_basic", "client_secret_post", "none"].includes(method);
 }
@@ -31994,7 +31994,7 @@ async function registerClient(authorizationServerUrl, { metadata: metadata2, cli
 }
 var UnauthorizedError, AUTHORIZATION_CODE_RESPONSE_TYPE, AUTHORIZATION_CODE_CHALLENGE_METHOD, TokenResponseSchema, RegistrationResponseSchema;
 var init_auth2 = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/client/auth.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/client/auth.js"() {
     init_index_node();
     init_types();
     init_auth();
@@ -32226,7 +32226,7 @@ var init_stream = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/client/streamableHttp.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/client/streamableHttp.js
 var streamableHttp_exports = {};
 __export(streamableHttp_exports, {
   StreamableHTTPClientTransport: () => StreamableHTTPClientTransport,
@@ -32234,7 +32234,7 @@ __export(streamableHttp_exports, {
 });
 var DEFAULT_STREAMABLE_HTTP_RECONNECTION_OPTIONS, StreamableHTTPError, StreamableHTTPClientTransport;
 var init_streamableHttp = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/client/streamableHttp.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/client/streamableHttp.js"() {
     init_mediaType();
     init_transport();
     init_types();
@@ -32272,8 +32272,8 @@ var init_streamableHttp = __esm({
       }
       /** Error text for a redirect `response` that was not followed, or `undefined` for any other response. */
       _unfollowedRedirect(response, url3) {
-        const text42 = unfollowedRedirect(response, url3);
-        return text42 && !this._followRedirects ? `${text42} (redirectPolicy: 'same-origin')` : text42;
+        const text43 = unfollowedRedirect(response, url3);
+        return text43 && !this._followRedirects ? `${text43} (redirectPolicy: 'same-origin')` : text43;
       }
       async _authThenStart() {
         if (!this._authProvider) {
@@ -32508,7 +32508,7 @@ var init_streamableHttp = __esm({
             this._sessionId = sessionId;
           }
           if (!response.ok) {
-            const text42 = await response.text().catch(() => null);
+            const text43 = await response.text().catch(() => null);
             if (response.status === 401 && this._authProvider) {
               if (this._hasCompletedAuthFlow) {
                 throw new StreamableHTTPError(401, "Server returned 401 after successful authentication");
@@ -32554,7 +32554,7 @@ var init_streamableHttp = __esm({
                 return this.send(message);
               }
             }
-            throw new StreamableHTTPError(response.status, `Error POSTing to endpoint: ${this._unfollowedRedirect(response, this._url) ?? text42}`);
+            throw new StreamableHTTPError(response.status, `Error POSTing to endpoint: ${this._unfollowedRedirect(response, this._url) ?? text43}`);
           }
           this._hasCompletedAuthFlow = false;
           this._lastUpscopingHeader = void 0;
@@ -33044,7 +33044,7 @@ var import_node_crypto180, sha2565;
 var init_task_context = __esm({
   "node_modules/.pnpm/craft-eval@file+vendor+craft-eval-0.7.2.tgz/node_modules/craft-eval/dist/src/task-context.js"() {
     import_node_crypto180 = require("node:crypto");
-    sha2565 = (text42) => (0, import_node_crypto180.createHash)("sha256").update(text42, "utf8").digest("hex");
+    sha2565 = (text43) => (0, import_node_crypto180.createHash)("sha256").update(text43, "utf8").digest("hex");
   }
 });
 
@@ -33062,14 +33062,14 @@ function allowedKeys(value, name, keys) {
     throw new Error(`${name} contains unsupported field: ${unknown2}`);
   }
 }
-function text41(value, name) {
+function text42(value, name) {
   if (typeof value !== "string" || value.trim() === "" || value.length > 2e3) {
     throw new Error(`${name} must be a non-empty string`);
   }
   return value;
 }
 function optionalText6(value, name) {
-  return value === void 0 ? void 0 : text41(value, name);
+  return value === void 0 ? void 0 : text42(value, name);
 }
 function identifier21(value, name) {
   if (typeof value !== "string" || !ID.test(value)) {
@@ -33087,14 +33087,14 @@ function stringList5(value, name, maximum = 100) {
   if (!Array.isArray(value) || value.length > maximum) {
     throw new Error(`${name} must be an array of at most ${maximum} strings`);
   }
-  const values3 = value.map((item) => text41(item, `${name} entry`));
+  const values3 = value.map((item) => text42(item, `${name} entry`));
   if (values3.length !== new Set(values3).size) {
     throw new Error(`${name} entries must be unique`);
   }
   return values3;
 }
 function date5(value, name) {
-  const result2 = text41(value, name);
+  const result2 = text42(value, name);
   if (!DATE.test(result2) || Number.isNaN(Date.parse(`${result2}T00:00:00Z`))) {
     throw new Error(`${name} must be an ISO date (YYYY-MM-DD)`);
   }
@@ -33104,8 +33104,8 @@ function validateClaim(value, name = "claim") {
   const claim2 = object15(value, name);
   allowedKeys(claim2, name, ["statement", "scope", "limitations"]);
   const result2 = {
-    statement: text41(claim2.statement, `${name}.statement`),
-    scope: text41(claim2.scope, `${name}.scope`)
+    statement: text42(claim2.statement, `${name}.statement`),
+    scope: text42(claim2.scope, `${name}.scope`)
   };
   if (claim2.limitations !== void 0) {
     result2.limitations = stringList5(claim2.limitations, `${name}.limitations`, 32);
@@ -33185,7 +33185,7 @@ function validateCaseProvenance(value, name = "provenance") {
     throw new Error(`${name}.independent_of_training must be a boolean`);
   }
   const result2 = {
-    source: text41(provenance2.source, `${name}.source`)
+    source: text42(provenance2.source, `${name}.source`)
   };
   if (provenance2.independent_of_training !== void 0) {
     result2.independent_of_training = provenance2.independent_of_training;
@@ -33589,10 +33589,10 @@ function groupBy(values3, key3) {
   }
   return result2;
 }
-function shingles(text42, size = 5) {
+function shingles(text43, size = 5) {
   const result2 = /* @__PURE__ */ new Set();
-  for (let index = 0; index + size <= text42.length; index += 1) {
-    result2.add(text42.slice(index, index + size));
+  for (let index = 0; index + size <= text43.length; index += 1) {
+    result2.add(text43.slice(index, index + size));
   }
   return result2;
 }
@@ -34029,8 +34029,8 @@ function digest36(value) {
   return "sha256:" + (0, import_node_crypto182.createHash)("sha256").update(jsonBytes(value)).digest("hex");
 }
 async function load(path2) {
-  const text42 = await (0, import_promises30.readFile)(path2, "utf8");
-  const value = JSON.parse(text42);
+  const text43 = await (0, import_promises30.readFile)(path2, "utf8");
+  const value = JSON.parse(text43);
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     throw new Error(`${path2} must contain a JSON object`);
   }
@@ -34854,19 +34854,19 @@ async function resolveSkill(workspace, binding) {
   if (info === null || !info.isFile()) {
     throw new Error(`skill manifest not found: ${binding.skill_path}/SKILL.md`);
   }
-  const text42 = await (0, import_promises30.readFile)(manifestPath, "utf8");
-  const name = frontmatterValue(text42, "name");
-  const description = frontmatterValue(text42, "description");
+  const text43 = await (0, import_promises30.readFile)(manifestPath, "utf8");
+  const name = frontmatterValue(text43, "name");
+  const description = frontmatterValue(text43, "description");
   if (name === null || description === null) {
     throw new Error(`skill manifest needs name and description: ${binding.skill_path}/SKILL.md`);
   }
   if (name !== binding.skill_id) {
     throw new Error(`skill.skill_id "${binding.skill_id}" does not match manifest name "${name}"`);
   }
-  return { skill_id: name, digest: digest36(text42), name };
+  return { skill_id: name, digest: digest36(text43), name };
 }
-function frontmatterValue(text42, key3) {
-  const lines = text42.split(/\r?\n/);
+function frontmatterValue(text43, key3) {
+  const lines = text43.split(/\r?\n/);
   if (lines[0]?.trim() !== "---") {
     return null;
   }
@@ -35276,11 +35276,11 @@ async function check2(item, sandbox, exitCode, events, terminalTrace, timeoutSec
     }
     evidence2.path = item.path;
   } else if (kind4 === "stdout_contains" || kind4 === "stdout_not_contains") {
-    const text42 = capturedStdout.toString("utf8");
-    const contains = text42.includes(String(item.value));
+    const text43 = capturedStdout.toString("utf8");
+    const contains = text43.includes(String(item.value));
     passed = kind4 === "stdout_contains" ? contains : !contains;
     reason = passed ? "ok" : kind4 === "stdout_contains" ? "stdout_missing" : "stdout_present";
-    evidence2.length = text42.length;
+    evidence2.length = text43.length;
     evidence2.value = item.value;
   } else if (kind4 === "model_graded") {
     if (judgeGate !== void 0 && judgeGate !== null && !judgeGate.calibrated) {
@@ -35389,8 +35389,8 @@ async function check2(item, sandbox, exitCode, events, terminalTrace, timeoutSec
       await walk3((0, import_node_path98.join)(sandbox, dir));
     const broken = [];
     for (const file of files5) {
-      const text42 = await (0, import_promises30.readFile)(file, "utf8").catch(() => "");
-      for (const match of text42.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+      const text43 = await (0, import_promises30.readFile)(file, "utf8").catch(() => "");
+      for (const match of text43.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
         const target2 = (match[1] ?? "").trim().replace(/^<|>$/g, "");
         if (/^(https?:|mailto:|#|\/)/.test(target2))
           continue;
@@ -36848,13 +36848,13 @@ function unwrapPack(value) {
   if (outer?.structuredContent !== void 0)
     candidate2 = outer.structuredContent;
   else if (Array.isArray(outer?.content)) {
-    const text42 = outer.content.find((item) => item && typeof item === "object" && item.type === "text");
-    if (typeof text42?.text !== "string")
+    const text43 = outer.content.find((item) => item && typeof item === "object" && item.type === "text");
+    if (typeof text43?.text !== "string")
       throw new Error("MCP response has no JSON text content");
-    if (Buffer.byteLength(text42.text, "utf8") > MAX_INPUT_BYTES2)
+    if (Buffer.byteLength(text43.text, "utf8") > MAX_INPUT_BYTES2)
       throw new Error("Context pack exceeds 1000000 bytes");
     try {
-      candidate2 = JSON.parse(text42.text);
+      candidate2 = JSON.parse(text43.text);
     } catch {
       throw new Error("MCP text content is not valid JSON");
     }
@@ -37388,8 +37388,8 @@ function experimentJobs(manifest, resolvePath = (value) => value) {
 }
 async function readIfExists(path2) {
   try {
-    const text42 = await (0, import_promises31.readFile)(path2, "utf8");
-    const value = JSON.parse(text42);
+    const text43 = await (0, import_promises31.readFile)(path2, "utf8");
+    const value = JSON.parse(text43);
     if (value.schema !== "craft-eval.experiment.v1" || !Array.isArray(value.jobs) || typeof value.completed !== "number" || typeof value.failed !== "number" || typeof value.skipped !== "number") {
       return null;
     }
@@ -38412,7 +38412,7 @@ var init_knowledge_task_effects = __esm({
     init_knowledge_task_effect_proof();
     init_src();
     import_node_crypto186 = require("node:crypto");
-    sha = (text42) => (0, import_node_crypto186.createHash)("sha256").update(text42).digest("hex");
+    sha = (text43) => (0, import_node_crypto186.createHash)("sha256").update(text43).digest("hex");
     same3 = (a, b) => stableDigest(a) === stableDigest(b);
     reject = (condition, message) => {
       if (!condition) throw new Error(message);
@@ -38466,9 +38466,9 @@ var init_knowledge_task_effects = __esm({
           return item;
         });
         reject(positives >= 20 && negatives >= 1, "Knowledge effect requires at least 20 positive tasks and one negative task");
-        const text42 = JSON.stringify({ claim_id: claim2.id, claim_version: claim2.version, content_digest: claim2.content_digest, source_id: source.id, source_version: source.version, source_digest: source.content_digest, content: claim2.content });
-        reject(Buffer.byteLength(text42) <= 64 * 1024, "Knowledge effect context exceeds the bounded input budget");
-        const context2 = { id: `knowledge-effect-${sha(text42).slice(0, 32)}`, text: text42 };
+        const text43 = JSON.stringify({ claim_id: claim2.id, claim_version: claim2.version, content_digest: claim2.content_digest, source_id: source.id, source_version: source.version, source_digest: source.content_digest, content: claim2.content });
+        reject(Buffer.byteLength(text43) <= 64 * 1024, "Knowledge effect context exceeds the bounded input budget");
+        const context2 = { id: `knowledge-effect-${sha(text43).slice(0, 32)}`, text: text43 };
         return { run, claim: claim2, claim_record_digest: stableDigest(this.store.find("knowledge_claim", String(claim2.id), void 0, false)), source, cases, context: context2, dependencies: [...dependencyMap.values()] };
       }
       /** Exact Subject.context to use for the candidate; baseline must omit context. */
@@ -40638,11 +40638,11 @@ var Sanitizer = class {
     if (!this.rules.length)
       throw new Error("No rules enabled");
   }
-  text(text42) {
-    const protectedRanges = [...text42.matchAll(/\[CRAFT_DATASEC_[a-z0-9_]+_[a-f0-9]{32}\]/g)].map((match) => [match.index, match.index + match[0].length]);
+  text(text43) {
+    const protectedRanges = [...text43.matchAll(/\[CRAFT_DATASEC_[a-z0-9_]+_[a-f0-9]{32}\]/g)].map((match) => [match.index, match.index + match[0].length]);
     const matches4 = [];
     for (const rule of this.rules) {
-      for (const match of text42.matchAll(rule.regex)) {
+      for (const match of text43.matchAll(rule.regex)) {
         const range = match.indices[rule.group];
         if (range && range[0] < range[1])
           matches4.push({ start: range[0], end: range[1], name: rule.name });
@@ -40653,15 +40653,15 @@ var Sanitizer = class {
     for (const match of matches4) {
       if (match.start < end || protectedRanges.some(([start2, stop]) => match.start < stop && match.end > start2))
         continue;
-      const value = text42.slice(match.start, match.end);
+      const value = text43.slice(match.start, match.end);
       if (match.name === "email" && !/^[^@]+@[^@]+$/.test(value))
         throw new Error("Invalid email rule match");
       const replacement = match.name === "email" ? `${value[0]}*@${value.slice(value.indexOf("@") + 1)}` : this.token(match.name, value);
-      result2 += text42.slice(end, match.start) + replacement;
+      result2 += text43.slice(end, match.start) + replacement;
       end = match.end;
       this.count++;
     }
-    return result2 + text42.slice(end);
+    return result2 + text43.slice(end);
   }
   value(value, depth = 0) {
     if (depth > 64)
@@ -44690,12 +44690,12 @@ function parseChatResponse(spec, payload10) {
   const body3 = payload10;
   if (spec.protocol === "anthropic") {
     const blocks = Array.isArray(body3.content) ? body3.content : [];
-    const text42 = blocks.filter((block) => block.type === "text").map((block) => String(block.text ?? "")).join("");
-    if (!text42) throw new Error("Anthropic response contained no text block");
+    const text43 = blocks.filter((block) => block.type === "text").map((block) => String(block.text ?? "")).join("");
+    if (!text43) throw new Error("Anthropic response contained no text block");
     const usage3 = body3.usage;
     const toolCalls2 = blocks.filter((block) => block.type === "tool_use").map((block, index) => ({ id: String(block.id ?? `tool_${index + 1}`), type: "function", function: { name: String(block.name), arguments: JSON.stringify(block.input ?? {}) } }));
     return {
-      text: text42,
+      text: text43,
       model: body3.model === void 0 ? null : String(body3.model),
       ...toolCalls2.length ? { tool_calls: toolCalls2 } : {},
       usage: usage3 ? { input_tokens: Number(usage3.input_tokens ?? 0), output_tokens: Number(usage3.output_tokens ?? 0) } : null
@@ -44736,18 +44736,18 @@ async function readModelResponse(response, maxBytes) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let size = 0;
-  let text42 = "";
+  let text43 = "";
   try {
     for (; ; ) {
       const chunk = await reader.read();
-      if (chunk.done) return text42 + decoder.decode();
+      if (chunk.done) return text43 + decoder.decode();
       size += chunk.value.byteLength;
       if (size > maxBytes) {
         void reader.cancel().catch(() => {
         });
         throw new ModelResponseTooLarge(`Model response exceeded ${maxBytes} bytes`);
       }
-      text42 += decoder.decode(chunk.value, { stream: true });
+      text43 += decoder.decode(chunk.value, { stream: true });
     }
   } finally {
     reader.releaseLock();
@@ -44912,15 +44912,15 @@ function observeStep(state4, limits2, step) {
 }
 function completeLoop(state4, verdict) {
   if (state4.status !== "running") throw new Error(`Loop is already ${state4.status}`);
-  const text42 = verdict.trim();
-  if (!text42) throw new Error("A loop verdict must not be empty");
-  return { ...state4, status: "completed", verdict: text42 };
+  const text43 = verdict.trim();
+  if (!text43) throw new Error("A loop verdict must not be empty");
+  return { ...state4, status: "completed", verdict: text43 };
 }
 function failLoop(state4, verdict) {
   if (state4.status !== "running") throw new Error(`Loop is already ${state4.status}`);
-  const text42 = verdict.trim();
-  if (!text42) throw new Error("A loop verdict must not be empty");
-  return { ...state4, status: "failed", verdict: text42 };
+  const text43 = verdict.trim();
+  if (!text43) throw new Error("A loop verdict must not be empty");
+  return { ...state4, status: "failed", verdict: text43 };
 }
 function loopSummary(state4, limits2) {
   return {
@@ -45760,6 +45760,38 @@ var EMPTY_PHRASES = [
   " tbd ",
   " tbc "
 ];
+var RELATION_TYPES = {
+  derives_from: {
+    is: "A claim rests on a more foundational statement; both ends are propositions.",
+    from: ["fact", "rule", "decision", "procedure"],
+    to: ["fact", "rule", "decision", "term", "procedure"]
+  },
+  supersedes: {
+    is: "A newer statement replaces an older one; versions of the same kind of statement.",
+    from: ["fact", "rule", "decision", "term", "preference", "procedure"],
+    to: ["fact", "rule", "decision", "term", "preference", "procedure"]
+  },
+  contradicts: {
+    is: "Two truth-bearing or normative statements cannot both hold.",
+    from: ["fact", "rule", "decision"],
+    to: ["fact", "rule", "decision"]
+  },
+  supports: {
+    is: "One statement gives evidence or rationale for another proposition.",
+    from: ["fact", "rule", "decision", "procedure"],
+    to: ["fact", "rule", "decision", "term", "procedure"]
+  },
+  refines: {
+    is: "A more specific statement narrows a general one.",
+    from: ["rule", "decision", "procedure", "term"],
+    to: ["rule", "decision", "procedure", "term", "fact"]
+  },
+  references: {
+    is: "A loose pointer; no concept constraint because anything may cite anything.",
+    from: null,
+    to: null
+  }
+};
 
 // ../craft-common/packages/craft-common-ontology/dist/validation.js
 var CONCEPT_MAX_LENGTH = 300;
@@ -45784,6 +45816,54 @@ function validateConcept(kind4, statement) {
     throw new Error("concept statement must stand on its own \u2014 it cannot rely on surrounding text the reader may not have");
   }
   return { kind: kind4, statement: normalized2 };
+}
+function mapLegacyKind(component2, legacyKind) {
+  const table2 = {
+    "knowledge:fact": "fact",
+    "knowledge:rule": "rule",
+    "knowledge:decision": "decision",
+    "knowledge:term": "term",
+    "knowledge:failure_mode": "rule",
+    "memory:working": "fact",
+    "memory:episodic": "fact",
+    "memory:preference": "preference",
+    "memory:procedural": "procedure",
+    "experience:scenario": "procedure"
+  };
+  const key3 = `${component2}:${legacyKind}`;
+  const mapped = table2[key3];
+  if (!mapped)
+    throw new Error(`unsupported ${component2} kind: ${legacyKind}`);
+  return mapped;
+}
+function validateConceptBody(body3, name = "body") {
+  if (typeof body3 !== "string" || !body3.trim())
+    throw new Error(`${name} must be a non-empty string`);
+  const lower = ` ${body3.toLowerCase()} `;
+  for (const phrase of EMPTY_PHRASES) {
+    if (lower.includes(phrase.toLowerCase())) {
+      throw new Error(`${name} must not contain the filler phrase "${phrase.trim()}" \u2014 say what the rule actually means`);
+    }
+  }
+  if (/^(?:这|the |this |it )?(?:个|条|些)?(?:相关的?|其他的?|上面|下面|以上)/u.test(body3.trim())) {
+    throw new Error(`${name} must stand on its own \u2014 it cannot rely on surrounding text`);
+  }
+  return body3;
+}
+function checkRelationConcepts(relation, fromConcept, toConcept) {
+  if (typeof relation !== "string" || !(relation in RELATION_TYPES)) {
+    throw new Error(`relation must be one of: ${Object.keys(RELATION_TYPES).join(", ")}`);
+  }
+  const rule = RELATION_TYPES[relation];
+  const fromKnown = typeof fromConcept === "string" && fromConcept in CONCEPTS;
+  const toKnown = typeof toConcept === "string" && toConcept in CONCEPTS;
+  if (!fromKnown || !toKnown)
+    return { valid: true, reason: null };
+  if (rule.from && !rule.from.includes(fromConcept))
+    return { valid: false, reason: `${relation} cannot start at a ${String(fromConcept)}` };
+  if (rule.to && !rule.to.includes(toConcept))
+    return { valid: false, reason: `${relation} cannot end at a ${String(toConcept)}` };
+  return { valid: true, reason: null };
 }
 
 // ../craft-capability/capability/craft-experience/dist/scenario-catalog.js
@@ -46638,31 +46718,31 @@ function basenameOf(rootPath) {
 function hasParentPathSegment(tail) {
   return tail.split("/").some((segment2) => segment2.startsWith(".."));
 }
-function hasUnsafeRootReference(text42, root) {
+function hasUnsafeRootReference(text43, root) {
   if (!root) return false;
-  for (let start2 = text42.indexOf(root + "/"); start2 !== -1; start2 = text42.indexOf(root + "/", start2 + 1)) {
-    if (!/[a-z0-9_./-]/u.test(text42[start2 - 1] ?? "") && hasParentPathSegment(text42.slice(start2 + root.length).split(/\s/u, 1)[0])) return true;
+  for (let start2 = text43.indexOf(root + "/"); start2 !== -1; start2 = text43.indexOf(root + "/", start2 + 1)) {
+    if (!/[a-z0-9_./-]/u.test(text43[start2 - 1] ?? "") && hasParentPathSegment(text43.slice(start2 + root.length).split(/\s/u, 1)[0])) return true;
   }
   return false;
 }
-function containsWholeReference(text42, reference3, isName = false) {
-  for (let start2 = text42.indexOf(reference3); start2 !== -1; start2 = text42.indexOf(reference3, start2 + 1)) {
-    const before = text42[start2 - 1] ?? "";
-    const after = text42[start2 + reference3.length] ?? "";
-    const sentencePeriod = after === "." && (text42[start2 + reference3.length + 1] === void 0 || /\s/u.test(text42[start2 + reference3.length + 1]));
-    const pathTail = isName ? "" : text42.slice(start2 + reference3.length).split(/\s/u, 1)[0];
+function containsWholeReference(text43, reference3, isName = false) {
+  for (let start2 = text43.indexOf(reference3); start2 !== -1; start2 = text43.indexOf(reference3, start2 + 1)) {
+    const before = text43[start2 - 1] ?? "";
+    const after = text43[start2 + reference3.length] ?? "";
+    const sentencePeriod = after === "." && (text43[start2 + reference3.length + 1] === void 0 || /\s/u.test(text43[start2 + reference3.length + 1]));
+    const pathTail = isName ? "" : text43.slice(start2 + reference3.length).split(/\s/u, 1)[0];
     const escapesPath = hasParentPathSegment(pathTail);
     if (!escapesPath && !(isName && before === "/") && !/[a-z0-9_.-]/u.test(before) && (sentencePeriod || !/[a-z0-9_.-]/u.test(after))) return true;
   }
   return false;
 }
 function coordinatorTokens(value) {
-  const text42 = value.toLowerCase();
+  const text43 = value.toLowerCase();
   const tokens = /* @__PURE__ */ new Set();
-  for (const match of text42.matchAll(/[a-z0-9_]+/gu)) {
+  for (const match of text43.matchAll(/[a-z0-9_]+/gu)) {
     if (match[0].length >= 2) tokens.add(match[0]);
   }
-  for (const match of text42.matchAll(/[\u3400-\u9fff]+/gu)) {
+  for (const match of text43.matchAll(/[\u3400-\u9fff]+/gu)) {
     const run = match[0];
     if (run.length === 1) {
       tokens.add(run);
@@ -46689,24 +46769,24 @@ function descriptionCoverage(description, intent) {
   return { fraction: matched / terms4.length, matched };
 }
 function scoreCoordinatorDirectories(intent, directories) {
-  const text42 = normalized(intent);
+  const text43 = normalized(intent);
   const scored = [];
   for (const directory3 of directories) {
     const root = normalized(directory3.root_path);
     let score = 0;
     let reason = "\u6CA1\u6709\u63D0\u5230\u8FD9\u4E2A\u76EE\u5F55";
-    const escaped = hasUnsafeRootReference(text42, root);
+    const escaped = hasUnsafeRootReference(text43, root);
     if (escaped) {
       reason = "\u8DEF\u5F84\u5305\u542B\u4E0A\u7EA7\u76EE\u5F55\uFF0C\u4E0D\u80FD\u786E\u5B9A\u9879\u76EE";
-    } else if (root && containsWholeReference(text42, root)) {
+    } else if (root && containsWholeReference(text43, root)) {
       score = 100;
       reason = "\u610F\u56FE\u91CC\u76F4\u63A5\u5199\u4E86\u76EE\u5F55\u8DEF\u5F84";
     } else {
       const base = basenameOf(directory3.root_path);
-      if (base.length >= 2 && containsWholeReference(text42, base, true)) {
+      if (base.length >= 2 && containsWholeReference(text43, base, true)) {
         score = 70 + Math.min(base.length, 30) / 30 * 10;
         reason = "\u610F\u56FE\u91CC\u63D0\u5230\u4E86\u76EE\u5F55\u540D";
-      } else if (directory3.name && directory3.name !== base && directory3.name.length >= 2 && containsWholeReference(text42, normalized(directory3.name), true)) {
+      } else if (directory3.name && directory3.name !== base && directory3.name.length >= 2 && containsWholeReference(text43, normalized(directory3.name), true)) {
         score = 72 + Math.min(directory3.name.length, 30) / 30 * 8;
         reason = "\u610F\u56FE\u91CC\u63D0\u5230\u4E86\u9879\u76EE\u540D";
       } else if (directory3.description) {
@@ -46728,11 +46808,11 @@ function resolveCoordinatorDirectory(intent, directories) {
   }
   const named = candidates.filter((candidate2) => candidate2.score === 100 || candidate2.reason === "\u610F\u56FE\u91CC\u63D0\u5230\u4E86\u76EE\u5F55\u540D" || candidate2.reason === "\u610F\u56FE\u91CC\u63D0\u5230\u4E86\u9879\u76EE\u540D");
   const nameOf = (candidate2) => normalized(candidate2.score === 100 ? candidate2.root_path : candidate2.reason === "\u610F\u56FE\u91CC\u63D0\u5230\u4E86\u76EE\u5F55\u540D" ? basenameOf(candidate2.root_path) : candidate2.name);
-  const text42 = normalized(intent);
+  const text43 = normalized(intent);
   const occurrences = named.flatMap((candidate2) => {
     const name = nameOf(candidate2);
     const matches4 = [];
-    for (let start2 = text42.indexOf(name); start2 !== -1; start2 = text42.indexOf(name, start2 + 1)) matches4.push({ candidate: candidate2, start: start2, end: start2 + name.length });
+    for (let start2 = text43.indexOf(name); start2 !== -1; start2 = text43.indexOf(name, start2 + 1)) matches4.push({ candidate: candidate2, start: start2, end: start2 + name.length });
     return matches4;
   });
   const distinct = named.filter((candidate2) => occurrences.some((match) => match.candidate === candidate2 && !occurrences.some((other) => other.start <= match.start && other.end >= match.end && other.end - other.start > match.end - match.start)));
@@ -47236,8 +47316,8 @@ function ref2(item, fields2) {
   return Object.fromEntries(fields2.filter((field2) => item[field2] !== void 0).map((field2) => [field2, item[field2]]));
 }
 function short(value, limit3 = 240) {
-  const text42 = String(value ?? "").trim();
-  return text42.length > limit3 ? `${text42.slice(0, limit3 - 1)}\u2026` : text42;
+  const text43 = String(value ?? "").trim();
+  return text43.length > limit3 ? `${text43.slice(0, limit3 - 1)}\u2026` : text43;
 }
 function ordered(rows4, limit3) {
   return [...rows4].sort((left, right) => String(right.created_at ?? right.updated_at ?? "").localeCompare(String(left.created_at ?? left.updated_at ?? "")) || String(right.id ?? "").localeCompare(String(left.id ?? ""))).slice(0, limit3);
@@ -48253,6 +48333,7 @@ var INTEGER_PARAMS = [
   "configuration_version",
   "harness_configuration_version",
   "target_version",
+  "to_version",
   "profile_version",
   "grader_version",
   "policy_version",
@@ -48301,6 +48382,9 @@ var OBJECT_PARAMS = [
   "scores",
   "args",
   "task_contract",
+  "repo_identity",
+  "device",
+  "tag_filters",
   "costs",
   "metrics",
   "configuration",
@@ -49468,6 +49552,18 @@ var TOOL_DEFINITIONS = [
   tool("craft_continual_harness_signals", "List content-free successful Outcome and failed Acceptance signals that may justify a human-reviewed refinement.", ["task_id"], true),
   tool("craft_continual_harness_resolve", "Resolve the exact unexpired Session and governed Refinements that apply to the next Host turn.", ["view_id", "session_id"], false, ["receipt_id", "now"]),
   tool("craft_continual_harness_get", "Read one Harness refinement and its lifecycle.", ["refinement_id"], true),
+  tool("craft_mod_create", "Create a hand-authored cognitive Mod overlay in draft status. It does not reach any Worker prompt until it is separately approved.", ["name", "body"], false, ["id", "scope_kind", "scope_id", "applies_to", "plugin_id"]),
+  tool("craft_mod_update", "Update a draft or pending Mod body, name, scope, or target. An active Mod cannot be edited; revoke and recreate it instead.", ["id", "body"], false, ["name", "scope_kind", "scope_id", "applies_to"]),
+  tool("craft_mod_list", "List cognitive Mods filtered by status and applies_to target.", [], true, ["status", "applies_to"]),
+  tool("craft_mod_approve", "Approve a draft or pending Mod, moving it to active. A self-evolved Mod requires a passing shadow test bound to its current body.", ["id"], false, ["approved_by"]),
+  tool("craft_mod_enable", "Enable an already approved Mod so it is injected into matching Worker prompts.", ["id"]),
+  tool("craft_mod_disable", "Disable an approved Mod so it is removed from the next Worker overlay without deleting it.", ["id"]),
+  tool("craft_mod_revoke", "Revoke a Mod so it is no longer injected into Worker prompts. History is retained.", ["id"]),
+  tool("craft_mod_rollback", "Roll a Mod back to an older version as a new version, recording the rolled-back-from version.", ["id", "to_version"]),
+  tool("craft_mod_rollback_previous", "Roll a Mod back to its immediately preceding version as a new version.", ["id"]),
+  tool("craft_mod_propose_from_attribution", "Distill an attributed failure and remedy into a pending self-evolved Mod candidate. Unattributed failures are rejected.", ["failure_class"], false, ["id", "remedy", "evidence_id", "scope_kind", "scope_id"]),
+  tool("craft_mod_shadow_test_run", "Run the deterministic, model-free shadow regression set for a self-evolved Mod. Only a real run may grant a pass.", ["id"]),
+  tool("craft_mod_shadow_test_record", "Record an external or failing shadow verdict for a self-evolved Mod. This route can never grant a pass; only a real regression run can.", ["id", "verdict", "regression_set"]),
   tool("craft_evolution_cycle_start", "Start an append-only, snapshot-bound evolution record and materialize a candidate workspace under the project Craft data directory from that exact checkpoint. Set allowed_paths before editing; candidate changes outside those relative paths are rejected. Returns its path; it does not dispatch or force Host execution there. The Host adapter must report the actual execution workspace separately.", ["task_id", "project_scope_id", "session_host", "session_id", "workspace_id", "checkpoint_id", "trigger", "trigger_refs"], false, ["cycle_id", "allowed_paths"]),
   tool("craft_evolution_cycle_advance", "Append one version-checked evolution stage event. Feedback records a terminal outcome; failed outcomes require cause attribution, while passed outcomes forbid a failure class. Held-out evaluation requires an independent task with a terminal content-free Host Session and matching Trace; capability-specific governance retains promotion authority.", ["cycle_id", "expected_version", "transition_id", "stage"], false, ["evidence_refs", "artifact_refs", "evaluation_refs", "authority_refs", "trace_refs", "failure_class", "outcome", "next_stage", "metrics", "reason", "terminal"]),
   tool("craft_evolution_cycle_get", "Read one evolution cycle, its append-only stage history, and the bound candidate workspace path when available.", ["cycle_id"], true),
@@ -50769,7 +50865,20 @@ var TOOL_DEFINITIONS = [
   tool("craft_context_correction_list", "List bounded Context correction tasks. status is one of pending_review, confirmed, dismissed, resolved, or decided; omitted means pending_review.", [], true, ["status", "member", "limit"]),
   tool("craft_context_correction_decide", "Resolve one pending correction task as confirmed or dismissed. It never changes source status; a confirmed correction keeps its ranking penalty.", ["task_id", "decision"], false, ["reason", "now"]),
   tool("craft_codebase_symbol_usage_record", "Record one outcome-linked use of a codebase symbol (read, passed or failed) so later retrieval can rank symbols by observed value.", ["index_id", "symbol_id"], false, ["outcome", "now"]),
-  tool("craft_codebase_symbol_usage_get", "Read the net per-symbol usage weight for one codebase index.", ["index_id"], true)
+  tool("craft_codebase_symbol_usage_get", "Read the net per-symbol usage weight for one codebase index.", ["index_id"], true),
+  tool("craft_file_dir_desc_register_device", "Register or update one device's metadata (name, kind, host, location, tags, health). Devices are the scope unit for places.", ["id", "name", "device_kind", "host_kind", "location", "tags", "health", "status", "concept_kind", "body"]),
+  tool("craft_file_dir_desc_device", "Read one registered device's metadata.", ["id"]),
+  tool("craft_file_dir_desc_list_devices", "List registered devices filtered by kind, host kind and status.", [], true, ["device_kind", "host_kind", "status"]),
+  tool("craft_file_dir_desc_disable_device", "Disable one device so all its places stop being recallable; places are kept for audit.", ["id"]),
+  tool("craft_file_dir_desc_enable_device", "Re-enable a disabled device so its places become recallable again.", ["id"]),
+  tool("craft_file_dir_desc_report_device_health", "Report one device's health and mark it as last-seen now.", ["id", "health"]),
+  tool("craft_file_dir_desc_record", "Record (or reinforce) one directory\u2194description place on a device; first touch observes, repeated use promotes.", ["device_id", "path", "description"], false, ["device_kind", "host_kind", "repo_identity", "promote", "concept_kind", "rationale"]),
+  tool("craft_file_dir_desc_observe", "Automatically reinforce one place from real use without rewriting its description.", ["device_id", "path"], false, ["device_kind", "host_kind", "repo_identity", "description", "concept_kind", "rationale"]),
+  tool("craft_file_dir_desc_relocate", "Move one place to a new path on the same device, keeping identity and use count.", ["id", "path", "device_id"]),
+  tool("craft_file_dir_desc_revoke", "Withdraw one place with attribution; keeps the audit trail.", ["id", "revoked_by", "reason"]),
+  tool("craft_file_dir_desc_promote", "Promote one observed place regardless of use count.", ["id"]),
+  tool("craft_file_dir_desc_resolve", "Bidirectional resolve: description\u2192places or path\u2192devices.", [], true, ["description", "path", "device_id", "repo_identity", "limit"]),
+  tool("craft_file_dir_desc_list", "List places filtered by status, host kind, device, with a bounded cap.", [], true, ["status", "host_kind", "device_id", "limit"])
 ];
 var RETIRED_PUBLIC_TOOL_NAMES = /* @__PURE__ */ new Set([
   "craft_work_launch_prepare",
@@ -53114,7 +53223,7 @@ var KnowledgeClaimGovernance = class {
       throw new Error("Knowledge claim kind is unsupported");
     const content = assertNoSecret(document(args.content, "content"), "content");
     const scope4 = text(args.scope, "scope");
-    const concept = validateConcept(kind4 === "failure_mode" ? "rule" : kind4, content);
+    const concept = validateConcept(mapLegacyKind("knowledge", kind4), content);
     const evidenceIds2 = uniqueTextArray(args.evidence_ids, "evidence_ids");
     evidenceIds2.forEach((item) => this.store.get("evidence", item));
     const tags2 = optionalTextArray(args.tags, "tags");
@@ -53217,6 +53326,9 @@ var KnowledgeClaimGovernance = class {
       ...coarseScenarioKey ? { coarse_scenario_key: coarseScenarioKey } : {},
       content_ref: contentRef,
       identity_digest: valueDigest(identity2),
+      // Concept tag is non-identity metadata: it never changes the claim's digest,
+      // so the shared taxonomy can be extended without invalidating old records.
+      concept_kind: concept.kind,
       status: "candidate",
       review: null,
       ...proposedBy === null ? {} : { proposed_by: proposedBy }
@@ -53567,15 +53679,15 @@ function bm25Ranking(query, items2) {
   }
   return index.score(query).filter((entry2) => entry2.score > 0).map((entry2) => ({ id: entry2.id }));
 }
-function parseSkill(text42, fallback2) {
+function parseSkill(text43, fallback2) {
   let metadata2 = {};
-  let body3 = text42;
-  if (text42.startsWith("---\n") || text42.startsWith("---\r\n")) {
-    const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/.exec(text42);
+  let body3 = text43;
+  if (text43.startsWith("---\n") || text43.startsWith("---\r\n")) {
+    const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/.exec(text43);
     if (match) {
       const parsed2 = (0, import_yaml.parse)(match[1]);
       if (parsed2 && typeof parsed2 === "object" && !Array.isArray(parsed2)) metadata2 = parsed2;
-      body3 = text42.slice(match[0].length);
+      body3 = text43.slice(match[0].length);
     }
   }
   return {
@@ -53737,14 +53849,14 @@ var Catalog = class {
         unchanged += 1;
         continue;
       }
-      const text42 = await (0, import_promises11.readFile)(path2, "utf8");
-      const digest37 = (0, import_node_crypto39.createHash)("sha256").update(text42).digest("hex");
+      const text43 = await (0, import_promises11.readFile)(path2, "utf8");
+      const digest37 = (0, import_node_crypto39.createHash)("sha256").update(text43).digest("hex");
       if (previous?.digest === digest37) {
         this.store.save("capability", assetId, { ...previous, size: fileStat.size, mtime_ms: fileStat.mtimeMs });
         unchanged += 1;
         continue;
       }
-      const skill = parseSkill(text42, (0, import_node_path32.basename)((0, import_node_path32.resolve)(path2, "..")));
+      const skill = parseSkill(text43, (0, import_node_path32.basename)((0, import_node_path32.resolve)(path2, "..")));
       this.store.save("capability", assetId, {
         ...skill,
         kind: "skill",
@@ -58850,10 +58962,10 @@ function stopWindowsHostProcessTree(pid) {
           return;
         }
         const code = error2.code;
-        const text42 = `${String(stdout ?? "")}
+        const text43 = `${String(stdout ?? "")}
 ${String(stderr ?? "")}
 ${error2.message}`;
-        if (code === 128 || /not found|not running|no process|not exist/i.test(text42)) {
+        if (code === 128 || /not found|not running|no process|not exist/i.test(text43)) {
           resolve70();
           return;
         }
@@ -59683,8 +59795,8 @@ function persistedConversation(messages) {
     return { role: message.role, content: redact6(raw).slice(0, MAX_SESSION_MESSAGE_CHARS), content_digest: digestJson(raw), tool_calls_digest: message.tool_calls ? digestJson(message.tool_calls) : null };
   });
 }
-function parseAction(text42) {
-  const trimmed = text42.trim();
+function parseAction(text43) {
+  const trimmed = text43.trim();
   if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return null;
   let parsed2;
   try {
@@ -69841,7 +69953,7 @@ var MemoryGovernanceKernel = class {
     const scope4 = { kind: scopeKind, id: scopeId };
     const envelope = scopeEnvelope(args.scope_envelope, scope4);
     const content = noSecret2(text13(args.content, "content"), "content");
-    validateConcept(kind4, content);
+    const concept = validateConcept(mapLegacyKind("memory", kind4), content);
     if (scopeKind === "session") {
       this.ledger.files.pathFor(scope4);
       if (this.ledger.files.isSessionArchived(scopeId))
@@ -69899,7 +70011,7 @@ var MemoryGovernanceKernel = class {
     const conflicts = topic ? this.store.listScoped("memory_candidate", [scope4], 1e4, (item) => Boolean(!["rejected", "superseded", "expired"].includes(String(item.status)) && (!item.valid_until || Date.parse(String(item.valid_until)) >= nowMillis) && item.scope && JSON.stringify(item.scope) === JSON.stringify(identity2.scope) && item.topic === topic && item.content_digest !== identity2.content_digest)) : [];
     const conflictingMemories = topic ? this.store.listScoped("memory_ledger", [scope4], 1e4, (item) => Boolean(item.status === "active" && (!item.valid_until || Date.parse(String(item.valid_until)) >= nowMillis) && item.topic === topic && item.scope && JSON.stringify(item.scope) === JSON.stringify(identity2.scope) && item.content_digest !== identity2.content_digest)) : [];
     const status2 = conflicts.length || conflictingMemories.length ? "conflict_pending" : "candidate";
-    const candidate2 = this.store.create("memory_candidate", candidateId2, { ...identity2, content, status: status2, conflict_ids: conflicts.map((x) => x.id), conflicting_memory_ids: conflictingMemories.map((x) => x.id), proposed_by: proposer(args.proposed_by, "agent"), identity_digest: digest16(identity2) });
+    const candidate2 = this.store.create("memory_candidate", candidateId2, { ...identity2, content, status: status2, conflict_ids: conflicts.map((x) => x.id), conflicting_memory_ids: conflictingMemories.map((x) => x.id), proposed_by: proposer(args.proposed_by, "agent"), concept_kind: concept.kind, identity_digest: digest16(identity2) });
     for (const conflict of conflicts)
       this.store.save("memory_candidate", String(conflict.id), { ...payload2(conflict), status: "conflict_pending", conflict_ids: [.../* @__PURE__ */ new Set([...conflict.conflict_ids ?? [], candidate2.id])] });
     const eligible = args.proposal_only !== true && policy.mode === "governed" && conflicts.length === 0 && conflictingMemories.length === 0 && ids6.length > 0 && ids6.every((e) => {
@@ -70775,7 +70887,8 @@ var MemoryLedgerKernel = class {
       body: content,
       ...typeof args.project_root === "string" ? { project_root: args.project_root } : {}
     });
-    const memory = this.store.create("memory_ledger", memoryId, { ...identity2, content_ref: contentRef, identity_digest: identityDigest, status: "active", supersedes_id: null, contradiction_ids: [], derived_from_ids: supportRefs.map((ref5) => ref5.id), ...workingNote ? {} : { working_legacy_compatibility: kind4 === "working" } });
+    const conceptKind = args.concept_kind === void 0 || args.concept_kind === null ? mapLegacyKind("memory", kind4) : args.concept_kind;
+    const memory = this.store.create("memory_ledger", memoryId, { ...identity2, content_ref: contentRef, identity_digest: identityDigest, status: "active", supersedes_id: null, contradiction_ids: [], derived_from_ids: supportRefs.map((ref5) => ref5.id), concept_kind: conceptKind, ...workingNote ? {} : { working_legacy_compatibility: kind4 === "working" } });
     return { memory, projection: this.files.sync(memoryScope), idempotent: false };
   }
   /**
@@ -71249,6 +71362,9 @@ var MemoryContribution = class {
         status: memory.status,
         scope: memory.scope,
         scope_envelope: scopeEnvelopeReceipt(scopeEnvelope(memory.scope_envelope, memory.scope)),
+        // Non-identity concept tag from the shared taxonomy, so the context
+        // receipt can state what kind of statement this memory carries.
+        ...typeof memory.concept_kind === "string" ? { concept_kind: memory.concept_kind } : {},
         ranking_weight: weight,
         confirmed_at: confirmedAt,
         execution_context: !historical,
@@ -72305,30 +72421,43 @@ var MAX_RETRIEVAL_EXCERPT_CHARS = 600;
 var DEFAULT_CANDIDATE_POOL_ITEMS = 8;
 var DEFAULT_CANDIDATE_POOL_CHARS = 6e3;
 var MAX_CANDIDATE_POOL_ITEMS = 24;
+var CONCEPT_SELECTION_REASON = {
+  fact: "\u53EF\u72EC\u7ACB\u6838\u5B9E\u7684\u9648\u8FF0\uFF0C\u4F5C\u4E3A\u5F53\u524D\u4E8B\u5B9E\u80CC\u666F",
+  rule: "\u56E2\u961F\u7EA6\u5B9A\u6216\u7EA6\u675F\uFF0C\u6267\u884C\u65F6\u987B\u9075\u5B88",
+  decision: "\u5DF2\u5B9A\u53D6\u820D\uFF0C\u907F\u514D\u91CD\u590D\u6743\u8861",
+  term: "\u9879\u76EE\u672F\u8BED\u5B9A\u4E49\uFF0C\u7EDF\u4E00\u7528\u8BCD\u542B\u4E49",
+  preference: "\u53EF\u63A5\u53D7\u9009\u9879\u95F4\u7684\u504F\u597D\uFF0C\u975E\u5F3A\u5236\u89C4\u5219",
+  procedure: "\u66FE\u9A8C\u8BC1\u53EF\u590D\u73B0\u7684\u6B65\u9AA4\u5E8F\u5217"
+};
+function withConceptReason(item) {
+  const concept = typeof item.concept_kind === "string" ? item.concept_kind : null;
+  if (!concept) return item;
+  return { ...item, concept_selection_reason: CONCEPT_SELECTION_REASON[concept] ?? `concept: ${concept}` };
+}
 function projectKnowledgeRetrieval(item, query, required6 = false, maxChars = MAX_RETRIEVAL_EXCERPT_CHARS) {
   const { retrieval_text: _retrievalText, ...source } = item;
-  if (required6 || typeof item.content !== "string") return source;
+  if (required6 || typeof item.content !== "string") return withConceptReason(source);
   const excerpt = retrievalExcerpt(item.content, query, Math.max(1, maxChars));
-  if (excerpt.reason === "complete") return source;
-  return { ...source, content: excerpt.text, content_excerpt: {
+  if (excerpt.reason === "complete") return withConceptReason(source);
+  return withConceptReason({ ...source, content: excerpt.text, content_excerpt: {
     source_start: excerpt.source_start,
     source_end: excerpt.source_end,
     source_chars: excerpt.source_chars,
     reason: excerpt.reason,
     ...excerpt.matched_terms ? { matched_terms: excerpt.matched_terms } : {}
-  } };
+  } });
 }
 function projectMemoryRetrieval(item, query, required6) {
-  if (required6 || typeof item.content !== "string") return item;
+  if (required6 || typeof item.content !== "string") return withConceptReason(item);
   const excerpt = retrievalExcerpt(item.content, query, MAX_RETRIEVAL_EXCERPT_CHARS);
-  if (excerpt.reason === "complete") return item;
-  return { ...item, content: excerpt.text, content_excerpt: {
+  if (excerpt.reason === "complete") return withConceptReason(item);
+  return withConceptReason({ ...item, content: excerpt.text, content_excerpt: {
     source_start: excerpt.source_start,
     source_end: excerpt.source_end,
     source_chars: excerpt.source_chars,
     reason: excerpt.reason,
     ...excerpt.matched_terms ? { matched_terms: excerpt.matched_terms } : {}
-  } };
+  } });
 }
 function projectionRetrievalText(item, fallback2) {
   const excerpt = item.content_excerpt;
@@ -73467,15 +73596,404 @@ var TurnCognitiveRuntime = class {
 };
 
 // core/continual-harness.ts
-var import_node_crypto119 = require("node:crypto");
+var import_node_crypto121 = require("node:crypto");
 init_store2();
 init_digest2();
+
+// core/mod-registry.ts
+var import_node_crypto119 = require("node:crypto");
+var import_node_crypto120 = require("node:crypto");
+init_store2();
+function regressionDigest(id24, body3, cases) {
+  return (0, import_node_crypto120.createHash)("sha256").update(JSON.stringify({ id: id24, body: body3, cases })).digest("hex");
+}
+var FORBIDDEN_MOD_PHRASES = [
+  { id: "mod.shadow.no_ignore_safety", pattern: /ignore\s+(all\s+)?(safety|security|rules|instructions)/iu },
+  { id: "mod.shadow.no_disable_approval", pattern: /(disable|skip|bypass)\s+(human\s+)?(approval|authorization|review)/iu },
+  { id: "mod.shadow.no_secret_exfiltration", pattern: /(exfiltrat|send\s+.*(secret|credential|api.?key)\s+.*(out|external)|upload\s+.*(secret|credential))/iu }
+];
+var STATUS_RANK = { draft: 0, pending: 1, active: 2, revoked: 3 };
+function normalizeScopeKind(value) {
+  if (value === "project") return "project";
+  if (value === "task") return "task";
+  if (value === void 0 || value === null || value === "global") return "global";
+  throw new Error("scope_kind must be global, project or task");
+}
+function normalizeAppliesTo(value) {
+  if (value === "reviewer") return "reviewer";
+  if (value === "all") return "all";
+  if (value === void 0 || value === null || value === "worker") return "worker";
+  throw new Error("applies_to must be worker, reviewer or all");
+}
+function normalizeStatus(value) {
+  if (value === "draft" || value === "pending" || value === "active" || value === "revoked") return value;
+  if (value === void 0 || value === null) return "draft";
+  throw new Error("status must be draft, pending, active or revoked");
+}
+function toRecord(payload10) {
+  return {
+    id: String(payload10.id),
+    name: String(payload10.name ?? payload10.id),
+    body: String(payload10.body ?? ""),
+    scopeKind: payload10.scope_kind === "project" ? "project" : payload10.scope_kind === "task" ? "task" : "global",
+    scopeId: String(payload10.scope_id ?? "global"),
+    appliesTo: payload10.applies_to === "reviewer" ? "reviewer" : payload10.applies_to === "all" ? "all" : "worker",
+    status: normalizeStatus(payload10.status),
+    enabled: payload10.enabled === true,
+    version: Number(payload10.version ?? 1),
+    createdAt: String(payload10.created_at),
+    updatedAt: String(payload10.updated_at),
+    approvedBy: payload10.approved_by === void 0 || payload10.approved_by === null ? null : String(payload10.approved_by),
+    approvedAt: payload10.approved_at === void 0 || payload10.approved_at === null ? null : String(payload10.approved_at),
+    rolledBackFrom: payload10.rolled_back_from === void 0 || payload10.rolled_back_from === null ? null : Number(payload10.rolled_back_from),
+    rolledBackTo: payload10.rolled_back_to === void 0 || payload10.rolled_back_to === null ? null : Number(payload10.rolled_back_to),
+    pluginId: payload10.plugin_id === void 0 || payload10.plugin_id === null ? null : String(payload10.plugin_id),
+    selfEvolved: payload10.self_evolved === true,
+    failureClass: payload10.failure_class === void 0 || payload10.failure_class === null ? null : String(payload10.failure_class),
+    evidenceId: payload10.evidence_id === void 0 || payload10.evidence_id === null ? null : String(payload10.evidence_id),
+    shadowTest: payload10.shadow_test === void 0 || payload10.shadow_test === null ? null : String(payload10.shadow_test),
+    shadowRegressionSet: payload10.shadow_regression_set === void 0 || payload10.shadow_regression_set === null ? null : String(payload10.shadow_regression_set)
+  };
+}
+var ModRegistry = class {
+  store;
+  constructor(store) {
+    this.store = store;
+  }
+  /**
+   * 自进化：把一条已归因的失败蒸馏为 Mod 候选。
+   *
+   * Honest boundary: this is pure engineering (no model call). The attribution
+   * already named a cause + remedy; we turn that into a structured rule draft,
+   * attach the evidence, and hold it as `pending` until a shadow test passes.
+   * An `unattributed` failure can never produce a rule — guessing a cause is
+   * worse than admitting we do not know one.
+   */
+  proposeFromAttribution(args) {
+    const failureClass = text15(args.failure_class, "failure_class");
+    if (failureClass === "unattributed") throw new Error("an unattributed failure cannot produce a Mod rule");
+    const remedy = bodyText(args.remedy ?? "");
+    const evidenceId = args.evidence_id === void 0 || args.evidence_id === null ? null : text15(args.evidence_id, "evidence_id");
+    const scopeKind = normalizeScopeKind(args.scope_kind ?? "global");
+    const scopeId = scopeKind === "global" ? "global" : text15(args.scope_id, "scope_id");
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const id24 = String(args.id ?? `mod_${(0, import_node_crypto119.randomUUID)()}`);
+    const rule = [
+      `# Rule ${failureClass}`,
+      `When a ${failureClass} failure is attributed, apply this remedy:`,
+      remedy || "consult the failure attribution evidence before repeating the action."
+    ].join("\n");
+    const payload10 = {
+      id: id24,
+      name: `auto:${failureClass}`,
+      body: rule,
+      scope_kind: scopeKind,
+      scope_id: scopeId,
+      applies_to: "worker",
+      status: "pending",
+      enabled: false,
+      version: 1,
+      created_at: now3,
+      updated_at: now3,
+      approved_by: null,
+      approved_at: null,
+      self_evolved: true,
+      failure_class: failureClass,
+      evidence_id: evidenceId,
+      // A Mod is a `rule` concept in the shared taxonomy. Its body is a bounded
+      // overlay (up to 20k chars), not a one-line ledger statement, so it carries
+      // the concept tag without the 300-char statement validation.
+      concept_kind: "rule",
+      shadow_test: "pending"
+    };
+    this.store.save("mod", id24, payload10);
+    return toRecord(payload10);
+  }
+  /**
+   * Run the fixed, model-free regression set against a candidate Mod.
+   *
+   * The four checks answer the only questions a cognitive overlay can break:
+   * is the candidate still inert while pending, is its body usable, does a
+   * plugin-bound rule leak in without that plugin, and did the shadow run
+   * leave the real Worker context untouched? Nothing calls a model, so the
+   * gate costs 0 tokens and cannot be flattered by a good answer.
+   */
+  runShadowRegression(id24) {
+    const candidate2 = this.store.find("mod", id24);
+    if (!candidate2) throw new Error(`Unknown mod: ${id24}`);
+    const body3 = String(candidate2.body ?? "");
+    const pluginId = candidate2.plugin_id === void 0 || candidate2.plugin_id === null ? null : String(candidate2.plugin_id);
+    const scopeKind = String(candidate2.scope_kind ?? "global");
+    const scopeId = String(candidate2.scope_id ?? "global");
+    const before = this.modSystemOverlay({ kind: scopeKind, id: scopeId }, "worker", []);
+    const cases = [];
+    const inert = candidate2.status !== "active";
+    cases.push({
+      case_id: "mod.shadow.inert_while_pending",
+      verdict: inert ? "passed" : "failed",
+      detail: inert ? "\u5019\u9009\u5728\u5F71\u5B50\u6D4B\u8BD5\u671F\u95F4\u672A\u751F\u6548" : "\u5019\u9009\u5DF2\u751F\u6548\uFF0C\u5F71\u5B50\u6D4B\u8BD5\u65E0\u6CD5\u9A8C\u8BC1\u6CE8\u5165\u524D\u72B6\u6001"
+    });
+    const simulated = this.modSystemOverlay({ kind: scopeKind, id: scopeId }, "worker", []);
+    cases.push({
+      case_id: "mod.shadow.body_non_empty",
+      verdict: body3.trim() ? "passed" : "failed",
+      detail: body3.trim() ? "\u89C4\u5219\u6B63\u6587\u975E\u7A7A" : "\u89C4\u5219\u6B63\u6587\u4E3A\u7A7A"
+    });
+    cases.push({
+      case_id: "mod.shadow.no_plugin_leak",
+      verdict: simulated.includes(body3) ? "failed" : "passed",
+      detail: pluginId ? "\u63D2\u4EF6\u7ED1\u5B9A\u89C4\u5219\u672A\u5728\u672A\u6302\u8F7D\u65F6\u6CC4\u6F0F" : "\u65E0\u63D2\u4EF6\u7ED1\u5B9A\uFF0C\u5019\u9009\u6B63\u6587\u4ECD\u672A\u6CE8\u5165"
+    });
+    cases.push({
+      case_id: "mod.shadow.overlay_unchanged",
+      verdict: simulated === before ? "passed" : "failed",
+      detail: simulated === before ? "\u5F71\u5B50\u8FD0\u884C\u672A\u6539\u53D8\u73B0\u6709 Worker \u4E0A\u4E0B\u6587" : "\u5F71\u5B50\u8FD0\u884C\u6C61\u67D3\u4E86\u73B0\u6709\u4E0A\u4E0B\u6587"
+    });
+    for (const invariant of FORBIDDEN_MOD_PHRASES) {
+      cases.push({
+        case_id: invariant.id,
+        verdict: invariant.pattern.test(body3) ? "failed" : "passed",
+        detail: invariant.pattern.test(body3) ? `\u5019\u9009\u6B63\u6587\u8FDD\u53CD\u56FA\u5B9A\u4E0D\u53D8\u91CF ${invariant.id}` : `\u5019\u9009\u6B63\u6587\u672A\u8FDD\u53CD ${invariant.id}`
+      });
+    }
+    const projected = `${before}
+# Mod: ${String(candidate2.name ?? id24)}
+${body3}`.trim();
+    cases.push({
+      case_id: "mod.shadow.candidate_is_observable",
+      verdict: body3.trim() && projected.includes(body3.trim()) && projected !== before ? "passed" : "failed",
+      detail: body3.trim() && projected.includes(body3.trim()) ? "\u5019\u9009\u6B63\u6587\u5728\u5F71\u5B50\u6CE8\u5165\u4E2D\u786E\u5B9E\u53EF\u89C2\u6D4B" : "\u5019\u9009\u6B63\u6587\u65E0\u6CD5\u5728\u5F71\u5B50\u6CE8\u5165\u4E2D\u88AB\u89C2\u6D4B"
+    });
+    const failed = cases.filter((item) => item.verdict === "failed");
+    return {
+      verdict: failed.length ? "failed" : "passed",
+      cases,
+      failed: failed.length,
+      model_calls: 0,
+      suite: "mod.shadow.v2",
+      candidate_digest: regressionDigest(id24, body3, cases)
+    };
+  }
+  /** Gate entry: only a real run may mark the candidate as passing. */
+  evaluateShadowTest(args) {
+    const id24 = text15(args.id, "id");
+    const existing = this.store.find("mod", id24);
+    if (!existing) throw new Error(`Unknown mod: ${id24}`);
+    if (existing.self_evolved !== true) throw new Error("shadow tests apply only to self-evolved Mod candidates");
+    const result2 = this.runShadowRegression(id24);
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const saved = this.store.save("mod", id24, {
+      ...existing,
+      shadow_test: result2.verdict,
+      shadow_regression_set: String(result2.suite),
+      shadow_cases: result2.cases,
+      shadow_failed: result2.failed,
+      shadow_model_calls: 0,
+      shadow_tested_at: now3,
+      // Provenance: a passing gate is only ever written by a real run and is
+      // bound to the exact candidate body + case outcomes it graded.
+      shadow_provenance: result2.verdict === "passed" ? String(result2.candidate_digest) : null,
+      shadow_body_digest: regressionDigest(id24, String(existing.body ?? ""), []),
+      updated_at: now3
+    });
+    return { ...toRecord(saved), regression: result2 };
+  }
+  recordShadowTest(args) {
+    const id24 = text15(args.id, "id");
+    const existing = this.store.find("mod", id24);
+    if (!existing) throw new Error(`Unknown mod: ${id24}`);
+    if (existing.self_evolved !== true) throw new Error("shadow tests apply only to self-evolved Mod candidates");
+    const verdict = text15(args.verdict, "verdict");
+    if (verdict !== "passed" && verdict !== "failed") throw new Error("verdict must be passed or failed");
+    if (verdict === "passed") throw new Error("a passing shadow test must come from a real regression run; use /mods/shadow-test/run");
+    const regressionSet = text15(args.regression_set, "regression_set");
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const payload10 = {
+      ...existing,
+      shadow_test: verdict,
+      shadow_regression_set: regressionSet,
+      shadow_provenance: null,
+      shadow_tested_at: now3,
+      updated_at: now3
+    };
+    this.store.save("mod", id24, payload10);
+    return toRecord(payload10);
+  }
+  create(args) {
+    const name = text15(args.name, "name");
+    const body3 = bodyText(args.body);
+    const scopeKind = normalizeScopeKind(args.scope_kind);
+    const scopeId = scopeKind === "global" ? "global" : text15(args.scope_id, "scope_id");
+    const appliesTo = normalizeAppliesTo(args.applies_to);
+    const pluginId = args.plugin_id === void 0 || args.plugin_id === null ? null : text15(args.plugin_id, "plugin_id");
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const id24 = String(args.id ?? `mod_${(0, import_node_crypto119.randomUUID)()}`);
+    const payload10 = {
+      id: id24,
+      name,
+      body: body3,
+      scope_kind: scopeKind,
+      scope_id: scopeId,
+      applies_to: appliesTo,
+      status: "draft",
+      enabled: false,
+      version: 1,
+      created_at: now3,
+      updated_at: now3,
+      approved_by: null,
+      approved_at: null,
+      concept_kind: "rule",
+      ...pluginId === null ? {} : { plugin_id: pluginId }
+    };
+    this.store.save("mod", id24, payload10);
+    return toRecord(payload10);
+  }
+  update(args) {
+    const id24 = text15(args.id, "id");
+    const existing = this.store.find("mod", id24);
+    if (!existing) throw new Error(`Unknown mod: ${id24}`);
+    if (existing.status === "active") throw new Error("cannot edit an active mod; revoke and recreate it");
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const payload10 = {
+      ...existing,
+      ...args.name !== void 0 ? { name: text15(args.name, "name") } : {},
+      ...args.body !== void 0 ? { body: bodyText(args.body) } : {},
+      ...args.scope_kind !== void 0 ? { scope_kind: normalizeScopeKind(args.scope_kind) } : {},
+      ...args.scope_id !== void 0 && normalizeScopeKind(args.scope_kind === void 0 ? existing.scope_kind : args.scope_kind) !== "global" ? { scope_id: text15(args.scope_id, "scope_id") } : {},
+      ...args.applies_to !== void 0 ? { applies_to: normalizeAppliesTo(args.applies_to) } : {},
+      version: Number(existing.version ?? 1) + 1,
+      updated_at: now3
+    };
+    this.store.save("mod", id24, payload10);
+    return toRecord(payload10);
+  }
+  /** Move a draft/pending Mod to active; only an operator-signed approval lands. */
+  approve(args) {
+    const id24 = text15(args.id, "id");
+    const actor = boundedActor2(args.approved_by, "approved_by");
+    const existing = this.store.find("mod", id24);
+    if (!existing) throw new Error(`Unknown mod: ${id24}`);
+    if (existing.self_evolved === true && existing.shadow_test !== "passed") {
+      throw new Error("a self-evolved Mod requires a passing shadow test before approval");
+    }
+    if (existing.self_evolved === true) {
+      const expected = regressionDigest(id24, String(existing.body ?? ""), []);
+      const bodyDigest2 = existing.shadow_body_digest === void 0 || existing.shadow_body_digest === null ? null : String(existing.shadow_body_digest);
+      const provenance2 = existing.shadow_provenance === void 0 || existing.shadow_provenance === null ? null : String(existing.shadow_provenance);
+      if (!provenance2 || !bodyDigest2 || bodyDigest2 !== expected) {
+        throw new Error("a self-evolved Mod requires a passing shadow test bound to its current body");
+      }
+    }
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const payload10 = { ...existing, status: "active", enabled: true, approved_by: actor, approved_at: now3, updated_at: now3 };
+    this.store.save("mod", id24, payload10);
+    return toRecord(payload10);
+  }
+  enable(args) {
+    return this.#setEnabled(args, true);
+  }
+  disable(args) {
+    return this.#setEnabled(args, false);
+  }
+  #setEnabled(args, enabled) {
+    const id24 = text15(args.id, "id");
+    const existing = this.store.find("mod", id24);
+    if (!existing) throw new Error(`Unknown mod: ${id24}`);
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const payload10 = { ...existing, enabled, updated_at: now3 };
+    this.store.save("mod", id24, payload10);
+    return toRecord(payload10);
+  }
+  revoke(args) {
+    const id24 = text15(args.id, "id");
+    const existing = this.store.find("mod", id24);
+    if (!existing) throw new Error(`Unknown mod: ${id24}`);
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const payload10 = { ...existing, status: "revoked", enabled: false, updated_at: now3 };
+    this.store.save("mod", id24, payload10);
+    return toRecord(payload10);
+  }
+  /**
+   * Git 风格回滚：把一条 Mod 恢复到某个历史稳定版本，写为一个新版本而不是
+   * 抹掉历史。审批签名与影子测试状态一并恢复，回滚本身留痕（rolled_back_from）。
+   */
+  rollback(args) {
+    const id24 = text15(args.id, "id");
+    const target2 = Number(args.to_version);
+    if (!Number.isInteger(target2) || target2 < 1) throw new Error("to_version must be a positive integer");
+    const current2 = this.store.find("mod", id24);
+    if (!current2) throw new Error(`Unknown mod: ${id24}`);
+    const historical = this.store.find("mod", id24, target2);
+    if (!historical) throw new Error(`Mod ${id24} has no version ${target2}`);
+    if (Number(historical.version) >= Number(current2.version)) throw new Error("to_version must be older than the current version");
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...body3 } = historical;
+    const payload10 = {
+      ...body3,
+      id: id24,
+      version: Number(current2.version) + 1,
+      created_at: String(current2.created_at),
+      updated_at: now3,
+      rolled_back_from: Number(current2.version),
+      rolled_back_to: target2,
+      rolled_back_at: now3
+    };
+    this.store.save("mod", id24, payload10);
+    return toRecord(payload10);
+  }
+  list(args = {}) {
+    const status2 = args.status === void 0 || args.status === null ? null : normalizeStatus(args.status);
+    const appliesTo = args.applies_to === void 0 || args.applies_to === null ? null : normalizeAppliesTo(args.applies_to);
+    const items2 = this.store.list("mod", 1e3, (item) => (status2 === null || item.status === status2) && (appliesTo === null || item.applies_to === appliesTo || item.applies_to === "all")).map(toRecord).sort((a, b) => STATUS_RANK[b.status] - STATUS_RANK[a.status] || (a.updatedAt < b.updatedAt ? 1 : -1));
+    return { items: items2 };
+  }
+  /**
+   * Cognitive overlay for a scope: the concatenation of every active, enabled
+   * Mod whose applies_to matches and whose scope is in effect for `scope`.
+   * Global Mods always apply; project/task Mods apply only when their scope id
+   * matches the requested scope id of the same kind.
+   */
+  modSystemOverlay(scope4, appliesTo = "worker", activePluginIds = []) {
+    return this.modSystemSelection(scope4, appliesTo, activePluginIds).overlay;
+  }
+  modSystemSelection(scope4, appliesTo = "worker", activePluginIds = [], taskId3) {
+    const active = new Set(activePluginIds);
+    const matching = this.store.list("mod", 1e3, (item) => {
+      if (item.status !== "active" || item.enabled !== true) return false;
+      if (!(item.applies_to === appliesTo || item.applies_to === "all")) return false;
+      if (item.plugin_id !== void 0 && item.plugin_id !== null && !active.has(String(item.plugin_id))) return false;
+      if (item.scope_kind === "global") return true;
+      if (taskId3 !== void 0 && item.scope_kind === "task" && String(item.scope_id) === taskId3) return true;
+      return item.scope_kind === scope4.kind && String(item.scope_id) === String(scope4.id);
+    });
+    const overlay = matching.map((item) => `# Mod: ${String(item.name)}
+${String(item.body)}`).join("\n\n");
+    return { overlay, mods: matching };
+  }
+};
+function text15(value, name) {
+  if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must be a non-empty string`);
+  return value.trim();
+}
+function bodyText(value) {
+  if (typeof value !== "string") throw new Error("body must be a string");
+  if (value.length > 2e4) throw new Error("body must be 20000 characters or fewer");
+  return validateConceptBody(value, "body");
+}
+function boundedActor2(value, name) {
+  if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must name the approving operator`);
+  const trimmed = value.trim();
+  if (trimmed.length > 120 || /[\r\n\0]/.test(trimmed)) throw new Error(`${name} must be a single line, 120 chars or fewer`);
+  return trimmed;
+}
+
+// core/continual-harness.ts
 var BINDING_KINDS = /* @__PURE__ */ new Set(["prompt_note", "memory_ledger", "capability", "workflow", "expert_profile", "harness_topology", "work_runtime_plan", "context_resolution_receipt", "activation_profile"]);
 var SOURCE_KINDS2 = /* @__PURE__ */ new Set(["trial", "outcome", "acceptance_gate", "verified_work_loop", "trace", "work_session"]);
-var CHANGE_KINDS = /* @__PURE__ */ new Set(["prompt_note", "memory", "skill", "workflow", "subagent_spec"]);
+var CHANGE_KINDS = /* @__PURE__ */ new Set(["prompt_note", "memory", "skill", "workflow", "subagent_spec", "mod"]);
 var CHANGE_ACTIONS = /* @__PURE__ */ new Set(["create", "update", "delete"]);
 var SECRET12 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
-function text15(value, name) {
+function text16(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   const result2 = value.trim();
   if (SECRET12.test(result2)) throw new Error(`${name} must not contain credentials or secrets`);
@@ -73483,16 +74001,16 @@ function text15(value, name) {
 }
 function strings28(value, name) {
   if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
-  const result2 = value.map((item) => text15(item, name));
+  const result2 = value.map((item) => text16(item, name));
   if (!result2.length) throw new Error(`${name} must contain at least one value`);
   if (new Set(result2).size !== result2.length) throw new Error(`${name} must contain unique values`);
   return result2.sort();
 }
 function reference2(store, raw, name, allowed) {
   const input2 = object(raw, name);
-  const kind4 = text15(input2.kind, `${name}.kind`);
+  const kind4 = text16(input2.kind, `${name}.kind`);
   if (!allowed.has(kind4)) throw new Error(`${name}.kind is unsupported`);
-  const id24 = text15(input2.id, `${name}.id`);
+  const id24 = text16(input2.id, `${name}.id`);
   const version5 = input2.version === void 0 ? void 0 : Number(input2.version);
   if (version5 !== void 0 && (!Number.isInteger(version5) || version5 < 1)) throw new Error(`${name}.version must be a positive integer`);
   const record4 = store.get(kind4, id24, version5);
@@ -73503,13 +74021,25 @@ function evidence(store, value) {
   for (const id24 of ids6) if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(store.get("evidence", id24).confidence))) throw new Error("Refinement Evidence must be confirmed or bounded");
   return ids6;
 }
+function assertModGate(store, modId) {
+  const mod = store.get("mod", modId);
+  if (mod.self_evolved === true && (mod.shadow_test !== "passed" || !mod.shadow_provenance || !mod.shadow_body_digest))
+    throw new Error("a self-evolved Mod refinement requires a passing shadow test bound to its current body");
+  if (mod.self_evolved === true && mod.shadow_test === "passed" && mod.shadow_body_digest) {
+    const expected = regressionDigest(modId, String(mod.body ?? ""), []);
+    if (String(mod.shadow_body_digest) !== expected)
+      throw new Error("a self-evolved Mod refinement requires a shadow pass bound to its current body digest");
+  }
+}
 var ContinualHarnessKernel = class {
   store;
-  constructor(store) {
+  mods;
+  constructor(store, mods) {
     this.store = store;
+    this.mods = mods ?? new ModRegistry(store);
   }
   viewCreate(args) {
-    const task = this.store.get("task", text15(args.task_id, "task_id"));
+    const task = this.store.get("task", text16(args.task_id, "task_id"));
     const inputs = Array.isArray(args.bindings) ? args.bindings : [];
     const bindings2 = inputs.map((item, index) => reference2(this.store, item, `bindings[${index}]`, BINDING_KINDS)).sort((a, b) => `${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`));
     if (new Set(bindings2.map((item) => `${item.kind}:${item.id}`)).size !== bindings2.length) throw new Error("Harness bindings must be unique");
@@ -73524,8 +74054,8 @@ var ContinualHarnessKernel = class {
     return { view: this.store.create("continual_harness_view", viewId, { ...identity2, identity_digest: identityDigest }), idempotent: false };
   }
   refine(args) {
-    const task = this.store.get("task", text15(args.task_id, "task_id"));
-    const view2 = this.store.get("continual_harness_view", text15(args.view_id, "view_id"));
+    const task = this.store.get("task", text16(args.task_id, "task_id"));
+    const view2 = this.store.get("continual_harness_view", text16(args.view_id, "view_id"));
     if (view2.task_id !== task.id) throw new Error("Harness view does not belong to the task");
     const sourceInputs = Array.isArray(args.source_refs) ? args.source_refs : [];
     if (!sourceInputs.length) throw new Error("source_refs must contain at least one source");
@@ -73535,12 +74065,39 @@ var ContinualHarnessKernel = class {
     if (!rawChanges.length || rawChanges.length > 4) throw new Error("changes must contain between one and four focused updates");
     const changes = rawChanges.map((raw, index) => this.change(raw, index));
     const axes2 = [...new Set(changes.map((change) => String(change.kind)))];
+    const modRefs = [];
+    for (const source of sourceRefs) this.assertTaskSource(task.id, source);
+    for (const change of changes) {
+      if (String(change.kind) !== "mod") continue;
+      if (!this.mods) throw new Error("Mod refinement requires the Mod kernel");
+      const action = String(change.action);
+      const scope4 = String(change.scope);
+      if (action === "delete") throw new Error("Mod refinement cannot delete a Mod; revoke it explicitly");
+      if (action === "update") {
+        const targetId = String(change.target_id);
+        const nextBody = text16(args.mod_body, "mod_body");
+        const existing2 = this.store.find("mod", targetId);
+        if (!existing2) throw new Error(`Unknown mod: ${targetId}`);
+        const mod2 = existing2.body === nextBody ? { ...existing2 } : this.mods.update({ id: targetId, body: nextBody });
+        if (existing2.self_evolved === true || mod2.selfEvolved === true) assertModGate(this.store, mod2.id);
+        modRefs.push({ id: mod2.id, version: mod2.version, action });
+        continue;
+      }
+      const mod = this.mods.proposeFromAttribution({
+        id: String(args.mod_id ?? `mod_${stableDigest({ task_id: task.id, view_id: view2.id, change }).slice(-20)}`),
+        failure_class: text16(args.failure_class, "failure_class"),
+        remedy: args.remedy === void 0 ? change.summary : args.remedy,
+        evidence_id: evidenceIds2.length === 1 ? evidenceIds2[0] : void 0,
+        scope_kind: scope4 === "session" ? "global" : scope4,
+        scope_id: scope4 === "session" || scope4 === "global" ? void 0 : text16(args.mod_scope_id, "mod_scope_id")
+      });
+      modRefs.push({ id: mod.id, version: mod.version, action });
+    }
     if (axes2.length > 2) throw new Error("A refinement may change at most two Harness design axes");
     const local = changes.every((change) => change.scope === "session" && (/* @__PURE__ */ new Set(["prompt_note", "memory"])).has(String(change.kind)) && change.action !== "delete");
-    for (const source of sourceRefs) this.assertTaskSource(task.id, source);
-    const sessionId = local ? text15(args.session_id, "session_id") : null;
-    const identity2 = { task_id: task.id, task_version: task.version, view_id: view2.id, view_version: view2.version, session_id: sessionId, source_refs: sourceRefs, evidence_ids: evidenceIds2, hypothesis: text15(args.hypothesis, "hypothesis"), changes, design_axes: axes2.sort(), risk: local ? "low" : "governed" };
-    const refinementId = String(args.refinement_id ?? `harness_refinement_${(0, import_node_crypto119.randomUUID)().replaceAll("-", "")}`);
+    const sessionId = local ? text16(args.session_id, "session_id") : null;
+    const identity2 = { task_id: task.id, task_version: task.version, view_id: view2.id, view_version: view2.version, session_id: sessionId, source_refs: sourceRefs, evidence_ids: evidenceIds2, hypothesis: text16(args.hypothesis, "hypothesis"), changes, mod_refs: modRefs, design_axes: axes2.sort(), risk: local ? "low" : "governed" };
+    const refinementId = String(args.refinement_id ?? `harness_refinement_${(0, import_node_crypto121.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = stableDigest(identity2);
     const existing = this.store.find("harness_refinement", refinementId);
     if (existing) {
@@ -73550,8 +74107,11 @@ var ContinualHarnessKernel = class {
     return { refinement: this.store.create("harness_refinement", refinementId, { ...identity2, identity_digest: identityDigest, before_snapshot: stableDigest(view2.bindings), after_snapshot: stableDigest({ bindings: view2.bindings, changes }), lifecycle: "draft", publication_allowed: false }), idempotent: false };
   }
   submit(args) {
-    const refinement = this.store.get("harness_refinement", text15(args.refinement_id, "refinement_id"));
+    const refinement = this.store.get("harness_refinement", text16(args.refinement_id, "refinement_id"));
     if (refinement.lifecycle !== "draft") throw new Error("Only a draft refinement can be submitted");
+    for (const modRef of Array.isArray(refinement.mod_refs) ? refinement.mod_refs : []) {
+      assertModGate(this.store, String(modRef.id));
+    }
     const isLocal = refinement.risk === "low";
     let expiresAt = null;
     if (isLocal) {
@@ -73565,50 +74125,50 @@ var ContinualHarnessKernel = class {
     return { refinement: saved, lifecycle, next_action: isLocal ? "apply_to_next_session_turn" : "run_shadow_evaluation" };
   }
   shadow(args) {
-    const refinement = this.store.get("harness_refinement", text15(args.refinement_id, "refinement_id"));
+    const refinement = this.store.get("harness_refinement", text16(args.refinement_id, "refinement_id"));
     if (refinement.lifecycle !== "evaluation_required") throw new Error("Refinement is not awaiting shadow evaluation");
-    const assessment = this.store.get("evaluation_reliability", text15(args.assessment_id, "assessment_id"));
+    const assessment = this.store.get("evaluation_reliability", text16(args.assessment_id, "assessment_id"));
     if (assessment.status !== "eligible") throw new Error("Refinement requires an eligible shadow reliability assessment");
     const saved = this.store.save("harness_refinement", String(refinement.id), { ...payload(refinement), lifecycle: "signoff_ready", assessment_id: assessment.id, assessment_version: assessment.version });
     return { refinement: saved };
   }
   authorizeCanary(args) {
-    const refinement = this.store.get("harness_refinement", text15(args.refinement_id, "refinement_id"));
+    const refinement = this.store.get("harness_refinement", text16(args.refinement_id, "refinement_id"));
     if (refinement.lifecycle !== "signoff_ready") throw new Error("Refinement is not ready for Signoff");
-    const signoff = this.store.get("signoff", text15(args.signoff_id, "signoff_id"));
+    const signoff = this.store.get("signoff", text16(args.signoff_id, "signoff_id"));
     if (signoff.decision !== "passed" || signoff.subject_type !== "harness_refinement" || signoff.subject_id !== refinement.id || Number(signoff.subject_version) !== Number(refinement.version)) throw new Error("Refinement requires Signoff for its exact version");
-    const canaryId = String(args.canary_id ?? `harness_refinement_canary_${(0, import_node_crypto119.randomUUID)().replaceAll("-", "")}`);
+    const canaryId = String(args.canary_id ?? `harness_refinement_canary_${(0, import_node_crypto121.randomUUID)().replaceAll("-", "")}`);
     const canary = this.store.create("harness_refinement_canary", canaryId, { refinement_id: refinement.id, refinement_version: refinement.version, baseline_snapshot: refinement.before_snapshot, candidate_snapshot: refinement.after_snapshot, status: "running" });
     const saved = this.store.save("harness_refinement", String(refinement.id), { ...payload(refinement), lifecycle: "canary_running", signoff_id: signoff.id, canary_id: canary.id });
     return { refinement: saved, canary };
   }
   observeCanary(args) {
-    const canary = this.store.get("harness_refinement_canary", text15(args.canary_id, "canary_id"));
+    const canary = this.store.get("harness_refinement_canary", text16(args.canary_id, "canary_id"));
     if (canary.status !== "running") throw new Error("Canary is not running");
     const baseline = Number(args.baseline);
     const candidate2 = Number(args.candidate);
     const threshold = Number(args.threshold ?? 0);
     if (![baseline, candidate2, threshold].every((item) => Number.isFinite(item) && item >= 0)) throw new Error("Canary metrics must be non-negative finite numbers");
-    const direction = text15(args.direction ?? "lower_is_better", "direction");
+    const direction = text16(args.direction ?? "lower_is_better", "direction");
     if (!(/* @__PURE__ */ new Set(["lower_is_better", "higher_is_better"])).has(direction)) throw new Error("Canary metric direction is unsupported");
     const regression = direction === "lower_is_better" ? candidate2 - baseline > threshold : baseline - candidate2 > threshold;
     const completed = args.complete === true;
     const status2 = regression ? "rolled_back" : completed ? "passed" : "running";
-    const savedCanary = this.store.save("harness_refinement_canary", String(canary.id), { ...payload(canary), status: status2, metric: text15(args.metric, "metric"), direction, baseline, candidate: candidate2, threshold });
+    const savedCanary = this.store.save("harness_refinement_canary", String(canary.id), { ...payload(canary), status: status2, metric: text16(args.metric, "metric"), direction, baseline, candidate: candidate2, threshold });
     const refinement = this.store.get("harness_refinement", String(canary.refinement_id));
     const lifecycle = regression ? "rolled_back" : completed ? "active" : "canary_running";
     const saved = lifecycle === refinement.lifecycle ? refinement : this.store.save("harness_refinement", String(refinement.id), { ...payload(refinement), lifecycle, publication_allowed: lifecycle === "active", rollback_snapshot: regression ? refinement.before_snapshot : null });
     return { refinement: saved, canary: savedCanary, lifecycle };
   }
   rollback(args) {
-    const refinement = this.store.get("harness_refinement", text15(args.refinement_id, "refinement_id"));
+    const refinement = this.store.get("harness_refinement", text16(args.refinement_id, "refinement_id"));
     if (!(/* @__PURE__ */ new Set(["bounded_active", "active", "canary_running"])).has(String(refinement.lifecycle))) throw new Error("Refinement is not active or running");
     const evidenceIds2 = evidence(this.store, args.evidence_ids);
-    const saved = this.store.save("harness_refinement", String(refinement.id), { ...payload(refinement), lifecycle: "rolled_back", publication_allowed: false, rollback_snapshot: refinement.before_snapshot, rollback_reason: text15(args.reason, "reason"), rollback_evidence_ids: evidenceIds2 });
+    const saved = this.store.save("harness_refinement", String(refinement.id), { ...payload(refinement), lifecycle: "rolled_back", publication_allowed: false, rollback_snapshot: refinement.before_snapshot, rollback_reason: text16(args.reason, "reason"), rollback_evidence_ids: evidenceIds2 });
     return { refinement: saved, restored_snapshot: refinement.before_snapshot };
   }
   signals(args) {
-    const task = this.store.get("task", text15(args.task_id, "task_id"));
+    const task = this.store.get("task", text16(args.task_id, "task_id"));
     const sources = [];
     for (const gate of this.store.list("acceptance_gate", 1e4, (item) => item.task_id === task.id && item.verdict === "failed")) sources.push({ kind: "acceptance_gate", id: gate.id, version: gate.version, trigger: "acceptance_failed" });
     for (const trial of this.store.list("trial", 1e4, (item) => item.task_id === task.id)) {
@@ -73618,9 +74178,9 @@ var ContinualHarnessKernel = class {
     return { task_id: task.id, sources: sources.sort((a, b) => `${a.kind}:${a.id}`.localeCompare(`${b.kind}:${b.id}`)), refinement_automatic: false, next_action: sources.length ? "review_and_propose_small_diff" : "none" };
   }
   resolve(args) {
-    const view2 = this.store.get("continual_harness_view", text15(args.view_id, "view_id"));
-    const sessionId = text15(args.session_id, "session_id");
-    const now3 = args.now === void 0 ? /* @__PURE__ */ new Date() : new Date(text15(args.now, "now"));
+    const view2 = this.store.get("continual_harness_view", text16(args.view_id, "view_id"));
+    const sessionId = text16(args.session_id, "session_id");
+    const now3 = args.now === void 0 ? /* @__PURE__ */ new Date() : new Date(text16(args.now, "now"));
     if (Number.isNaN(now3.valueOf())) throw new Error("now must be an ISO timestamp");
     const all = this.store.list("harness_refinement", 1e4, (item) => item.view_id === view2.id && (/* @__PURE__ */ new Set(["bounded_active", "active"])).has(String(item.lifecycle)));
     const selected = all.filter((item) => item.lifecycle === "active" || item.session_id === sessionId && Date.parse(String(item.expires_at)) > now3.valueOf()).sort((a, b) => String(a.id).localeCompare(String(b.id)));
@@ -73637,7 +74197,7 @@ var ContinualHarnessKernel = class {
     return { receipt: this.store.create("harness_resolution_receipt", receiptId, { ...identity2, identity_digest: identityDigest }), expired, idempotent: false };
   }
   get(args) {
-    return { refinement: this.store.get("harness_refinement", text15(args.refinement_id, "refinement_id")) };
+    return { refinement: this.store.get("harness_refinement", text16(args.refinement_id, "refinement_id")) };
   }
   assertTaskSource(taskId3, source) {
     const record4 = this.store.get(String(source.kind), String(source.id), Number(source.version));
@@ -73647,22 +74207,22 @@ var ContinualHarnessKernel = class {
   }
   change(raw, index) {
     const input2 = object(raw, `changes[${index}]`);
-    const kind4 = text15(input2.kind, `changes[${index}].kind`);
-    const action = text15(input2.action, `changes[${index}].action`);
-    const scope4 = text15(input2.scope, `changes[${index}].scope`);
+    const kind4 = text16(input2.kind, `changes[${index}].kind`);
+    const action = text16(input2.action, `changes[${index}].action`);
+    const scope4 = text16(input2.scope, `changes[${index}].scope`);
     if (!CHANGE_KINDS.has(kind4) || !CHANGE_ACTIONS.has(action) || !(/* @__PURE__ */ new Set(["session", "project", "user"])).has(scope4)) throw new Error("Harness refinement change is unsupported");
-    return { kind: kind4, action, scope: scope4, target_id: input2.target_id === void 0 ? null : text15(input2.target_id, `changes[${index}].target_id`), summary: text15(input2.summary, `changes[${index}].summary`) };
+    return { kind: kind4, action, scope: scope4, target_id: input2.target_id === void 0 ? null : text16(input2.target_id, `changes[${index}].target_id`), summary: text16(input2.summary, `changes[${index}].summary`) };
   }
 };
 
 // core/evolution-cycle.ts
-var import_node_crypto121 = require("node:crypto");
+var import_node_crypto123 = require("node:crypto");
 var import_node_fs42 = require("node:fs");
 init_digest2();
 init_paths();
 
 // core/evolution-candidate-workspace.ts
-var import_node_crypto120 = require("node:crypto");
+var import_node_crypto122 = require("node:crypto");
 var import_node_fs41 = require("node:fs");
 var import_node_path54 = require("node:path");
 init_paths();
@@ -73758,7 +74318,7 @@ var EvolutionCandidateWorkspace = class {
       const path2 = safeRelative2(raw.path), digest37 = String(raw.digest ?? "");
       if (!/^[a-f0-9]{64}$/u.test(digest37)) throw new Error("Candidate checkpoint entry digest is invalid");
       const source = readNested(sourceRoot2, path2), stat10 = (0, import_node_fs41.lstatSync)(source);
-      const actualDigest = (0, import_node_crypto120.createHash)("sha256").update((0, import_node_fs41.readFileSync)(source)).digest("hex");
+      const actualDigest = (0, import_node_crypto122.createHash)("sha256").update((0, import_node_fs41.readFileSync)(source)).digest("hex");
       if (actualDigest !== digest37 || raw.size_bytes !== void 0 && Number(raw.size_bytes) !== stat10.size)
         throw new Error("Candidate checkpoint content failed digest verification");
       entries2.push({ path: path2, digest: digest37, ...raw.size_bytes === void 0 ? {} : { size_bytes: Number(raw.size_bytes) } });
@@ -73849,7 +74409,7 @@ var EvolutionCandidateWorkspace = class {
         if (stat10.isDirectory()) visit(absolute, path2);
         else if (stat10.isFile()) {
           if (files5.size >= 1e4) throw new Error("Candidate workspace exceeds the file limit");
-          files5.set(path2, (0, import_node_crypto120.createHash)("sha256").update((0, import_node_fs41.readFileSync)(absolute)).digest("hex"));
+          files5.set(path2, (0, import_node_crypto122.createHash)("sha256").update((0, import_node_fs41.readFileSync)(absolute)).digest("hex"));
         } else throw new Error("Candidate workspace contains a non-regular entry");
       }
     };
@@ -73887,7 +74447,7 @@ var NEXT = {
 };
 var FAILURE_CLASSES2 = /* @__PURE__ */ new Set(["environment", "retrieval_or_routing", "execution", "missing_process", "evaluation"]);
 function digest17(value) {
-  return `sha256:${(0, import_node_crypto121.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto123.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function ref4(store, raw, name) {
   const input2 = object(raw, name), kind4 = text(input2.kind, `${name}.kind`), id24 = text(input2.id, `${name}.id`);
@@ -74124,7 +74684,7 @@ var EvolutionCycleKernel = class {
     const trigger = text(args.trigger, "trigger");
     const triggerRefs = refs3(this.store, args.trigger_refs, "trigger_refs");
     if (!triggerRefs.length) throw new Error("trigger_refs must contain a versioned task result or Host event");
-    const cycleId = text(args.cycle_id ?? `evolution_cycle_${(0, import_node_crypto121.randomUUID)().replaceAll("-", "")}`, "cycle_id");
+    const cycleId = text(args.cycle_id ?? `evolution_cycle_${(0, import_node_crypto123.randomUUID)().replaceAll("-", "")}`, "cycle_id");
     const candidateId2 = `candidate_${stableDigest({ cycle_id: cycleId, workspace_id: workspace.id, checkpoint_id: checkpoint.id, checkpoint_version: checkpoint.version }).slice(-32)}`;
     const candidateWorkspace = this.candidateWorkspaces.create({
       workspace_id: workspace.id,
@@ -74371,13 +74931,13 @@ var EvolutionCycleKernel = class {
 };
 
 // core/stateful-compute.ts
-var import_node_crypto122 = require("node:crypto");
+var import_node_crypto124 = require("node:crypto");
 init_store2();
 init_digest2();
 var HOST_KINDS2 = /* @__PURE__ */ new Set(["repl", "notebook", "agent_host", "custom"]);
 var CONFIDENCE3 = /* @__PURE__ */ new Set(["confirmed", "bounded", "unverified"]);
 var SECRET13 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
-function text16(value, name) {
+function text17(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   const result2 = value.trim();
   if (SECRET13.test(result2)) throw new Error(`${name} must not contain credentials or secrets`);
@@ -74386,7 +74946,7 @@ function text16(value, name) {
 function strings29(value, name, required6 = false) {
   if (value === void 0 && !required6) return [];
   if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
-  const result2 = value.map((item) => text16(item, name));
+  const result2 = value.map((item) => text17(item, name));
   if (required6 && !result2.length) throw new Error(`${name} must contain at least one value`);
   if (new Set(result2).size !== result2.length) throw new Error(`${name} must contain unique values`);
   return result2.sort();
@@ -74397,19 +74957,19 @@ var StatefulComputeKernel = class {
     this.store = store;
   }
   hostRegister(args) {
-    const kind4 = text16(args.kind, "kind");
+    const kind4 = text17(args.kind, "kind");
     if (!HOST_KINDS2.has(kind4)) throw new Error("Stateful compute Host kind is unsupported");
-    const trust = text16(args.trust ?? "bounded", "trust");
+    const trust = text17(args.trust ?? "bounded", "trust");
     if (!(/* @__PURE__ */ new Set(["bounded", "verified"])).has(trust)) throw new Error("Stateful compute Host must be bounded or verified");
     const generatedCode = args.generated_code === true;
-    const conformanceId = args.conformance_id === void 0 ? null : text16(args.conformance_id, "conformance_id");
+    const conformanceId = args.conformance_id === void 0 ? null : text17(args.conformance_id, "conformance_id");
     if (generatedCode) {
       if (!conformanceId) throw new Error("Generated-code Host requires a verified sandbox conformance profile");
       const profile = this.store.get("sandbox_conformance", conformanceId);
       if (profile.status !== "verified" || profile.isolation !== "verified" || profile.network !== "deny") throw new Error("Generated-code Host conformance is not verified and network-denied");
     }
-    const identity2 = { kind: kind4, label: text16(args.label, "label"), trust, generated_code: generatedCode, conformance_id: conformanceId, capabilities: strings29(args.capabilities, "capabilities"), execution_authority: false };
-    const hostId = String(args.host_id ?? `stateful_compute_host_${(0, import_node_crypto122.randomUUID)().replaceAll("-", "")}`);
+    const identity2 = { kind: kind4, label: text17(args.label, "label"), trust, generated_code: generatedCode, conformance_id: conformanceId, capabilities: strings29(args.capabilities, "capabilities"), execution_authority: false };
+    const hostId = String(args.host_id ?? `stateful_compute_host_${(0, import_node_crypto124.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = digestJson(identity2);
     const existing = this.store.find("stateful_compute_host", hostId);
     if (existing) {
@@ -74419,15 +74979,15 @@ var StatefulComputeKernel = class {
     return { host: this.store.create("stateful_compute_host", hostId, { ...identity2, identity_digest: identityDigest, status: "active" }), idempotent: false };
   }
   sessionPrepare(args) {
-    const task = this.store.get("task", text16(args.task_id, "task_id"));
-    const host = this.store.get("stateful_compute_host", text16(args.host_id, "host_id"));
+    const task = this.store.get("task", text17(args.task_id, "task_id"));
+    const host = this.store.get("stateful_compute_host", text17(args.host_id, "host_id"));
     if (host.status !== "active") throw new Error("Stateful compute Host is not active");
-    const context2 = this.store.get("context_resolution_receipt", text16(args.context_receipt_id, "context_receipt_id"));
+    const context2 = this.store.get("context_resolution_receipt", text17(args.context_receipt_id, "context_receipt_id"));
     if (context2.content_free !== true) throw new Error("Stateful compute requires a content-free Context Resolution Receipt");
-    const environmentFingerprint = text16(args.environment_fingerprint, "environment_fingerprint");
-    const identity2 = { task_id: task.id, task_version: task.version, host_id: host.id, host_version: host.version, context_receipt_id: context2.id, context_receipt_version: context2.version, environment_fingerprint: environmentFingerprint, workspace_snapshot_ref: text16(args.workspace_snapshot_ref, "workspace_snapshot_ref"), budget_ref: text16(args.budget_ref, "budget_ref"), allowed_effect: text16(args.allowed_effect ?? "read_only", "allowed_effect") };
+    const environmentFingerprint = text17(args.environment_fingerprint, "environment_fingerprint");
+    const identity2 = { task_id: task.id, task_version: task.version, host_id: host.id, host_version: host.version, context_receipt_id: context2.id, context_receipt_version: context2.version, environment_fingerprint: environmentFingerprint, workspace_snapshot_ref: text17(args.workspace_snapshot_ref, "workspace_snapshot_ref"), budget_ref: text17(args.budget_ref, "budget_ref"), allowed_effect: text17(args.allowed_effect ?? "read_only", "allowed_effect") };
     if (identity2.allowed_effect !== "read_only" && !host.conformance_id) throw new Error("Stateful compute writes require a verified conformance profile");
-    const sessionId = String(args.session_id ?? `stateful_compute_session_${(0, import_node_crypto122.randomUUID)().replaceAll("-", "")}`);
+    const sessionId = String(args.session_id ?? `stateful_compute_session_${(0, import_node_crypto124.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = digestJson(identity2);
     const existing = this.store.find("stateful_compute_session", sessionId);
     if (existing) {
@@ -74437,10 +74997,10 @@ var StatefulComputeKernel = class {
     return { session: this.store.create("stateful_compute_session", sessionId, { ...identity2, identity_digest: identityDigest, status: "prepared", state_revision: 0, execution_authority: false, last_receipt_id: null }), idempotent: false };
   }
   dispatch(args) {
-    const session = this.store.get("stateful_compute_session", text16(args.session_id, "session_id"));
+    const session = this.store.get("stateful_compute_session", text17(args.session_id, "session_id"));
     if (Number(args.expected_revision) !== Number(session.state_revision)) throw new Error("Stateful compute Session revision changed; re-observation is required");
-    const action = { operation: text16(args.operation, "operation"), input_refs: strings29(args.input_refs, "input_refs"), expected_revision: session.state_revision, environment_fingerprint: session.environment_fingerprint };
-    const dispatchId = String(args.dispatch_id ?? `stateful_compute_dispatch_${(0, import_node_crypto122.randomUUID)().replaceAll("-", "")}`);
+    const action = { operation: text17(args.operation, "operation"), input_refs: strings29(args.input_refs, "input_refs"), expected_revision: session.state_revision, environment_fingerprint: session.environment_fingerprint };
+    const dispatchId = String(args.dispatch_id ?? `stateful_compute_dispatch_${(0, import_node_crypto124.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("stateful_compute_dispatch", dispatchId);
     const actionDigest2 = digestJson(action);
     if (existing) {
@@ -74453,25 +75013,25 @@ var StatefulComputeKernel = class {
     return { session: saved, dispatch, idempotent: false };
   }
   observe(args) {
-    const dispatch = this.store.get("stateful_compute_dispatch", text16(args.dispatch_id, "dispatch_id"));
+    const dispatch = this.store.get("stateful_compute_dispatch", text17(args.dispatch_id, "dispatch_id"));
     if (dispatch.status !== "issued") throw new Error("Stateful compute Dispatch is not awaiting a Receipt");
     const session = this.store.get("stateful_compute_session", String(dispatch.session_id));
     if (session.active_dispatch_id !== dispatch.id || Number(args.observed_revision) !== Number(session.state_revision) + 1) throw new Error("Stateful compute Receipt has a stale revision");
-    if (text16(args.environment_fingerprint, "environment_fingerprint") !== session.environment_fingerprint) throw new Error("Stateful compute environment drift requires replanning");
-    const status2 = text16(args.status, "status");
+    if (text17(args.environment_fingerprint, "environment_fingerprint") !== session.environment_fingerprint) throw new Error("Stateful compute environment drift requires replanning");
+    const status2 = text17(args.status, "status");
     if (!(/* @__PURE__ */ new Set(["paused", "completed", "failed"])).has(status2)) throw new Error("Stateful compute Receipt status is unsupported");
     const outputRefs = strings29(args.output_refs, "output_refs");
     const receiptId = `stateful_compute_receipt_${dispatch.id}`;
-    const receipt = this.store.create("stateful_compute_receipt", receiptId, { session_id: session.id, dispatch_id: dispatch.id, observed_revision: args.observed_revision, state_digest: text16(args.state_digest, "state_digest"), output_refs: outputRefs, usage: object(args.usage ?? {}, "usage"), status: status2, reobserved: true });
+    const receipt = this.store.create("stateful_compute_receipt", receiptId, { session_id: session.id, dispatch_id: dispatch.id, observed_revision: args.observed_revision, state_digest: text17(args.state_digest, "state_digest"), output_refs: outputRefs, usage: object(args.usage ?? {}, "usage"), status: status2, reobserved: true });
     this.store.save("stateful_compute_dispatch", String(dispatch.id), { ...payload(dispatch), status: "consumed", receipt_id: receipt.id });
     const saved = this.store.save("stateful_compute_session", String(session.id), { ...payload(session), status: status2, state_revision: args.observed_revision, last_receipt_id: receipt.id, active_dispatch_id: null });
     return { session: saved, receipt };
   }
   delegate(args) {
-    const session = this.store.get("stateful_compute_session", text16(args.session_id, "session_id"));
+    const session = this.store.get("stateful_compute_session", text17(args.session_id, "session_id"));
     if (!(/* @__PURE__ */ new Set(["prepared", "running", "paused"])).has(String(session.status))) throw new Error("Stateful compute Session cannot delegate work");
-    const identity2 = { parent_session_id: session.id, task_id: session.task_id, objective: text16(args.objective, "objective"), role: text16(args.role ?? "diagnostic_research", "role"), context_refs: strings29(args.context_refs, "context_refs"), budget_ref: session.budget_ref, allocation: object(args.allocation ?? {}, "allocation"), effect: "read_only", result_schema: object(args.result_schema, "result_schema"), async: true };
-    const callId = String(args.call_id ?? `subagent_call_${(0, import_node_crypto122.randomUUID)().replaceAll("-", "")}`);
+    const identity2 = { parent_session_id: session.id, task_id: session.task_id, objective: text17(args.objective, "objective"), role: text17(args.role ?? "diagnostic_research", "role"), context_refs: strings29(args.context_refs, "context_refs"), budget_ref: session.budget_ref, allocation: object(args.allocation ?? {}, "allocation"), effect: "read_only", result_schema: object(args.result_schema, "result_schema"), async: true };
+    const callId = String(args.call_id ?? `subagent_call_${(0, import_node_crypto124.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = digestJson(identity2);
     const existing = this.store.find("subagent_function_call", callId);
     if (existing) {
@@ -74483,31 +75043,31 @@ var StatefulComputeKernel = class {
     return { call: this.store.create("subagent_function_call", callId, { ...identity2, identity_digest: identityDigest, status: "issued", execution_authority: false }), idempotent: false };
   }
   report(args) {
-    const call = this.store.get("subagent_function_call", text16(args.call_id, "call_id"));
+    const call = this.store.get("subagent_function_call", text17(args.call_id, "call_id"));
     if (call.status !== "issued") throw new Error("Sub-agent call is not awaiting a result");
     const evidenceIds2 = strings29(args.evidence_ids, "evidence_ids", true);
     for (const id24 of evidenceIds2) if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(this.store.get("evidence", id24).confidence))) throw new Error("Sub-agent Evidence must be confirmed or bounded");
-    const confidence3 = text16(args.confidence, "confidence");
+    const confidence3 = text17(args.confidence, "confidence");
     if (!CONFIDENCE3.has(confidence3)) throw new Error("Sub-agent result confidence is unsupported");
-    const result2 = { hypotheses: strings29(args.hypotheses, "hypotheses", true), counterexamples: strings29(args.counterexamples, "counterexamples", true), evidence_ids: evidenceIds2, confidence: confidence3, next_action: text16(args.next_action, "next_action"), output_refs: strings29(args.output_refs, "output_refs") };
+    const result2 = { hypotheses: strings29(args.hypotheses, "hypotheses", true), counterexamples: strings29(args.counterexamples, "counterexamples", true), evidence_ids: evidenceIds2, confidence: confidence3, next_action: text17(args.next_action, "next_action"), output_refs: strings29(args.output_refs, "output_refs") };
     const receipt = this.store.create("subagent_function_receipt", `subagent_function_receipt_${call.id}`, { call_id: call.id, parent_session_id: call.parent_session_id, result_digest: digestJson(result2), ...result2, status: "completed" });
     const saved = this.store.save("subagent_function_call", String(call.id), { ...payload(call), status: "completed", receipt_id: receipt.id });
     return { call: saved, receipt };
   }
   sessionGet(args) {
-    return { session: this.store.get("stateful_compute_session", text16(args.session_id, "session_id")) };
+    return { session: this.store.get("stateful_compute_session", text17(args.session_id, "session_id")) };
   }
   cancel(args) {
-    const session = this.store.get("stateful_compute_session", text16(args.session_id, "session_id"));
+    const session = this.store.get("stateful_compute_session", text17(args.session_id, "session_id"));
     if ((/* @__PURE__ */ new Set(["completed", "failed", "cancelled"])).has(String(session.status))) throw new Error("Stateful compute Session is already terminal");
-    const calls = this.store.list("subagent_function_call", 1e3, (item) => item.parent_session_id === session.id && item.status === "issued").map((item) => this.store.save("subagent_function_call", String(item.id), { ...payload(item), status: "cancelled", cancellation_reason: text16(args.reason, "reason") }));
-    const saved = this.store.save("stateful_compute_session", String(session.id), { ...payload(session), status: "cancelled", cancellation_reason: text16(args.reason, "reason"), active_dispatch_id: null });
+    const calls = this.store.list("subagent_function_call", 1e3, (item) => item.parent_session_id === session.id && item.status === "issued").map((item) => this.store.save("subagent_function_call", String(item.id), { ...payload(item), status: "cancelled", cancellation_reason: text17(args.reason, "reason") }));
+    const saved = this.store.save("stateful_compute_session", String(session.id), { ...payload(session), status: "cancelled", cancellation_reason: text17(args.reason, "reason"), active_dispatch_id: null });
     return { session: saved, cancelled_calls: calls.map((item) => ({ id: item.id, version: item.version })) };
   }
 };
 
 // core/uncertainty-policy.ts
-var import_node_crypto123 = require("node:crypto");
+var import_node_crypto125 = require("node:crypto");
 init_store2();
 init_digest2();
 var SCOPES = ["core", "global", "project", "task", "case"];
@@ -74598,7 +75158,7 @@ var UncertaintyPolicyKernel = class {
     if (!evidenceIds2.length) throw new Error("Adjudication requires Evidence");
     for (const id24 of evidenceIds2) if (!(/* @__PURE__ */ new Set(["confirmed", "bounded"])).has(String(this.store.get("evidence", id24).confidence))) throw new Error("Adjudication Evidence must be confirmed or bounded");
     const identity2 = { resolution_id: resolution.id, resolution_version: resolution.version, decision, actor: text(args.actor, "actor"), reason: text(args.reason, "reason"), scope: text(args.scope, "scope"), valid_until: text(args.valid_until, "valid_until"), evidence_ids: evidenceIds2 };
-    const adjudicationId = String(args.adjudication_id ?? `adjudication_${(0, import_node_crypto123.randomUUID)().replaceAll("-", "")}`);
+    const adjudicationId = String(args.adjudication_id ?? `adjudication_${(0, import_node_crypto125.randomUUID)().replaceAll("-", "")}`);
     const identityDigest = digestJson(identity2);
     const existing = this.store.find("adjudication", adjudicationId);
     if (existing) {
@@ -78647,7 +79207,7 @@ var VerificationPlane = class {
 };
 
 // core/trust-profile.ts
-var import_node_crypto124 = require("node:crypto");
+var import_node_crypto126 = require("node:crypto");
 init_store2();
 init_digest2();
 function integer22(value, name, fallback2, minimum = 0) {
@@ -78668,7 +79228,7 @@ var TrustProfileKernel = class {
     this.store = store;
   }
   record(args) {
-    const profileId = String(args.profile_id ?? `trust_${(0, import_node_crypto124.randomUUID)().replaceAll("-", "")}`);
+    const profileId = String(args.profile_id ?? `trust_${(0, import_node_crypto126.randomUUID)().replaceAll("-", "")}`);
     const scope4 = this.scope(args.scope);
     const passed = integer22(args.passed, "passed", 0);
     const failed = integer22(args.failed, "failed", 0);
@@ -78759,7 +79319,7 @@ var TrustProfileKernel = class {
 };
 
 // core/web-operation.ts
-var import_node_crypto125 = require("node:crypto");
+var import_node_crypto127 = require("node:crypto");
 var import_node_http = require("node:http");
 var import_node_net2 = require("node:net");
 var import_node_stream = require("node:stream");
@@ -78775,7 +79335,7 @@ function integer23(value, name, fallback2, minimum, maximum) {
   return number10;
 }
 function digest19(value) {
-  return `sha256:${(0, import_node_crypto125.createHash)("sha256").update(typeof value === "string" || Buffer.isBuffer(value) ? value : JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto127.createHash)("sha256").update(typeof value === "string" || Buffer.isBuffer(value) ? value : JSON.stringify(value)).digest("hex")}`;
 }
 function list8(value, name) {
   if (value === void 0) return [];
@@ -78969,7 +79529,7 @@ var WebOperationKernel = class {
     const maxBytes = integer23(args.max_bytes, "max_bytes", 512e3, 1, 5e6);
     const accept = args.accept === void 0 ? DEFAULT_ACCEPT : text(args.accept, "accept");
     if (accept.length > 256 || /[\r\n]/u.test(accept)) throw new Error("accept is invalid");
-    const id24 = String(args.operation_id ?? `web_${(0, import_node_crypto125.randomUUID)().replaceAll("-", "")}`);
+    const id24 = String(args.operation_id ?? `web_${(0, import_node_crypto127.randomUUID)().replaceAll("-", "")}`);
     const requestDigest = digest19({ task_id: taskId3, method, url: target2.toString(), allowed_hosts: allowedHosts, timeout_ms: timeout, max_bytes: maxBytes, accept });
     const existing = this.store.find("web_operation", id24);
     if (existing) {
@@ -79240,7 +79800,7 @@ ${sourceLines.length ? sourceLines.join("\n") : "_No source evidence supplied._"
     const operation2 = text(args.operation ?? "navigate", "operation");
     if (!["navigate", "click", "fill", "submit"].includes(operation2)) throw new Error("unsupported browser operation");
     const effect3 = operation2 === "navigate" ? "read_only" : "external_write";
-    const id24 = String(args.operation_id ?? `browser_${(0, import_node_crypto125.randomUUID)().replaceAll("-", "")}`);
+    const id24 = String(args.operation_id ?? `browser_${(0, import_node_crypto127.randomUUID)().replaceAll("-", "")}`);
     const contract = {
       kind: "browser",
       operation: operation2,
@@ -79492,7 +80052,7 @@ function object6(value, name) {
     throw new Error(`${name} must be an object`);
   return value;
 }
-function text17(value, name) {
+function text18(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must be a non-empty string`);
   if (value !== value.trim())
@@ -79505,7 +80065,7 @@ function list9(value, name, minimum = 0) {
   return value;
 }
 function names2(value, name, minimum = 0) {
-  const result2 = list9(value, name, minimum).map((item) => text17(item, name));
+  const result2 = list9(value, name, minimum).map((item) => text18(item, name));
   if (new Set(result2).size !== result2.length)
     throw new Error(`${name} contains duplicates`);
   return result2;
@@ -79516,16 +80076,16 @@ function version(value) {
   return Number(value);
 }
 function bindings(value, name) {
-  return Object.fromEntries(Object.entries(object6(value, name)).map(([key3, item]) => [text17(key3, name), text17(item, name)]));
+  return Object.fromEntries(Object.entries(object6(value, name)).map(([key3, item]) => [text18(key3, name), text18(item, name)]));
 }
 function effect(value) {
-  const result2 = text17(value, "side_effect");
+  const result2 = text18(value, "side_effect");
   if (!["read_only", "local_write", "external_write", "destructive"].includes(result2))
     throw new Error("unsupported side_effect");
   return result2;
 }
 function stepId(value) {
-  const id24 = text17(value, "step.id");
+  const id24 = text18(value, "step.id");
   if (id24.includes("/"))
     throw new Error("step.id must not contain path separators");
   if (id24 === "$exit")
@@ -79542,17 +80102,17 @@ function validateProcedureComposition(kind4, raw, rawSteps) {
   const steps = list9(rawSteps, "steps", 1).map((value) => {
     const step = object6(value, "step");
     stepId(step.id);
-    text17(step.type, "step.type");
+    text18(step.type, "step.type");
     effect(step.side_effect);
     names2(step.requires, "step.requires");
     names2(step.provides, "step.provides");
     if (step.type === "procedure_call") {
-      text17(step.procedure_id, "procedure_id");
+      text18(step.procedure_id, "procedure_id");
       version(step.procedure_version);
-      if (!/^sha256:[a-f0-9]{64}$/u.test(text17(step.definition_digest, "definition_digest")))
+      if (!/^sha256:[a-f0-9]{64}$/u.test(text18(step.definition_digest, "definition_digest")))
         throw new Error("invalid definition_digest");
-      text17(step.entry_id, "entry_id");
-      text17(step.exit_id, "exit_id");
+      text18(step.entry_id, "entry_id");
+      text18(step.exit_id, "exit_id");
       const inputs = bindings(step.input_bindings, "input_bindings"), outputs = bindings(step.output_bindings, "output_bindings");
       if (stableDigest([...new Set(Object.values(inputs))].sort()) !== stableDigest([...step.requires].sort()) || stableDigest(Object.keys(outputs).sort()) !== stableDigest([...step.provides].sort()))
         throw new Error("Procedure Call bindings must match requires/provides");
@@ -79562,9 +80122,9 @@ function validateProcedureComposition(kind4, raw, rawSteps) {
   unique2(steps, "step ids");
   const exits = list9(composition.exits, "exits", 1).map((value) => {
     const exit = object6(value, "exit");
-    text17(exit.id, "exit.id");
-    text17(exit.title, "exit.title");
-    text17(exit.acceptance_ref, "exit.acceptance_ref");
+    text18(exit.id, "exit.id");
+    text18(exit.title, "exit.title");
+    text18(exit.acceptance_ref, "exit.acceptance_ref");
     names2(exit.required_outputs, "exit.required_outputs", 1);
     return exit;
   });
@@ -79572,13 +80132,13 @@ function validateProcedureComposition(kind4, raw, rawSteps) {
   const usedSteps = /* @__PURE__ */ new Set(), usedExits = /* @__PURE__ */ new Set();
   const entries2 = list9(composition.entries, "entries", 1).map((value) => {
     const entry2 = object6(value, "entry");
-    text17(entry2.id, "entry.id");
-    text17(entry2.title, "entry.title");
+    text18(entry2.id, "entry.id");
+    text18(entry2.title, "entry.title");
     const inputs = names2(entry2.required_inputs, "entry.required_inputs");
     names2(entry2.preconditions, "entry.preconditions");
     const routes = list9(entry2.routes, "entry.routes", 1).map((value2) => {
       const route = object6(value2, "route");
-      const exitId = text17(route.exit_id, "route.exit_id");
+      const exitId = text18(route.exit_id, "route.exit_id");
       const exit = exits.find((item) => item.id === exitId);
       if (!exit)
         throw new Error(`Unknown exit: ${exitId}`);
@@ -79636,7 +80196,7 @@ var ProcedurePlanner = class {
     this.store = store;
   }
   plan(args, options = {}) {
-    const scope4 = text17(args.scope, "scope"), access5 = scopeAccess(args);
+    const scope4 = text18(args.scope, "scope"), access5 = scopeAccess(args);
     const allowed = new Set(names2(args.allowed_effects, "allowed_effects", 1).map(effect));
     if (args.release_channel === "test" && [...allowed].some((effect3) => effect3 !== "read_only")) {
       if (args.test_workspace_id === void 0)
@@ -79648,7 +80208,7 @@ var ProcedurePlanner = class {
     const definitions2 = new ProcedureDefinitionStore(this.store);
     let count3 = 0;
     const compile2 = (selection, inputs, ancestors, budgets, path2) => {
-      const id24 = text17(selection.procedure_id, "procedure_id"), pinned = version(selection.procedure_version);
+      const id24 = text18(selection.procedure_id, "procedure_id"), pinned = version(selection.procedure_version);
       if (ancestors.includes(id24))
         throw new Error("Recursive Procedure Call is forbidden");
       if (ancestors.length >= 8)
@@ -79677,7 +80237,7 @@ var ProcedurePlanner = class {
         const preconditions2 = conditions.map((condition) => {
           if (options.deferPreconditions)
             return { condition_ref: condition, deferred: true };
-          const proof = this.store.get("evidence", text17(evidence2[condition], "Graph precondition Evidence"));
+          const proof = this.store.get("evidence", text18(evidence2[condition], "Graph precondition Evidence"));
           const meta2 = object6(proof.metadata, "Evidence metadata");
           if (!["bounded", "confirmed"].includes(String(proof.confidence)) || meta2.scope !== scope4 || meta2.condition_ref !== condition)
             throw new Error("Graph precondition Evidence mismatch");
@@ -79780,7 +80340,7 @@ var ProcedurePlanner = class {
 };
 
 // core/durable-action-loop.ts
-var import_node_crypto126 = require("node:crypto");
+var import_node_crypto128 = require("node:crypto");
 init_store2();
 init_digest2();
 var ACTION_KINDS = /* @__PURE__ */ new Set(["observe", "execute", "verify", "wait", "clarify"]);
@@ -79788,7 +80348,7 @@ var EFFECTS16 = /* @__PURE__ */ new Set(["read_only", "local_write"]);
 var OUTCOMES2 = /* @__PURE__ */ new Set(["succeeded", "failed", "waiting", "blocked"]);
 var RECEIPT_KINDS2 = /* @__PURE__ */ new Set(["verified_work_loop_receipt", "host_session_event", "action_gateway_receipt", "managed_write"]);
 var SECRET14 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
-function text18(value, name) {
+function text19(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   const result2 = value.trim();
   if (SECRET14.test(result2)) throw new Error(`${name} must not contain credentials or secrets`);
@@ -79802,7 +80362,7 @@ var DurableActionLoopKernel = class {
     this.trace = trace2;
   }
   create(args) {
-    const workLoop = this.store.get("verified_work_loop", text18(args.work_loop_id, "work_loop_id"));
+    const workLoop = this.store.get("verified_work_loop", text19(args.work_loop_id, "work_loop_id"));
     const snapshot = this.store.get("state_snapshot", String(workLoop.latest_snapshot_id));
     const supplied = Array.isArray(args.work_items) ? args.work_items : [];
     if (!supplied.length) throw new Error("work_items must contain at least one item");
@@ -79839,7 +80399,7 @@ var DurableActionLoopKernel = class {
     return { loop, idempotent: false };
   }
   next(args) {
-    const loop = this.store.get("durable_action_loop", text18(args.action_loop_id, "action_loop_id"));
+    const loop = this.store.get("durable_action_loop", text19(args.action_loop_id, "action_loop_id"));
     const items2 = this.items(loop.id).filter((item) => item.status !== "superseded");
     const pending = this.store.list("durable_action", 1e4, (item) => item.action_loop_id === loop.id && ["proposed", "dispatched"].includes(String(item.lifecycle)));
     const pendingAction = pending[0];
@@ -79852,11 +80412,11 @@ var DurableActionLoopKernel = class {
     return { loop, next_action: allowed.length ? "propose_action" : "resolve_blocker", ready_items: allowed.map((item) => ({ item_key: item.item_key, acceptance_digest: item.acceptance_digest })) };
   }
   propose(args) {
-    const loop = this.store.get("durable_action_loop", text18(args.action_loop_id, "action_loop_id"));
-    const itemKey = text18(args.item_key, "item_key");
-    const kind4 = text18(args.kind, "kind");
+    const loop = this.store.get("durable_action_loop", text19(args.action_loop_id, "action_loop_id"));
+    const itemKey = text19(args.item_key, "item_key");
+    const kind4 = text19(args.kind, "kind");
     if (!ACTION_KINDS.has(kind4)) throw new Error("Durable action kind is unsupported");
-    const effect3 = text18(args.effect ?? "read_only", "effect");
+    const effect3 = text19(args.effect ?? "read_only", "effect");
     if (!EFFECTS16.has(effect3) || kind4 !== "execute" && effect3 !== "read_only") throw new Error("Durable action effect is unsupported");
     const identity2 = {
       action_loop_id: loop.id,
@@ -79864,12 +80424,12 @@ var DurableActionLoopKernel = class {
       item_key: itemKey,
       kind: kind4,
       effect: effect3,
-      action_digest: text18(args.action_digest, "action_digest"),
+      action_digest: text19(args.action_digest, "action_digest"),
       expected_snapshot_id: loop.latest_snapshot_id,
       expected_snapshot_version: loop.latest_snapshot_version,
       expected_snapshot_digest: loop.latest_snapshot_digest
     };
-    const actionId = String(args.action_id ?? `durable_action_${(0, import_node_crypto126.randomUUID)().replaceAll("-", "")}`);
+    const actionId = String(args.action_id ?? `durable_action_${(0, import_node_crypto128.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("durable_action", actionId);
     const identityDigest = stableDigest(identity2);
     if (existing) {
@@ -79885,20 +80445,20 @@ var DurableActionLoopKernel = class {
     return { action, idempotent: false, host_execution_authority: false };
   }
   dispatch(args) {
-    const action = this.store.get("durable_action", text18(args.action_id, "action_id"));
+    const action = this.store.get("durable_action", text19(args.action_id, "action_id"));
     if (action.lifecycle !== "proposed") throw new Error("Only a proposed Durable action can be dispatched");
-    const saved = this.store.save("durable_action", String(action.id), { ...payload(action), lifecycle: "dispatched", dispatch_digest: stableDigest(text18(args.dispatch_ref, "dispatch_ref")) });
+    const saved = this.store.save("durable_action", String(action.id), { ...payload(action), lifecycle: "dispatched", dispatch_digest: stableDigest(text19(args.dispatch_ref, "dispatch_ref")) });
     const loop = this.store.get("durable_action_loop", String(action.action_loop_id));
     this.appendTrace(loop, "durable.action.dispatched", { action_id: action.id, dispatch_digest: saved.dispatch_digest }, `durable_action:${action.id}:dispatched`, { ref: action.expected_snapshot_id });
     return { action: saved };
   }
   report(args) {
-    const action = this.store.get("durable_action", text18(args.action_id, "action_id"));
+    const action = this.store.get("durable_action", text19(args.action_id, "action_id"));
     if (!(/* @__PURE__ */ new Set(["proposed", "dispatched"])).has(String(action.lifecycle))) throw new Error("Durable action is already terminal");
-    const outcome2 = text18(args.outcome, "outcome");
+    const outcome2 = text19(args.outcome, "outcome");
     if (!OUTCOMES2.has(outcome2)) throw new Error("Durable action outcome is unsupported");
     const loop = this.store.get("durable_action_loop", String(action.action_loop_id));
-    const snapshot = this.store.get("state_snapshot", text18(args.snapshot_id, "snapshot_id"));
+    const snapshot = this.store.get("state_snapshot", text19(args.snapshot_id, "snapshot_id"));
     if (snapshot.workspace_id !== loop.workspace_id) throw new Error("Durable action reobservation belongs to another Workspace");
     const needsReceipt = action.kind === "execute" || action.kind === "verify";
     const receipt = args.receipt_ref === void 0 ? null : this.reference(args.receipt_ref, "receipt_ref");
@@ -79920,16 +80480,16 @@ var DurableActionLoopKernel = class {
       this.store.save("durable_work_item", String(item.id), { ...payload(item), status: itemStatus, verified_by_action_id: progressProved ? savedAction.id : null });
     }
     const changedOutsideAction = args.input_drift === true;
-    const savedLoop = changedOutsideAction ? this.store.save("durable_action_loop", String(loop.id), { ...payload(loop), lifecycle: "needs_replan", needs_replan_reason: text18(args.replan_reason ?? "input_drift", "replan_reason"), latest_snapshot_id: snapshot.id, latest_snapshot_version: snapshot.version, latest_snapshot_digest: snapshot.snapshot_digest }) : this.store.save("durable_action_loop", String(loop.id), { ...payload(loop), latest_snapshot_id: snapshot.id, latest_snapshot_version: snapshot.version, latest_snapshot_digest: snapshot.snapshot_digest });
+    const savedLoop = changedOutsideAction ? this.store.save("durable_action_loop", String(loop.id), { ...payload(loop), lifecycle: "needs_replan", needs_replan_reason: text19(args.replan_reason ?? "input_drift", "replan_reason"), latest_snapshot_id: snapshot.id, latest_snapshot_version: snapshot.version, latest_snapshot_digest: snapshot.snapshot_digest }) : this.store.save("durable_action_loop", String(loop.id), { ...payload(loop), latest_snapshot_id: snapshot.id, latest_snapshot_version: snapshot.version, latest_snapshot_digest: snapshot.snapshot_digest });
     this.appendTrace(savedLoop, "durable.action.observed", { action_id: savedAction.id, outcome: outcome2, progress_proved: progressProved, receipt_ref: receipt }, `durable_action:${action.id}:observed`, { ref: action.expected_snapshot_id }, { ref: snapshot.id });
     if (savedLoop.lifecycle === "needs_replan") this.appendTrace(savedLoop, "durable.loop.needs_replan", { reason: savedLoop.needs_replan_reason }, `durable_action_loop:${savedLoop.id}:needs_replan:${savedLoop.version}`, { ref: action.expected_snapshot_id }, { ref: snapshot.id });
     if (outcome2 === "blocked" && args.recoverable !== true) this.finalizeTrace(savedLoop, "blocked", "durable action blocked");
     return { action: savedAction, loop: savedLoop, progress_proved: progressProved, next_action: savedLoop.lifecycle === "needs_replan" ? "replan" : this.next({ action_loop_id: savedLoop.id }).next_action };
   }
   resume(args) {
-    const loop = this.store.get("durable_action_loop", text18(args.action_loop_id, "action_loop_id"));
+    const loop = this.store.get("durable_action_loop", text19(args.action_loop_id, "action_loop_id"));
     if (loop.lifecycle !== "active") return { loop, resumed: false, next_action: loop.lifecycle === "needs_replan" ? "replan" : "none" };
-    const snapshot = this.store.get("state_snapshot", text18(args.snapshot_id, "snapshot_id"));
+    const snapshot = this.store.get("state_snapshot", text19(args.snapshot_id, "snapshot_id"));
     if (snapshot.workspace_id !== loop.workspace_id) throw new Error("Resume snapshot belongs to another Workspace");
     if (snapshot.snapshot_digest !== loop.latest_snapshot_digest || snapshot.workspace_state_revision !== this.store.get("state_snapshot", String(loop.latest_snapshot_id), Number(loop.latest_snapshot_version)).workspace_state_revision) {
       const saved = this.store.save("durable_action_loop", String(loop.id), { ...payload(loop), lifecycle: "needs_replan", needs_replan_reason: "workspace_drift_on_resume", latest_snapshot_id: snapshot.id, latest_snapshot_version: snapshot.version, latest_snapshot_digest: snapshot.snapshot_digest });
@@ -79939,17 +80499,17 @@ var DurableActionLoopKernel = class {
     return { loop, resumed: true, ...this.next({ action_loop_id: loop.id }) };
   }
   get(args) {
-    const loop = this.store.get("durable_action_loop", text18(args.action_loop_id, "action_loop_id"));
+    const loop = this.store.get("durable_action_loop", text19(args.action_loop_id, "action_loop_id"));
     return { loop, work_items: this.items(loop.id), actions: this.store.list("durable_action", 1e4, (item) => item.action_loop_id === loop.id) };
   }
   item(value, index) {
     const input2 = object(value, `work_items[${index}]`);
-    const id24 = text18(input2.id, `work_items[${index}].id`);
+    const id24 = text19(input2.id, `work_items[${index}].id`);
     const depends = input2.depends_on === void 0 ? [] : input2.depends_on;
     if (!Array.isArray(depends)) throw new Error(`work_items[${index}].depends_on must be an array`);
-    const dependsOn = depends.map((item) => text18(item, `work_items[${index}].depends_on`));
+    const dependsOn = depends.map((item) => text19(item, `work_items[${index}].depends_on`));
     if (new Set(dependsOn).size !== dependsOn.length || dependsOn.includes(id24)) throw new Error("Work item dependencies must be unique and cannot reference itself");
-    return { id: id24, effect: input2.effect ?? "local_write", depends_on: dependsOn.sort(), acceptance_digest: text18(input2.acceptance_digest, `work_items[${index}].acceptance_digest`) };
+    return { id: id24, effect: input2.effect ?? "local_write", depends_on: dependsOn.sort(), acceptance_digest: text19(input2.acceptance_digest, `work_items[${index}].acceptance_digest`) };
   }
   hasCycle(items2) {
     const graph = new Map(items2.map((item) => [item.id, item.depends_on]));
@@ -79984,9 +80544,9 @@ var DurableActionLoopKernel = class {
   }
   reference(value, name) {
     const input2 = object(value, name);
-    const kind4 = text18(input2.kind, `${name}.kind`);
+    const kind4 = text19(input2.kind, `${name}.kind`);
     if (!RECEIPT_KINDS2.has(kind4) && kind4 !== "acceptance_gate") throw new Error(`${name}.kind is unsupported`);
-    const id24 = text18(input2.id, `${name}.id`);
+    const id24 = text19(input2.id, `${name}.id`);
     const version5 = Number(input2.version);
     if (!Number.isInteger(version5) || version5 < 1) throw new Error(`${name}.version must be a positive integer`);
     this.store.get(kind4, id24, version5);
@@ -80679,7 +81239,7 @@ Evidence: ${claim2.evidence_ids.join(", ")}
 };
 
 // ../craft-capability/capability/craft-knowledge/dist/knowledge-relation.js
-var import_node_crypto127 = require("node:crypto");
+var import_node_crypto129 = require("node:crypto");
 init_store();
 init_digest();
 var RELATION_KINDS = /* @__PURE__ */ new Set(["derives_from", "supersedes", "contradicts", "supports", "refines", "references"]);
@@ -80756,7 +81316,7 @@ var KnowledgeRelationKernel = class {
       throw new Error("Confirmed Knowledge Relation requires Evidence");
     const validFrom = instant19(args.valid_from ?? (/* @__PURE__ */ new Date()).toISOString(), "valid_from");
     const identity2 = { source, target: target2, relation, evidence_ids: evidenceIds2, confidence: confidence3 };
-    const relationId = String(args.relation_id ?? `knowledge_relation_${(0, import_node_crypto127.randomUUID)().replaceAll("-", "")}`);
+    const relationId = String(args.relation_id ?? `knowledge_relation_${(0, import_node_crypto129.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("knowledge_relation", relationId);
     if (existing) {
       if (existing.identity_digest !== stableDigest(identity2))
@@ -80968,12 +81528,12 @@ var KnowledgeWorkbenchKernel = class {
 };
 
 // ../craft-capability/capability/craft-knowledge/dist/local-candidate-import.js
-var import_node_crypto128 = require("node:crypto");
+var import_node_crypto130 = require("node:crypto");
 var import_promises20 = require("node:fs/promises");
 var import_node_path55 = require("node:path");
 init_store();
 function digest20(value) {
-  return `sha256:${(0, import_node_crypto128.createHash)("sha256").update(value).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto130.createHash)("sha256").update(value).digest("hex")}`;
 }
 var LocalCandidateImportKernel = class {
   store;
@@ -80993,7 +81553,7 @@ var LocalCandidateImportKernel = class {
     if (!pathRelative || pathRelative.split(/[\\/]+/).includes("..") || pathRelative.includes(":") || !pathRelative.endsWith(".md"))
       throw new Error("Local package import path must be a descendant Markdown file");
     const content = String(packageRecord.content);
-    const importId = String(args.import_id ?? `wiki_candidate_local_import_${(0, import_node_crypto128.randomUUID)().replaceAll("-", "")}`);
+    const importId = String(args.import_id ?? `wiki_candidate_local_import_${(0, import_node_crypto130.randomUUID)().replaceAll("-", "")}`);
     const identity2 = { package_id: packageRecord.id, package_version: packageRecord.version, target_root: root, relative_path: pathRelative, content_digest: digest20(content), reviewer: text(args.reviewer, "reviewer") };
     const existing = this.store.find("wiki_candidate_local_import", importId);
     if (existing) {
@@ -81029,15 +81589,15 @@ var KNOWLEDGE_CONTEXT_SOURCE = `${KNOWLEDGE_CONTEXT_NAMESPACE}|${SHARED_CONTEXT}
 var KNOWLEDGE_COMPONENT = new RegExp(`^(?:${KNOWLEDGE_COMPONENT_SOURCE})`);
 
 // ../craft-capability/capability/craft-knowledge/dist/project-knowledge.js
-var import_node_crypto129 = require("node:crypto");
+var import_node_crypto131 = require("node:crypto");
 var import_node_fs43 = require("node:fs");
 var import_node_path56 = require("node:path");
 init_store();
 function digest21(value) {
-  return `sha256:${(0, import_node_crypto129.createHash)("sha256").update(String(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto131.createHash)("sha256").update(String(value)).digest("hex")}`;
 }
 function recordDigest2(value) {
-  return `sha256:${(0, import_node_crypto129.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto131.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function safeChild(root, path2) {
   const target2 = (0, import_node_path56.resolve)(root, path2);
@@ -81145,12 +81705,12 @@ var ProjectKnowledgeKernel = class {
 };
 
 // ../craft-capability/capability/craft-knowledge/dist/wiki-candidate-governance.js
-var import_node_crypto130 = require("node:crypto");
+var import_node_crypto132 = require("node:crypto");
 init_store();
 init_digest();
 init_knowledge_evaluation_provenance();
 function id14(prefix) {
-  return `${prefix}_${(0, import_node_crypto130.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto132.randomUUID)().replaceAll("-", "")}`;
 }
 function integer26(value, name, minimum = 1) {
   const result2 = Number(value);
@@ -81304,7 +81864,7 @@ var WikiCandidateGovernanceKernel = class {
 // ../craft-capability/capability/craft-knowledge/dist/contribution.js
 init_content_store();
 init_knowledge_evaluation_provenance();
-var import_node_crypto131 = require("node:crypto");
+var import_node_crypto133 = require("node:crypto");
 var import_node_fs44 = require("node:fs");
 var import_promises21 = __toESM(require("node:fs/promises"), 1);
 var import_node_path57 = require("node:path");
@@ -81356,7 +81916,7 @@ async function currentFileDocument(locator2, document3) {
       if (offset !== before.size || after.size !== before.size || after.mtimeMs !== before.mtimeMs || after.ctimeMs !== before.ctimeMs || current2.isSymbolicLink() || current2.dev !== before.dev || current2.ino !== before.ino || await import_promises21.default.realpath(path2) !== resolved)
         return false;
       const body3 = buffer.subarray(0, offset).toString("utf8").replace(/\r\n/g, "\n");
-      return `sha256:${(0, import_node_crypto131.createHash)("sha256").update(body3).digest("hex")}` === document3.content_digest;
+      return `sha256:${(0, import_node_crypto133.createHash)("sha256").update(body3).digest("hex")}` === document3.content_digest;
     } finally {
       await fd.close();
     }
@@ -81560,6 +82120,9 @@ var KnowledgeContribution = class {
         content_digest: match.claim.content_digest,
         evidence_ids: match.claim.evidence_ids,
         source_id: match.claim.source_id,
+        // The shared concept tag travels with the hit so context assembly can
+        // explain *why* a record was selected, not just that it matched.
+        ...typeof match.claim.concept_kind === "string" ? { concept_kind: match.claim.concept_kind } : {},
         reason: match.claim.status === "reviewed" ? "reviewed_bm25" : freshnessOf(match.claim) === null ? "candidate_diagnostic_only" : "stale_advisory",
         ranking_weight: weightOf(match.claim),
         ...freshnessOf(match.claim) === null ? {} : { advisory: true, freshness_score: freshnessOf(match.claim) }
@@ -81940,7 +82503,7 @@ var ExperienceContribution = class {
 };
 
 // ../craft-capability/capability/craft-experience/dist/evaluation-model-profile.js
-var import_node_crypto132 = require("node:crypto");
+var import_node_crypto134 = require("node:crypto");
 var import_node_path59 = require("node:path");
 init_digest();
 
@@ -82073,7 +82636,7 @@ function knowledgeDirectoryForScope3(store, scope4, options = {}) {
 var PURPOSES = /* @__PURE__ */ new Set(["evaluation", "workflow_evolution", "knowledge_scenario_classification"]);
 var KNOWLEDGE_CLASSIFIABLE_STATUSES = /* @__PURE__ */ new Set(["candidate", "reviewed"]);
 var SECRET16 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
-function text19(value, name) {
+function text20(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must not be empty`);
   const result2 = value.trim();
@@ -82098,7 +82661,7 @@ function strings32(value, name, fallback2) {
   const input2 = value === void 0 ? fallback2 : value;
   if (!Array.isArray(input2) || !input2.length)
     throw new Error(`${name} must be a non-empty array`);
-  const result2 = input2.map((item) => text19(item, name));
+  const result2 = input2.map((item) => text20(item, name));
   if (new Set(result2).size !== result2.length || result2.some((item) => !PURPOSES.has(item)))
     throw new Error(`${name} contains an unsupported purpose`);
   return result2.sort();
@@ -82116,9 +82679,9 @@ var EvaluationModelProfileKernel = class {
   }
   save(args) {
     const spec = this.provider(args.provider);
-    const requestedTier = args.tier === void 0 ? null : text19(args.tier, "tier");
+    const requestedTier = args.tier === void 0 ? null : text20(args.tier, "tier");
     const selected = requestedTier === null ? null : selectModel2(spec, requestedTier);
-    const model = args.model === void 0 ? selected?.model : text19(args.model, "model");
+    const model = args.model === void 0 ? selected?.model : text20(args.model, "model");
     if (!model)
       throw new Error("model or tier is required");
     const temperature = args.temperature === void 0 ? 0 : Number(args.temperature);
@@ -82136,7 +82699,7 @@ var EvaluationModelProfileKernel = class {
       purposes: strings32(args.purposes, "purposes", ["evaluation", "workflow_evolution"]),
       network_execution_enabled: bool(args.network_execution_enabled, "network_execution_enabled", false)
     };
-    const profileId = String(args.profile_id ?? `evaluation_model_profile_${(0, import_node_crypto132.randomUUID)().replaceAll("-", "")}`);
+    const profileId = String(args.profile_id ?? `evaluation_model_profile_${(0, import_node_crypto134.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("evaluation_model_profile", profileId);
     const identityDigest = stableDigest(identity2);
     if (existing) {
@@ -82148,7 +82711,7 @@ var EvaluationModelProfileKernel = class {
     return { profile, readiness: this.readiness(profile), idempotent: false };
   }
   get(args) {
-    const profile = this.store.get("evaluation_model_profile", text19(args.profile_id, "profile_id"), args.version === void 0 ? void 0 : integer27(args.version, "version", 1, 1, Number.MAX_SAFE_INTEGER));
+    const profile = this.store.get("evaluation_model_profile", text20(args.profile_id, "profile_id"), args.version === void 0 ? void 0 : integer27(args.version, "version", 1, 1, Number.MAX_SAFE_INTEGER));
     const spec = this.provider(profile.provider);
     return { profile, provider: {
       provider: spec.provider,
@@ -82170,7 +82733,7 @@ var EvaluationModelProfileKernel = class {
   }
   ticketList(args = {}) {
     const limit3 = integer27(args.limit, "limit", 100, 1, 1e3);
-    const purpose = args.purpose === void 0 ? null : text19(args.purpose, "purpose");
+    const purpose = args.purpose === void 0 ? null : text20(args.purpose, "purpose");
     if (purpose !== null && !PURPOSES.has(purpose))
       throw new Error("purpose is unsupported");
     if (args.after_id !== void 0 && (typeof args.after_id !== "string" || args.after_id.length > 65536 || args.after_id.includes("\0"))) {
@@ -82238,17 +82801,17 @@ var EvaluationModelProfileKernel = class {
     }), ...page ? { has_more: page.has_more, next_cursor: page.next_cursor } : {} };
   }
   ticketComplete(args) {
-    const ticketId = text19(args.ticket_id, "ticket_id");
+    const ticketId = text20(args.ticket_id, "ticket_id");
     const ticket = this.store.get("evaluation_model_ticket", ticketId);
     if (!(/* @__PURE__ */ new Set(["knowledge_scenario_classification", "workflow_evolution"])).has(String(ticket.purpose)))
       throw new Error("Only a Knowledge classification or Workflow-evolution ticket can be completed");
-    const resultDigest = text19(args.result_digest, "result_digest");
+    const resultDigest = text20(args.result_digest, "result_digest");
     if (!/^sha256:[a-f0-9]{64}$/u.test(resultDigest))
       throw new Error("result_digest must be a SHA-256 digest");
     if (ticket.status === "completed") {
       if (ticket.result_digest !== resultDigest)
         throw new Error("Evaluation Model Ticket completion digest conflicts with its prior result");
-      const traceId2 = ticket.purpose === "knowledge_scenario_classification" || args.trace_id !== void 0 ? text19(args.trace_id, "trace_id") : void 0;
+      const traceId2 = ticket.purpose === "knowledge_scenario_classification" || args.trace_id !== void 0 ? text20(args.trace_id, "trace_id") : void 0;
       if (traceId2 && ticket.purpose === "knowledge_scenario_classification" && !this.knowledgeResultTraceMatches(ticket, traceId2, resultDigest)) {
         throw new Error("Knowledge classification ticket requires its exact model and result Trace before completion");
       }
@@ -82258,7 +82821,7 @@ var EvaluationModelProfileKernel = class {
     }
     if (ticket.status !== "ready_for_adapter")
       throw new Error("Evaluation Model Ticket is not ready for completion");
-    const traceId = ticket.purpose === "knowledge_scenario_classification" || args.trace_id !== void 0 ? text19(args.trace_id, "trace_id") : void 0;
+    const traceId = ticket.purpose === "knowledge_scenario_classification" || args.trace_id !== void 0 ? text20(args.trace_id, "trace_id") : void 0;
     if (traceId && ticket.purpose === "knowledge_scenario_classification" && !this.knowledgeResultTraceMatches(ticket, traceId, resultDigest)) {
       throw new Error("Knowledge classification ticket requires its exact model and result Trace before completion");
     }
@@ -82294,15 +82857,15 @@ var EvaluationModelProfileKernel = class {
     return { ticket: completed, idempotent: completed === ticket };
   }
   issue(args) {
-    const profile = this.store.get("evaluation_model_profile", text19(args.profile_id, "profile_id"));
+    const profile = this.store.get("evaluation_model_profile", text20(args.profile_id, "profile_id"));
     if (profile.lifecycle !== "active")
       throw new Error("Evaluation Model Profile is not active");
-    const purpose = text19(args.purpose, "purpose");
+    const purpose = text20(args.purpose, "purpose");
     if (!profile.purposes.includes(purpose))
       throw new Error("Evaluation Model Profile does not allow this purpose");
     const target2 = this.target(args, purpose);
-    const inputRef = text19(args.input_ref, "input_ref");
-    const outputContractRef = text19(args.output_contract_ref, "output_contract_ref");
+    const inputRef = text20(args.input_ref, "input_ref");
+    const outputContractRef = text20(args.output_contract_ref, "output_contract_ref");
     const identity2 = { profile_id: profile.id, profile_version: profile.version, profile_digest: profile.identity_digest, purpose, target: target2, input_ref: inputRef, output_contract_ref: outputContractRef, content_stored: false, execution_authority: "adapter_only" };
     const ticketId = String(args.ticket_id ?? `evaluation_model_ticket_${stableDigest(identity2).slice(-20)}`);
     const existing = this.store.find("evaluation_model_ticket", ticketId);
@@ -82387,7 +82950,7 @@ var EvaluationModelProfileKernel = class {
     throw new Error("Evaluation Model Ticket recovery attempt limit reached");
   }
   provider(value) {
-    const provider = text19(value, "provider");
+    const provider = text20(value, "provider");
     const spec = this.providers.find((item) => item.provider === provider);
     if (!spec)
       throw new Error(`Unknown model provider: ${provider}`);
@@ -82404,13 +82967,13 @@ var EvaluationModelProfileKernel = class {
   }
   target(args, purpose) {
     if (purpose === "evaluation") {
-      const dispatch = this.store.get("campaign_runner_dispatch", text19(args.campaign_dispatch_id, "campaign_dispatch_id"));
+      const dispatch = this.store.get("campaign_runner_dispatch", text20(args.campaign_dispatch_id, "campaign_dispatch_id"));
       if (dispatch.status !== "issued")
         throw new Error("Campaign Runner dispatch is not issuable");
       return { kind: "campaign_runner_dispatch", id: dispatch.id, version: dispatch.version, campaign_id: dispatch.runner_id, slot_id: dispatch.slot_id };
     }
     if (purpose === "knowledge_scenario_classification") {
-      const claim2 = this.store.get("knowledge_claim", text19(args.knowledge_claim_id, "knowledge_claim_id"));
+      const claim2 = this.store.get("knowledge_claim", text20(args.knowledge_claim_id, "knowledge_claim_id"));
       const scope4 = scopeFromKey(String(claim2.scope ?? "global"));
       const source = typeof claim2.source_id === "string" ? this.store.find("knowledge_source", claim2.source_id) : null;
       if (typeof claim2.scope !== "string" || !KNOWLEDGE_CLASSIFIABLE_STATUSES.has(String(claim2.status)) || typeof claim2.scenario_key === "string" || scope4.kind !== "project" && scope4.kind !== "global" || !source || source.status !== "active" || source.trust === "untrusted") {
@@ -82431,15 +82994,15 @@ var EvaluationModelProfileKernel = class {
       };
     }
     if (args.experience_scenario_classification_request_id !== void 0) {
-      const requestId = text19(args.experience_scenario_classification_request_id, "experience_scenario_classification_request_id");
-      const scope4 = text19(args.experience_scenario_classification_scope, "experience_scenario_classification_scope");
+      const requestId = text20(args.experience_scenario_classification_request_id, "experience_scenario_classification_request_id");
+      const scope4 = text20(args.experience_scenario_classification_scope, "experience_scenario_classification_scope");
       const reference3 = this.store.get("experience_scenario_classification_request_ref", requestId);
       if (!/^project:[A-Za-z0-9_-]{1,96}$/u.test(scope4) || reference3.scope !== scope4 || reference3.status !== "awaiting_model") {
         throw new Error("Experience scenario classification ticket requires an awaiting project request");
       }
       return { kind: "experience_scenario_classification_request", id: requestId, version: reference3.request_version, scope: scope4 };
     }
-    const request2 = this.store.get("workflow_evolution_request", text19(args.workflow_evolution_request_id, "workflow_evolution_request_id"));
+    const request2 = this.store.get("workflow_evolution_request", text20(args.workflow_evolution_request_id, "workflow_evolution_request_id"));
     if (request2.lifecycle !== "awaiting_model")
       throw new Error("Workflow Evolution request is not awaiting a model proposal");
     return { kind: "workflow_evolution_request", id: request2.id, version: request2.version };
@@ -82447,7 +83010,7 @@ var EvaluationModelProfileKernel = class {
 };
 
 // ../craft-capability/capability/craft-experience/dist/experience-deduplication.js
-var import_node_crypto133 = require("node:crypto");
+var import_node_crypto135 = require("node:crypto");
 init_digest();
 var VERDICTS3 = /* @__PURE__ */ new Set(["accepted", "rejected", "unknown"]);
 var REJECTED = ["\u8BC1\u4F2A", "\u5931\u8D25", "\u65E0\u6539\u5584", "\u65E0\u6548", "\u8D1F\u8D21\u732E", "\u6DD8\u6C70", "\u8DD1\u8F93", "\u66F4\u5DEE", "\u53CD\u800C", "\u4E0D\u53EF\u7528", "\u63A8\u7FFB", "\u5DF2\u5426\u51B3"];
@@ -82461,10 +83024,10 @@ function factorKey(factors, pool = "") {
   const scope4 = pool.trim().toLowerCase();
   return scope4 ? `${scope4}::${base}` : base;
 }
-function classifyVerdict(text42) {
-  if (REJECTED.some((kw) => text42.includes(kw)))
+function classifyVerdict(text43) {
+  if (REJECTED.some((kw) => text43.includes(kw)))
     return "rejected";
-  if (ACCEPTED.some((kw) => text42.includes(kw)))
+  if (ACCEPTED.some((kw) => text43.includes(kw)))
     return "accepted";
   return "unknown";
 }
@@ -82481,14 +83044,14 @@ var ExperienceDeduplicationKernel = class {
     const key3 = factorKey(factors, pool);
     if (!factors.length)
       throw new Error("experience conclusion requires at least one factor");
-    const text42 = typeof args.title === "string" && args.title.trim() ? args.title : typeof args.evidence === "string" ? args.evidence : "";
-    const verdict = args.verdict === void 0 ? classifyVerdict(text42) : String(args.verdict);
+    const text43 = typeof args.title === "string" && args.title.trim() ? args.title : typeof args.evidence === "string" ? args.evidence : "";
+    const verdict = args.verdict === void 0 ? classifyVerdict(text43) : String(args.verdict);
     if (!VERDICTS3.has(verdict))
       throw new Error("experience conclusion verdict is unsupported");
     const nomFactors = [...new Set(factors.map(normalizeFactor).filter(Boolean))].sort();
     const identity2 = { factors: nomFactors, pool, verdict };
     const identityDigest = stableDigest(identity2);
-    const id24 = `experience_conclusion_${(0, import_node_crypto133.createHash)("sha256").update(key3).digest("hex").slice(-24)}`;
+    const id24 = `experience_conclusion_${(0, import_node_crypto135.createHash)("sha256").update(key3).digest("hex").slice(-24)}`;
     const existing = this.store.find("experience_conclusion", id24);
     if (existing) {
       if (existing.identity_digest !== identityDigest)
@@ -82517,7 +83080,7 @@ var ExperienceDeduplicationKernel = class {
 };
 
 // ../craft-capability/capability/craft-experience/dist/experience-ledger.js
-var import_node_crypto134 = require("node:crypto");
+var import_node_crypto136 = require("node:crypto");
 init_store();
 init_digest();
 var OBSERVATION_KINDS = /* @__PURE__ */ new Set(["success", "failure", "correction"]);
@@ -82526,7 +83089,7 @@ var AXES = /* @__PURE__ */ new Set(["context", "tools", "generation", "orchestra
 var SUBJECT_KINDS2 = /* @__PURE__ */ new Set(["workflow", "harness_refinement", "capability_asset", "activation_profile"]);
 var SOURCES = /* @__PURE__ */ new Set(["verified_work_loop_receipt", "outcome", "acceptance_gate", "trace", "experience_legacy_source"]);
 var SECRET17 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
-function text20(value, name) {
+function text21(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must not be empty`);
   const result2 = value.trim();
@@ -82541,12 +83104,12 @@ var ExperienceLedgerKernel = class {
   }
   observe(args) {
     const source = this.reference(args.source_ref, "source_ref", SOURCES);
-    const kind4 = text20(args.kind, "kind");
+    const kind4 = text21(args.kind, "kind");
     if (!OBSERVATION_KINDS.has(kind4))
       throw new Error("Experience observation kind is unsupported");
     const scope4 = optionalScope(args);
     const evidenceIds2 = this.evidenceIds(args.evidence_ids);
-    const identity2 = { source, kind: kind4, scenario_key: text20(args.scenario_key, "scenario_key"), ...scope4 ? { scope: scope4 } : {}, finding_digest: stableDigest(text20(args.finding, "finding")), evidence_ids: evidenceIds2, content_free: true };
+    const identity2 = { source, kind: kind4, scenario_key: text21(args.scenario_key, "scenario_key"), ...scope4 ? { scope: scope4 } : {}, finding_digest: stableDigest(text21(args.finding, "finding")), evidence_ids: evidenceIds2, content_free: true };
     const observationId = String(args.observation_id ?? `experience_observation_${stableDigest(identity2).slice(-20)}`);
     const existing = this.store.find("experience_observation", observationId);
     const identityDigest = stableDigest(identity2);
@@ -82558,7 +83121,7 @@ var ExperienceLedgerKernel = class {
     return { observation: this.store.create("experience_observation", observationId, { ...identity2, identity_digest: identityDigest, status: "recorded" }), idempotent: false };
   }
   compile(args) {
-    const scenarioKey = text20(args.scenario_key, "scenario_key");
+    const scenarioKey = text21(args.scenario_key, "scenario_key");
     const ids6 = this.ids(args.observation_ids, "observation_ids", 2);
     const observations = ids6.map((id24) => this.store.get("experience_observation", id24)).sort((a, b) => String(a.id).localeCompare(String(b.id)));
     if (observations.some((item) => item.scenario_key !== scenarioKey || item.status !== "recorded"))
@@ -82568,11 +83131,11 @@ var ExperienceLedgerKernel = class {
       throw new Error("Experience observations do not share one scope");
     if (new Set(observations.map((item) => `${item.source.kind}:${item.source.id}:${item.source.version}`)).size < 2)
       throw new Error("Experience patterns require independent source records");
-    const kind4 = text20(args.kind, "kind");
+    const kind4 = text21(args.kind, "kind");
     if (!PATTERN_KINDS.has(kind4))
       throw new Error("Experience pattern kind is unsupported");
     const scope4 = observations[0].scope;
-    const identity2 = { scenario_key: scenarioKey, kind: kind4, ...scope4 ? { scope: scope4 } : {}, observation_refs: observations.map((item) => ({ id: item.id, version: item.version })), hypothesis_digest: stableDigest(text20(args.hypothesis, "hypothesis")), applicability_digest: stableDigest(text20(args.applicability, "applicability")), counterexample_digest: stableDigest(text20(args.counterexample, "counterexample")), evidence_ids: [...new Set(observations.flatMap((item) => item.evidence_ids))].sort(), content_free: true };
+    const identity2 = { scenario_key: scenarioKey, kind: kind4, ...scope4 ? { scope: scope4 } : {}, observation_refs: observations.map((item) => ({ id: item.id, version: item.version })), hypothesis_digest: stableDigest(text21(args.hypothesis, "hypothesis")), applicability_digest: stableDigest(text21(args.applicability, "applicability")), counterexample_digest: stableDigest(text21(args.counterexample, "counterexample")), evidence_ids: [...new Set(observations.flatMap((item) => item.evidence_ids))].sort(), content_free: true };
     const patternId = String(args.pattern_id ?? `experience_pattern_${stableDigest(identity2).slice(-20)}`);
     const existing = this.store.find("experience_pattern", patternId);
     const identityDigest = stableDigest(identity2);
@@ -82595,8 +83158,8 @@ var ExperienceLedgerKernel = class {
     if (dedup.hasRefutedCombination(factors, pool)) {
       throw new Error("experience intervention combination has been refuted before");
     }
-    const identity2 = { pattern_refs: patterns.map((item) => ({ id: item.id, version: item.version })), subject, design_axes: axes2, diff_digest: stableDigest(text20(args.diff_summary, "diff_summary")), hypothesis_digest: stableDigest(text20(args.hypothesis, "hypothesis")), lifecycle: "draft", execution_visible: false };
-    const interventionId = String(args.intervention_id ?? `experience_intervention_${(0, import_node_crypto134.randomUUID)().replaceAll("-", "")}`);
+    const identity2 = { pattern_refs: patterns.map((item) => ({ id: item.id, version: item.version })), subject, design_axes: axes2, diff_digest: stableDigest(text21(args.diff_summary, "diff_summary")), hypothesis_digest: stableDigest(text21(args.hypothesis, "hypothesis")), lifecycle: "draft", execution_visible: false };
+    const interventionId = String(args.intervention_id ?? `experience_intervention_${(0, import_node_crypto136.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("experience_intervention", interventionId);
     const identityDigest = stableDigest(identity2);
     if (existing) {
@@ -82607,44 +83170,44 @@ var ExperienceLedgerKernel = class {
     return { intervention: this.store.create("experience_intervention", interventionId, { ...identity2, identity_digest: identityDigest, evaluation_status: "not_run", publication_allowed: false }), idempotent: false, next_action: "run_shadow_evaluation" };
   }
   evaluate(args) {
-    const intervention = this.store.get("experience_intervention", text20(args.intervention_id, "intervention_id"));
+    const intervention = this.store.get("experience_intervention", text21(args.intervention_id, "intervention_id"));
     if (intervention.lifecycle !== "draft")
       throw new Error("Only a draft Experience intervention can be evaluated");
-    const assessment = this.store.get("evaluation_reliability", text20(args.assessment_id, "assessment_id"));
+    const assessment = this.store.get("evaluation_reliability", text21(args.assessment_id, "assessment_id"));
     const status2 = String(assessment.status);
     if (!(/* @__PURE__ */ new Set(["eligible", "rejected", "inconclusive"])).has(status2))
       throw new Error("Experience assessment status is unsupported");
     const lifecycle = status2 === "eligible" ? "signoff_required" : status2 === "rejected" ? "rejected" : "inconclusive";
-    return { intervention: this.store.save("experience_intervention", String(intervention.id), { ...payload(intervention), lifecycle, evaluation_status: status2, assessment_id: assessment.id, assessment_version: assessment.version, publication_allowed: false, retry_condition_digest: status2 === "rejected" ? stableDigest(text20(args.retry_condition, "retry_condition")) : null }) };
+    return { intervention: this.store.save("experience_intervention", String(intervention.id), { ...payload(intervention), lifecycle, evaluation_status: status2, assessment_id: assessment.id, assessment_version: assessment.version, publication_allowed: false, retry_condition_digest: status2 === "rejected" ? stableDigest(text21(args.retry_condition, "retry_condition")) : null }) };
   }
   decide(args) {
-    const intervention = this.store.get("experience_intervention", text20(args.intervention_id, "intervention_id"));
-    const decision = text20(args.decision, "decision");
+    const intervention = this.store.get("experience_intervention", text21(args.intervention_id, "intervention_id"));
+    const decision = text21(args.decision, "decision");
     if (!(/* @__PURE__ */ new Set(["accept", "reject"])).has(decision))
       throw new Error("Experience intervention decision is unsupported");
     if (decision === "accept") {
       if (intervention.lifecycle !== "signoff_required")
         throw new Error("Experience intervention is not ready for Signoff");
-      const signoff = this.store.get("signoff", text20(args.signoff_id, "signoff_id"));
+      const signoff = this.store.get("signoff", text21(args.signoff_id, "signoff_id"));
       if (signoff.decision !== "passed" || signoff.subject_type !== "experience_intervention" || signoff.subject_id !== intervention.id || Number(signoff.subject_version) !== Number(intervention.version))
         throw new Error("Experience intervention requires exact passed Signoff");
     }
     if (decision === "reject" && intervention.lifecycle === "accepted")
       throw new Error("Accepted Experience intervention cannot be rejected without rollback");
     const lifecycle = decision === "accept" ? "accepted" : "rejected";
-    const saved = this.store.save("experience_intervention", String(intervention.id), { ...payload(intervention), lifecycle, publication_allowed: false, decision_reason_digest: stableDigest(text20(args.reason, "reason")), signoff_id: decision === "accept" ? text20(args.signoff_id, "signoff_id") : null, retry_condition_digest: decision === "reject" ? stableDigest(text20(args.retry_condition, "retry_condition")) : intervention.retry_condition_digest ?? null });
+    const saved = this.store.save("experience_intervention", String(intervention.id), { ...payload(intervention), lifecycle, publication_allowed: false, decision_reason_digest: stableDigest(text21(args.reason, "reason")), signoff_id: decision === "accept" ? text21(args.signoff_id, "signoff_id") : null, retry_condition_digest: decision === "reject" ? stableDigest(text21(args.retry_condition, "retry_condition")) : intervention.retry_condition_digest ?? null });
     return { intervention: saved, active_asset_changed: false, next_action: lifecycle === "accepted" ? "create_or_link_existing_governed_candidate" : "retain_rejected_evidence" };
   }
   get(args) {
-    const intervention = this.store.get("experience_intervention", text20(args.intervention_id, "intervention_id"));
+    const intervention = this.store.get("experience_intervention", text21(args.intervention_id, "intervention_id"));
     return { intervention, patterns: intervention.pattern_refs.map((item) => this.store.get("experience_pattern", String(item.id), Number(item.version))) };
   }
   reference(value, name, allowed) {
     const input2 = object(value, name);
-    const kind4 = text20(input2.kind, `${name}.kind`);
+    const kind4 = text21(input2.kind, `${name}.kind`);
     if (!allowed.has(kind4))
       throw new Error(`${name}.kind is unsupported`);
-    const id24 = text20(input2.id, `${name}.id`);
+    const id24 = text21(input2.id, `${name}.id`);
     const version5 = Number(input2.version);
     if (!Number.isInteger(version5) || version5 < 1)
       throw new Error(`${name}.version must be a positive integer`);
@@ -82654,7 +83217,7 @@ var ExperienceLedgerKernel = class {
   ids(value, name, minimum) {
     if (!Array.isArray(value) || value.length < minimum)
       throw new Error(`${name} must contain at least ${minimum} values`);
-    const values3 = value.map((item) => text20(item, name));
+    const values3 = value.map((item) => text21(item, name));
     if (new Set(values3).size !== values3.length)
       throw new Error(`${name} must contain unique values`);
     return values3.sort();
@@ -82674,7 +83237,7 @@ var import_node_path60 = require("node:path");
 init_digest();
 var STAGES2 = ["shadow", "held_out", "signoff", "canary"];
 var KINDS7 = /* @__PURE__ */ new Set(["workflow", "graph", "prompt"]);
-function text21(value, name) {
+function text22(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -82682,7 +83245,7 @@ function text21(value, name) {
 function strings33(value, name, minimum = 0) {
   if (!Array.isArray(value))
     throw new Error(`${name} must be an array`);
-  const result2 = [...new Set(value.map((item) => text21(item, name)))].sort();
+  const result2 = [...new Set(value.map((item) => text22(item, name)))].sort();
   if (result2.length < minimum)
     throw new Error(`${name} must contain at least ${minimum} unique values`);
   return result2;
@@ -82709,9 +83272,9 @@ var ProcedureStore = class {
     return procedureDefinitionRef(procedure.definition_ref) ? { ...result2, ...syncGraphVersionManifest(this.store, String(procedure.id)) } : result2;
   }
   draftCandidate(args) {
-    const proposal = this.store.get("workflow_evolution_proposal", text21(args.proposal_id, "proposal_id"));
+    const proposal = this.store.get("workflow_evolution_proposal", text22(args.proposal_id, "proposal_id"));
     const request2 = this.store.get("workflow_evolution_request", String(proposal.request_id), Number(proposal.request_version));
-    const procedureKind = text21(args.procedure_kind ?? proposal.procedure_kind ?? "workflow", "procedure_kind");
+    const procedureKind = text22(args.procedure_kind ?? proposal.procedure_kind ?? "workflow", "procedure_kind");
     if (!KINDS7.has(procedureKind))
       throw new Error("Experience Procedure kind is unsupported");
     const scenarioSignature = args.scenario_signature ?? request2.scenario_signature;
@@ -82739,14 +83302,14 @@ var ProcedureStore = class {
       scope_envelope: envelope,
       ...composition ? { entrypoints: composition.entries, exits: composition.exits } : {},
       ...control ? { scenario_id: control.scenario_id, graph_control: control, entrypoints: control.entries.map((entry2) => ({ ...entry2, routes: control.subscenarios.filter((s) => s.entry_id === entry2.id).map((s) => ({ exit_id: s.exit_id, subscenario_id: s.id })) })), exits: control.exits } : {},
-      trigger: text21(args.trigger ?? request2.scenario_key, "trigger"),
+      trigger: text22(args.trigger ?? request2.scenario_key, "trigger"),
       preconditions: strings33(args.preconditions ?? [], "preconditions"),
       allowed_effects: strings33(args.allowed_effects ?? (control ? graph.nodes.map((node2) => node2.side_effect) : composition ? proposal.steps.map((step) => step.side_effect) : ["read"]), "allowed_effects", 1),
-      acceptance_ref: text21(args.acceptance_ref ?? request2.output_contract_ref, "acceptance_ref"),
-      failure_disposition: text21(args.failure_disposition ?? "checkpoint_and_handoff", "failure_disposition"),
+      acceptance_ref: text22(args.acceptance_ref ?? request2.output_contract_ref, "acceptance_ref"),
+      failure_disposition: text22(args.failure_disposition ?? "checkpoint_and_handoff", "failure_disposition"),
       evidence_ids: strings33(args.evidence_ids ?? request2.observation_refs.flatMap((item) => item.evidence_ids), "evidence_ids", 1),
-      title: text21(args.title ?? proposal.name, "title"),
-      description: text21(args.description ?? proposal.description, "description")
+      title: text22(args.title ?? proposal.name, "title"),
+      description: text22(args.description ?? proposal.description, "description")
     };
     validateConcept("procedure", identity2.title);
     const id24 = String(args.procedure_id ?? `experience_procedure_${stableDigest(identity2).slice(-20)}`);
@@ -82800,6 +83363,9 @@ var ProcedureStore = class {
       content_digest: ref5.digest,
       definition_ref: definitionRef,
       definition_digest: definitionRef?.digest ?? null,
+      // Concept tag is non-identity metadata: the taxonomy already validated the
+      // title as a procedure, so downstream context/relations can see it.
+      concept_kind: "procedure",
       identity_digest: identityDigest,
       routeable: false,
       publication_allowed: false
@@ -82816,7 +83382,7 @@ var ProcedureStore = class {
         return this.recordGate(args);
       if (args.passed !== false || args.stage !== "canary")
         throw new Error("Current release operation only supports explicit canary revocation");
-      const active = activeProcedure(this.store, text21(args.procedure_id, "procedure_id"));
+      const active = activeProcedure(this.store, text22(args.procedure_id, "procedure_id"));
       if (!active || args.expected_version !== active.version)
         throw new Error("Current release version conflict or unavailable");
       const evidenceIds2 = strings33(args.evidence_ids, "evidence_ids", 1);
@@ -82832,10 +83398,10 @@ var ProcedureStore = class {
     return procedureDefinitionRef(procedure.definition_ref) ? { ...result2, ...syncGraphVersionManifest(this.store, String(procedure.id)) } : result2;
   }
   recordGate(args) {
-    const procedure = this.store.get("experience_procedure", text21(args.procedure_id, "procedure_id"));
+    const procedure = this.store.get("experience_procedure", text22(args.procedure_id, "procedure_id"));
     if (belongsToRetiredScenario(this.store, procedure))
       throw new Error("Experience scenario is retired; Procedure cannot qualify");
-    const stage = text21(args.stage, "stage");
+    const stage = text22(args.stage, "stage");
     if (!STAGES2.includes(stage))
       throw new Error("Experience Procedure gate is unsupported");
     const expected = STAGES2.indexOf(stage);
@@ -82845,7 +83411,7 @@ var ProcedureStore = class {
     for (const evidenceId of evidenceIds2)
       this.assertEvidence(evidenceId);
     const passed = args.passed === true;
-    const identity2 = { procedure_id: procedure.id, procedure_version: procedure.version, stage, evidence_ids: evidenceIds2, passed, verdict: text21(args.verdict ?? (passed ? "passed" : "failed"), "verdict") };
+    const identity2 = { procedure_id: procedure.id, procedure_version: procedure.version, stage, evidence_ids: evidenceIds2, passed, verdict: text22(args.verdict ?? (passed ? "passed" : "failed"), "verdict") };
     const requestDigest = stableDigest({ ...identity2, procedure_version: null, asset_digest: procedure.identity_digest });
     const id24 = String(args.gate_id ?? `experience_procedure_gate_${requestDigest.slice(-20)}`);
     const existing = this.store.find("experience_procedure_gate", id24);
@@ -82882,19 +83448,19 @@ var ProcedureStore = class {
     return new ProcedurePlanner(this.store).plan(args);
   }
   get(args) {
-    const id24 = text21(args.procedure_id, "procedure_id");
+    const id24 = text22(args.procedure_id, "procedure_id");
     const procedure = args.release_channel === void 0 ? this.store.get("experience_procedure", id24, args.version === void 0 ? void 0 : Number(args.version)) : selectedProcedure(this.store, id24, args.release_channel);
     if (!procedure)
       throw new Error("Procedure release unavailable");
     return { procedure };
   }
   list(args = {}) {
-    const scope4 = args.scope === void 0 ? null : text21(args.scope, "scope");
+    const scope4 = args.scope === void 0 ? null : text22(args.scope, "scope");
     return { procedures: this.store.list("experience_procedure", Number(args.limit ?? 100), (item) => scope4 === null || item.scope === scope4) };
   }
   /** Export only a routeable Procedure and keep it disabled until a Host installs it. */
   skillExport(args) {
-    const procedure = activeProcedure(this.store, text21(args.procedure_id, "procedure_id"));
+    const procedure = activeProcedure(this.store, text22(args.procedure_id, "procedure_id"));
     if (!procedure || procedure.lifecycle !== "routeable" || procedure.routeable !== true)
       throw new Error("Only routeable Experience Procedures can be exported as Skills");
     const exportId = String(args.export_id ?? `experience_skill_export_${stableDigest({ procedure_id: procedure.id, version: procedure.version }).slice(-20)}`);
@@ -82902,7 +83468,7 @@ var ProcedureStore = class {
     if (!procedure.content_ref && !definition2)
       throw new Error("Procedure has no checked export content");
     const source = procedure.content_ref ? this.store.contentStore.readCompatSync(procedure.content_ref).body : this.markdown(procedure);
-    const name = text21(args.skill_name ?? String(procedure.id).replace(/^experience_procedure_/u, "craft-procedure-"), "skill_name");
+    const name = text22(args.skill_name ?? String(procedure.id).replace(/^experience_procedure_/u, "craft-procedure-"), "skill_name");
     const markdown = `---
 name: ${yaml(name)}
 description: ${yaml(`Disabled Craft Procedure export: ${String(procedure.title)}`)}
@@ -83060,7 +83626,7 @@ var OUTCOMES3 = /* @__PURE__ */ new Set(["passed", "failed", "inconclusive"]);
 var AXES2 = /* @__PURE__ */ new Set(["context", "tools", "generation", "orchestration", "memory", "output"]);
 var PROCEDURE_KINDS = /* @__PURE__ */ new Set(["workflow", "graph", "prompt"]);
 var SECRET18 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
-function text22(value, name) {
+function text23(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must not be empty`);
   const result2 = value.trim();
@@ -83071,7 +83637,7 @@ function text22(value, name) {
 function strings34(value, name, minimum = 0) {
   if (!Array.isArray(value))
     throw new Error(`${name} must be an array`);
-  const result2 = value.map((item) => text22(item, name));
+  const result2 = value.map((item) => text23(item, name));
   if (result2.length < minimum || new Set(result2).size !== result2.length)
     throw new Error(`${name} must contain ${minimum ? `at least ${minimum} unique values` : "unique values"}`);
   return result2.sort();
@@ -83087,40 +83653,40 @@ var WorkflowEvolutionKernel = class {
     const evidenceIds2 = strings34(args.evidence_ids, "evidence_ids", 1);
     for (const evidenceId of evidenceIds2)
       this.assertEvidence(evidenceId);
-    const outcome2 = text22(args.outcome, "outcome");
+    const outcome2 = text23(args.outcome, "outcome");
     if (!OUTCOMES3.has(outcome2))
       throw new Error("Workflow Evolution outcome is unsupported");
-    const sourceSessionId = args.source_session_id === void 0 ? null : text22(args.source_session_id, "source_session_id");
+    const sourceSessionId = args.source_session_id === void 0 ? null : text23(args.source_session_id, "source_session_id");
     if (sourceSessionId && (sourceSessionId.length > 256 || /[\r\n\0]/u.test(sourceSessionId)))
       throw new Error("source_session_id must be a bounded Host session identifier");
     const source = {
-      kind: text22(args.source_kind, "source_kind"),
-      id: text22(args.source_id, "source_id"),
-      digest: text22(args.source_digest, "source_digest"),
+      kind: text23(args.source_kind, "source_kind"),
+      id: text23(args.source_id, "source_id"),
+      digest: text23(args.source_digest, "source_digest"),
       ...sourceSessionId ? { session_id: sourceSessionId } : {},
-      scope: args.scope === void 0 ? null : text22(args.scope, "scope")
+      scope: args.scope === void 0 ? null : text23(args.scope, "scope")
     };
     let verification = null;
     if (args.verification !== void 0) {
       const receipt = args.verification;
       if (!receipt || typeof receipt !== "object" || Array.isArray(receipt))
         throw new Error("Verification receipt must be an object");
-      const startedAt = text22(receipt.started_at, "verification.started_at"), completedAt = text22(receipt.completed_at, "verification.completed_at");
+      const startedAt = text23(receipt.started_at, "verification.started_at"), completedAt = text23(receipt.completed_at, "verification.completed_at");
       if (!Number.isFinite(Date.parse(startedAt)) || !Number.isFinite(Date.parse(completedAt)) || Date.parse(completedAt) < Date.parse(startedAt))
         throw new Error("Verification receipt timestamps are invalid");
       if (!Number.isInteger(receipt.exit_code) || outcome2 === "passed" && receipt.exit_code !== 0 || outcome2 === "failed" && receipt.exit_code === 0)
         throw new Error("Verification outcome contradicts exit_code");
-      verification = { contract_ref: text22(receipt.contract_ref, "verification.contract_ref"), workspace_revision: text22(receipt.workspace_revision, "verification.workspace_revision"), evidence_digest: text22(receipt.evidence_digest, "verification.evidence_digest"), producer: text22(receipt.producer, "verification.producer"), started_at: startedAt, completed_at: completedAt, exit_code: receipt.exit_code, provenance: "host_attested", independently_verified: false };
+      verification = { contract_ref: text23(receipt.contract_ref, "verification.contract_ref"), workspace_revision: text23(receipt.workspace_revision, "verification.workspace_revision"), evidence_digest: text23(receipt.evidence_digest, "verification.evidence_digest"), producer: text23(receipt.producer, "verification.producer"), started_at: startedAt, completed_at: completedAt, exit_code: receipt.exit_code, provenance: "host_attested", independently_verified: false };
     }
     const executionShape = args.execution_shape === void 0 ? [] : strings34(args.execution_shape, "execution_shape");
     const allowedShapes = /* @__PURE__ */ new Set(["branch", "parallel_join", "approval", "recovery", "compensation", "retry"]);
     if (executionShape.some((shape) => !allowedShapes.has(shape)))
       throw new Error("Workflow Evolution execution_shape is unsupported");
-    const scenarioKey = text22(args.scenario_key, "scenario_key");
+    const scenarioKey = text23(args.scenario_key, "scenario_key");
     const scenarioSignature = args.scenario_signature === void 0 ? { digest: stableDigest(scenarioKey), source: "legacy_scenario_key" } : args.scenario_signature;
     if (!scenarioSignature || typeof scenarioSignature !== "object" || Array.isArray(scenarioSignature))
       throw new Error("Workflow Evolution Scenario Signature is invalid");
-    const identity2 = { scenario_key: scenarioKey, scenario_signature: scenarioSignature, source, outcome: outcome2, ...verification ? { verification } : {}, failure_type: args.failure_type === void 0 ? null : text22(args.failure_type, "failure_type"), evidence_ids: evidenceIds2, execution_shape: executionShape, sanitized: true, content_stored: false };
+    const identity2 = { scenario_key: scenarioKey, scenario_signature: scenarioSignature, source, outcome: outcome2, ...verification ? { verification } : {}, failure_type: args.failure_type === void 0 ? null : text23(args.failure_type, "failure_type"), evidence_ids: evidenceIds2, execution_shape: executionShape, sanitized: true, content_stored: false };
     const observationId = String(args.observation_id ?? `workflow_evolution_observation_${stableDigest(identity2).slice(-20)}`);
     const existing = this.store.find("workflow_evolution_observation", observationId);
     const identityDigest = stableDigest(identity2);
@@ -83161,7 +83727,7 @@ var WorkflowEvolutionKernel = class {
     return { observation, idempotent: false };
   }
   propose(args) {
-    const scenarioKey = text22(args.scenario_key, "scenario_key");
+    const scenarioKey = text23(args.scenario_key, "scenario_key");
     const selectedIds = args.observation_ids === void 0 ? null : strings34(args.observation_ids, "observation_ids", 2);
     const observations = (selectedIds === null ? this.store.list("workflow_evolution_observation", 1e4, (item) => item.scenario_key === scenarioKey && item.lifecycle === "accepted") : selectedIds.map((id24) => this.store.get("workflow_evolution_observation", id24))).sort((left, right) => String(left.id).localeCompare(String(right.id)));
     if (observations.length < 2)
@@ -83184,13 +83750,13 @@ var WorkflowEvolutionKernel = class {
     const axes2 = strings34(args.design_axes, "design_axes", 1);
     if (axes2.length > 2 || axes2.some((axis) => !AXES2.has(axis)))
       throw new Error("Workflow Evolution may change at most two supported design axes");
-    const procedureKind = text22(args.procedure_kind ?? "workflow", "procedure_kind");
+    const procedureKind = text23(args.procedure_kind ?? "workflow", "procedure_kind");
     if (!PROCEDURE_KINDS.has(procedureKind))
       throw new Error("Workflow Evolution procedure_kind is unsupported");
     const graphEvidence = observations.some((item) => Array.isArray(item.execution_shape) && item.execution_shape.some((shape) => ["branch", "parallel_join", "approval", "recovery", "compensation"].includes(String(shape))));
     if (procedureKind === "graph" && !graphEvidence)
       throw new Error("Graph Procedure requires observed branch, join, approval, recovery, or compensation evidence");
-    const identity2 = { scenario_key: scenarioKey, scenario_signature: observations[0].scenario_signature ?? args.scenario_signature ?? { digest: stableDigest(scenarioKey), source: "legacy_scenario_key" }, observation_refs: observations.map((item) => ({ id: item.id, version: item.version, source: item.source, outcome: item.outcome, evidence_ids: item.evidence_ids, execution_shape: item.execution_shape ?? [] })), hypothesis: text22(args.hypothesis, "hypothesis"), design_axes: axes2, procedure_kind: procedureKind, output_contract_ref: text22(args.output_contract_ref, "output_contract_ref"), lifecycle: "awaiting_model", content_stored: false };
+    const identity2 = { scenario_key: scenarioKey, scenario_signature: observations[0].scenario_signature ?? args.scenario_signature ?? { digest: stableDigest(scenarioKey), source: "legacy_scenario_key" }, observation_refs: observations.map((item) => ({ id: item.id, version: item.version, source: item.source, outcome: item.outcome, evidence_ids: item.evidence_ids, execution_shape: item.execution_shape ?? [] })), hypothesis: text23(args.hypothesis, "hypothesis"), design_axes: axes2, procedure_kind: procedureKind, output_contract_ref: text23(args.output_contract_ref, "output_contract_ref"), lifecycle: "awaiting_model", content_stored: false };
     const requestId = String(args.request_id ?? `workflow_evolution_request_${stableDigest(identity2).slice(-20)}`);
     const existing = this.store.find("workflow_evolution_request", requestId);
     const identityDigest = stableDigest(identity2);
@@ -83204,8 +83770,8 @@ var WorkflowEvolutionKernel = class {
     return { request: request2, idempotent: false, next_action: procedureKind === "graph" ? "issue_a_model_ticket_or_submit_a_host_distilled_graph_draft" : procedureKind === "prompt" ? "issue_a_model_ticket_or_submit_a_host_distilled_prompt_procedure" : "issue_a_model_ticket_or_submit_a_host_distilled_workflow_draft" };
   }
   submit(args) {
-    const request2 = this.store.get("workflow_evolution_request", text22(args.request_id, "request_id"));
-    const explicitProposalId = args.proposal_id === void 0 ? null : text22(args.proposal_id, "proposal_id");
+    const request2 = this.store.get("workflow_evolution_request", text23(args.request_id, "request_id"));
+    const explicitProposalId = args.proposal_id === void 0 ? null : text23(args.proposal_id, "proposal_id");
     const prior = explicitProposalId === null ? null : this.store.find("workflow_evolution_proposal", explicitProposalId);
     if (prior) {
       const priorControl = prior.graph?.graph_control;
@@ -83223,7 +83789,7 @@ var WorkflowEvolutionKernel = class {
         throw new Error("Workflow Evolution proposal idempotency conflict");
       return { proposal: prior, request: request2, idempotent: true };
     }
-    const ticketId = args.model_ticket_id === void 0 ? null : text22(args.model_ticket_id, "model_ticket_id");
+    const ticketId = args.model_ticket_id === void 0 ? null : text23(args.model_ticket_id, "model_ticket_id");
     if (ticketId) {
       const ticket = this.store.get("evaluation_model_ticket", ticketId);
       if (ticket.purpose !== "workflow_evolution")
@@ -83232,14 +83798,14 @@ var WorkflowEvolutionKernel = class {
       if (target2.id !== request2.id || Number(target2.version) !== Number(request2.version))
         throw new Error("Model Ticket does not belong to this Workflow Evolution request");
     }
-    const procedureKind = text22(request2.procedure_kind ?? "workflow", "procedure_kind");
+    const procedureKind = text23(request2.procedure_kind ?? "workflow", "procedure_kind");
     if (!PROCEDURE_KINDS.has(procedureKind))
       throw new Error("Workflow Evolution procedure_kind is unsupported");
     const composition = args.composition === void 0 ? void 0 : validateProcedureComposition(procedureKind, args.composition, args.steps);
     const replacementKind = procedureKind === "graph" ? "workflow_dag" : "workflow";
-    const replacement = procedureKind === "prompt" || args.replaces_workflow_id === void 0 ? null : this.store.get(replacementKind, text22(args.replaces_workflow_id, "replaces_workflow_id"));
+    const replacement = procedureKind === "prompt" || args.replaces_workflow_id === void 0 ? null : this.store.get(replacementKind, text23(args.replaces_workflow_id, "replaces_workflow_id"));
     const graph = procedureKind === "graph" ? { nodes: args.nodes, edges: args.edges ?? [], outputs: args.outputs ?? {}, checkpoint_policy: args.checkpoint_policy ?? { mode: "step" }, ...args.graph_control === void 0 ? {} : { graph_control: validateGraphControl(args.graph_control, args.nodes, args.edges) } } : null;
-    const identity2 = { request_id: request2.id, request_version: request2.version, model_ticket_id: ticketId, procedure_kind: procedureKind, workflow_id: procedureKind === "prompt" ? String(args.workflow_id ?? `prompt_${stableDigest({ request: request2.id, name: args.name }).slice(-16)}`) : text22(args.workflow_id, "workflow_id"), name: text22(args.name, "name"), description: text22(args.description, "description"), inputs: strings34(args.inputs ?? [], "inputs"), steps: procedureKind === "workflow" ? args.steps : null, ...composition ? { composition } : {}, graph, prompt: procedureKind === "prompt" ? text22(args.prompt ?? args.description, "prompt") : null, replaces_workflow: replacement === null ? null : { kind: replacementKind, id: replacement.id, version: replacement.version }, lifecycle: "draft" };
+    const identity2 = { request_id: request2.id, request_version: request2.version, model_ticket_id: ticketId, procedure_kind: procedureKind, workflow_id: procedureKind === "prompt" ? String(args.workflow_id ?? `prompt_${stableDigest({ request: request2.id, name: args.name }).slice(-16)}`) : text23(args.workflow_id, "workflow_id"), name: text23(args.name, "name"), description: text23(args.description, "description"), inputs: strings34(args.inputs ?? [], "inputs"), steps: procedureKind === "workflow" ? args.steps : null, ...composition ? { composition } : {}, graph, prompt: procedureKind === "prompt" ? text23(args.prompt ?? args.description, "prompt") : null, replaces_workflow: replacement === null ? null : { kind: replacementKind, id: replacement.id, version: replacement.version }, lifecycle: "draft" };
     if (procedureKind === "workflow" && (!Array.isArray(identity2.steps) || !identity2.steps.length))
       throw new Error("steps must be a non-empty array");
     if (procedureKind === "graph" && (!Array.isArray(graph.nodes) || !graph.nodes.length))
@@ -83254,10 +83820,10 @@ var WorkflowEvolutionKernel = class {
     return { proposal, request: savedRequest, idempotent: false };
   }
   get(args) {
-    return { proposal: this.store.get("workflow_evolution_proposal", text22(args.proposal_id, "proposal_id")), request: args.request_id === void 0 ? null : this.store.get("workflow_evolution_request", text22(args.request_id, "request_id")) };
+    return { proposal: this.store.get("workflow_evolution_proposal", text23(args.proposal_id, "proposal_id")), request: args.request_id === void 0 ? null : this.store.get("workflow_evolution_request", text23(args.request_id, "request_id")) };
   }
   observations(args = {}) {
-    const scenario = args.scenario_key === void 0 ? null : text22(args.scenario_key, "scenario_key");
+    const scenario = args.scenario_key === void 0 ? null : text23(args.scenario_key, "scenario_key");
     return { observations: this.store.list("workflow_evolution_observation", Number(args.limit ?? 100), (item) => scenario === null || item.scenario_key === scenario) };
   }
   /** Bounded list of proposals (drafts awaiting gates), optionally by lifecycle. */
@@ -83265,7 +83831,7 @@ var WorkflowEvolutionKernel = class {
     const limit3 = args.limit === void 0 ? 100 : Number(args.limit);
     if (!Number.isInteger(limit3) || limit3 < 1 || limit3 > 1e3)
       throw new Error("limit must be an integer between 1 and 1000");
-    const lifecycle = args.lifecycle === void 0 ? null : text22(args.lifecycle, "lifecycle");
+    const lifecycle = args.lifecycle === void 0 ? null : text23(args.lifecycle, "lifecycle");
     return { proposals: this.store.list("workflow_evolution_proposal", limit3, (item) => lifecycle === null || item.lifecycle === lifecycle) };
   }
   assertEvidence(id24) {
@@ -83630,7 +84196,7 @@ function codeContextCandidates(index, query, limit3 = 100, searchIndex) {
 init_digest();
 var USAGE_KIND = "codebase_symbol_usage";
 var OUTCOMES4 = /* @__PURE__ */ new Set(["read", "passed", "failed"]);
-function text23(value, name) {
+function text24(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must be a non-empty string`);
   return value.trim();
@@ -83654,9 +84220,9 @@ function codebaseUsageWeights(store, indexId) {
   return result2;
 }
 function recordCodebaseSymbolUsage(store, args) {
-  const indexId = text23(args.index_id, "index_id");
-  const symbolId = text23(args.symbol_id, "symbol_id");
-  const outcome2 = args.outcome === void 0 ? "read" : text23(args.outcome, "outcome");
+  const indexId = text24(args.index_id, "index_id");
+  const symbolId = text24(args.symbol_id, "symbol_id");
+  const outcome2 = args.outcome === void 0 ? "read" : text24(args.outcome, "outcome");
   if (!OUTCOMES4.has(outcome2))
     throw new Error("outcome must be read, passed or failed");
   const capturedDay = day(args.now);
@@ -84390,7 +84956,7 @@ init_paths();
 
 // ../craft-capability/capability/craft-codebase/dist/lsp-stdio-client.js
 var import_node_child_process9 = require("node:child_process");
-var import_node_crypto136 = require("node:crypto");
+var import_node_crypto138 = require("node:crypto");
 var import_node_fs49 = require("node:fs");
 var import_node_path63 = require("node:path");
 var import_node_url7 = require("node:url");
@@ -84558,7 +85124,7 @@ function languageIdForFile(path2) {
 }
 
 // ../craft-capability/capability/craft-codebase/dist/lsp-adapter.js
-var import_node_crypto135 = require("node:crypto");
+var import_node_crypto137 = require("node:crypto");
 init_digest();
 
 // ../craft-capability/capability/craft-codebase/dist/symbol-kind.js
@@ -84649,7 +85215,7 @@ function normalizeLspSymbols(input2) {
     documents.set(doc.path, doc);
     const documentEndpoints = /* @__PURE__ */ new Map();
     endpoints.set(doc.path, documentEndpoints);
-    const sourceDigest = (0, import_node_crypto135.createHash)("sha256").update(doc.content).digest("hex");
+    const sourceDigest = (0, import_node_crypto137.createHash)("sha256").update(doc.content).digest("hex");
     if (sourceDigest !== doc.source_digest)
       throw new Error("LSP source digest mismatch");
     const lines = doc.content.split("\n"), offsets = [0];
@@ -84676,7 +85242,7 @@ function normalizeLspSymbols(input2) {
         if (nodes.length >= MAX_LSP_SYMBOLS)
           omittedSymbols++;
         else {
-          const id24 = `lsp_${(0, import_node_crypto135.createHash)("sha256").update(JSON.stringify([doc.path, symbol.name, start2, end])).digest("hex").slice(0, 24)}`;
+          const id24 = `lsp_${(0, import_node_crypto137.createHash)("sha256").update(JSON.stringify([doc.path, symbol.name, start2, end])).digest("hex").slice(0, 24)}`;
           const declarationKind2 = lspDeclarationKind(symbol.kind);
           const declarationStart = fullRange ? offset(fullRange.start) : void 0;
           const declarationEnd = fullRange ? offset(fullRange.end) : void 0;
@@ -85696,7 +86262,7 @@ function validateRequest(input2, timeoutMs) {
     totalBytes += bytes;
     if (totalBytes > MAX_TOTAL_BYTES)
       throw new Error("LSP checkpoint exceeds byte budget");
-    if ((0, import_node_crypto136.createHash)("sha256").update(document3.content).digest("hex") !== document3.source_digest)
+    if ((0, import_node_crypto138.createHash)("sha256").update(document3.content).digest("hex") !== document3.source_digest)
       throw new Error("LSP snapshot digest mismatch");
     if (document3.cached_symbols !== void 0) {
       if (!Array.isArray(document3.cached_symbols))
@@ -86981,10 +87547,10 @@ function analyzePythonFallback(files5) {
       const start2 = lineOffset + match[0].length - name.length;
       let endLine = index;
       for (let next = index + 1; next < lines.length; next += 1) {
-        const text42 = lines[next];
-        if (!text42.trim() || text42.trimStart().startsWith("#"))
+        const text43 = lines[next];
+        if (!text43.trim() || text43.trimStart().startsWith("#"))
           continue;
-        if (text42.length - text42.trimStart().length <= indent)
+        if (text43.length - text43.trimStart().length <= indent)
           break;
         endLine = next;
       }
@@ -87207,7 +87773,7 @@ function analyzePythonDataFlow(file, symbol, variable, options = {}) {
 
 // ../craft-capability/capability/craft-codebase/dist/java-analysis.js
 var import_node_child_process11 = require("node:child_process");
-var import_node_crypto137 = require("node:crypto");
+var import_node_crypto139 = require("node:crypto");
 var import_node_fs52 = require("node:fs");
 var import_node_os5 = require("node:os");
 var import_node_path67 = require("node:path");
@@ -87355,7 +87921,7 @@ function analyzeJavaCheckpoint(files5, options = {}) {
   const result2 = (() => {
     try {
       for (const file of files5) {
-        const digest37 = (0, import_node_crypto137.createHash)("sha256").update(file.content, "utf8").digest("hex");
+        const digest37 = (0, import_node_crypto139.createHash)("sha256").update(file.content, "utf8").digest("hex");
         if (digest37 !== file.digest)
           return { diagnostic: { language: "java", status: "failed", reason: "snapshot_digest_mismatch" } };
         const path2 = (0, import_node_path67.join)(sourceRoot2, ...file.path.split("/"));
@@ -87415,7 +87981,7 @@ function analyzeJavaControlFlow(file, symbol, options = {}) {
     return { diagnostic: { language: "java", status: "failed", reason: "invalid_symbol_offset" } };
   if (Buffer.byteLength(file.content, "utf8") > MAX_INPUT_BYTES)
     return { diagnostic: { language: "java", status: "partial", reason: "input_budget_exceeded" } };
-  if ((0, import_node_crypto137.createHash)("sha256").update(file.content, "utf8").digest("hex") !== file.digest)
+  if ((0, import_node_crypto139.createHash)("sha256").update(file.content, "utf8").digest("hex") !== file.digest)
     return { diagnostic: { language: "java", status: "failed", reason: "snapshot_digest_mismatch" } };
   const analyzerPath = options.analyzerPath ?? resolveJavaControlFlowAnalyzerPath(options.cwd, options.fileExists);
   if (!analyzerPath)
@@ -87470,14 +88036,14 @@ function analyzeJavaControlFlow(file, symbol, options = {}) {
 }
 
 // ../craft-capability/capability/craft-codebase/dist/codebase-index.js
-var import_node_crypto139 = require("node:crypto");
+var import_node_crypto141 = require("node:crypto");
 var import_node_fs54 = require("node:fs");
 var import_node_path69 = require("node:path");
 init_digest();
 init_store();
 
 // ../craft-capability/capability/craft-codebase/dist/project-graph-store.js
-var import_node_crypto138 = require("node:crypto");
+var import_node_crypto140 = require("node:crypto");
 var import_node_fs53 = require("node:fs");
 var import_node_path68 = require("node:path");
 init_digest();
@@ -87511,7 +88077,7 @@ var ProjectGraphStore = class {
         throw new Error("Project Codebase graph record integrity failure");
       return;
     }
-    const temporary = `${path2}.${process.pid}.${(0, import_node_crypto138.randomUUID)()}.tmp`;
+    const temporary = `${path2}.${process.pid}.${(0, import_node_crypto140.randomUUID)()}.tmp`;
     const fd = (0, import_node_fs53.openSync)(temporary, "wx", 384);
     try {
       (0, import_node_fs53.writeFileSync)(fd, `${JSON.stringify(record4)}
@@ -87539,7 +88105,7 @@ var ProjectGraphStore = class {
   recordsDigest(ids6) {
     const records2 = [...new Set(ids6)].sort().map((id24) => {
       this.read(id24);
-      return [id24, (0, import_node_crypto138.createHash)("sha256").update((0, import_node_fs53.readFileSync)(this.path(id24))).digest("hex")];
+      return [id24, (0, import_node_crypto140.createHash)("sha256").update((0, import_node_fs53.readFileSync)(this.path(id24))).digest("hex")];
     });
     return stableDigest(records2);
   }
@@ -87609,13 +88175,13 @@ function dataFlowFallback(flow, language2, symbolId, variable) {
     interprocedural: false
   };
 }
-function text24(value, name) {
+function text25(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function identifier20(value, name) {
-  const result2 = text24(value, name);
+  const result2 = text25(value, name);
   if (!/^[A-Za-z0-9_-]+$/u.test(result2))
     throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result2;
@@ -87740,7 +88306,7 @@ function relationDiagnosticsSummary(diagnostics) {
   };
 }
 function digest22(content) {
-  return (0, import_node_crypto139.createHash)("sha256").update(content).digest("hex");
+  return (0, import_node_crypto141.createHash)("sha256").update(content).digest("hex");
 }
 function safeChild2(root, path2) {
   if (!path2 || (0, import_node_path69.isAbsolute)(path2) || path2.split(/[\\/]+/u).includes(".."))
@@ -87829,7 +88395,7 @@ var CodebaseIndexKernel = class {
     const workspaceId = identifier20(args.workspace_id, "workspace_id");
     this.store.get("workspace", workspaceId);
     const activationId = String(args.activation_id ?? `codebase_activation_${workspaceId}`);
-    const actor = text24(args.actor ?? "explicit-user", "actor");
+    const actor = text25(args.actor ?? "explicit-user", "actor");
     const existing = this.store.find("codebase_activation", activationId);
     const identity2 = { workspace_id: workspaceId, effect: "read_only", actor };
     if (existing) {
@@ -87845,7 +88411,7 @@ var CodebaseIndexKernel = class {
   }
   deactivate(args) {
     const activation = this.activation(args);
-    const actor = text24(args.actor ?? "explicit-user", "actor");
+    const actor = text25(args.actor ?? "explicit-user", "actor");
     if (activation.status === "disabled")
       return { activation, idempotent: true };
     const saved = this.store.save("codebase_activation", String(activation.id), { ...recordPayload9(activation), status: "disabled", deactivated_by: actor, deactivated_at: (/* @__PURE__ */ new Date()).toISOString() });
@@ -87941,8 +88507,8 @@ var CodebaseIndexKernel = class {
       throw new Error("Unsupported analysis format");
     if (Buffer.byteLength(JSON.stringify(input2), "utf8") > MAX_IMPORT_GRAPH_BYTES)
       throw new Error("Analysis exceeds import graph byte budget");
-    const analyzer = text24(input2.analyzer, "analysis.analyzer");
-    const analyzerVersion = text24(input2.analyzer_version, "analysis.analyzer_version");
+    const analyzer = text25(input2.analyzer, "analysis.analyzer");
+    const analyzerVersion = text25(input2.analyzer_version, "analysis.analyzer_version");
     if (analyzer.length > 100 || analyzerVersion.length > 100)
       throw new Error("Analyzer identity exceeds budget");
     if (!Array.isArray(input2.nodes) || !input2.nodes.length || input2.nodes.length > MAX_GRAPH_NODES || !Array.isArray(input2.edges) || input2.edges.length > MAX_GRAPH_EDGES2)
@@ -87950,7 +88516,7 @@ var CodebaseIndexKernel = class {
     const entries2 = new Map(checkpoint.entries.map((entry2) => [String(entry2.path), entry2]));
     const verifiedByPath = /* @__PURE__ */ new Map();
     for (const source of verifiedSources ?? []) {
-      const path2 = text24(source.path, "repository_source.path");
+      const path2 = text25(source.path, "repository_source.path");
       const entry2 = entries2.get(path2);
       if (!entry2)
         throw new Error("Analysis path is outside checkpoint");
@@ -88024,7 +88590,7 @@ var CodebaseIndexKernel = class {
     }
     const nodes = input2.nodes.map((raw) => {
       const item = raw;
-      const path2 = text24(item.path, "node.path");
+      const path2 = text25(item.path, "node.path");
       const file = fileAt(path2);
       if (item.source_digest !== file.digest)
         throw new Error(`Analysis source digest mismatch: ${path2}`);
@@ -88036,10 +88602,10 @@ var CodebaseIndexKernel = class {
         id: identifier20(item.id, "node.id"),
         kind: item.kind,
         path: path2,
-        name: text24(item.name, "node.name"),
+        name: text25(item.name, "node.name"),
         source_digest: file.digest,
         span: range(item.span, file),
-        language: text24(item.language, "node.language"),
+        language: text25(item.language, "node.language"),
         ...item.declaration_kind === void 0 ? {} : { declaration_kind: item.declaration_kind },
         ...item.declaration_span === void 0 ? {} : { declaration_span: range(item.declaration_span, file) }
       };
@@ -88082,7 +88648,7 @@ var CodebaseIndexKernel = class {
   }
   projectContext(args) {
     const { index, workspace } = this.readyIndex(args);
-    const query = text24(args.query, "query"), limit3 = bounded2(args.limit, "limit", 100);
+    const query = text25(args.query, "query"), limit3 = bounded2(args.limit, "limit", 100);
     if (args.required_refs !== void 0 && !Array.isArray(args.required_refs))
       throw new Error("required_refs must be an array");
     const required6 = (args.required_refs ?? []).map(requiredContextRef).filter((ref5) => ref5.member === "codebase");
@@ -88143,7 +88709,7 @@ var CodebaseIndexKernel = class {
   }
   findSymbol(args) {
     const { index, workspace } = this.readyIndex(args);
-    const query = text24(args.query, "query");
+    const query = text25(args.query, "query");
     const limit3 = bounded2(args.limit, "limit", 20);
     const ranked = this.symbolSearch(index).rank(query, Number.MAX_SAFE_INTEGER);
     const nodes = ranked.slice(0, limit3).map((item) => item.node);
@@ -88152,11 +88718,11 @@ var CodebaseIndexKernel = class {
   /** Agent-oriented symbol exploration: retrieve candidates and their bounded snapshot relations in one call. */
   exploreSymbols(args) {
     const { index, workspace } = this.readyIndex(args);
-    const query = text24(args.query, "query"), limit3 = bounded2(args.symbol_limit, "symbol_limit", 8, 10);
+    const query = text25(args.query, "query"), limit3 = bounded2(args.symbol_limit, "symbol_limit", 8, 10);
     if (Buffer.byteLength(query, "utf8") > 2e3)
       throw new Error("query exceeds the Codebase symbol exploration budget");
     const relationLimit = bounded2(args.relation_limit, "relation_limit", 10, 20);
-    const direction = args.direction === void 0 ? "both" : text24(args.direction, "direction");
+    const direction = args.direction === void 0 ? "both" : text25(args.direction, "direction");
     if (direction !== "incoming" && direction !== "outgoing" && direction !== "both")
       throw new Error("direction must be incoming, outgoing or both");
     const allowedKinds = ["calls", "imports", "references", "definitions", "implements", "extends", "type_definition"];
@@ -88164,7 +88730,7 @@ var CodebaseIndexKernel = class {
     if (!Array.isArray(kinds) || !kinds.length || kinds.some((kind4) => typeof kind4 !== "string" || !allowedKinds.includes(kind4)) || new Set(kinds).size !== kinds.length)
       throw new Error("relation_kinds must contain unique supported relation kinds");
     const relationKinds = kinds;
-    const path2 = args.path === void 0 ? void 0 : text24(args.path, "path");
+    const path2 = args.path === void 0 ? void 0 : text25(args.path, "path");
     if (path2 !== void 0) {
       if ((0, import_node_path69.isAbsolute)(path2) || path2.split(/[\\/]+/u).includes(".."))
         throw new Error("Codebase path must stay below the checkpoint");
@@ -88222,7 +88788,7 @@ var CodebaseIndexKernel = class {
   /** Return a bounded symbol outline for one immutable checkpoint path. */
   symbolsOverview(args) {
     const { index, workspace } = this.readyIndex(args);
-    const path2 = text24(args.path, "path"), limit3 = bounded2(args.limit, "limit", 100, 500);
+    const path2 = text25(args.path, "path"), limit3 = bounded2(args.limit, "limit", 100, 500);
     if ((0, import_node_path69.isAbsolute)(path2) || path2.split(/[\\/]+/u).includes(".."))
       throw new Error("Codebase path must stay below the checkpoint");
     const checkpoint = this.store.get("workspace_checkpoint", String(index.checkpoint_id));
@@ -88262,7 +88828,7 @@ var CodebaseIndexKernel = class {
   /** Read a bounded source window around an indexed symbol from its immutable checkpoint. */
   symbolRead(args) {
     const { index, workspace } = this.readyIndex(args);
-    const symbol = this.findNode(index, text24(args.node_id, "node_id"));
+    const symbol = this.findNode(index, text25(args.node_id, "node_id"));
     if (symbol.kind !== "symbol")
       throw new Error("Codebase source read requires a symbol node");
     const checkpoint = this.store.get("workspace_checkpoint", String(index.checkpoint_id));
@@ -88297,7 +88863,7 @@ var CodebaseIndexKernel = class {
     const readStart = hasDeclarationSpan ? declarationStart : lineStarts[fallbackFirstLine - 1];
     const readEnd = hasDeclarationSpan ? declarationEnd : source.content.length;
     let pageStart = readStart;
-    const continuation = args.continuation === void 0 ? void 0 : text24(args.continuation, "continuation");
+    const continuation = args.continuation === void 0 ? void 0 : text25(args.continuation, "continuation");
     if (continuation !== void 0) {
       if (Buffer.byteLength(continuation, "utf8") > 2048)
         throw new Error("Codebase continuation exceeds budget");
@@ -88366,7 +88932,7 @@ var CodebaseIndexKernel = class {
   }
   findCallers(args) {
     const { index, workspace } = this.readyIndex(args);
-    const symbol = this.findNode(index, text24(args.symbol_id ?? args.node_id, args.symbol_id === void 0 ? "node_id" : "symbol_id"));
+    const symbol = this.findNode(index, text25(args.symbol_id ?? args.node_id, args.symbol_id === void 0 ? "node_id" : "symbol_id"));
     if (symbol.kind !== "symbol")
       throw new Error("Codebase caller lookup requires a symbol node");
     const limit3 = bounded2(args.limit, "limit", 20);
@@ -88378,7 +88944,7 @@ var CodebaseIndexKernel = class {
   queryCallers(args) {
     return observeOperation(this.store, "codebase", "callers_query", args, async () => {
       const { index, workspace } = this.readyIndex(args);
-      const symbol = this.findNode(index, text24(args.symbol_id ?? args.node_id, args.symbol_id === void 0 ? "node_id" : "symbol_id"));
+      const symbol = this.findNode(index, text25(args.symbol_id ?? args.node_id, args.symbol_id === void 0 ? "node_id" : "symbol_id"));
       if (symbol.kind !== "symbol")
         throw new Error("Codebase caller query requires a symbol node");
       const checkpoint = this.store.get("workspace_checkpoint", String(index.checkpoint_id));
@@ -88398,11 +88964,11 @@ var CodebaseIndexKernel = class {
   findRelations(args) {
     const { index, workspace } = this.readyIndex(args);
     const nodeCache = { routes: /* @__PURE__ */ new Map(), shards: /* @__PURE__ */ new Map() };
-    const target2 = this.findNode(index, text24(args.node_id, "node_id"), nodeCache);
-    const kind4 = text24(args.relation_kind, "relation_kind");
+    const target2 = this.findNode(index, text25(args.node_id, "node_id"), nodeCache);
+    const kind4 = text25(args.relation_kind, "relation_kind");
     if (!["calls", "imports", "references", "definitions", "implements", "extends", "type_definition"].includes(kind4))
       throw new Error("Unsupported Codebase relation kind");
-    const direction = args.direction === void 0 ? "incoming" : text24(args.direction, "direction");
+    const direction = args.direction === void 0 ? "incoming" : text25(args.direction, "direction");
     if (direction !== "incoming" && direction !== "outgoing")
       throw new Error("direction must be incoming or outgoing");
     const limit3 = bounded2(args.limit, "limit", 20);
@@ -88414,7 +88980,7 @@ var CodebaseIndexKernel = class {
   /** Resolve one snapshot source position using only digest-bound indexed relation spans. */
   findDefinition(args) {
     const { index, workspace } = this.readyIndex(args);
-    const path2 = text24(args.path, "path"), offset = Number(args.offset), limit3 = bounded2(args.limit, "limit", 20);
+    const path2 = text25(args.path, "path"), offset = Number(args.offset), limit3 = bounded2(args.limit, "limit", 20);
     if ((0, import_node_path69.isAbsolute)(path2) || path2.split(/[\\/]+/u).includes(".."))
       throw new Error("Definition path must stay below the checkpoint");
     if (!Number.isSafeInteger(offset) || offset < 0)
@@ -88462,7 +89028,7 @@ var CodebaseIndexKernel = class {
   /** Build a bounded, source-free statement CFG from one fresh TS/JS snapshot symbol. */
   controlFlow(args) {
     const { index, workspace } = this.readyIndex(args);
-    const symbol = this.findNode(index, text24(args.node_id, "node_id"));
+    const symbol = this.findNode(index, text25(args.node_id, "node_id"));
     if (symbol.kind !== "symbol")
       throw new Error("Control-flow query requires an indexed symbol");
     const language2 = String(symbol.language);
@@ -88485,7 +89051,7 @@ var CodebaseIndexKernel = class {
   /** Compute bounded, intra-procedural may-reaching definitions from a pinned TS/JS/Python snapshot. */
   dataFlow(args) {
     const { index, workspace } = this.readyIndex(args);
-    const symbol = this.findNode(index, text24(args.node_id, "node_id"));
+    const symbol = this.findNode(index, text25(args.node_id, "node_id"));
     if (symbol.kind !== "symbol")
       throw new Error("Data-flow query requires an indexed symbol");
     const language2 = String(symbol.language);
@@ -88500,7 +89066,7 @@ var CodebaseIndexKernel = class {
     const source = this.sourceFile(String(checkpoint.snapshot_root), entry2);
     if (source.digest !== symbol.source_digest)
       throw new Error("Data-flow symbol source digest does not match the index");
-    const variable = text24(args.variable, "variable");
+    const variable = text25(args.variable, "variable");
     const flow = supportsPython ? analyzePythonDataFlow({ ...source, language: language2 }, {
       id: symbol.id,
       name: symbol.name,
@@ -88516,7 +89082,7 @@ var CodebaseIndexKernel = class {
       const result2 = await queryCheckpointDiagnostics({
         store: this.store,
         checkpoint,
-        path: text24(args.path, "path"),
+        path: text25(args.path, "path"),
         limit: bounded2(args.limit, "limit", 100, 500),
         readSource: (root, entry2) => this.sourceFile(root, entry2)
       });
@@ -88526,11 +89092,11 @@ var CodebaseIndexKernel = class {
   }
   impact(args) {
     const { index, workspace } = this.readyIndex(args);
-    const seedId = text24(args.node_id, "node_id"), depth = bounded2(args.max_depth, "max_depth", 2, 5), limit3 = bounded2(args.limit, "limit", 40);
-    const direction = args.direction === void 0 ? "both" : text24(args.direction, "direction");
+    const seedId = text25(args.node_id, "node_id"), depth = bounded2(args.max_depth, "max_depth", 2, 5), limit3 = bounded2(args.limit, "limit", 40);
+    const direction = args.direction === void 0 ? "both" : text25(args.direction, "direction");
     if (direction !== "incoming" && direction !== "outgoing" && direction !== "both")
       throw new Error("direction must be incoming, outgoing or both");
-    const relationKind = args.relation_kind === void 0 ? void 0 : text24(args.relation_kind, "relation_kind");
+    const relationKind = args.relation_kind === void 0 ? void 0 : text25(args.relation_kind, "relation_kind");
     if (relationKind !== void 0 && !["calls", "imports", "references", "definitions", "implements", "extends", "type_definition"].includes(relationKind))
       throw new Error("Unsupported Codebase relation kind");
     const cacheKey = isShardedGraph(index) ? stableDigest({
@@ -88598,7 +89164,7 @@ var CodebaseIndexKernel = class {
   contextSlice(args) {
     const { index, workspace } = this.readyIndex(args);
     const limit3 = bounded2(args.limit, "limit", 20);
-    const requested = Array.isArray(args.node_ids) ? args.node_ids.map((item) => text24(item, "node_ids")) : [];
+    const requested = Array.isArray(args.node_ids) ? args.node_ids.map((item) => text25(item, "node_ids")) : [];
     if (!requested.length || new Set(requested).size !== requested.length)
       throw new Error("node_ids must contain unique node ids");
     const nodeCache = { routes: /* @__PURE__ */ new Map(), shards: /* @__PURE__ */ new Map() };
@@ -89094,7 +89660,7 @@ var CodebaseIndexKernel = class {
     return { ...index, status: stale ? "stale" : index.status, stale_reason: stale && index.stale_reason === void 0 ? "workspace_checkpoint_changed" : index.stale_reason };
   }
   sourceFile(root, entry2) {
-    const path2 = text24(entry2.path, "workspace_checkpoint.entries.path");
+    const path2 = text25(entry2.path, "workspace_checkpoint.entries.path");
     const file = safeChild2(root, path2);
     const stat10 = (0, import_node_fs54.lstatSync)(file);
     if (stat10.isSymbolicLink() || !stat10.isFile())
@@ -89208,7 +89774,7 @@ function ownerOfTool(toolName) {
 }
 
 // core/hook-plane.ts
-var import_node_crypto140 = require("node:crypto");
+var import_node_crypto142 = require("node:crypto");
 var HookPlane = class _HookPlane {
   hooks;
   /** One record per phase run, in order. Bounded by the number of phases per turn. */
@@ -89243,7 +89809,7 @@ var HookPlane = class _HookPlane {
    * keep it while refusing to keep the conversation.
    */
   static inputDigest(toolName, args) {
-    return `sha256:${(0, import_node_crypto140.createHash)("sha256").update(JSON.stringify({ tool: toolName, args })).digest("hex")}`;
+    return `sha256:${(0, import_node_crypto142.createHash)("sha256").update(JSON.stringify({ tool: toolName, args })).digest("hex")}`;
   }
   /**
    * The context a tool call can honestly supply.
@@ -89266,7 +89832,7 @@ var HookPlane = class _HookPlane {
 };
 
 // core/legacy-knowledge-migration.ts
-var import_node_crypto141 = require("node:crypto");
+var import_node_crypto143 = require("node:crypto");
 var import_promises22 = require("node:fs/promises");
 var import_node_path70 = require("node:path");
 init_store2();
@@ -89278,12 +89844,12 @@ var FORBIDDEN = /个人述职|述职|\bddo\b|\bokr\b|绩效|个人能力|能力�
 var MAX_FILES2 = 1e4;
 var MAX_BYTES2 = 256 * 1024;
 function digest23(value) {
-  return `sha256:${(0, import_node_crypto141.createHash)("sha256").update(typeof value === "string" ? value : JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto143.createHash)("sha256").update(typeof value === "string" ? value : JSON.stringify(value)).digest("hex")}`;
 }
 function id15(prefix) {
-  return `${prefix}_${(0, import_node_crypto141.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto143.randomUUID)().replaceAll("-", "")}`;
 }
-function text25(value, name) {
+function text26(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
@@ -89313,7 +89879,7 @@ function tags(value) {
   return value ? value.split(",").map((item) => item.trim()).filter(Boolean) : [];
 }
 function candidateId(migrationId, entry2) {
-  return `legacy_knowledge_candidate_${(0, import_node_crypto141.createHash)("sha256").update(`${migrationId}:${entry2.rel_path}:${entry2.page_digest}`).digest("hex").slice(0, 24)}`;
+  return `legacy_knowledge_candidate_${(0, import_node_crypto143.createHash)("sha256").update(`${migrationId}:${entry2.rel_path}:${entry2.page_digest}`).digest("hex").slice(0, 24)}`;
 }
 var LegacyKnowledgeMigrationKernel = class {
   store;
@@ -89321,11 +89887,11 @@ var LegacyKnowledgeMigrationKernel = class {
     this.store = store;
   }
   sourceSnapshot(args) {
-    return { migration: this.store.get("legacy_knowledge_migration", text25(args.migration_id, "migration_id")), content_free: true };
+    return { migration: this.store.get("legacy_knowledge_migration", text26(args.migration_id, "migration_id")), content_free: true };
   }
   async sourceDiff(args) {
-    const migration = this.store.get("legacy_knowledge_migration", text25(args.migration_id, "migration_id"));
-    const sourceRoot2 = text25(args.source_root ?? migration.source_root, "source_root");
+    const migration = this.store.get("legacy_knowledge_migration", text26(args.migration_id, "migration_id"));
+    const sourceRoot2 = text26(args.source_root ?? migration.source_root, "source_root");
     const latest = await this.discover({ migration_id: `${String(migration.id)}_diff_${Date.now()}`, source_root: sourceRoot2 });
     const next = latest.migration;
     const before = new Map(migration.entries.map((x) => [String(x.rel_path), x]));
@@ -89339,7 +89905,7 @@ var LegacyKnowledgeMigrationKernel = class {
     return { migration_id: migration.id, previous_digest: migration.source_digest, current_digest: next.source_digest, changed: drifted, entries: changed, tombstones, migration: saved, content_free: true };
   }
   async discover(args) {
-    const sourceRoot2 = await (0, import_promises22.realpath)((0, import_node_path70.resolve)(text25(args.source_root, "source_root")));
+    const sourceRoot2 = await (0, import_promises22.realpath)((0, import_node_path70.resolve)(text26(args.source_root, "source_root")));
     const pagesRoot = (0, import_node_path70.resolve)(sourceRoot2, "data", "pages");
     const root = await (0, import_promises22.realpath)(pagesRoot).catch(() => {
       throw new Error("source_root must contain data/pages");
@@ -89360,8 +89926,8 @@ var LegacyKnowledgeMigrationKernel = class {
     return { migration, idempotent: false };
   }
   async importCandidates(args, sourceId, create) {
-    const migration = this.store.get("legacy_knowledge_migration", text25(args.migration_id, "migration_id"));
-    const selected = Array.isArray(args.candidate_ids) ? args.candidate_ids.map((item) => text25(item, "candidate_ids item")) : [];
+    const migration = this.store.get("legacy_knowledge_migration", text26(args.migration_id, "migration_id"));
+    const selected = Array.isArray(args.candidate_ids) ? args.candidate_ids.map((item) => text26(item, "candidate_ids item")) : [];
     if (!selected.length) throw new Error("candidate_ids must be a non-empty array");
     const entries2 = migration.entries;
     const failures = [];
@@ -89411,9 +89977,9 @@ var LegacyKnowledgeMigrationKernel = class {
    * "source is known but not revalidated" from "source is unknown".
    */
   async rebindProvenance(args) {
-    const migration = this.store.get("legacy_knowledge_migration", text25(args.migration_id, "migration_id"));
+    const migration = this.store.get("legacy_knowledge_migration", text26(args.migration_id, "migration_id"));
     const requested = args.candidate_ids === void 0 ? null : new Set(
-      Array.isArray(args.candidate_ids) && args.candidate_ids.length ? args.candidate_ids.map((item) => text25(item, "candidate_ids item")) : (() => {
+      Array.isArray(args.candidate_ids) && args.candidate_ids.length ? args.candidate_ids.map((item) => text26(item, "candidate_ids item")) : (() => {
         throw new Error("candidate_ids must be a non-empty array");
       })()
     );
@@ -89477,14 +90043,14 @@ var LegacyKnowledgeMigrationKernel = class {
    * effectiveness evaluation or grant formal Context eligibility.
    */
   async reviewCandidates(args) {
-    const migration = this.store.get("legacy_knowledge_migration", text25(args.migration_id, "migration_id"));
-    const reviewer = text25(args.reviewer, "reviewer");
-    const modelRef = text25(args.model_ref, "model_ref");
+    const migration = this.store.get("legacy_knowledge_migration", text26(args.migration_id, "migration_id"));
+    const reviewer = text26(args.reviewer, "reviewer");
+    const modelRef = text26(args.model_ref, "model_ref");
     if (!Array.isArray(args.assessments) || !args.assessments.length) throw new Error("assessments must be a non-empty array");
     const assessments = args.assessments.map((value) => {
-      const decision = text25(value.decision, "assessment decision");
+      const decision = text26(value.decision, "assessment decision");
       if (!(/* @__PURE__ */ new Set(["supported", "revalidate", "reject"])).has(decision)) throw new Error("assessment decision is unsupported");
-      return { candidate_id: text25(value.candidate_id, "assessment candidate_id"), source_digest: text25(value.source_digest, "assessment source_digest"), decision, reason: text25(value.reason, "assessment reason") };
+      return { candidate_id: text26(value.candidate_id, "assessment candidate_id"), source_digest: text26(value.source_digest, "assessment source_digest"), decision, reason: text26(value.reason, "assessment reason") };
     });
     if (new Set(assessments.map((item) => item.candidate_id)).size !== assessments.length) throw new Error("assessment candidate_ids must be unique");
     const reviewed = [];
@@ -89582,10 +90148,10 @@ var LegacyKnowledgeMigrationKernel = class {
     return { migration_id: migration.id, reviewed, deferred, failures, reviewer, model_ref: modelRef };
   }
   publishReady(args) {
-    const candidate2 = this.store.get("legacy_knowledge_migration_candidate", text25(args.candidate_id, "candidate_id"));
+    const candidate2 = this.store.get("legacy_knowledge_migration_candidate", text26(args.candidate_id, "candidate_id"));
     if (candidate2.status === "published") return { candidate: candidate2, idempotent: true };
     if (candidate2.status !== "candidate") throw new Error("Only a non-duplicate candidate can be published");
-    const claim2 = this.store.get("knowledge_claim", text25(candidate2.claim_id, "candidate claim_id"));
+    const claim2 = this.store.get("knowledge_claim", text26(candidate2.claim_id, "candidate claim_id"));
     if (!knowledgeClaimPromotionProofVerified(this.store, claim2)) throw new Error("Candidate Claim requires verified managed promotion and independent effectiveness evaluation before publication");
     return { candidate: candidate2, claim: claim2, idempotent: false };
   }
@@ -89594,7 +90160,7 @@ var LegacyKnowledgeMigrationKernel = class {
     return this.store.save("legacy_knowledge_migration_candidate", candidateId2, { ...payload6(candidate2), status: "published", wiki_page_id: wikiPageId, memory_id: memoryId, published_at: (/* @__PURE__ */ new Date()).toISOString(), import_authority: false });
   }
   retractReady(args) {
-    const candidate2 = this.store.get("legacy_knowledge_migration_candidate", text25(args.candidate_id, "candidate_id"));
+    const candidate2 = this.store.get("legacy_knowledge_migration_candidate", text26(args.candidate_id, "candidate_id"));
     if (candidate2.status === "retracted") return { candidate: candidate2, idempotent: true };
     if (candidate2.status !== "published") throw new Error("Only a published candidate can be retracted");
     return { candidate: candidate2, idempotent: false };
@@ -89604,7 +90170,7 @@ var LegacyKnowledgeMigrationKernel = class {
     return this.store.save("legacy_knowledge_migration_candidate", candidateId2, { ...payload6(candidate2), status: "retracted", retracted_at: (/* @__PURE__ */ new Date()).toISOString(), retraction_reason_digest: digest23(reason), import_authority: false });
   }
   failureReport(args) {
-    const migrationId = text25(args.migration_id, "migration_id");
+    const migrationId = text26(args.migration_id, "migration_id");
     return { reports: this.store.list("legacy_knowledge_migration_report", MAX_FILES2, (item) => item.migration_id === migrationId) };
   }
   recordFailure(migrationId, stage, sourceLocator, code) {
@@ -89698,7 +90264,7 @@ ${summary2}`)) return this.excluded(rel_path, page_digest, "sensitive_or_disallo
 };
 
 // core/workflow-dag.ts
-var import_node_crypto142 = require("node:crypto");
+var import_node_crypto144 = require("node:crypto");
 var import_node_fs55 = require("node:fs");
 var import_node_path71 = require("node:path");
 init_store2();
@@ -89709,14 +90275,14 @@ var EFFECTS17 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_w
 var LIFECYCLE = /* @__PURE__ */ new Set(["draft", "candidate", "verified", "canary", "routable", "deprecated", "rolled_back"]);
 var SECRET20 = /(?:api[_-]?key|authorization|cookie|password|passwd|secret|token)\s*[:=]\s*[^\s]{6,}/iu;
 function id16(prefix) {
-  return `${prefix}_${(0, import_node_crypto142.randomUUID)().replaceAll("-", "")}`;
+  return `${prefix}_${(0, import_node_crypto144.randomUUID)().replaceAll("-", "")}`;
 }
-function text26(v, name) {
+function text27(v, name) {
   if (typeof v !== "string" || !v.trim()) throw new Error(`${name} must not be empty`);
   return v.trim();
 }
 function digest24(v) {
-  return `sha256:${(0, import_node_crypto142.createHash)("sha256").update(JSON.stringify(v)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto144.createHash)("sha256").update(JSON.stringify(v)).digest("hex")}`;
 }
 function payload7(r) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...p } = r;
@@ -89736,19 +90302,19 @@ var WorkflowDagKernel = class {
       const raw = nodes[i];
       if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error(`nodes[${i}] must be an object`);
       const n = raw;
-      const nodeId4 = text26(n.id, `nodes[${i}].id`);
+      const nodeId4 = text27(n.id, `nodes[${i}].id`);
       if (seen.has(nodeId4)) throw new Error(`duplicate node id: ${nodeId4}`);
       seen.add(nodeId4);
-      const type = text26(n.type, `nodes[${i}].type`);
+      const type = text27(n.type, `nodes[${i}].type`);
       if (!NODE_TYPES.has(type)) throw new Error(`unsupported node type: ${type}`);
       const deps = n.depends_on === void 0 ? [] : n.depends_on;
       if (!Array.isArray(deps) || deps.some((d) => typeof d !== "string")) throw new Error(`nodes[${i}].depends_on must be an array`);
-      const sideEffect = text26(n.side_effect ?? "read_only", `nodes[${i}].side_effect`);
+      const sideEffect = text27(n.side_effect ?? "read_only", `nodes[${i}].side_effect`);
       if (!EFFECTS17.has(sideEffect)) throw new Error(`unsupported side_effect: ${sideEffect}`);
       if (deps.includes(nodeId4)) throw new Error(`node ${nodeId4} cannot depend on itself`);
       if (type === "retry" && (!Number.isInteger(Number(n.max_attempts)) || Number(n.max_attempts) < 1)) throw new Error(`retry node ${nodeId4} requires max_attempts`);
-      if (type === "subworkflow") text26(n.workflow_id, `nodes[${i}].workflow_id`);
-      if (type === "parallel" && n.join_policy !== void 0 && !JOIN_POLICIES.has(text26(n.join_policy, `nodes[${i}].join_policy`))) throw new Error(`parallel node ${nodeId4} has unsupported join_policy`);
+      if (type === "subworkflow") text27(n.workflow_id, `nodes[${i}].workflow_id`);
+      if (type === "parallel" && n.join_policy !== void 0 && !JOIN_POLICIES.has(text27(n.join_policy, `nodes[${i}].join_policy`))) throw new Error(`parallel node ${nodeId4} has unsupported join_policy`);
       normalized2.push({ ...n, id: nodeId4, type, depends_on: [...new Set(deps)].sort(), side_effect: sideEffect, ...type === "parallel" ? { join_policy: n.join_policy ?? "all" } : {} });
     }
     for (const n of normalized2) for (const dep of n.depends_on) if (!seen.has(dep)) throw new Error(`node ${n.id} has unknown dependency: ${dep}`);
@@ -89772,21 +90338,21 @@ var WorkflowDagKernel = class {
       const raw = rawEdges[i];
       if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error(`edges[${i}] must be an object`);
       const edge = raw;
-      const edgeId3 = text26(edge.id ?? `edge_${i + 1}`, `edges[${i}].id`);
+      const edgeId3 = text27(edge.id ?? `edge_${i + 1}`, `edges[${i}].id`);
       if (edgeIds.has(edgeId3)) throw new Error(`duplicate edge id: ${edgeId3}`);
       edgeIds.add(edgeId3);
-      const from = text26(edge.from, `edges[${i}].from`);
-      const to = text26(edge.to, `edges[${i}].to`);
+      const from = text27(edge.from, `edges[${i}].from`);
+      const to = text27(edge.to, `edges[${i}].to`);
       if (!seen.has(from) || !seen.has(to)) throw new Error(`edge ${edgeId3} references an unknown node`);
-      const kind4 = text26(edge.kind, `edges[${i}].kind`);
+      const kind4 = text27(edge.kind, `edges[${i}].kind`);
       if (!EDGE_KINDS.has(kind4)) throw new Error(`edge ${edgeId3} has unsupported kind`);
-      if (kind4 === "condition") text26(edge.predicate_ref, `edges[${i}].predicate_ref`);
+      if (kind4 === "condition") text27(edge.predicate_ref, `edges[${i}].predicate_ref`);
       if (kind4 === "retry") {
         if (!Number.isInteger(Number(edge.max_attempts)) || Number(edge.max_attempts) < 1) throw new Error(`retry edge ${edgeId3} requires max_attempts`);
-        if (edge.on_exhausted !== void 0 && !(/* @__PURE__ */ new Set(["needs_replan", "blocked", "handoff"])).has(text26(edge.on_exhausted, `edges[${i}].on_exhausted`))) throw new Error(`retry edge ${edgeId3} has unsupported on_exhausted`);
+        if (edge.on_exhausted !== void 0 && !(/* @__PURE__ */ new Set(["needs_replan", "blocked", "handoff"])).has(text27(edge.on_exhausted, `edges[${i}].on_exhausted`))) throw new Error(`retry edge ${edgeId3} has unsupported on_exhausted`);
       }
-      if (kind4 === "compensation") text26(edge.compensation_ref, `edges[${i}].compensation_ref`);
-      if (kind4 === "human_resume") text26(edge.approval_ref, `edges[${i}].approval_ref`);
+      if (kind4 === "compensation") text27(edge.compensation_ref, `edges[${i}].compensation_ref`);
+      if (kind4 === "human_resume") text27(edge.approval_ref, `edges[${i}].approval_ref`);
       edges.push({ ...edge, id: edgeId3, from, to, kind: kind4 });
     }
     const outgoing = /* @__PURE__ */ new Map();
@@ -89822,7 +90388,7 @@ var WorkflowDagKernel = class {
     if (SECRET20.test(JSON.stringify({ graph, derived_from: args.derived_from ?? null })) || SECRET20.test(String(args.name)) || SECRET20.test(String(args.description ?? ""))) throw new Error("Workflow definition must not contain credentials or secrets");
     const derivedFrom = args.derived_from === void 0 ? null : args.derived_from;
     if (derivedFrom !== null && (typeof derivedFrom !== "object" || Array.isArray(derivedFrom))) throw new Error("derived_from must be an object");
-    const identity2 = { workflow_id: workflowId, name: text26(args.name, "name"), description: String(args.description ?? ""), graph, graph_digest: digest24(graph), derived_from: derivedFrom };
+    const identity2 = { workflow_id: workflowId, name: text27(args.name, "name"), description: String(args.description ?? ""), graph, graph_digest: digest24(graph), derived_from: derivedFrom };
     const existing = this.store.find("workflow_dag", workflowId);
     if (existing) {
       if (existing.identity_digest !== digest24(identity2)) throw new Error("Workflow DAG idempotency conflict");
@@ -89837,19 +90403,19 @@ var WorkflowDagKernel = class {
     return { workflow, idempotent: false };
   }
   get(args) {
-    return { workflow: this.store.get("workflow_dag", text26(args.workflow_id, "workflow_id"), args.version === void 0 ? void 0 : Number(args.version)) };
+    return { workflow: this.store.get("workflow_dag", text27(args.workflow_id, "workflow_id"), args.version === void 0 ? void 0 : Number(args.version)) };
   }
   transition(args) {
-    const workflow = this.store.get("workflow_dag", text26(args.workflow_id, "workflow_id"));
+    const workflow = this.store.get("workflow_dag", text27(args.workflow_id, "workflow_id"));
     const current2 = String(workflow.lifecycle);
-    const target2 = text26(args.target, "target");
+    const target2 = text27(args.target, "target");
     const allowed = { draft: ["candidate"], candidate: ["verified"], verified: ["canary", "deprecated"], canary: ["routable", "rolled_back"], routable: ["deprecated", "rolled_back"], deprecated: [], rolled_back: [] };
     if (!LIFECYCLE.has(target2) || !allowed[current2]?.includes(target2)) throw new Error(`Invalid Workflow DAG transition: ${current2} -> ${target2}`);
     let evaluationRunId = typeof workflow.evaluation_run_id === "string" ? workflow.evaluation_run_id : null;
     let evaluationRunVersion = typeof workflow.evaluation_run_version === "number" ? workflow.evaluation_run_version : null;
     let evaluatedCandidateVersion = typeof workflow.evaluated_candidate_version === "number" ? workflow.evaluated_candidate_version : null;
     if (target2 === "verified") {
-      const evaluation = this.store.get("evaluation_run", text26(args.evaluation_run_id, "evaluation_run_id"));
+      const evaluation = this.store.get("evaluation_run", text27(args.evaluation_run_id, "evaluation_run_id"));
       if (evaluation.verdict !== "passed" || evaluation.split !== "held_out" || evaluation.subject_type !== "workflow_dag" || evaluation.subject_id !== workflow.id || Number(evaluation.subject_version) !== Number(workflow.version)) {
         throw new Error("Workflow verification requires a passed held-out evaluation for this exact Workflow DAG candidate version");
       }
@@ -89867,33 +90433,33 @@ var WorkflowDagKernel = class {
       }
     }
     if (target2 === "routable" && args.canary_receipt === void 0) throw new Error("Workflow routable transition requires canary_receipt");
-    const reason = text26(args.reason, "reason");
+    const reason = text27(args.reason, "reason");
     return { workflow: this.store.save("workflow_dag", String(workflow.id), { ...payload7(workflow), lifecycle: target2, transition_reason_digest: digest24(reason), evaluation_run_id: evaluationRunId, evaluation_run_version: evaluationRunVersion, evaluated_candidate_version: evaluatedCandidateVersion, canary_receipt: args.canary_receipt ?? workflow.canary_receipt ?? null, automation_authority: false }) };
   }
   checkpoint(args) {
-    const runId = text26(args.run_id, "run_id");
-    const workflow = this.store.get("workflow_dag", text26(args.workflow_id, "workflow_id"));
-    const state4 = { completed: args.completed ?? [], pending: args.pending ?? [], active: args.active ?? [], state_digest: text26(args.state_digest ?? digest24({ completed: args.completed ?? [], pending: args.pending ?? [], active: args.active ?? [] }), "state_digest") };
+    const runId = text27(args.run_id, "run_id");
+    const workflow = this.store.get("workflow_dag", text27(args.workflow_id, "workflow_id"));
+    const state4 = { completed: args.completed ?? [], pending: args.pending ?? [], active: args.active ?? [], state_digest: text27(args.state_digest ?? digest24({ completed: args.completed ?? [], pending: args.pending ?? [], active: args.active ?? [] }), "state_digest") };
     const checkpointId = String(args.checkpoint_id ?? id16("workflow_checkpoint"));
     const cp3 = this.store.create("workflow_checkpoint", checkpointId, { run_id: runId, workflow_id: workflow.id, workflow_version: workflow.version, graph_digest: workflow.graph_digest, ...state4, workspace_snapshot: args.workspace_snapshot ?? null, budget_fingerprint: args.budget_fingerprint ?? null, environment_fingerprint: args.environment_fingerprint ?? null, pending_decision: args.pending_decision ?? null, resume_action: String(args.resume_action ?? "resume") });
     return { checkpoint: cp3 };
   }
   resume(args) {
-    const cp3 = this.store.get("workflow_checkpoint", text26(args.checkpoint_id, "checkpoint_id"));
+    const cp3 = this.store.get("workflow_checkpoint", text27(args.checkpoint_id, "checkpoint_id"));
     const workflow = this.store.get("workflow_dag", String(cp3.workflow_id));
     const drift = args.graph_digest !== void 0 && args.graph_digest !== cp3.graph_digest || args.state_digest !== void 0 && args.state_digest !== cp3.state_digest;
     return { checkpoint: cp3, workflow, status: drift ? "needs_replan" : "ready", reason: drift ? "checkpoint fingerprint drift" : "exact graph and state match" };
   }
   cancel(args) {
-    const runId = text26(args.run_id, "run_id");
-    return { run: this.store.save("workflow_dag_run", runId, { run_id: runId, status: "cancelled", reason_digest: digest24(text26(args.reason, "reason")) }) };
+    const runId = text27(args.run_id, "run_id");
+    return { run: this.store.save("workflow_dag_run", runId, { run_id: runId, status: "cancelled", reason_digest: digest24(text27(args.reason, "reason")) }) };
   }
   replan(args) {
-    const cp3 = this.store.get("workflow_checkpoint", text26(args.checkpoint_id, "checkpoint_id"));
-    return { checkpoint: cp3, status: "needs_replan", replan_required: true, reason: text26(args.reason, "reason") };
+    const cp3 = this.store.get("workflow_checkpoint", text27(args.checkpoint_id, "checkpoint_id"));
+    return { checkpoint: cp3, status: "needs_replan", replan_required: true, reason: text27(args.reason, "reason") };
   }
   export(args) {
-    const workflow = this.store.get("workflow_dag", text26(args.workflow_id, "workflow_id"), args.version === void 0 ? void 0 : Number(args.version));
+    const workflow = this.store.get("workflow_dag", text27(args.workflow_id, "workflow_id"), args.version === void 0 ? void 0 : Number(args.version));
     const document3 = { workflow_id: workflow.id, name: workflow.name, description: workflow.description, ...workflow.graph, graph_digest: workflow.graph_digest, derived_from: workflow.derived_from ?? null };
     const fileDrift = workflow.file_path ? digest24(JSON.parse((0, import_node_fs55.readFileSync)(String(workflow.file_path), "utf8"))) !== workflow.file_digest : false;
     return { workflow_id: workflow.id, version: workflow.version, graph_digest: workflow.graph_digest, file_drift: fileDrift, document: document3 };
@@ -89906,15 +90472,15 @@ var WorkflowDagKernel = class {
 };
 
 // core/task-state.ts
-var import_node_crypto143 = require("node:crypto");
+var import_node_crypto145 = require("node:crypto");
 init_store2();
 var STATES = /* @__PURE__ */ new Set(["prepared", "awaiting_approval", "running", "paused", "awaiting_acceptance", "ready_for_delivery", "completed", "failed", "cancelled", "needs_replan", "blocked"]);
-function text27(v, name) {
+function text28(v, name) {
   if (typeof v !== "string" || !v.trim()) throw new Error(`${name} must not be empty`);
   return v.trim();
 }
 function digest25(v) {
-  return `sha256:${(0, import_node_crypto143.createHash)("sha256").update(JSON.stringify(v)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto145.createHash)("sha256").update(JSON.stringify(v)).digest("hex")}`;
 }
 var TaskStateKernel = class {
   store;
@@ -89922,16 +90488,16 @@ var TaskStateKernel = class {
     this.store = store;
   }
   transition(args) {
-    const taskId3 = text27(args.task_id, "task_id");
-    const state4 = text27(args.state, "state");
+    const taskId3 = text28(args.task_id, "task_id");
+    const state4 = text28(args.state, "state");
     if (!STATES.has(state4)) throw new Error("task state is unsupported");
     const current2 = this.store.find("task_state_projection", taskId3);
     const expected = args.expected_revision === void 0 ? Number(current2?.state_revision ?? 0) : Number(args.expected_revision);
     if (!Number.isInteger(expected) || expected < 0) throw new Error("expected_revision must be a non-negative integer");
     if (Number(current2?.state_revision ?? 0) !== expected) throw new Error("Concurrent task state update; refresh before writing");
-    const actor = text27(args.actor ?? "system", "actor");
-    const reason = text27(args.reason ?? "state transition", "reason");
-    const evidenceIds2 = Array.isArray(args.evidence_ids) ? args.evidence_ids.map((x) => text27(x, "evidence_ids")) : [];
+    const actor = text28(args.actor ?? "system", "actor");
+    const reason = text28(args.reason ?? "state transition", "reason");
+    const evidenceIds2 = Array.isArray(args.evidence_ids) ? args.evidence_ids.map((x) => text28(x, "evidence_ids")) : [];
     evidenceIds2.forEach((e) => this.store.get("evidence", e));
     const revision2 = expected + 1;
     const event = this.store.appendEvent(`task:${taskId3}`, "task_state_changed", { task_id: taskId3, state: state4, state_revision: revision2, actor, reason_digest: digest25(reason), evidence_ids: evidenceIds2 });
@@ -89939,11 +90505,11 @@ var TaskStateKernel = class {
     return { event, projection };
   }
   get(args) {
-    const taskId3 = text27(args.task_id, "task_id");
+    const taskId3 = text28(args.task_id, "task_id");
     return { projection: this.store.find("task_state_projection", taskId3), events: this.store.events(`task:${taskId3}`) };
   }
   replay(args) {
-    const taskId3 = text27(args.task_id, "task_id");
+    const taskId3 = text28(args.task_id, "task_id");
     let state4 = "prepared";
     let revision2 = 0;
     for (const event of this.store.events(`task:${taskId3}`)) {
@@ -89956,24 +90522,24 @@ var TaskStateKernel = class {
 };
 
 // core/mcp-tasks.ts
-var import_node_crypto144 = require("node:crypto");
+var import_node_crypto146 = require("node:crypto");
 init_store2();
 var STATES2 = /* @__PURE__ */ new Set(["working", "input_required", "completed", "failed", "cancelled", "expired"]);
 var TERMINAL6 = /* @__PURE__ */ new Set(["completed", "failed", "cancelled", "expired"]);
-function text28(value, name) {
+function text29(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest26(value) {
-  return `sha256:${(0, import_node_crypto144.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto146.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function payload8(record4) {
   const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...rest } = record4;
   return rest;
 }
 function ownerOf(record4, owner) {
-  const expected = record4.owner === null ? null : text28(record4.owner, "owner");
-  const actual = owner === void 0 || owner === null ? null : text28(owner, "owner");
+  const expected = record4.owner === null ? null : text29(record4.owner, "owner");
+  const actual = owner === void 0 || owner === null ? null : text29(owner, "owner");
   if (expected !== actual) throw new Error("MCP Task is not visible to this owner");
 }
 var McpTaskKernel = class {
@@ -89982,15 +90548,15 @@ var McpTaskKernel = class {
     this.store = store;
   }
   create(args) {
-    const requestId = text28(args.request_id, "request_id");
-    const operation2 = text28(args.operation, "operation");
-    const inputDigest = text28(args.input_digest ?? digest26(args.input ?? null), "input_digest");
-    const owner = args.owner === void 0 || args.owner === null ? null : text28(args.owner, "owner");
+    const requestId = text29(args.request_id, "request_id");
+    const operation2 = text29(args.operation, "operation");
+    const inputDigest = text29(args.input_digest ?? digest26(args.input ?? null), "input_digest");
+    const owner = args.owner === void 0 || args.owner === null ? null : text29(args.owner, "owner");
     const ttl = args.ttl_seconds === void 0 ? 86400 : Number(args.ttl_seconds);
     if (!Number.isInteger(ttl) || ttl < 1 || ttl > 2592e3) throw new Error("ttl_seconds must be an integer between 1 and 2592000");
     const pollInterval = args.poll_interval_ms === void 0 ? 1e3 : Number(args.poll_interval_ms);
     if (!Number.isInteger(pollInterval) || pollInterval < 100 || pollInterval > 864e5) throw new Error("poll_interval_ms must be an integer between 100 and 86400000");
-    const taskId3 = args.task_id === void 0 ? `mcp_task_${digest26({ requestId, operation: operation2, inputDigest }).slice(-20)}` : text28(args.task_id, "task_id");
+    const taskId3 = args.task_id === void 0 ? `mcp_task_${digest26({ requestId, operation: operation2, inputDigest }).slice(-20)}` : text29(args.task_id, "task_id");
     const now3 = (/* @__PURE__ */ new Date()).toISOString();
     const existing = this.store.find("mcp_task", taskId3);
     if (existing) {
@@ -90012,26 +90578,26 @@ var McpTaskKernel = class {
     return { task, idempotent: false };
   }
   get(args) {
-    const task = this.store.get("mcp_task", text28(args.task_id, "task_id"));
+    const task = this.store.get("mcp_task", text29(args.task_id, "task_id"));
     ownerOf(task, args.owner);
     return { task: this.expireOne(task) };
   }
   update(args) {
-    const task = this.store.get("mcp_task", text28(args.task_id, "task_id"));
+    const task = this.store.get("mcp_task", text29(args.task_id, "task_id"));
     ownerOf(task, args.owner);
     const current2 = this.expireOne(task);
     if (TERMINAL6.has(String(current2.status))) return { task: current2, idempotent: true };
-    const next = text28(args.status ?? current2.status, "status");
+    const next = text29(args.status ?? current2.status, "status");
     if (!STATES2.has(next)) throw new Error(`Unsupported MCP Task status: ${next}`);
     const updates = current2.updates;
-    const update = { status: next, input_digest: args.input_digest === void 0 ? current2.input_digest : text28(args.input_digest, "input_digest"), result_digest: args.result_digest === void 0 ? current2.result_digest ?? null : text28(args.result_digest, "result_digest"), error_code: args.error_code === void 0 ? current2.error_code ?? null : text28(args.error_code, "error_code"), at: (/* @__PURE__ */ new Date()).toISOString() };
+    const update = { status: next, input_digest: args.input_digest === void 0 ? current2.input_digest : text29(args.input_digest, "input_digest"), result_digest: args.result_digest === void 0 ? current2.result_digest ?? null : text29(args.result_digest, "result_digest"), error_code: args.error_code === void 0 ? current2.error_code ?? null : text29(args.error_code, "error_code"), at: (/* @__PURE__ */ new Date()).toISOString() };
     return { task: this.store.updateIfVersion("mcp_task", String(current2.id), Number(current2.version), { ...payload8(current2), ...update, updates: [...updates, { status: next, at: update.at }] }), idempotent: false };
   }
   cancel(args) {
     return this.update({ ...args, status: "cancelled", error_code: args.reason ?? "cancelled" });
   }
   expire(args = {}) {
-    const now3 = args.now === void 0 ? Date.now() : Date.parse(text28(args.now, "now"));
+    const now3 = args.now === void 0 ? Date.now() : Date.parse(text29(args.now, "now"));
     if (!Number.isFinite(now3)) throw new Error("now must be an ISO timestamp");
     const expired = this.store.list("mcp_task", 1e4).filter((task) => !TERMINAL6.has(String(task.status)) && Date.parse(String(task.expires_at)) <= now3);
     for (const task of expired) this.store.updateIfVersion("mcp_task", String(task.id), Number(task.version), { ...payload8(task), status: "expired", updates: [...task.updates, { status: "expired", at: new Date(now3).toISOString() }] });
@@ -90044,15 +90610,15 @@ var McpTaskKernel = class {
 };
 
 // core/runtime-proof.ts
-var import_node_crypto145 = require("node:crypto");
+var import_node_crypto147 = require("node:crypto");
 init_store2();
 var REQUIRED_CHECKS = ["workspace_boundary", "network_boundary", "credential_boundary", "process_cleanup", "resource_limits", "cancel_observed"];
-function text29(value, name) {
+function text30(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest27(value) {
-  return `sha256:${(0, import_node_crypto145.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto147.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var RuntimeProofKernel = class {
   store;
@@ -90060,8 +90626,8 @@ var RuntimeProofKernel = class {
     this.store = store;
   }
   manifest(args) {
-    const runtimeId = text29(args.runtime_id, "runtime_id");
-    const definition2 = { runtime_id: runtimeId, platform: text29(args.platform, "platform"), adapter_id: text29(args.adapter_id, "adapter_id"), workspace_digest: text29(args.workspace_digest, "workspace_digest"), network: text29(args.network ?? "deny", "network"), credential_mode: text29(args.credential_mode ?? "broker_required", "credential_mode"), process_mode: text29(args.process_mode ?? "bounded", "process_mode"), resources_digest: digest27(args.resources ?? {}) };
+    const runtimeId = text30(args.runtime_id, "runtime_id");
+    const definition2 = { runtime_id: runtimeId, platform: text30(args.platform, "platform"), adapter_id: text30(args.adapter_id, "adapter_id"), workspace_digest: text30(args.workspace_digest, "workspace_digest"), network: text30(args.network ?? "deny", "network"), credential_mode: text30(args.credential_mode ?? "broker_required", "credential_mode"), process_mode: text30(args.process_mode ?? "bounded", "process_mode"), resources_digest: digest27(args.resources ?? {}) };
     const manifestId = String(args.manifest_id ?? `runtime_manifest_${runtimeId}`);
     const existing = this.store.find("runtime_manifest", manifestId);
     if (existing) {
@@ -90071,9 +90637,9 @@ var RuntimeProofKernel = class {
     return { manifest: this.store.create("runtime_manifest", manifestId, { ...definition2, definition_digest: digest27(definition2), status: "declared" }), idempotent: false };
   }
   probe(args) {
-    const manifest = this.store.get("runtime_manifest", text29(args.manifest_id, "manifest_id"));
+    const manifest = this.store.get("runtime_manifest", text30(args.manifest_id, "manifest_id"));
     const checks = args.checks;
-    const observed = { manifest_id: manifest.id, environment_digest: text29(args.environment_digest, "environment_digest"), checks: checks ?? {} };
+    const observed = { manifest_id: manifest.id, environment_digest: text30(args.environment_digest, "environment_digest"), checks: checks ?? {} };
     const probeId = String(args.probe_id ?? `runtime_probe_${manifest.id}`);
     const existing = this.store.find("runtime_probe", probeId);
     if (existing) {
@@ -90083,12 +90649,12 @@ var RuntimeProofKernel = class {
     return { probe: this.store.create("runtime_probe", probeId, { ...observed, observed_at: (/* @__PURE__ */ new Date()).toISOString(), observation_digest: digest27(observed) }), idempotent: false };
   }
   conformance(args) {
-    const manifest = this.store.get("runtime_manifest", text29(args.manifest_id, "manifest_id"));
+    const manifest = this.store.get("runtime_manifest", text30(args.manifest_id, "manifest_id"));
     const checks = args.checks ?? {};
     const failed = REQUIRED_CHECKS.filter((key3) => checks[key3] !== true);
     const platform2 = String(manifest.platform);
     const status2 = failed.length || platform2 === "win32" && manifest.adapter_id === "none" ? "blocked" : "verified";
-    const record4 = { manifest_id: manifest.id, platform: platform2, checks: Object.fromEntries(REQUIRED_CHECKS.map((key3) => [key3, checks[key3] === true])), failed, status: status2, verifier: text29(args.verifier, "verifier"), conformance_digest: digest27({ manifest_id: manifest.id, checks, verifier: args.verifier }) };
+    const record4 = { manifest_id: manifest.id, platform: platform2, checks: Object.fromEntries(REQUIRED_CHECKS.map((key3) => [key3, checks[key3] === true])), failed, status: status2, verifier: text30(args.verifier, "verifier"), conformance_digest: digest27({ manifest_id: manifest.id, checks, verifier: args.verifier }) };
     const id24 = String(args.conformance_id ?? `runtime_conformance_${manifest.id}`);
     const existing = this.store.find("runtime_conformance", id24);
     if (existing) {
@@ -90098,10 +90664,10 @@ var RuntimeProofKernel = class {
     return { conformance: this.store.create("runtime_conformance", id24, record4), idempotent: false };
   }
   attest(args) {
-    const conformance = this.store.get("runtime_conformance", text29(args.conformance_id, "conformance_id"));
+    const conformance = this.store.get("runtime_conformance", text30(args.conformance_id, "conformance_id"));
     if (conformance.status !== "verified") throw new Error("Runtime conformance is not verified");
-    const runId = text29(args.run_id, "run_id");
-    const identity2 = { run_id: runId, conformance_id: conformance.id, environment_digest: text29(args.environment_digest, "environment_digest"), profile_version: text29(args.profile_version, "profile_version"), expires_at: text29(args.expires_at, "expires_at") };
+    const runId = text30(args.run_id, "run_id");
+    const identity2 = { run_id: runId, conformance_id: conformance.id, environment_digest: text30(args.environment_digest, "environment_digest"), profile_version: text30(args.profile_version, "profile_version"), expires_at: text30(args.expires_at, "expires_at") };
     const id24 = String(args.attestation_id ?? `runtime_attestation_${runId}`);
     const existing = this.store.find("runtime_attestation", id24);
     if (existing) {
@@ -90111,23 +90677,23 @@ var RuntimeProofKernel = class {
     return { attestation: this.store.create("runtime_attestation", id24, { ...identity2, attestation_digest: digest27(identity2), evidence_ids: Array.isArray(args.evidence_ids) ? args.evidence_ids : [] }), idempotent: false };
   }
   rehydrate(args) {
-    const checkpoint = text29(args.checkpoint_id, "checkpoint_id");
-    const expected = text29(args.expected_environment_digest, "expected_environment_digest");
-    const current2 = text29(args.current_environment_digest, "current_environment_digest");
+    const checkpoint = text30(args.checkpoint_id, "checkpoint_id");
+    const expected = text30(args.expected_environment_digest, "expected_environment_digest");
+    const current2 = text30(args.current_environment_digest, "current_environment_digest");
     const status2 = expected === current2 ? "ready" : "needs_replan";
     return { checkpoint_id: checkpoint, status: status2, rehydrate_digest: digest27({ checkpoint, expected, current: current2 }) };
   }
 };
 
 // core/content-migration.ts
-var import_node_crypto146 = require("node:crypto");
+var import_node_crypto148 = require("node:crypto");
 var import_node_fs56 = require("node:fs");
 var import_node_path72 = require("node:path");
 init_store2();
 var INLINE_KINDS = /* @__PURE__ */ new Set(["knowledge_claim", "memory_ledger", "episodic_memory", "semantic_memory"]);
 var WIKI_KINDS = /* @__PURE__ */ new Set(["wiki_page"]);
 function digest28(value) {
-  return `sha256:${(0, import_node_crypto146.createHash)("sha256").update(value, "utf8").digest("hex")}`;
+  return `sha256:${(0, import_node_crypto148.createHash)("sha256").update(value, "utf8").digest("hex")}`;
 }
 function legacyBody(raw) {
   const lines = raw.split(/\r?\n/u);
@@ -90356,21 +90922,21 @@ var ContentMigrationKernel = class {
 };
 
 // core/trace-review.ts
-var import_node_crypto147 = require("node:crypto");
+var import_node_crypto149 = require("node:crypto");
 init_store2();
 var REVIEW_STATUSES = /* @__PURE__ */ new Set(["passed", "needs_attention", "inconclusive"]);
 var ROOT_CAUSES = /* @__PURE__ */ new Set(["none", "host", "tool", "policy", "environment", "state_drift", "model", "unknown"]);
-function text30(value, name) {
+function text31(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest29(value) {
-  return `sha256:${(0, import_node_crypto147.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto149.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function refs6(value, name) {
   if (value === void 0) return [];
   if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
-  const result2 = value.map((item) => text30(item, name));
+  const result2 = value.map((item) => text31(item, name));
   if (new Set(result2).size !== result2.length) throw new Error(`${name} must be unique`);
   return result2.sort();
 }
@@ -90380,7 +90946,7 @@ var TraceReviewKernel = class {
     this.store = store;
   }
   review(args) {
-    const trace2 = this.store.get("trace", text30(args.trace_id, "trace_id"));
+    const trace2 = this.store.get("trace", text31(args.trace_id, "trace_id"));
     const events = this.store.list("trace_event", Number.MAX_SAFE_INTEGER, (item) => item.trace_id === trace2.id).sort((left, right) => Number(left.sequence) - Number(right.sequence));
     const failed = events.find((event) => event.status === "failed" || event.error_class !== void 0 && event.error_class !== null && String(event.error_class).length > 0);
     const missingObservation = events.some((event) => String(event.event_kind ?? "").includes("completed") && event.state_after === null && Array.isArray(event.output_refs) && event.output_refs.length === 0);
@@ -90402,7 +90968,7 @@ var TraceReviewKernel = class {
       event_count: events.length,
       versions,
       evidence_ids: refs6(args.evidence_ids, "evidence_ids"),
-      summary_digest: digest29(text30(args.summary ?? `Trace review ${status2}`, "summary"))
+      summary_digest: digest29(text31(args.summary ?? `Trace review ${status2}`, "summary"))
     };
     const identityDigest = digest29(identity2);
     const existing = this.store.find("trace_review", reviewId);
@@ -90413,11 +90979,11 @@ var TraceReviewKernel = class {
     return { review: this.store.create("trace_review", reviewId, { ...identity2, identity_digest: identityDigest, raw_content_stored: false }), idempotent: false };
   }
   get(args) {
-    const review = this.store.get("trace_review", text30(args.review_id, "review_id"));
+    const review = this.store.get("trace_review", text31(args.review_id, "review_id"));
     return { review, trace: this.store.get("trace", String(review.trace_id)) };
   }
   list(args = {}) {
-    const status2 = args.status === void 0 ? null : text30(args.status, "status");
+    const status2 = args.status === void 0 ? null : text31(args.status, "status");
     if (status2 !== null && !REVIEW_STATUSES.has(status2)) throw new Error("Trace review status is unsupported");
     return { reviews: this.store.list("trace_review", Number(args.limit ?? 100), (item) => status2 === null || item.status === status2) };
   }
@@ -90429,17 +90995,17 @@ var TraceReviewKernel = class {
 };
 
 // core/memory-maintenance.ts
-var import_node_crypto148 = require("node:crypto");
+var import_node_crypto150 = require("node:crypto");
 init_digest2();
 init_store2();
 var STAGES3 = /* @__PURE__ */ new Set(["light", "review", "deep"]);
 var SECRET21 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]/iu;
-function text31(value, name) {
+function text32(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest30(value) {
-  return `sha256:${(0, import_node_crypto148.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto150.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var MemoryMaintenanceKernel = class {
   store;
@@ -90447,11 +91013,11 @@ var MemoryMaintenanceKernel = class {
     this.store = store;
   }
   signal(args) {
-    const memoryId = text31(args.memory_id, "memory_id");
+    const memoryId = text32(args.memory_id, "memory_id");
     const ledger = this.store.find("memory_ledger", memoryId);
     const legacy = ledger ? null : this.store.find("episodic_memory", memoryId);
     if (!ledger && !legacy) throw new Error(`Unknown Memory: ${memoryId}`);
-    const kind4 = text31(args.kind ?? "recalled", "kind");
+    const kind4 = text32(args.kind ?? "recalled", "kind");
     const value = Number(args.value ?? 1);
     if (!Number.isFinite(value) || value < 0) throw new Error("value must be a non-negative number");
     const signalId = String(args.signal_id ?? `memory_usage_${memoryId}_${kind4}`);
@@ -90464,9 +91030,9 @@ var MemoryMaintenanceKernel = class {
     return { signal: this.store.create("memory_usage_signal", signalId, { ...identity2, identity_digest: digest30(identity2) }), idempotent: false };
   }
   run(args = {}) {
-    const stage = text31(args.stage ?? "light", "stage");
+    const stage = text32(args.stage ?? "light", "stage");
     if (!STAGES3.has(stage)) throw new Error("Memory maintenance stage is unsupported");
-    const now3 = args.now === void 0 ? (/* @__PURE__ */ new Date()).toISOString() : text31(args.now, "now");
+    const now3 = args.now === void 0 ? (/* @__PURE__ */ new Date()).toISOString() : text32(args.now, "now");
     if (Number.isNaN(Date.parse(now3))) throw new Error("now must be an ISO timestamp");
     const scope4 = optionalScope(args), access5 = scopeAccess(args);
     const visible = (item) => {
@@ -90499,7 +91065,7 @@ var MemoryMaintenanceKernel = class {
         if (!related.length) findings2.push({ kind: "orphaned_semantic", memory_id: memory.id });
       }
     }
-    const maintenanceId = String(args.maintenance_id ?? `memory_maintenance_${(0, import_node_crypto148.randomUUID)().replaceAll("-", "")}`);
+    const maintenanceId = String(args.maintenance_id ?? `memory_maintenance_${(0, import_node_crypto150.randomUUID)().replaceAll("-", "")}`);
     const identity2 = { scope: scope4, stage, now: now3, memory_kind: candidateKind, memory_ids: candidates.map((item) => item.id).sort(), semantic_ids: semantic.map((item) => item.id).sort(), finding_digest: digest30(findings2), confirmation_digest: digest30(confirmations) };
     const existing = this.store.find("memory_maintenance_run", maintenanceId);
     if (existing) {
@@ -90525,7 +91091,7 @@ var MemoryMaintenanceKernel = class {
     return { run, findings: findings2, confirmations, candidate: proposal, idempotent: false };
   }
   get(args) {
-    const run = this.store.get("memory_maintenance_run", text31(args.maintenance_id, "maintenance_id"));
+    const run = this.store.get("memory_maintenance_run", text32(args.maintenance_id, "maintenance_id"));
     return { run, candidate: run.candidate_id ? this.store.get("memory_maintenance_candidate", String(run.candidate_id)) : null };
   }
   /**
@@ -90562,14 +91128,14 @@ var MemoryMaintenanceKernel = class {
 };
 
 // core/runtime-model-probe.ts
-var import_node_crypto149 = require("node:crypto");
+var import_node_crypto151 = require("node:crypto");
 init_store2();
-function text32(value, name) {
+function text33(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 function digest31(value) {
-  return `sha256:${(0, import_node_crypto149.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto151.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 var RuntimeModelProbeKernel = class {
   store;
@@ -90584,7 +91150,7 @@ var RuntimeModelProbeKernel = class {
     return { providers: this.providers.map((provider) => ({ ...credentialStatus(provider), model: provider.models.standard ?? provider.models.frontier ?? provider.models.small ?? null, supports_tools: provider.supports_tools })) };
   }
   async probe(args) {
-    const providerId = args.provider === void 0 ? this.providers[0]?.provider : text32(args.provider, "provider");
+    const providerId = args.provider === void 0 ? this.providers[0]?.provider : text33(args.provider, "provider");
     const provider = this.providers.find((item) => item.provider === providerId);
     if (!provider) throw new Error("Model provider is not declared");
     const model = provider.models.standard ?? provider.models.frontier ?? provider.models.small;
@@ -90615,7 +91181,7 @@ function configuredReason(provider) {
 }
 
 // core/runtime-execution-attempt.ts
-var import_node_crypto150 = require("node:crypto");
+var import_node_crypto152 = require("node:crypto");
 init_store2();
 init_digest2();
 var RUNTIME_ATTEMPT_STATUSES = [
@@ -90635,7 +91201,7 @@ var EFFECTS18 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_w
 var SECRET22 = /(?:api[_-]?key|authorization|bearer|cookie|password|passwd|secret|token)\s*[:=]/iu;
 var TERMINAL7 = /* @__PURE__ */ new Set(["accepted", "failed", "blocked", "cancelled"]);
 function id17(value, name, prefix) {
-  const result2 = value === void 0 || value === null ? `${prefix}_${(0, import_node_crypto150.randomUUID)().replaceAll("-", "")}` : text(value, name);
+  const result2 = value === void 0 || value === null ? `${prefix}_${(0, import_node_crypto152.randomUUID)().replaceAll("-", "")}` : text(value, name);
   if (!/^[a-zA-Z0-9_-]+$/u.test(result2)) throw new Error(`${name} must contain only letters, numbers, _ or -`);
   return result2;
 }
@@ -91020,12 +91586,12 @@ var ContextWorkingSetKernel = class {
 };
 
 // core/graph-compiler.ts
-var import_node_crypto151 = require("node:crypto");
+var import_node_crypto153 = require("node:crypto");
 function digest32(value) {
-  return `sha256:${(0, import_node_crypto151.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
+  return `sha256:${(0, import_node_crypto153.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
 function id18(value) {
-  return value === void 0 ? `plan_${(0, import_node_crypto151.randomUUID)().replaceAll("-", "")}` : String(value);
+  return value === void 0 ? `plan_${(0, import_node_crypto153.randomUUID)().replaceAll("-", "")}` : String(value);
 }
 var GraphCompilerKernel = class {
   validator;
@@ -91054,14 +91620,14 @@ var GraphCompilerKernel = class {
 };
 
 // core/capability-intake.ts
-var import_node_crypto152 = require("node:crypto");
+var import_node_crypto154 = require("node:crypto");
 init_store2();
 init_digest2();
 var CAPABILITY_INTAKE_STATES = ["discovered", "scanned", "conformance_passed", "approved", "active", "degraded", "revoked", "retired"];
 var EFFECTS19 = /* @__PURE__ */ new Set(["read_only", "local_write", "external_write", "destructive"]);
 var SECRET23 = /(?:api[_-]?key|authorization|bearer|cookie|password|passwd|secret|token)\s*[:=]/iu;
 function id19(value) {
-  return value === void 0 ? `capability_intake_${(0, import_node_crypto152.randomUUID)().replaceAll("-", "")}` : text(value, "capability_id");
+  return value === void 0 ? `capability_intake_${(0, import_node_crypto154.randomUUID)().replaceAll("-", "")}` : text(value, "capability_id");
 }
 function state3(value) {
   const result2 = text(value, "state");
@@ -91135,12 +91701,12 @@ var CapabilityIntakeKernel = class {
 };
 
 // core/workbench-command.ts
-var import_node_crypto153 = require("node:crypto");
+var import_node_crypto155 = require("node:crypto");
 init_store2();
 init_digest2();
 var WORKBENCH_COMMANDS = ["goal_update", "context_set", "acceptance_set", "approve", "reject", "pause", "resume", "cancel", "replan", "effect_unknown_confirm", "checkpoint_restore"];
 function id20(value) {
-  return value === void 0 ? `command_${(0, import_node_crypto153.randomUUID)().replaceAll("-", "")}` : text(value, "command_id");
+  return value === void 0 ? `command_${(0, import_node_crypto155.randomUUID)().replaceAll("-", "")}` : text(value, "command_id");
 }
 function commandName(value) {
   const result2 = text(value, "command");
@@ -91194,11 +91760,11 @@ var WorkbenchCommandKernel = class {
 };
 
 // core/activation-proof.ts
-var import_node_crypto154 = require("node:crypto");
+var import_node_crypto156 = require("node:crypto");
 init_digest2();
 var COMPONENTS = /* @__PURE__ */ new Set(["knowledge", "memory", "experience"]);
 var HOSTS2 = /* @__PURE__ */ new Set(["codex", "claude"]);
-function text33(value, name) {
+function text34(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
@@ -91208,14 +91774,14 @@ var ActivationProofKernel = class {
     this.store = store;
   }
   record(args) {
-    const host = text33(args.host, "host");
+    const host = text34(args.host, "host");
     if (!HOSTS2.has(host)) throw new Error("host must be codex or claude");
-    const component2 = text33(args.component, "component");
+    const component2 = text34(args.component, "component");
     if (!COMPONENTS.has(component2)) throw new Error("component is unsupported");
-    const event = text33(args.event, "event");
-    const sessionId = text33(args.session_id ?? "unknown", "session_id");
-    const turnId = args.turn_id === void 0 || args.turn_id === null ? null : text33(args.turn_id, "turn_id");
-    const contextReceiptId = args.context_receipt_id === void 0 || args.context_receipt_id === null ? null : text33(args.context_receipt_id, "context_receipt_id");
+    const event = text34(args.event, "event");
+    const sessionId = text34(args.session_id ?? "unknown", "session_id");
+    const turnId = args.turn_id === void 0 || args.turn_id === null ? null : text34(args.turn_id, "turn_id");
+    const contextReceiptId = args.context_receipt_id === void 0 || args.context_receipt_id === null ? null : text34(args.context_receipt_id, "context_receipt_id");
     if (contextReceiptId !== null) this.store.get("context_resolution_receipt", contextReceiptId);
     const identity2 = {
       host,
@@ -91226,12 +91792,12 @@ var ActivationProofKernel = class {
       context_receipt_id: contextReceiptId,
       memory_written: args.memory_written === true,
       observation_written: args.observation_written === true,
-      plugin_release: text33(args.plugin_release ?? CRAFT_RELEASE_VERSION, "plugin_release"),
+      plugin_release: text34(args.plugin_release ?? CRAFT_RELEASE_VERSION, "plugin_release"),
       hook_trusted: args.hook_trusted === true,
       mcp_reachable: args.mcp_reachable === true,
       content_free: true
     };
-    const receiptId = String(args.receipt_id ?? `activation_proof_${(0, import_node_crypto154.randomUUID)().replaceAll("-", "")}`);
+    const receiptId = String(args.receipt_id ?? `activation_proof_${(0, import_node_crypto156.randomUUID)().replaceAll("-", "")}`);
     const existing = this.store.find("activation_proof_receipt", receiptId);
     const identityDigest = stableDigest(identity2);
     if (existing) {
@@ -91241,7 +91807,7 @@ var ActivationProofKernel = class {
     return { receipt: this.store.create("activation_proof_receipt", receiptId, { ...identity2, identity_digest: identityDigest, observed_at: (/* @__PURE__ */ new Date()).toISOString() }), idempotent: false };
   }
   doctor(args = {}) {
-    const sessionId = args.session_id === void 0 ? null : text33(args.session_id, "session_id");
+    const sessionId = args.session_id === void 0 ? null : text34(args.session_id, "session_id");
     const receipts = this.store.list("activation_proof_receipt", 1e4, (item) => sessionId === null || item.session_id === sessionId);
     const components = [...COMPONENTS].sort().map((component2) => {
       const records2 = receipts.filter((item) => item.component === component2);
@@ -91654,7 +92220,9 @@ var ServiceFoundation = class {
     const configuredModels = specsFromModels(settings.models);
     const catalog = policy.hostManagedAuthProvider ? PROVIDER_CATALOG : PROVIDER_CATALOG.filter((provider) => provider.host_managed_auth !== true);
     const hostManaged = policy.hostManagedAuthProvider ? PROVIDER_CATALOG.filter((provider) => provider.host_managed_auth === true) : [];
-    this.modelProviders = modelProviders && modelProviders.length ? [...modelProviders, ...hostManaged.filter((host) => !modelProviders.some((provider) => provider.provider === host.provider))] : configuredModels.length ? [...configuredModels, ...hostManaged] : catalog;
+    const learningHost = PROVIDER_CATALOG.find((provider) => provider.provider === "codex-cli");
+    const learningHostSpec = process.env.CRAFT_LEARNING_MODEL_HOST === "codex-cli" && learningHost && !catalog.some((provider) => provider.provider === "codex-cli") ? [learningHost] : [];
+    this.modelProviders = modelProviders && modelProviders.length ? [...modelProviders, ...hostManaged.filter((host) => !modelProviders.some((provider) => provider.provider === host.provider))] : configuredModels.length ? [...configuredModels, ...hostManaged, ...learningHostSpec.filter((host) => !configuredModels.some((provider) => provider.provider === host.provider))] : [...catalog, ...learningHostSpec];
     this.modelTransport = modelTransport;
     this.internalHost = new InternalHostDriver(store, {
       providers: this.modelProviders,
@@ -92369,7 +92937,7 @@ function matchGraphRoutes(definition2, query, inputKeys = []) {
 
 // ../craft-capability/capability/craft-experience/dist/graph-assets.js
 var import_node_fs57 = require("node:fs");
-var import_node_crypto155 = require("node:crypto");
+var import_node_crypto157 = require("node:crypto");
 var import_node_path73 = require("node:path");
 init_digest();
 var rows2 = (value) => Array.isArray(value) ? value : [];
@@ -92633,7 +93201,7 @@ var ExperienceGraphAssets = class {
         base_definition_digest: current2?.definition_digest ?? null
       };
       const preview = this.preview(current2, draft);
-      const temporary = `${path2}.${process.pid}.${(0, import_node_crypto155.randomUUID)()}.tmp`;
+      const temporary = `${path2}.${process.pid}.${(0, import_node_crypto157.randomUUID)()}.tmp`;
       try {
         (0, import_node_fs57.writeFileSync)(temporary, `${JSON.stringify(draft, null, 2)}
 `, { encoding: "utf8", mode: 384, flag: "wx" });
@@ -92891,7 +93459,7 @@ var ContextUsageWorkbench = class {
 };
 
 // core/application/coordinators/workflow-design.ts
-var import_node_crypto156 = require("node:crypto");
+var import_node_crypto158 = require("node:crypto");
 var DESIGN_QUESTIONS = [
   ["example", "\u6700\u8FD1\u4E00\u6B21\uFF0C\u4F60\u600E\u6837\u5B8C\u6210\u8FD9\u4EF6\u91CD\u590D\u5DE5\u4F5C\uFF1F"],
   ["trigger", "\u4EC0\u4E48\u60C5\u51B5\u89E6\u53D1\uFF1F\u91CD\u590D\u89E6\u53D1\u600E\u6837\u8BC6\u522B\uFF1F"],
@@ -92938,7 +93506,7 @@ var WorkflowDesignWorkbench = class {
     }
     if (!/^(project|user|task|workspace):.+$/u.test(scope4) || name.length > 200) throw new Error("Explicit design scope and bounded name required");
     if (/(?:api[_-]?key|password|secret|authorization|cookie|token)["']?\s*[:=]\s*[^\s]{6,}/iu.test(JSON.stringify({ name, answers }))) throw new Error("Design must not contain credentials");
-    const id24 = args.design_id === void 0 ? `workflow_design_${(0, import_node_crypto156.randomUUID)()}` : text(args.design_id, "design_id");
+    const id24 = args.design_id === void 0 ? `workflow_design_${(0, import_node_crypto158.randomUUID)()}` : text(args.design_id, "design_id");
     return this.store.transaction(() => {
       const current2 = this.store.find("workflow_design", id24);
       if (current2 && (current2.scope !== scope4 || args.expected_version !== current2.version)) throw new Error("Design scope or version conflict; reload before saving");
@@ -93253,7 +93821,7 @@ var CognitiveWorkbenchCoordinator = class {
 
 // ../craft-capability/capability/craft-file-dir-desc/dist/file-dir-desc.js
 var import_node_path74 = require("node:path");
-var import_node_crypto157 = require("node:crypto");
+var import_node_crypto159 = require("node:crypto");
 init_store();
 var PROMOTION_USE_THRESHOLD = 3;
 var DEVICE_KINDS = /* @__PURE__ */ new Set(["local", "ssh", "container", "remote-workspace", "cloud"]);
@@ -93275,6 +93843,454 @@ function normalizeDeviceKind(value) {
     throw new Error(`device_kind must be one of: ${[...DEVICE_KINDS].join(", ")}`);
   }
   return value;
+}
+function normalizeTag(value) {
+  if (typeof value !== "string" || !value.trim())
+    throw new Error("tag must be a non-empty string");
+  const trimmed = value.trim();
+  if (trimmed.length > 64)
+    throw new Error("tag must be 64 characters or fewer");
+  return trimmed;
+}
+function normalizeTags(value) {
+  if (!Array.isArray(value))
+    return [];
+  return [...new Set(value.map((item) => normalizeTag(item)))];
+}
+function normalizeHealth(value) {
+  if (value === void 0 || value === null)
+    return "healthy";
+  if (typeof value !== "string" || !(/* @__PURE__ */ new Set(["healthy", "degraded", "offline"])).has(value)) {
+    throw new Error("health must be healthy, degraded or offline");
+  }
+  return value;
+}
+function normalizeDeviceStatus(value) {
+  if (value === void 0 || value === null)
+    return "active";
+  if (typeof value !== "string" || !(/* @__PURE__ */ new Set(["active", "disabled"])).has(value)) {
+    throw new Error("status must be active or disabled");
+  }
+  return value;
+}
+function toDeviceRecord(payload10) {
+  return {
+    id: String(payload10.id),
+    name: payload10.name === void 0 || payload10.name === null ? null : String(payload10.name),
+    deviceKind: DEVICE_KINDS.has(payload10.device_kind) ? payload10.device_kind : "local",
+    hostKind: payload10.host_kind === "cloud" ? "cloud" : "local",
+    location: payload10.location === void 0 || payload10.location === null ? null : String(payload10.location),
+    tags: Array.isArray(payload10.tags) ? payload10.tags.map(String) : [],
+    health: normalizeHealth(payload10.health),
+    lastSeenAt: payload10.last_seen_at === void 0 || payload10.last_seen_at === null ? null : String(payload10.last_seen_at),
+    createdAt: String(payload10.created_at),
+    updatedAt: String(payload10.updated_at),
+    status: normalizeDeviceStatus(payload10.status)
+  };
+}
+function repoPayload(value) {
+  return value === null ? null : { remote_url: value.remoteUrl, commit: value.commit };
+}
+function toRecord2(payload10) {
+  return {
+    id: String(payload10.id),
+    deviceId: String(payload10.device_id ?? "local"),
+    deviceKind: DEVICE_KINDS.has(payload10.device_kind) ? payload10.device_kind : "local",
+    path: String(payload10.path),
+    description: String(payload10.description),
+    hostKind: payload10.host_kind === "cloud" ? "cloud" : "local",
+    repoIdentity: normalizeRepoIdentity(payload10.repo_identity ?? null),
+    useCount: Number(payload10.use_count ?? 0),
+    status: payload10.status === "promoted" ? "promoted" : payload10.status === "revoked" ? "revoked" : "observed",
+    createdAt: String(payload10.created_at),
+    updatedAt: String(payload10.updated_at),
+    lastUsedAt: payload10.last_used_at === void 0 || payload10.last_used_at === null ? null : String(payload10.last_used_at),
+    revokedBy: payload10.revoked_by === void 0 || payload10.revoked_by === null ? null : String(payload10.revoked_by),
+    revokedReason: payload10.revoked_reason === void 0 || payload10.revoked_reason === null ? null : String(payload10.revoked_reason),
+    concept_kind: payload10.concept_kind === void 0 || payload10.concept_kind === null ? null : String(payload10.concept_kind),
+    rationale: payload10.rationale === void 0 || payload10.rationale === null ? null : String(payload10.rationale)
+  };
+}
+function termMatch(haystack, needle) {
+  const terms4 = needle.toLowerCase().split(/\s+/u).filter(Boolean);
+  if (terms4.length === 0)
+    return false;
+  const lower = haystack.toLowerCase();
+  return terms4.every((term) => lower.includes(term));
+}
+function text35(value, name) {
+  if (typeof value !== "string" || !value.trim())
+    throw new Error(`${name} must be a non-empty string`);
+  return value.trim();
+}
+function boundedActor3(value, name) {
+  if (typeof value !== "string" || !value.trim())
+    throw new Error(`${name} must name the operator`);
+  const trimmed = value.trim();
+  if (trimmed.length > 120 || /[\r\n\0]/u.test(trimmed))
+    throw new Error(`${name} must be a single line, 120 chars or fewer`);
+  return trimmed;
+}
+function finiteLimit(value) {
+  if (value === void 0 || value === null || value === "")
+    return 50;
+  const parsed2 = Number(value);
+  if (!Number.isInteger(parsed2) || parsed2 < 1 || parsed2 > 1e3)
+    throw new Error("limit must be an integer between 1 and 1000");
+  return parsed2;
+}
+function deviceActive(store, deviceId) {
+  const record4 = store.find("device", deviceId);
+  return Boolean(record4 && record4.status === "active");
+}
+var FileDirDescRegistry = class {
+  store;
+  constructor(store) {
+    this.store = store;
+  }
+  /** Register or update device metadata. Disabled devices stop being recallable. */
+  registerDevice(args) {
+    const id24 = String(args.id ?? `device_${(0, import_node_crypto159.randomUUID)()}`);
+    const existing = this.store.find("device", id24);
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const deviceKind = normalizeDeviceKind(args.device_kind ?? (existing ? existing.device_kind : "local"));
+    const hostKind = normalizeHostKind(args.host_kind ?? (existing ? existing.host_kind : deviceKind === "cloud" ? "cloud" : "local"));
+    const tags2 = normalizeTags(args.tags);
+    const health = normalizeHealth(args.health);
+    const status2 = normalizeDeviceStatus(args.status ?? (existing ? existing.status : "active"));
+    if (existing) {
+      if (existing.status === "disabled" && status2 === "active")
+        throw new Error("a disabled device cannot be reactivated through registration; un-disable it first");
+      const payload11 = {
+        ...existing,
+        name: args.name === void 0 ? existing.name : args.name,
+        device_kind: deviceKind,
+        host_kind: hostKind,
+        location: args.location === void 0 ? existing.location : args.location,
+        tags: tags2,
+        health: args.health === void 0 ? existing.health : health,
+        status: status2,
+        last_seen_at: args.status === "active" ? now3 : existing.last_seen_at,
+        updated_at: now3
+      };
+      this.store.save("device", id24, payload11);
+      return toDeviceRecord(payload11);
+    }
+    const payload10 = {
+      id: id24,
+      name: args.name ?? null,
+      device_kind: deviceKind,
+      host_kind: hostKind,
+      location: args.location ?? null,
+      tags: tags2,
+      health,
+      last_seen_at: now3,
+      created_at: now3,
+      updated_at: now3,
+      status: status2
+    };
+    this.store.save("device", id24, payload10);
+    return toDeviceRecord(payload10);
+  }
+  /** Read one device's metadata. */
+  device(id24) {
+    const record4 = this.store.find("device", id24);
+    if (!record4)
+      return null;
+    return toDeviceRecord(record4);
+  }
+  /** Disable or re-enable a device; disabling stops its places from being recalled. */
+  setDeviceStatus(id24, status2) {
+    const existing = this.store.find("device", id24);
+    if (!existing)
+      throw new Error(`Unknown device: ${id24}`);
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const payload10 = {
+      ...existing,
+      status: status2,
+      updated_at: now3,
+      ...status2 === "disabled" ? { health: "offline", last_seen_at: existing.last_seen_at } : { health: "healthy", last_seen_at: now3 }
+    };
+    this.store.save("device", id24, payload10);
+    return toDeviceRecord(payload10);
+  }
+  /** List registered devices, optionally filtered by kind/host/status. */
+  listDevices(args = {}) {
+    const kind4 = args.device_kind === void 0 || args.device_kind === null ? null : normalizeDeviceKind(args.device_kind);
+    const hostKind = args.host_kind === void 0 || args.host_kind === null ? null : normalizeHostKind(args.host_kind);
+    const status2 = args.status === void 0 || args.status === null ? null : normalizeDeviceStatus(args.status);
+    const items2 = this.store.list("device", 1e3, (item) => {
+      const record4 = toDeviceRecord(item);
+      return (kind4 === null || record4.deviceKind === kind4) && (hostKind === null || record4.hostKind === hostKind) && (status2 === null || record4.status === status2);
+    }).map(toDeviceRecord).sort((a, b) => b.updatedAt < a.updatedAt ? 1 : -1);
+    return { items: items2 };
+  }
+  /** Disable a device so all its places stop being recallable, without deleting them. */
+  disableDevice(id24) {
+    return this.setDeviceStatus(id24, "disabled");
+  }
+  /** Re-enable a disabled device so its places become recallable again. */
+  enableDevice(id24) {
+    return this.setDeviceStatus(id24, "active");
+  }
+  /** Report health for one device. */
+  reportDeviceHealth(id24, health) {
+    const existing = this.store.find("device", id24);
+    if (!existing)
+      throw new Error(`Unknown device: ${id24}`);
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const payload10 = { ...existing, health, last_seen_at: now3, updated_at: now3 };
+    this.store.save("device", id24, payload10);
+    return toDeviceRecord(payload10);
+  }
+  /**
+   * Record (or reinforce) a directory↔description link. The first touch only
+   * "observes" the path; repeat uses bump the count and promote it once it
+   * crosses the threshold. An explicit `promote: true` forces promotion.
+   *
+   * This is the human-facing entry point: it is the one place where a
+   * description may be corrected. Automatic reinforcement must go through
+   * `observe`, which never rewrites the description.
+   */
+  record(args) {
+    const deviceId = normalizeDeviceId(args.device_id);
+    const deviceKind = normalizeDeviceKind(args.device_kind);
+    const path2 = normalizePath(args.path);
+    const description = normalizeDescription(args.description);
+    const hostKind = normalizeHostKind(args.host_kind);
+    const repoIdentity = normalizeRepoIdentity(args.repo_identity);
+    const conceptKind = args.concept_kind === void 0 || args.concept_kind === null ? null : String(args.concept_kind);
+    const rationale = args.rationale === void 0 || args.rationale === null ? null : normalizeDescription(args.rationale);
+    const forcePromote = args.promote === true;
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const deviceRecord = this.store.find("device", deviceId);
+    if (deviceRecord && String(deviceRecord.status) !== "active")
+      throw new Error(`device ${deviceId} is not active; enable it before recording places`);
+    const existing = this.store.list("file_dir_desc", Number.MAX_SAFE_INTEGER, (item) => item.path === path2 && String(item.device_id ?? "local") === deviceId)[0];
+    if (existing) {
+      const useCount2 = Number(existing.use_count ?? 0) + 1;
+      const withdrawn = existing.status === "revoked";
+      const promoted2 = !withdrawn && (forcePromote || useCount2 >= PROMOTION_USE_THRESHOLD);
+      const payload11 = {
+        ...existing,
+        device_id: deviceId,
+        device_kind: deviceKind,
+        description,
+        host_kind: hostKind,
+        repo_identity: repoPayload(repoIdentity),
+        use_count: useCount2,
+        status: withdrawn ? "revoked" : promoted2 ? "promoted" : "observed",
+        updated_at: now3,
+        last_used_at: now3,
+        concept_kind: conceptKind ?? existing.concept_kind,
+        rationale: rationale ?? existing.rationale
+      };
+      this.store.save("file_dir_desc", String(existing.id), payload11);
+      return toRecord2(payload11);
+    }
+    const id24 = String(args.id ?? `fdd_${(0, import_node_crypto159.randomUUID)()}`);
+    const useCount = 1;
+    const promoted = forcePromote || useCount >= PROMOTION_USE_THRESHOLD;
+    const payload10 = {
+      id: id24,
+      device_id: deviceId,
+      device_kind: deviceKind,
+      path: path2,
+      description,
+      host_kind: hostKind,
+      repo_identity: repoPayload(repoIdentity),
+      use_count: useCount,
+      status: promoted ? "promoted" : "observed",
+      created_at: now3,
+      updated_at: now3,
+      last_used_at: now3,
+      concept_kind: conceptKind ?? null,
+      rationale
+    };
+    this.store.save("file_dir_desc", id24, payload10);
+    return toRecord2(payload10);
+  }
+  /**
+   * Automatic reinforcement from real use (NEEDREAD 13.2: "使用过才会存，用的多
+   * 才会推到正式"). Unlike `record` this never rewrites the description - a later
+   * task title is not the meaning of a directory - and it refuses to inflate an
+   * entry that was withdrawn.
+   */
+  observe(args) {
+    const deviceId = normalizeDeviceId(args.device_id);
+    const deviceKind = normalizeDeviceKind(args.device_kind);
+    const path2 = normalizePath(args.path);
+    const hostKind = normalizeHostKind(args.host_kind);
+    const repoIdentity = normalizeRepoIdentity(args.repo_identity);
+    const conceptKind = args.concept_kind === void 0 || args.concept_kind === null ? null : String(args.concept_kind);
+    const rationale = args.rationale === void 0 || args.rationale === null ? null : normalizeDescription(args.rationale);
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const existing = this.store.list("file_dir_desc", Number.MAX_SAFE_INTEGER, (item) => item.path === path2 && String(item.device_id ?? "local") === deviceId)[0];
+    if (existing) {
+      const useCount = Number(existing.use_count ?? 0) + 1;
+      const withdrawn = existing.status === "revoked";
+      const promoted = !withdrawn && useCount >= PROMOTION_USE_THRESHOLD;
+      const payload11 = {
+        ...existing,
+        device_id: deviceId,
+        device_kind: deviceKind,
+        host_kind: hostKind,
+        repo_identity: repoPayload(repoIdentity) ?? existing.repo_identity ?? null,
+        use_count: useCount,
+        status: withdrawn ? "revoked" : promoted ? "promoted" : "observed",
+        updated_at: now3,
+        last_used_at: now3,
+        concept_kind: existing.concept_kind ?? conceptKind ?? null,
+        rationale: existing.rationale ?? rationale ?? null
+      };
+      this.store.save("file_dir_desc", String(existing.id), payload11);
+      return toRecord2(payload11);
+    }
+    const description = args.description === void 0 || args.description === null ? path2.split(/[\\/]/u).filter(Boolean).pop() ?? path2 : normalizeDescription(args.description);
+    const id24 = String(args.id ?? `fdd_${(0, import_node_crypto159.randomUUID)()}`);
+    const payload10 = {
+      id: id24,
+      device_id: deviceId,
+      device_kind: deviceKind,
+      path: path2,
+      description,
+      host_kind: hostKind,
+      repo_identity: repoPayload(repoIdentity),
+      use_count: 1,
+      status: "observed",
+      concept_kind: conceptKind ?? null,
+      rationale,
+      created_at: now3,
+      updated_at: now3,
+      last_used_at: now3
+    };
+    this.store.save("file_dir_desc", id24, payload10);
+    return toRecord2(payload10);
+  }
+  /**
+   * Relocate a directory after it moved (rename, clone, drive change). Identity
+   * and accumulated use survive; the previous path is kept for audit. A conflict
+   * with an existing entry for the new path is refused rather than merged away.
+   */
+  relocate(args) {
+    const id24 = text35(args.id, "id");
+    const toPath = normalizePath(args.path);
+    const existing = this.store.find("file_dir_desc", id24);
+    if (!existing)
+      throw new Error(`Unknown file_dir_desc: ${id24}`);
+    const deviceId = normalizeDeviceId(args.device_id ?? existing.device_id);
+    if (deviceId !== String(existing.device_id ?? "local"))
+      throw new Error("relocate cannot move a place to another device; record it on that device instead");
+    const conflict = this.store.list("file_dir_desc", Number.MAX_SAFE_INTEGER, (item) => item.path === toPath && String(item.device_id ?? "local") === deviceId && String(item.id) !== id24)[0];
+    if (conflict)
+      throw new Error(`another entry already describes ${toPath}; withdraw it first`);
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const payload10 = {
+      ...existing,
+      path: toPath,
+      relocated_from: String(existing.path),
+      relocated_at: now3,
+      updated_at: now3,
+      concept_kind: existing.concept_kind ?? null,
+      rationale: existing.rationale ?? null
+    };
+    this.store.save("file_dir_desc", id24, payload10);
+    return toRecord2(payload10);
+  }
+  /**
+   * Withdraw an entry. Revocation is attributed and keeps the record: a
+   * withdrawn directory must stop being recallable without losing the audit
+   * trail that would let it be corrected or revived deliberately.
+   */
+  revoke(args) {
+    const id24 = text35(args.id, "id");
+    const actor = boundedActor3(args.revoked_by, "revoked_by");
+    const reason = text35(args.reason, "reason");
+    const existing = this.store.find("file_dir_desc", id24);
+    if (!existing)
+      throw new Error(`Unknown file_dir_desc: ${id24}`);
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const conceptKind = args.concept_kind === void 0 || args.concept_kind === null ? null : String(args.concept_kind);
+    const rationale = args.rationale === void 0 || args.rationale === null ? null : normalizeDescription(args.rationale);
+    const payload10 = {
+      ...existing,
+      status: "revoked",
+      revoked_by: actor,
+      revoked_reason: reason,
+      revoked_at: now3,
+      updated_at: now3,
+      concept_kind: conceptKind,
+      rationale
+    };
+    this.store.save("file_dir_desc", id24, payload10);
+    return toRecord2(payload10);
+  }
+  /** Promote an observed entry regardless of use count (explicit user action). */
+  promote(args) {
+    const id24 = text35(args.id, "id");
+    const existing = this.store.find("file_dir_desc", id24);
+    if (!existing)
+      throw new Error(`Unknown file_dir_desc: ${id24}`);
+    const now3 = (/* @__PURE__ */ new Date()).toISOString();
+    const conceptKind = args.concept_kind === void 0 || args.concept_kind === null ? null : String(args.concept_kind);
+    const rationale = args.rationale === void 0 || args.rationale === null ? null : normalizeDescription(args.rationale);
+    this.store.save("file_dir_desc", id24, {
+      ...existing,
+      status: "promoted",
+      updated_at: now3,
+      revoked_by: null,
+      revoked_reason: null,
+      concept_kind: conceptKind ?? existing.concept_kind ?? null,
+      rationale: rationale ?? existing.rationale ?? null
+    });
+    const saved = this.store.find("file_dir_desc", id24);
+    if (!saved)
+      throw new Error(`Promoted entry ${id24} disappeared`);
+    return toRecord2(saved);
+  }
+  /**
+   * Bidirectional resolve. With `description`, return ranked matching places
+   * (only promoted entries on active devices are recallable; observed ones are
+   * too noisy). With `path`, return the names for that path.
+   *
+   * Recall is device-scoped by default: a place on another machine is not
+   * returned unless the caller either asks for that device explicitly or the
+   * record carries a repository identity that matches `repo_identity`. That is
+   * the only case where two devices legitimately describe the same place.
+   */
+  resolve(args) {
+    if (args.description !== void 0 && args.description !== null) {
+      const description = normalizeDescription(args.description);
+      const limit3 = finiteLimit(args.limit);
+      const deviceId = args.device_id === void 0 || args.device_id === null ? null : normalizeDeviceId(args.device_id);
+      const repoIdentity = normalizeRepoIdentity(args.repo_identity);
+      const matches4 = this.store.list("file_dir_desc", 1e3, (item) => item.status === "promoted" && termMatch(String(item.description), description) && (deviceId === null ? true : String(item.device_id ?? "local") === deviceId) && (repoIdentity === null ? true : sameRepo(item.repo_identity, repoIdentity)) && (String(item.status) !== "revoked" ? deviceActive(this.store, String(item.device_id ?? "local")) : true)).map(toRecord2).sort((a, b) => b.useCount - a.useCount);
+      return { kind: "by_description", query: description, results: matches4.slice(0, limit3) };
+    }
+    if (args.path !== void 0 && args.path !== null) {
+      const path2 = normalizePath(args.path);
+      const deviceId = args.device_id === void 0 || args.device_id === null ? null : normalizeDeviceId(args.device_id);
+      const entries2 = this.store.list("file_dir_desc", 1e3, (item) => item.path === path2 && (deviceId === null ? true : String(item.device_id ?? "local") === deviceId) && (String(item.status) !== "revoked" ? deviceActive(this.store, String(item.device_id ?? "local")) : true)).map(toRecord2);
+      return { kind: "by_path", path: path2, results: entries2 };
+    }
+    throw new Error("resolve requires description or path");
+  }
+  list(args = {}) {
+    const status2 = args.status === "observed" || args.status === "promoted" || args.status === "revoked" ? args.status : null;
+    const hostKind = args.host_kind === "cloud" ? "cloud" : args.host_kind === "local" ? "local" : null;
+    const deviceId = args.device_id === void 0 || args.device_id === null ? null : normalizeDeviceId(args.device_id);
+    const limit3 = finiteLimit(args.limit);
+    const items2 = this.store.list("file_dir_desc", Number.MAX_SAFE_INTEGER, (item) => (status2 === null || item.status === status2) && (hostKind === null || (hostKind === "cloud" ? item.host_kind === "cloud" : item.host_kind !== "cloud")) && (deviceId === null || String(item.device_id ?? "local") === deviceId)).map(toRecord2).sort((a, b) => b.useCount - a.useCount || (a.updatedAt < b.updatedAt ? 1 : -1));
+    return { items: items2.slice(0, limit3) };
+  }
+};
+function sameRepo(value, expected) {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    return false;
+  const item = value;
+  const remote = String(item.remote_url ?? "").trim().replace(/\.git$/iu, "").replace(/\/+$/u, "");
+  const wanted = expected.remoteUrl.trim().replace(/\.git$/iu, "").replace(/\/+$/u, "");
+  return remote === wanted;
 }
 function normalizeRepoIdentity(value) {
   if (value === void 0 || value === null)
@@ -93322,276 +94338,6 @@ function normalizeHostKind(value) {
     return "cloud";
   throw new Error("host_kind must be local or cloud");
 }
-function toRecord(payload10) {
-  return {
-    id: String(payload10.id),
-    deviceId: String(payload10.device_id ?? "local"),
-    deviceKind: DEVICE_KINDS.has(payload10.device_kind) ? payload10.device_kind : "local",
-    path: String(payload10.path),
-    description: String(payload10.description),
-    hostKind: payload10.host_kind === "cloud" ? "cloud" : "local",
-    repoIdentity: normalizeRepoIdentity(payload10.repo_identity ?? null),
-    useCount: Number(payload10.use_count ?? 0),
-    status: payload10.status === "promoted" ? "promoted" : payload10.status === "revoked" ? "revoked" : "observed",
-    createdAt: String(payload10.created_at),
-    updatedAt: String(payload10.updated_at),
-    lastUsedAt: payload10.last_used_at === null || payload10.last_used_at === void 0 ? null : String(payload10.last_used_at),
-    revokedBy: payload10.revoked_by === void 0 || payload10.revoked_by === null ? null : String(payload10.revoked_by),
-    revokedReason: payload10.revoked_reason === void 0 || payload10.revoked_reason === null ? null : String(payload10.revoked_reason)
-  };
-}
-function termMatch(haystack, needle) {
-  const terms4 = needle.toLowerCase().split(/\s+/u).filter(Boolean);
-  if (terms4.length === 0)
-    return false;
-  const lower = haystack.toLowerCase();
-  return terms4.every((term) => lower.includes(term));
-}
-var FileDirDescRegistry = class {
-  store;
-  constructor(store) {
-    this.store = store;
-  }
-  /**
-   * Record (or reinforce) a directory↔description link. The first touch only
-   * "observes" the path; repeat uses bump the count and promote it once it
-   * crosses the threshold. An explicit `promote: true` forces promotion.
-   *
-   * This is the human-facing entry point: it is the one place where a
-   * description may be corrected. Automatic reinforcement must go through
-   * `observe`, which never rewrites the description.
-   */
-  record(args) {
-    const deviceId = normalizeDeviceId(args.device_id);
-    const deviceKind = normalizeDeviceKind(args.device_kind);
-    const path2 = normalizePath(args.path);
-    const description = normalizeDescription(args.description);
-    const hostKind = normalizeHostKind(args.host_kind);
-    const repoIdentity = normalizeRepoIdentity(args.repo_identity);
-    const forcePromote = args.promote === true;
-    const now3 = (/* @__PURE__ */ new Date()).toISOString();
-    const existing = this.store.list("file_dir_desc", Number.MAX_SAFE_INTEGER, (item) => item.path === path2 && String(item.device_id ?? "local") === deviceId)[0];
-    if (existing) {
-      const useCount2 = Number(existing.use_count ?? 0) + 1;
-      const withdrawn = existing.status === "revoked";
-      const promoted2 = !withdrawn && (forcePromote || useCount2 >= PROMOTION_USE_THRESHOLD);
-      const payload11 = {
-        ...existing,
-        device_id: deviceId,
-        device_kind: deviceKind,
-        description,
-        host_kind: hostKind,
-        repo_identity: repoPayload(repoIdentity),
-        use_count: useCount2,
-        status: withdrawn ? "revoked" : promoted2 ? "promoted" : "observed",
-        updated_at: now3,
-        last_used_at: now3
-      };
-      this.store.save("file_dir_desc", String(existing.id), payload11);
-      return toRecord(payload11);
-    }
-    const id24 = String(args.id ?? `fdd_${(0, import_node_crypto157.randomUUID)()}`);
-    const useCount = 1;
-    const promoted = forcePromote || useCount >= PROMOTION_USE_THRESHOLD;
-    const payload10 = {
-      id: id24,
-      device_id: deviceId,
-      device_kind: deviceKind,
-      path: path2,
-      description,
-      host_kind: hostKind,
-      repo_identity: repoPayload(repoIdentity),
-      use_count: useCount,
-      status: promoted ? "promoted" : "observed",
-      created_at: now3,
-      updated_at: now3,
-      last_used_at: now3
-    };
-    this.store.save("file_dir_desc", id24, payload10);
-    return toRecord(payload10);
-  }
-  /**
-   * Automatic reinforcement from real use (NEEDREAD 13.2: "使用过才会存，用的多
-   * 才会推到正式"). Unlike `record` this never rewrites the description - a later
-   * task title is not the meaning of a directory - and it refuses to inflate an
-   * entry that was withdrawn.
-   */
-  observe(args) {
-    const deviceId = normalizeDeviceId(args.device_id);
-    const deviceKind = normalizeDeviceKind(args.device_kind);
-    const path2 = normalizePath(args.path);
-    const hostKind = normalizeHostKind(args.host_kind);
-    const repoIdentity = normalizeRepoIdentity(args.repo_identity);
-    const now3 = (/* @__PURE__ */ new Date()).toISOString();
-    const existing = this.store.list("file_dir_desc", Number.MAX_SAFE_INTEGER, (item) => item.path === path2 && String(item.device_id ?? "local") === deviceId)[0];
-    if (existing) {
-      const useCount = Number(existing.use_count ?? 0) + 1;
-      const withdrawn = existing.status === "revoked";
-      const promoted = !withdrawn && useCount >= PROMOTION_USE_THRESHOLD;
-      const payload11 = {
-        ...existing,
-        device_id: deviceId,
-        device_kind: deviceKind,
-        host_kind: hostKind,
-        repo_identity: repoPayload(repoIdentity) ?? existing.repo_identity ?? null,
-        use_count: useCount,
-        status: withdrawn ? "revoked" : promoted ? "promoted" : "observed",
-        updated_at: now3,
-        last_used_at: now3
-      };
-      this.store.save("file_dir_desc", String(existing.id), payload11);
-      return toRecord(payload11);
-    }
-    const description = args.description === void 0 || args.description === null ? path2.split(/[\\/]/u).filter(Boolean).pop() ?? path2 : normalizeDescription(args.description);
-    const id24 = String(args.id ?? `fdd_${(0, import_node_crypto157.randomUUID)()}`);
-    const payload10 = {
-      id: id24,
-      device_id: deviceId,
-      device_kind: deviceKind,
-      path: path2,
-      description,
-      host_kind: hostKind,
-      repo_identity: repoPayload(repoIdentity),
-      use_count: 1,
-      status: "observed",
-      created_at: now3,
-      updated_at: now3,
-      last_used_at: now3
-    };
-    this.store.save("file_dir_desc", id24, payload10);
-    return toRecord(payload10);
-  }
-  /**
-   * Relocate a directory after it moved (rename, clone, drive change). Identity
-   * and accumulated use survive; the previous path is kept for audit. A conflict
-   * with an existing entry for the new path is refused rather than merged away.
-   */
-  relocate(args) {
-    const id24 = text34(args.id, "id");
-    const toPath = normalizePath(args.path);
-    const existing = this.store.find("file_dir_desc", id24);
-    if (!existing)
-      throw new Error(`Unknown file_dir_desc: ${id24}`);
-    const deviceId = normalizeDeviceId(args.device_id ?? existing.device_id);
-    if (deviceId !== String(existing.device_id ?? "local"))
-      throw new Error("relocate cannot move a place to another device; record it on that device instead");
-    const conflict = this.store.list("file_dir_desc", Number.MAX_SAFE_INTEGER, (item) => item.path === toPath && String(item.device_id ?? "local") === deviceId && String(item.id) !== id24)[0];
-    if (conflict)
-      throw new Error(`another entry already describes ${toPath}; withdraw it first`);
-    const now3 = (/* @__PURE__ */ new Date()).toISOString();
-    const payload10 = { ...existing, path: toPath, relocated_from: String(existing.path), relocated_at: now3, updated_at: now3 };
-    this.store.save("file_dir_desc", id24, payload10);
-    return toRecord(payload10);
-  }
-  /**
-   * Withdraw an entry. Revocation is attributed and keeps the record: a
-   * withdrawn directory must stop being recallable without losing the audit
-   * trail that would let it be corrected or revived deliberately.
-   */
-  revoke(args) {
-    const id24 = text34(args.id, "id");
-    const actor = boundedActor2(args.revoked_by, "revoked_by");
-    const reason = text34(args.reason, "reason");
-    const existing = this.store.find("file_dir_desc", id24);
-    if (!existing)
-      throw new Error(`Unknown file_dir_desc: ${id24}`);
-    const now3 = (/* @__PURE__ */ new Date()).toISOString();
-    const payload10 = {
-      ...existing,
-      status: "revoked",
-      revoked_by: actor,
-      revoked_reason: reason,
-      revoked_at: now3,
-      updated_at: now3
-    };
-    this.store.save("file_dir_desc", id24, payload10);
-    return toRecord(payload10);
-  }
-  /** Promote an observed entry regardless of use count (explicit user action). */
-  promote(args) {
-    const id24 = text34(args.id, "id");
-    const existing = this.store.find("file_dir_desc", id24);
-    if (!existing)
-      throw new Error(`Unknown file_dir_desc: ${id24}`);
-    const now3 = (/* @__PURE__ */ new Date()).toISOString();
-    const payload10 = {
-      ...existing,
-      status: "promoted",
-      updated_at: now3,
-      revoked_by: null,
-      revoked_reason: null
-    };
-    this.store.save("file_dir_desc", id24, payload10);
-    return toRecord(payload10);
-  }
-  /**
-   * Bidirectional resolve. With `description`, return ranked matching places
-   * (only promoted entries are recallable; observed ones are too noisy). With
-   * `path`, return the names for that path.
-   *
-   * Recall is device-scoped by default: a place on another machine is not
-   * returned unless the caller either asks for that device explicitly or the
-   * record carries a repository identity that matches `repo_identity`. That is
-   * the only case where two devices legitimately describe the same place.
-   */
-  resolve(args) {
-    if (args.description !== void 0 && args.description !== null) {
-      const description = normalizeDescription(args.description);
-      const limit3 = finiteLimit(args.limit);
-      const deviceId = args.device_id === void 0 || args.device_id === null ? null : normalizeDeviceId(args.device_id);
-      const repoIdentity = normalizeRepoIdentity(args.repo_identity);
-      const matches4 = this.store.list("file_dir_desc", 1e3, (item) => item.status === "promoted" && termMatch(String(item.description), description) && (deviceId === null ? true : String(item.device_id ?? "local") === deviceId) && (repoIdentity === null ? true : sameRepo(item.repo_identity, repoIdentity))).map(toRecord).sort((a, b) => b.useCount - a.useCount);
-      return { kind: "by_description", query: description, results: matches4.slice(0, limit3) };
-    }
-    if (args.path !== void 0 && args.path !== null) {
-      const path2 = normalizePath(args.path);
-      const deviceId = args.device_id === void 0 || args.device_id === null ? null : normalizeDeviceId(args.device_id);
-      const entries2 = this.store.list("file_dir_desc", 1e3, (item) => item.path === path2 && (deviceId === null ? true : String(item.device_id ?? "local") === deviceId)).map(toRecord);
-      return { kind: "by_path", path: path2, results: entries2 };
-    }
-    throw new Error("resolve requires description or path");
-  }
-  list(args = {}) {
-    const status2 = args.status === "observed" || args.status === "promoted" || args.status === "revoked" ? args.status : null;
-    const hostKind = args.host_kind === "cloud" ? "cloud" : args.host_kind === "local" ? "local" : null;
-    const deviceId = args.device_id === void 0 || args.device_id === null ? null : normalizeDeviceId(args.device_id);
-    const limit3 = finiteLimit(args.limit);
-    const items2 = this.store.list("file_dir_desc", Number.MAX_SAFE_INTEGER, (item) => (status2 === null || item.status === status2) && (hostKind === null || (hostKind === "cloud" ? item.host_kind === "cloud" : item.host_kind !== "cloud")) && (deviceId === null || String(item.device_id ?? "local") === deviceId)).map(toRecord).sort((a, b) => b.useCount - a.useCount || (a.updatedAt < b.updatedAt ? 1 : -1));
-    return { items: items2.slice(0, limit3) };
-  }
-};
-function text34(value, name) {
-  if (typeof value !== "string" || !value.trim())
-    throw new Error(`${name} must be a non-empty string`);
-  return value.trim();
-}
-function sameRepo(value, expected) {
-  if (!value || typeof value !== "object" || Array.isArray(value))
-    return false;
-  const item = value;
-  const remote = String(item.remote_url ?? "").trim().replace(/\.git$/iu, "").replace(/\/+$/u, "");
-  const wanted = expected.remoteUrl.trim().replace(/\.git$/iu, "").replace(/\/+$/u, "");
-  return remote === wanted;
-}
-function repoPayload(value) {
-  return value === null ? null : { remote_url: value.remoteUrl, commit: value.commit };
-}
-function boundedActor2(value, name) {
-  if (typeof value !== "string" || !value.trim())
-    throw new Error(`${name} must name the operator`);
-  const trimmed = value.trim();
-  if (trimmed.length > 120 || /[\r\n\0]/u.test(trimmed))
-    throw new Error(`${name} must be a single line, 120 chars or fewer`);
-  return trimmed;
-}
-function finiteLimit(value) {
-  if (value === void 0 || value === null || value === "")
-    return 50;
-  const parsed2 = Number(value);
-  if (!Number.isInteger(parsed2) || parsed2 < 1 || parsed2 > 1e3)
-    throw new Error("limit must be an integer between 1 and 1000");
-  return parsed2;
-}
 
 // core/context-directory.ts
 function resolveContextDirectory(registry2, args) {
@@ -93623,388 +94369,6 @@ function resolveContextDirectory(registry2, args) {
     coverage: "bounded_registry_lookup",
     access_granted: false
   };
-}
-
-// core/mod-registry.ts
-var import_node_crypto158 = require("node:crypto");
-var import_node_crypto159 = require("node:crypto");
-init_store2();
-function regressionDigest(id24, body3, cases) {
-  return (0, import_node_crypto159.createHash)("sha256").update(JSON.stringify({ id: id24, body: body3, cases })).digest("hex");
-}
-var FORBIDDEN_MOD_PHRASES = [
-  { id: "mod.shadow.no_ignore_safety", pattern: /ignore\s+(all\s+)?(safety|security|rules|instructions)/iu },
-  { id: "mod.shadow.no_disable_approval", pattern: /(disable|skip|bypass)\s+(human\s+)?(approval|authorization|review)/iu },
-  { id: "mod.shadow.no_secret_exfiltration", pattern: /(exfiltrat|send\s+.*(secret|credential|api.?key)\s+.*(out|external)|upload\s+.*(secret|credential))/iu }
-];
-var STATUS_RANK = { draft: 0, pending: 1, active: 2, revoked: 3 };
-function normalizeScopeKind(value) {
-  if (value === "project") return "project";
-  if (value === "task") return "task";
-  if (value === void 0 || value === null || value === "global") return "global";
-  throw new Error("scope_kind must be global, project or task");
-}
-function normalizeAppliesTo(value) {
-  if (value === "reviewer") return "reviewer";
-  if (value === "all") return "all";
-  if (value === void 0 || value === null || value === "worker") return "worker";
-  throw new Error("applies_to must be worker, reviewer or all");
-}
-function normalizeStatus(value) {
-  if (value === "draft" || value === "pending" || value === "active" || value === "revoked") return value;
-  if (value === void 0 || value === null) return "draft";
-  throw new Error("status must be draft, pending, active or revoked");
-}
-function toRecord2(payload10) {
-  return {
-    id: String(payload10.id),
-    name: String(payload10.name ?? payload10.id),
-    body: String(payload10.body ?? ""),
-    scopeKind: payload10.scope_kind === "project" ? "project" : payload10.scope_kind === "task" ? "task" : "global",
-    scopeId: String(payload10.scope_id ?? "global"),
-    appliesTo: payload10.applies_to === "reviewer" ? "reviewer" : payload10.applies_to === "all" ? "all" : "worker",
-    status: normalizeStatus(payload10.status),
-    enabled: payload10.enabled === true,
-    version: Number(payload10.version ?? 1),
-    createdAt: String(payload10.created_at),
-    updatedAt: String(payload10.updated_at),
-    approvedBy: payload10.approved_by === void 0 || payload10.approved_by === null ? null : String(payload10.approved_by),
-    approvedAt: payload10.approved_at === void 0 || payload10.approved_at === null ? null : String(payload10.approved_at),
-    rolledBackFrom: payload10.rolled_back_from === void 0 || payload10.rolled_back_from === null ? null : Number(payload10.rolled_back_from),
-    rolledBackTo: payload10.rolled_back_to === void 0 || payload10.rolled_back_to === null ? null : Number(payload10.rolled_back_to),
-    pluginId: payload10.plugin_id === void 0 || payload10.plugin_id === null ? null : String(payload10.plugin_id),
-    selfEvolved: payload10.self_evolved === true,
-    failureClass: payload10.failure_class === void 0 || payload10.failure_class === null ? null : String(payload10.failure_class),
-    evidenceId: payload10.evidence_id === void 0 || payload10.evidence_id === null ? null : String(payload10.evidence_id),
-    shadowTest: payload10.shadow_test === void 0 || payload10.shadow_test === null ? null : String(payload10.shadow_test),
-    shadowRegressionSet: payload10.shadow_regression_set === void 0 || payload10.shadow_regression_set === null ? null : String(payload10.shadow_regression_set)
-  };
-}
-var ModRegistry = class {
-  store;
-  constructor(store) {
-    this.store = store;
-  }
-  /**
-   * 自进化：把一条已归因的失败蒸馏为 Mod 候选。
-   *
-   * Honest boundary: this is pure engineering (no model call). The attribution
-   * already named a cause + remedy; we turn that into a structured rule draft,
-   * attach the evidence, and hold it as `pending` until a shadow test passes.
-   * An `unattributed` failure can never produce a rule — guessing a cause is
-   * worse than admitting we do not know one.
-   */
-  proposeFromAttribution(args) {
-    const failureClass = text35(args.failure_class, "failure_class");
-    if (failureClass === "unattributed") throw new Error("an unattributed failure cannot produce a Mod rule");
-    const remedy = bodyText(args.remedy ?? "");
-    const evidenceId = args.evidence_id === void 0 || args.evidence_id === null ? null : text35(args.evidence_id, "evidence_id");
-    const scopeKind = normalizeScopeKind(args.scope_kind ?? "global");
-    const scopeId = scopeKind === "global" ? "global" : text35(args.scope_id, "scope_id");
-    const now3 = (/* @__PURE__ */ new Date()).toISOString();
-    const id24 = String(args.id ?? `mod_${(0, import_node_crypto158.randomUUID)()}`);
-    const rule = [
-      `# Rule ${failureClass}`,
-      `When a ${failureClass} failure is attributed, apply this remedy:`,
-      remedy || "consult the failure attribution evidence before repeating the action."
-    ].join("\n");
-    const payload10 = {
-      id: id24,
-      name: `auto:${failureClass}`,
-      body: rule,
-      scope_kind: scopeKind,
-      scope_id: scopeId,
-      applies_to: "worker",
-      status: "pending",
-      enabled: false,
-      version: 1,
-      created_at: now3,
-      updated_at: now3,
-      approved_by: null,
-      approved_at: null,
-      self_evolved: true,
-      failure_class: failureClass,
-      evidence_id: evidenceId,
-      shadow_test: "pending"
-    };
-    this.store.save("mod", id24, payload10);
-    return toRecord2(payload10);
-  }
-  /**
-   * Run the fixed, model-free regression set against a candidate Mod.
-   *
-   * The four checks answer the only questions a cognitive overlay can break:
-   * is the candidate still inert while pending, is its body usable, does a
-   * plugin-bound rule leak in without that plugin, and did the shadow run
-   * leave the real Worker context untouched? Nothing calls a model, so the
-   * gate costs 0 tokens and cannot be flattered by a good answer.
-   */
-  runShadowRegression(id24) {
-    const candidate2 = this.store.find("mod", id24);
-    if (!candidate2) throw new Error(`Unknown mod: ${id24}`);
-    const body3 = String(candidate2.body ?? "");
-    const pluginId = candidate2.plugin_id === void 0 || candidate2.plugin_id === null ? null : String(candidate2.plugin_id);
-    const scopeKind = String(candidate2.scope_kind ?? "global");
-    const scopeId = String(candidate2.scope_id ?? "global");
-    const before = this.modSystemOverlay({ kind: scopeKind, id: scopeId }, "worker", []);
-    const cases = [];
-    const inert = candidate2.status !== "active";
-    cases.push({
-      case_id: "mod.shadow.inert_while_pending",
-      verdict: inert ? "passed" : "failed",
-      detail: inert ? "\u5019\u9009\u5728\u5F71\u5B50\u6D4B\u8BD5\u671F\u95F4\u672A\u751F\u6548" : "\u5019\u9009\u5DF2\u751F\u6548\uFF0C\u5F71\u5B50\u6D4B\u8BD5\u65E0\u6CD5\u9A8C\u8BC1\u6CE8\u5165\u524D\u72B6\u6001"
-    });
-    const simulated = this.modSystemOverlay({ kind: scopeKind, id: scopeId }, "worker", []);
-    cases.push({
-      case_id: "mod.shadow.body_non_empty",
-      verdict: body3.trim() ? "passed" : "failed",
-      detail: body3.trim() ? "\u89C4\u5219\u6B63\u6587\u975E\u7A7A" : "\u89C4\u5219\u6B63\u6587\u4E3A\u7A7A"
-    });
-    cases.push({
-      case_id: "mod.shadow.no_plugin_leak",
-      verdict: simulated.includes(body3) ? "failed" : "passed",
-      detail: pluginId ? "\u63D2\u4EF6\u7ED1\u5B9A\u89C4\u5219\u672A\u5728\u672A\u6302\u8F7D\u65F6\u6CC4\u6F0F" : "\u65E0\u63D2\u4EF6\u7ED1\u5B9A\uFF0C\u5019\u9009\u6B63\u6587\u4ECD\u672A\u6CE8\u5165"
-    });
-    cases.push({
-      case_id: "mod.shadow.overlay_unchanged",
-      verdict: simulated === before ? "passed" : "failed",
-      detail: simulated === before ? "\u5F71\u5B50\u8FD0\u884C\u672A\u6539\u53D8\u73B0\u6709 Worker \u4E0A\u4E0B\u6587" : "\u5F71\u5B50\u8FD0\u884C\u6C61\u67D3\u4E86\u73B0\u6709\u4E0A\u4E0B\u6587"
-    });
-    for (const invariant of FORBIDDEN_MOD_PHRASES) {
-      cases.push({
-        case_id: invariant.id,
-        verdict: invariant.pattern.test(body3) ? "failed" : "passed",
-        detail: invariant.pattern.test(body3) ? `\u5019\u9009\u6B63\u6587\u8FDD\u53CD\u56FA\u5B9A\u4E0D\u53D8\u91CF ${invariant.id}` : `\u5019\u9009\u6B63\u6587\u672A\u8FDD\u53CD ${invariant.id}`
-      });
-    }
-    const projected = `${before}
-# Mod: ${String(candidate2.name ?? id24)}
-${body3}`.trim();
-    cases.push({
-      case_id: "mod.shadow.candidate_is_observable",
-      verdict: body3.trim() && projected.includes(body3.trim()) && projected !== before ? "passed" : "failed",
-      detail: body3.trim() && projected.includes(body3.trim()) ? "\u5019\u9009\u6B63\u6587\u5728\u5F71\u5B50\u6CE8\u5165\u4E2D\u786E\u5B9E\u53EF\u89C2\u6D4B" : "\u5019\u9009\u6B63\u6587\u65E0\u6CD5\u5728\u5F71\u5B50\u6CE8\u5165\u4E2D\u88AB\u89C2\u6D4B"
-    });
-    const failed = cases.filter((item) => item.verdict === "failed");
-    return {
-      verdict: failed.length ? "failed" : "passed",
-      cases,
-      failed: failed.length,
-      model_calls: 0,
-      suite: "mod.shadow.v2",
-      candidate_digest: regressionDigest(id24, body3, cases)
-    };
-  }
-  /** Gate entry: only a real run may mark the candidate as passing. */
-  evaluateShadowTest(args) {
-    const id24 = text35(args.id, "id");
-    const existing = this.store.find("mod", id24);
-    if (!existing) throw new Error(`Unknown mod: ${id24}`);
-    if (existing.self_evolved !== true) throw new Error("shadow tests apply only to self-evolved Mod candidates");
-    const result2 = this.runShadowRegression(id24);
-    const now3 = (/* @__PURE__ */ new Date()).toISOString();
-    const saved = this.store.save("mod", id24, {
-      ...existing,
-      shadow_test: result2.verdict,
-      shadow_regression_set: String(result2.suite),
-      shadow_cases: result2.cases,
-      shadow_failed: result2.failed,
-      shadow_model_calls: 0,
-      shadow_tested_at: now3,
-      // Provenance: a passing gate is only ever written by a real run and is
-      // bound to the exact candidate body + case outcomes it graded.
-      shadow_provenance: result2.verdict === "passed" ? String(result2.candidate_digest) : null,
-      shadow_body_digest: regressionDigest(id24, String(existing.body ?? ""), []),
-      updated_at: now3
-    });
-    return { ...toRecord2(saved), regression: result2 };
-  }
-  recordShadowTest(args) {
-    const id24 = text35(args.id, "id");
-    const existing = this.store.find("mod", id24);
-    if (!existing) throw new Error(`Unknown mod: ${id24}`);
-    if (existing.self_evolved !== true) throw new Error("shadow tests apply only to self-evolved Mod candidates");
-    const verdict = text35(args.verdict, "verdict");
-    if (verdict !== "passed" && verdict !== "failed") throw new Error("verdict must be passed or failed");
-    if (verdict === "passed") throw new Error("a passing shadow test must come from a real regression run; use /mods/shadow-test/run");
-    const regressionSet = text35(args.regression_set, "regression_set");
-    const now3 = (/* @__PURE__ */ new Date()).toISOString();
-    const payload10 = {
-      ...existing,
-      shadow_test: verdict,
-      shadow_regression_set: regressionSet,
-      shadow_provenance: null,
-      shadow_tested_at: now3,
-      updated_at: now3
-    };
-    this.store.save("mod", id24, payload10);
-    return toRecord2(payload10);
-  }
-  create(args) {
-    const name = text35(args.name, "name");
-    const body3 = bodyText(args.body);
-    const scopeKind = normalizeScopeKind(args.scope_kind);
-    const scopeId = scopeKind === "global" ? "global" : text35(args.scope_id, "scope_id");
-    const appliesTo = normalizeAppliesTo(args.applies_to);
-    const pluginId = args.plugin_id === void 0 || args.plugin_id === null ? null : text35(args.plugin_id, "plugin_id");
-    const now3 = (/* @__PURE__ */ new Date()).toISOString();
-    const id24 = String(args.id ?? `mod_${(0, import_node_crypto158.randomUUID)()}`);
-    const payload10 = {
-      id: id24,
-      name,
-      body: body3,
-      scope_kind: scopeKind,
-      scope_id: scopeId,
-      applies_to: appliesTo,
-      status: "draft",
-      enabled: false,
-      version: 1,
-      created_at: now3,
-      updated_at: now3,
-      approved_by: null,
-      approved_at: null,
-      ...pluginId === null ? {} : { plugin_id: pluginId }
-    };
-    this.store.save("mod", id24, payload10);
-    return toRecord2(payload10);
-  }
-  update(args) {
-    const id24 = text35(args.id, "id");
-    const existing = this.store.find("mod", id24);
-    if (!existing) throw new Error(`Unknown mod: ${id24}`);
-    if (existing.status === "active") throw new Error("cannot edit an active mod; revoke and recreate it");
-    const now3 = (/* @__PURE__ */ new Date()).toISOString();
-    const payload10 = {
-      ...existing,
-      ...args.name !== void 0 ? { name: text35(args.name, "name") } : {},
-      ...args.body !== void 0 ? { body: bodyText(args.body) } : {},
-      ...args.scope_kind !== void 0 ? { scope_kind: normalizeScopeKind(args.scope_kind) } : {},
-      ...args.scope_id !== void 0 && normalizeScopeKind(args.scope_kind === void 0 ? existing.scope_kind : args.scope_kind) !== "global" ? { scope_id: text35(args.scope_id, "scope_id") } : {},
-      ...args.applies_to !== void 0 ? { applies_to: normalizeAppliesTo(args.applies_to) } : {},
-      version: Number(existing.version ?? 1) + 1,
-      updated_at: now3
-    };
-    this.store.save("mod", id24, payload10);
-    return toRecord2(payload10);
-  }
-  /** Move a draft/pending Mod to active; only an operator-signed approval lands. */
-  approve(args) {
-    const id24 = text35(args.id, "id");
-    const actor = boundedActor3(args.approved_by, "approved_by");
-    const existing = this.store.find("mod", id24);
-    if (!existing) throw new Error(`Unknown mod: ${id24}`);
-    if (existing.self_evolved === true && existing.shadow_test !== "passed") {
-      throw new Error("a self-evolved Mod requires a passing shadow test before approval");
-    }
-    if (existing.self_evolved === true) {
-      const expected = regressionDigest(id24, String(existing.body ?? ""), []);
-      const bodyDigest2 = existing.shadow_body_digest === void 0 || existing.shadow_body_digest === null ? null : String(existing.shadow_body_digest);
-      const provenance2 = existing.shadow_provenance === void 0 || existing.shadow_provenance === null ? null : String(existing.shadow_provenance);
-      if (!provenance2 || !bodyDigest2 || bodyDigest2 !== expected) {
-        throw new Error("a self-evolved Mod requires a passing shadow test bound to its current body");
-      }
-    }
-    const now3 = (/* @__PURE__ */ new Date()).toISOString();
-    const payload10 = { ...existing, status: "active", enabled: true, approved_by: actor, approved_at: now3, updated_at: now3 };
-    this.store.save("mod", id24, payload10);
-    return toRecord2(payload10);
-  }
-  enable(args) {
-    return this.#setEnabled(args, true);
-  }
-  disable(args) {
-    return this.#setEnabled(args, false);
-  }
-  #setEnabled(args, enabled) {
-    const id24 = text35(args.id, "id");
-    const existing = this.store.find("mod", id24);
-    if (!existing) throw new Error(`Unknown mod: ${id24}`);
-    const now3 = (/* @__PURE__ */ new Date()).toISOString();
-    const payload10 = { ...existing, enabled, updated_at: now3 };
-    this.store.save("mod", id24, payload10);
-    return toRecord2(payload10);
-  }
-  revoke(args) {
-    const id24 = text35(args.id, "id");
-    const existing = this.store.find("mod", id24);
-    if (!existing) throw new Error(`Unknown mod: ${id24}`);
-    const now3 = (/* @__PURE__ */ new Date()).toISOString();
-    const payload10 = { ...existing, status: "revoked", enabled: false, updated_at: now3 };
-    this.store.save("mod", id24, payload10);
-    return toRecord2(payload10);
-  }
-  /**
-   * Git 风格回滚：把一条 Mod 恢复到某个历史稳定版本，写为一个新版本而不是
-   * 抹掉历史。审批签名与影子测试状态一并恢复，回滚本身留痕（rolled_back_from）。
-   */
-  rollback(args) {
-    const id24 = text35(args.id, "id");
-    const target2 = Number(args.to_version);
-    if (!Number.isInteger(target2) || target2 < 1) throw new Error("to_version must be a positive integer");
-    const current2 = this.store.find("mod", id24);
-    if (!current2) throw new Error(`Unknown mod: ${id24}`);
-    const historical = this.store.find("mod", id24, target2);
-    if (!historical) throw new Error(`Mod ${id24} has no version ${target2}`);
-    if (Number(historical.version) >= Number(current2.version)) throw new Error("to_version must be older than the current version");
-    const now3 = (/* @__PURE__ */ new Date()).toISOString();
-    const { id: _id, version: _version, created_at: _created, updated_at: _updated, ...body3 } = historical;
-    const payload10 = {
-      ...body3,
-      id: id24,
-      version: Number(current2.version) + 1,
-      created_at: String(current2.created_at),
-      updated_at: now3,
-      rolled_back_from: Number(current2.version),
-      rolled_back_to: target2,
-      rolled_back_at: now3
-    };
-    this.store.save("mod", id24, payload10);
-    return toRecord2(payload10);
-  }
-  list(args = {}) {
-    const status2 = args.status === void 0 || args.status === null ? null : normalizeStatus(args.status);
-    const appliesTo = args.applies_to === void 0 || args.applies_to === null ? null : normalizeAppliesTo(args.applies_to);
-    const items2 = this.store.list("mod", 1e3, (item) => (status2 === null || item.status === status2) && (appliesTo === null || item.applies_to === appliesTo || item.applies_to === "all")).map(toRecord2).sort((a, b) => STATUS_RANK[b.status] - STATUS_RANK[a.status] || (a.updatedAt < b.updatedAt ? 1 : -1));
-    return { items: items2 };
-  }
-  /**
-   * Cognitive overlay for a scope: the concatenation of every active, enabled
-   * Mod whose applies_to matches and whose scope is in effect for `scope`.
-   * Global Mods always apply; project/task Mods apply only when their scope id
-   * matches the requested scope id of the same kind.
-   */
-  modSystemOverlay(scope4, appliesTo = "worker", activePluginIds = []) {
-    return this.modSystemSelection(scope4, appliesTo, activePluginIds).overlay;
-  }
-  modSystemSelection(scope4, appliesTo = "worker", activePluginIds = [], taskId3) {
-    const active = new Set(activePluginIds);
-    const matching = this.store.list("mod", 1e3, (item) => {
-      if (item.status !== "active" || item.enabled !== true) return false;
-      if (!(item.applies_to === appliesTo || item.applies_to === "all")) return false;
-      if (item.plugin_id !== void 0 && item.plugin_id !== null && !active.has(String(item.plugin_id))) return false;
-      if (item.scope_kind === "global") return true;
-      if (taskId3 !== void 0 && item.scope_kind === "task" && String(item.scope_id) === taskId3) return true;
-      return item.scope_kind === scope4.kind && String(item.scope_id) === String(scope4.id);
-    });
-    const overlay = matching.map((item) => `# Mod: ${String(item.name)}
-${String(item.body)}`).join("\n\n");
-    return { overlay, mods: matching };
-  }
-};
-function text35(value, name) {
-  if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must be a non-empty string`);
-  return value.trim();
-}
-function bodyText(value) {
-  if (typeof value !== "string") throw new Error("body must be a string");
-  if (value.length > 2e4) throw new Error("body must be 20000 characters or fewer");
-  return value;
-}
-function boundedActor3(value, name) {
-  if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must name the approving operator`);
-  const trimmed = value.trim();
-  if (trimmed.length > 120 || /[\r\n\0]/.test(trimmed)) throw new Error(`${name} must be a single line, 120 chars or fewer`);
-  return trimmed;
 }
 
 // core/message-inbox.ts
@@ -95371,7 +95735,7 @@ var MemoryCapture = class {
     const kind4 = String(args.kind ?? "preference");
     if (!(/* @__PURE__ */ new Set(["working", "episodic", "preference", "procedural"])).has(kind4))
       throw new Error("Memory capture kind is unsupported");
-    validateConcept(kind4, content);
+    validateConcept(mapLegacyKind("memory", kind4), content);
     const scopeKind = text(args.scope_kind ?? (args.session_id ? "session" : "user"), "scope_kind");
     const rawScopeId = text(args.scope_id ?? (scopeKind === "session" ? args.session_id : scopeKind === "global" ? "global" : "local"), "scope_id");
     const sessionHost = scopeKind === "session" && args.session_host !== void 0 ? text(args.session_host, "session_host") : void 0;
@@ -96221,12 +96585,12 @@ function outputText(value) {
   let size = 0;
   for (const item of value) {
     if (!item || typeof item !== "object" || Array.isArray(item)) continue;
-    const text42 = item.text;
-    if (typeof text42 !== "string" || !text42) continue;
+    const text43 = item.text;
+    if (typeof text43 !== "string" || !text43) continue;
     const remaining = MAX_OUTPUT_CHARS - size;
     if (remaining <= 0) break;
-    parts.push(text42.slice(0, remaining));
-    size += Math.min(text42.length, remaining);
+    parts.push(text43.slice(0, remaining));
+    size += Math.min(text43.length, remaining);
   }
   return parts.length ? parts.join("\n") : null;
 }
@@ -96374,11 +96738,11 @@ function createCodexSessionVerificationCollector(saved) {
         return;
       }
       seenOutputs.add(callId);
-      const text42 = outputText(payload10.output);
-      if (text42) {
-        const exitCodes = [...text42.matchAll(/^Process exited with code (\d+)\s*$/gimu)];
-        const stillRunning = /^(?:Process running with session ID|Script running with cell ID|Session ID:)\s*\S+/imu.test(text42);
-        outputs.set(callId, { digest: stableDigest(text42), passed: !stillRunning && exitCodes.length === 1 && exitCodes[0][1] === "0" ? ["javascript", "python", "go", "rust", "java-maven", "java-gradle", "dotnet"].filter((runner) => successfulSummary(runner, text42)) : [] });
+      const text43 = outputText(payload10.output);
+      if (text43) {
+        const exitCodes = [...text43.matchAll(/^Process exited with code (\d+)\s*$/gimu)];
+        const stillRunning = /^(?:Process running with session ID|Script running with cell ID|Session ID:)\s*\S+/imu.test(text43);
+        outputs.set(callId, { digest: stableDigest(text43), passed: !stillRunning && exitCodes.length === 1 && exitCodes[0][1] === "0" ? ["javascript", "python", "go", "rust", "java-maven", "java-gradle", "dotnet"].filter((runner) => successfulSummary(runner, text43)) : [] });
       }
     }
   }
@@ -97481,6 +97845,19 @@ function createActionHandlers(service, mountedComponent) {
     }),
     craft_context_directory_resolve: (a) => service.contextDirectoryResolve(a),
     craft_context_open: (a) => service.contextOpen(a),
+    craft_file_dir_desc_register_device: service.fileDirDescRegisterDevice.bind(service),
+    craft_file_dir_desc_device: service.fileDirDescDevice.bind(service),
+    craft_file_dir_desc_list_devices: service.fileDirDescListDevices.bind(service),
+    craft_file_dir_desc_disable_device: service.fileDirDescDisableDevice.bind(service),
+    craft_file_dir_desc_enable_device: service.fileDirDescEnableDevice.bind(service),
+    craft_file_dir_desc_report_device_health: service.fileDirDescReportDeviceHealth.bind(service),
+    craft_file_dir_desc_record: service.fileDirDescRecord.bind(service),
+    craft_file_dir_desc_observe: service.fileDirDescObserve.bind(service),
+    craft_file_dir_desc_relocate: service.fileDirDescRelocate.bind(service),
+    craft_file_dir_desc_revoke: service.fileDirDescRevoke.bind(service),
+    craft_file_dir_desc_promote: service.fileDirDescPromote.bind(service),
+    craft_file_dir_desc_resolve: service.fileDirDescResolve.bind(service),
+    craft_file_dir_desc_list: service.fileDirDescList.bind(service),
     craft_context_routing_render: service.contextExtensionsRenderRouting.bind(service),
     craft_context_ephemeral_record: service.contextExtensionsRecordEphemeral.bind(service),
     craft_context_ephemeral_search: service.contextExtensionsSearchEphemeral.bind(service),
@@ -98232,6 +98609,18 @@ function createActionHandlers(service, mountedComponent) {
     craft_continual_harness_get: service.continualHarnessGet.bind(service),
     craft_continual_harness_signals: service.continualHarnessSignals.bind(service),
     craft_continual_harness_resolve: service.continualHarnessResolve.bind(service),
+    craft_mod_create: service.modCreate.bind(service),
+    craft_mod_update: service.modUpdate.bind(service),
+    craft_mod_list: service.modList.bind(service),
+    craft_mod_approve: service.modApprove.bind(service),
+    craft_mod_enable: service.modEnable.bind(service),
+    craft_mod_disable: service.modDisable.bind(service),
+    craft_mod_revoke: service.modRevoke.bind(service),
+    craft_mod_rollback: service.modRollback.bind(service),
+    craft_mod_rollback_previous: service.modRollbackPrevious.bind(service),
+    craft_mod_propose_from_attribution: service.modProposeFromAttribution.bind(service),
+    craft_mod_shadow_test_run: service.modEvaluateShadowTest.bind(service),
+    craft_mod_shadow_test_record: service.modRecordShadowTest.bind(service),
     craft_evolution_cycle_start: service.evolutionCycleStart.bind(service),
     craft_evolution_cycle_advance: service.evolutionCycleAdvance.bind(service),
     craft_evolution_cycle_get: service.evolutionCycleGet.bind(service),
@@ -99089,6 +99478,16 @@ function cleanNode(node2) {
     clean3.version = version5;
   return clean3;
 }
+function conceptOf(store, node2) {
+  if (typeof node2.kind !== "string" || typeof node2.id !== "string")
+    return null;
+  try {
+    const record4 = node2.version === void 0 || node2.version === null ? store.get(node2.kind, node2.id) : store.get(node2.kind, node2.id, Number(node2.version));
+    return typeof record4.concept_kind === "string" ? record4.concept_kind : null;
+  } catch {
+    return null;
+  }
+}
 var KnowledgeLineageImpactKernel = class {
   store;
   relations;
@@ -99111,6 +99510,13 @@ var KnowledgeLineageImpactKernel = class {
     const asOf = typeof args.as_of === "string" ? args.as_of : void 0;
     const maxNodes = Number.isInteger(args.max_nodes) && Number(args.max_nodes) >= 1 ? Math.min(Number(args.max_nodes), MAX_NODES) : MAX_NODES;
     const all = this.relations.neighbors({ node: root, as_of: asOf, limit: 1e3 }).relations;
+    const typeIssues = [];
+    for (const edge of all) {
+      const check3 = checkRelationConcepts(edge.relation, conceptOf(this.store, edge.source), conceptOf(this.store, edge.target));
+      if (!check3.valid && check3.reason) {
+        typeIssues.push({ relation_id: String(edge.relation_id), relation: String(edge.relation), reason: check3.reason });
+      }
+    }
     const challengeIds = [];
     for (const edge of all) {
       if (edge.relation !== "contradicts" && edge.relation !== "supersedes")
@@ -99121,7 +99527,7 @@ var KnowledgeLineageImpactKernel = class {
     const rootChallenged = challengeIds.length > 0;
     const impacted = [];
     const visited = /* @__PURE__ */ new Set([nodeKey(root)]);
-    let frontier = [{ node: root, depth: 0, confidence_factor: 1, via_relation_id: null, relation_confidence: null, needs_reevaluation: false }];
+    let frontier = [{ node: root, depth: 0, confidence_factor: 1, via_relation_id: null, relation_confidence: null, needs_reevaluation: false, concept_kind: conceptOf(this.store, root) }];
     let truncated = false;
     for (let depth = 1; depth <= MAX_DEPTH && frontier.length; depth += 1) {
       const next = [];
@@ -99146,7 +99552,8 @@ var KnowledgeLineageImpactKernel = class {
             confidence_factor: Number(factor.toFixed(4)),
             via_relation_id: String(edge.relation_id),
             relation_confidence: String(edge.confidence ?? "unverified"),
-            needs_reevaluation: rootChallenged
+            needs_reevaluation: rootChallenged,
+            concept_kind: conceptOf(this.store, derived2)
           };
           impacted.push(entry2);
           next.push(entry2);
@@ -99164,7 +99571,8 @@ var KnowledgeLineageImpactKernel = class {
       challenge_relation_ids: challengeIds,
       impacted,
       truncated,
-      needs_reevaluation: rootChallenged && impacted.length > 0
+      needs_reevaluation: rootChallenged && impacted.length > 0,
+      type_issues: typeIssues
     };
   }
 };
@@ -99390,7 +99798,7 @@ function object10(value, name) {
     throw new Error(`${name} must be an object`);
   return value;
 }
-function text38(value, name, max = 500) {
+function text39(value, name, max = 500) {
   if (typeof value !== "string" || !value.trim() || value.length > max)
     throw new Error(`${name} must be non-empty and at most ${max} characters`);
   return value.trim();
@@ -99410,7 +99818,7 @@ function caseSet(value, name, domain, heldOut = false) {
       if (typeof input2 === "string" && (input2.length > 500 || /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*\S{8,}/iu.test(input2)))
         throw new Error(`${name}.cases[${index}].inputs contains unsafe text`);
     }
-    const caseDomain = item.domain === void 0 ? void 0 : text38(item.domain, `${name}.cases[${index}].domain`);
+    const caseDomain = item.domain === void 0 ? void 0 : text39(item.domain, `${name}.cases[${index}].domain`);
     if (caseDomain !== void 0 && !EVAL_DOMAINS.includes(caseDomain)) {
       throw new Error(`${name}.cases[${index}].domain is unsupported`);
     }
@@ -99418,8 +99826,8 @@ function caseSet(value, name, domain, heldOut = false) {
       throw new Error(`${name}.cases[${index}].domain must match the scenario domain`);
     }
     return {
-      case_id: text38(item.case_id, `${name}.cases[${index}].case_id`, 96),
-      project_root: text38(item.project_root, `${name}.cases[${index}].project_root`, 2e3),
+      case_id: text39(item.case_id, `${name}.cases[${index}].case_id`, 96),
+      project_root: text39(item.project_root, `${name}.cases[${index}].project_root`, 2e3),
       inputs,
       ...caseDomain !== void 0 ? { domain: caseDomain } : {}
     };
@@ -99427,12 +99835,12 @@ function caseSet(value, name, domain, heldOut = false) {
   if (new Set(checked.map((item) => item.case_id)).size !== checked.length)
     throw new Error(`${name}.cases case_id values must be unique`);
   const expected = stableDigest(checked);
-  if (text38(source.case_set_ref, `${name}.case_set_ref`) !== expected)
+  if (text39(source.case_set_ref, `${name}.case_set_ref`) !== expected)
     throw new Error(`${name}.case_set_ref must pin the exact case set digest`);
   if (heldOut) {
     if (source.independent_of_training !== true)
       throw new Error(`${name}.independent_of_training must be true`);
-    const trainingDigest = text38(source.training_set_digest, `${name}.training_set_digest`);
+    const trainingDigest = text39(source.training_set_digest, `${name}.training_set_digest`);
     if (!/^sha256:[0-9a-f]{64}$/u.test(trainingDigest))
       throw new Error(`${name}.training_set_digest must be a sha256 digest`);
     if (trainingDigest === expected)
@@ -99447,7 +99855,7 @@ function validateScenarioEvaluation(value) {
     throw new Error("evaluation.schema is unsupported");
   if (source.signoff_policy_ref !== AUTOMATIC_SIGNOFF_POLICY)
     throw new Error("evaluation.signoff_policy_ref is unsupported");
-  const domain = source.domain === void 0 ? void 0 : text38(source.domain, "evaluation.domain");
+  const domain = source.domain === void 0 ? void 0 : text39(source.domain, "evaluation.domain");
   if (domain !== void 0 && !EVAL_DOMAINS.includes(domain))
     throw new Error("evaluation.domain is unsupported");
   const stages = object10(source.stages, "evaluation.stages");
@@ -99468,7 +99876,7 @@ function validateReadOnlyEvaluationSteps(value) {
     throw new Error("candidate steps must contain between 1 and 32 values");
   const ids6 = /* @__PURE__ */ new Set();
   return value.map((raw, index) => {
-    const step = object10(raw, `candidate steps[${index}]`), id24 = text38(step.id, `candidate steps[${index}].id`, 96);
+    const step = object10(raw, `candidate steps[${index}]`), id24 = text39(step.id, `candidate steps[${index}].id`, 96);
     if (ids6.has(id24))
       throw new Error("candidate step ids must be unique");
     ids6.add(id24);
@@ -99477,7 +99885,7 @@ function validateReadOnlyEvaluationSteps(value) {
     if (step.type === "assertion") {
       if (step.evaluator !== "file_exists" && step.evaluator !== "json_value")
         throw new Error(`candidate steps[${index}] evaluator is unsupported`);
-      const path2 = text38(step.path, `candidate steps[${index}].path`);
+      const path2 = text39(step.path, `candidate steps[${index}].path`);
       if (path2.startsWith("/") || path2.includes("\\") || path2.split("/").includes("..") || path2.includes("\0"))
         throw new Error(`candidate steps[${index}].path must stay inside the project`);
       if (step.evaluator === "json_value" && !("expected" in step))
@@ -99487,7 +99895,7 @@ function validateReadOnlyEvaluationSteps(value) {
       return step;
     }
     if (step.type === "coverage_gate") {
-      const report = step.report === void 0 ? "coverage-summary.json" : text38(step.report, `candidate steps[${index}].report`);
+      const report = step.report === void 0 ? "coverage-summary.json" : text39(step.report, `candidate steps[${index}].report`);
       if (report.startsWith("/") || report.includes("\\") || report.split("/").includes("..") || report.includes("\0"))
         throw new Error(`candidate steps[${index}].report must stay inside the project`);
       for (const field2 of ["line_threshold", "branch_threshold", "function_threshold", "statement_threshold"]) {
@@ -99502,7 +99910,7 @@ function validateReadOnlyEvaluationSteps(value) {
 
 // ../craft-capability/capability/craft-experience/dist/learning-evaluation.js
 var STAGES4 = ["shadow", "held_out", "signoff", "canary"];
-function text39(value, name) {
+function text40(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must not be empty`);
   return value.trim();
@@ -99541,7 +99949,7 @@ var ExperienceLearningEvaluation = class {
     return { dispatches, count: dispatches.length };
   }
   run(args, execute3, validateProjectRoot, recordEvidence, gate) {
-    const id24 = text39(args.dispatch_id, "dispatch_id"), dispatch = this.store.get("experience_evaluation_dispatch", id24);
+    const id24 = text40(args.dispatch_id, "dispatch_id"), dispatch = this.store.get("experience_evaluation_dispatch", id24);
     if (dispatch.status !== "awaiting_adapter")
       throw new Error("Experience evaluation dispatch is already resolved");
     const procedure = this.store.get("experience_procedure", String(dispatch.procedure_id), Number(dispatch.procedure_version));
@@ -99728,7 +100136,7 @@ var ExperienceLearningEvaluation = class {
     return matches4[0].evaluation === void 0 ? null : validateScenarioEvaluation(matches4[0].evaluation);
   }
   dispatch(args) {
-    const procedure = this.store.get("experience_procedure", text39(args.procedure_id, "procedure_id"));
+    const procedure = this.store.get("experience_procedure", text40(args.procedure_id, "procedure_id"));
     if (retiredForEvaluation(this.store, procedure))
       throw new Error("Experience scenario is retired; candidate cannot be evaluated");
     if (procedure.lifecycle !== "candidate" || procedure.routeable === true)
@@ -99764,10 +100172,10 @@ var ExperienceLearningEvaluation = class {
     return this.store.transaction(() => this.applyResult(args, gate));
   }
   applyResult(args, gate) {
-    const id24 = text39(args.dispatch_id, "dispatch_id");
+    const id24 = text40(args.dispatch_id, "dispatch_id");
     const dispatch = this.store.get("experience_evaluation_dispatch", id24);
     if (dispatch.status !== "awaiting_adapter") {
-      const replayEvidence = Array.isArray(args.evidence_ids) ? [...new Set(args.evidence_ids.map((value) => text39(value, "evidence_ids")))].sort() : [];
+      const replayEvidence = Array.isArray(args.evidence_ids) ? [...new Set(args.evidence_ids.map((value) => text40(value, "evidence_ids")))].sort() : [];
       if (!["passed", "failed"].includes(String(dispatch.status)) || stableDigest(replayEvidence) !== stableDigest(dispatch.evidence_ids))
         throw new Error("Experience evaluation dispatch is already resolved with different evidence");
       const procedure2 = this.store.get("experience_procedure", String(dispatch.procedure_id));
@@ -99788,7 +100196,7 @@ var ExperienceLearningEvaluation = class {
       throw new Error("Experience evaluation candidate definition drifted");
     if (!Array.isArray(args.evidence_ids) || args.evidence_ids.length === 0 || args.evidence_ids.length > 20)
       throw new Error("evidence_ids must contain between 1 and 20 values");
-    const evidenceIds2 = [...new Set(args.evidence_ids.map((value) => text39(value, "evidence_ids")))].sort();
+    const evidenceIds2 = [...new Set(args.evidence_ids.map((value) => text40(value, "evidence_ids")))].sort();
     if (evidenceIds2.length !== args.evidence_ids.length)
       throw new Error("evidence_ids must be unique");
     for (const evidenceId of evidenceIds2) {
@@ -99847,9 +100255,9 @@ function factorKey2(factors, pool = "") {
   const scope4 = pool.trim().toLowerCase();
   return scope4 ? `${scope4}::${base}` : base;
 }
-function classifyVerdict2(text42) {
-  if (REJECTED2.some((kw) => text42.includes(kw))) return "rejected";
-  if (ACCEPTED2.some((kw) => text42.includes(kw))) return "accepted";
+function classifyVerdict2(text43) {
+  if (REJECTED2.some((kw) => text43.includes(kw))) return "rejected";
+  if (ACCEPTED2.some((kw) => text43.includes(kw))) return "accepted";
   return "unknown";
 }
 var ExperienceDeduplicationKernel2 = class {
@@ -99863,8 +100271,8 @@ var ExperienceDeduplicationKernel2 = class {
     const pool = typeof args.pool === "string" ? args.pool.trim().toLowerCase() : "";
     const key3 = factorKey2(factors, pool);
     if (!factors.length) throw new Error("experience conclusion requires at least one factor");
-    const text42 = typeof args.title === "string" && args.title.trim() ? args.title : typeof args.evidence === "string" ? args.evidence : "";
-    const verdict = args.verdict === void 0 ? classifyVerdict2(text42) : String(args.verdict);
+    const text43 = typeof args.title === "string" && args.title.trim() ? args.title : typeof args.evidence === "string" ? args.evidence : "";
+    const verdict = args.verdict === void 0 ? classifyVerdict2(text43) : String(args.verdict);
     if (!VERDICTS4.has(verdict)) throw new Error("experience conclusion verdict is unsupported");
     const nomFactors = [...new Set(factors.map(normalizeFactor2).filter(Boolean))].sort();
     const identity2 = { factors: nomFactors, pool, verdict };
@@ -103854,7 +104262,7 @@ var SENSITIVE_MODEL_TEXT_PATTERNS = [
   /\b[A-Z]:\\Users\\[^\\/\s<>"']+(?:\\[^\s<>"']*)?/giu
 ];
 function redactKnowledgeModelText(value) {
-  if (typeof value === "string") return SENSITIVE_MODEL_TEXT_PATTERNS.reduce((text42, pattern) => text42.replace(pattern, "[REDACTED]"), value);
+  if (typeof value === "string") return SENSITIVE_MODEL_TEXT_PATTERNS.reduce((text43, pattern) => text43.replace(pattern, "[REDACTED]"), value);
   if (Array.isArray(value)) return value.map(redactKnowledgeModelText);
   if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key3, item]) => [key3, redactKnowledgeModelText(item)]));
   return value;
@@ -104062,7 +104470,7 @@ var WorkControl = class {
 init_digest2();
 var ACTIONS3 = /* @__PURE__ */ new Set(["worktree", "draft_pr", "merge"]);
 var HIGH_RISK_LABELS = /* @__PURE__ */ new Set(["security", "compliance", "production", "destructive"]);
-function text40(value, name) {
+function text41(value, name) {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
   return value.trim();
 }
@@ -104072,7 +104480,7 @@ function object11(value, name) {
 }
 function strings35(value, name, minimum = 0) {
   if (!Array.isArray(value)) throw new Error(`${name} must be an array`);
-  const values3 = [...new Set(value.map((item) => text40(item, name)))].sort();
+  const values3 = [...new Set(value.map((item) => text41(item, name)))].sort();
   if (values3.length < minimum) throw new Error(`${name} must contain at least ${minimum} item`);
   return values3;
 }
@@ -104099,9 +104507,9 @@ var ForgeDispatchCoordinator = class {
     this.store = store;
   }
   scan(args) {
-    const repository = text40(args.repository, "repository");
-    const sourceRef = text40(args.source_ref, "source_ref");
-    const scope4 = text40(args.scope, "scope");
+    const repository = text41(args.repository, "repository");
+    const sourceRef = text41(args.source_ref, "source_ref");
+    const scope4 = text41(args.scope, "scope");
     const state4 = object11(args.repository_state ?? {}, "repository_state");
     const repositoryReady = state4.clean === true && state4.default_branch_protected === true;
     const sourceIssues = Array.isArray(args.issues) ? args.issues : (() => {
@@ -104109,7 +104517,7 @@ var ForgeDispatchCoordinator = class {
     })();
     const entries2 = sourceIssues.map((value) => {
       const issue2 = object11(value, "issues");
-      const ticketId = text40(issue2.ticket_id, "issue.ticket_id");
+      const ticketId = text41(issue2.ticket_id, "issue.ticket_id");
       const classified = issueDisposition(issue2, repositoryReady);
       return {
         ticket_id: ticketId,
@@ -104143,15 +104551,15 @@ var ForgeDispatchCoordinator = class {
     }), idempotent: false };
   }
   evaluate(args) {
-    const ledger = this.store.get("ticket_dispatch_ledger", text40(args.ledger_id, "ledger_id"));
+    const ledger = this.store.get("ticket_dispatch_ledger", text41(args.ledger_id, "ledger_id"));
     const cases = Array.isArray(args.cases) ? args.cases.map((item) => object11(item, "cases")) : (() => {
       throw new Error("cases must be an array");
     })();
     if (!cases.length) throw new Error("cases must contain at least 1 item");
     const entries2 = new Map(ledger.entries.map((entry2) => [String(entry2.ticket_id), entry2]));
     const rows4 = cases.map((item) => {
-      const ticketId = text40(item.ticket_id, "case.ticket_id");
-      const expected = text40(item.expected, "case.expected");
+      const ticketId = text41(item.ticket_id, "case.ticket_id");
+      const expected = text41(item.expected, "case.expected");
       if (!["ready", "blocked", "needs_human"].includes(expected)) throw new Error("case.expected is unsupported");
       const actual = entries2.get(ticketId);
       if (!actual) throw new Error(`Ticket Dispatch case is absent from ledger: ${ticketId}`);
@@ -104179,11 +104587,11 @@ var ForgeDispatchCoordinator = class {
     }), idempotent: false };
   }
   policySave(args) {
-    const kit = this.store.get("domain_kit", text40(args.domain_kit_id, "domain_kit_id"), Number(args.domain_kit_version));
+    const kit = this.store.get("domain_kit", text41(args.domain_kit_id, "domain_kit_id"), Number(args.domain_kit_version));
     const operations2 = strings35(args.operations, "operations", 1);
     if (operations2.some((operation2) => !ACTIONS3.has(operation2))) throw new Error("Forge Policy operation is unsupported");
     const identity2 = {
-      scope: text40(args.scope, "scope"),
+      scope: text41(args.scope, "scope"),
       repositories: strings35(args.repositories, "repositories", 1),
       branches: strings35(args.branches, "branches", 1),
       operations: operations2,
@@ -104204,16 +104612,16 @@ var ForgeDispatchCoordinator = class {
     return { policy: this.store.create("forge_policy", policyId2, { ...identity2, identity_digest: digest37, status: "active", created_at: (/* @__PURE__ */ new Date()).toISOString() }), idempotent: false };
   }
   actionPrepare(args) {
-    const action = text40(args.action, "action");
+    const action = text41(args.action, "action");
     if (!ACTIONS3.has(action)) throw new Error("Forge action is unsupported");
-    const policy = this.store.get("forge_policy", text40(args.policy_id, "policy_id"));
-    const ledger = this.store.get("ticket_dispatch_ledger", text40(args.ledger_id, "ledger_id"));
-    const evaluation = this.store.get("ticket_dispatch_evaluation", text40(args.evaluation_id, "evaluation_id"));
-    const procedure = this.store.get("experience_procedure", text40(args.procedure_id, "procedure_id"));
-    const application = this.store.get("domain_kit_application", text40(args.kit_application_id, "kit_application_id"));
-    const taskId3 = text40(args.task_id, "task_id");
-    const branch = text40(args.branch, "branch");
-    const ticketId = text40(args.ticket_id, "ticket_id");
+    const policy = this.store.get("forge_policy", text41(args.policy_id, "policy_id"));
+    const ledger = this.store.get("ticket_dispatch_ledger", text41(args.ledger_id, "ledger_id"));
+    const evaluation = this.store.get("ticket_dispatch_evaluation", text41(args.evaluation_id, "evaluation_id"));
+    const procedure = this.store.get("experience_procedure", text41(args.procedure_id, "procedure_id"));
+    const application = this.store.get("domain_kit_application", text41(args.kit_application_id, "kit_application_id"));
+    const taskId3 = text41(args.task_id, "task_id");
+    const branch = text41(args.branch, "branch");
+    const ticketId = text41(args.ticket_id, "ticket_id");
     const entry2 = ledger.entries.find((item) => item.ticket_id === ticketId);
     const repositories = strings35(policy.repositories, "policy.repositories", 1);
     const operations2 = strings35(policy.operations, "policy.operations", 1);
@@ -104226,7 +104634,7 @@ var ForgeDispatchCoordinator = class {
     if (evaluation.status !== "eligible" || evaluation.ledger_id !== ledger.id || Number(evaluation.ledger_version) !== Number(ledger.version)) throw new Error("Forge action requires an eligible same-ledger evaluation");
     if (!entry2 || entry2.disposition !== "ready") throw new Error("Forge action requires a ready ticket");
     if (procedure.lifecycle !== "routeable" || procedure.routeable !== true) throw new Error("Forge action requires a routeable Experience Procedure");
-    const approvalRef = text40(args.approval_ref, "approval_ref");
+    const approvalRef = text41(args.approval_ref, "approval_ref");
     if (action === "merge") {
       if (policy.auto_merge_enabled !== true || policy.require_ci_green !== true || policy.require_protected_branch !== true || ledger.repository_state.ci_green !== true || ledger.repository_state.default_branch_protected !== true) {
         throw new Error("Forge merge requires an explicitly enabled policy, green CI and protected branch");
@@ -104269,7 +104677,7 @@ var ForgeDispatchCoordinator = class {
     }), idempotent: false };
   }
   get(args) {
-    return { action: this.store.get("forge_action", text40(args.forge_action_id, "forge_action_id")) };
+    return { action: this.store.get("forge_action", text41(args.forge_action_id, "forge_action_id")) };
   }
 };
 
@@ -105208,9 +105616,9 @@ function assertNoSecret5(value, name) {
   if (SECRET_ASSIGNMENT4.test(value)) throw new Error(`${name} must not contain sensitive assignments`);
   return value;
 }
-function parseModelJson(text42) {
-  const fenced = /```(?:json)?\s*([\s\S]*?)```/u.exec(text42);
-  const candidate2 = fenced ? fenced[1] : text42;
+function parseModelJson(text43) {
+  const fenced = /```(?:json)?\s*([\s\S]*?)```/u.exec(text43);
+  const candidate2 = fenced ? fenced[1] : text43;
   const start2 = candidate2.indexOf("{");
   const end = candidate2.lastIndexOf("}");
   if (start2 < 0 || end <= start2) throw new Error("pilot model did not return a JSON object");
@@ -105490,6 +105898,24 @@ var CraftService = class _CraftService extends ServiceFoundation {
   }
   fileDirDescList(args = {}) {
     return this.fileDirDesc.list(args);
+  }
+  fileDirDescRegisterDevice(args) {
+    return this.fileDirDesc.registerDevice(args);
+  }
+  fileDirDescDevice(args) {
+    return this.fileDirDesc.device(text(args.id, "id"));
+  }
+  fileDirDescListDevices(args = {}) {
+    return this.fileDirDesc.listDevices(args);
+  }
+  fileDirDescDisableDevice(args) {
+    return this.fileDirDesc.disableDevice(text(args.id, "id"));
+  }
+  fileDirDescEnableDevice(args) {
+    return this.fileDirDesc.enableDevice(text(args.id, "id"));
+  }
+  fileDirDescReportDeviceHealth(args) {
+    return this.fileDirDesc.reportDeviceHealth(text(args.id, "id"), text(args.health, "health"));
   }
   /** Mod kernel: cognitive overlays with a governed draft → approve → active lifecycle. */
   modCreate(args) {
