@@ -7,7 +7,7 @@ import { createInterface } from "node:readline";
 import { join as join11 } from "node:path";
 import { pathToFileURL } from "node:url";
 
-// common/craft-common-store-local/src/paths.ts
+// ../craft-common/packages/craft-common-store-local/dist/paths.js
 import { createHash, randomUUID } from "node:crypto";
 import { chmod, mkdir, open, rename, unlink } from "node:fs/promises";
 import { closeSync, existsSync, fsyncSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, statSync, unlinkSync, writeFileSync } from "node:fs";
@@ -15,7 +15,8 @@ import { homedir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 function dataRoot(env = process.env) {
   const configured = env.CRAFT_DATA_DIR?.trim();
-  if (configured) return resolve(configured);
+  if (configured)
+    return resolve(configured);
   const defaultRoot = join(homedir(), ".craft_data");
   const settingsPath = env.CRAFT_SETTINGS_FILE?.trim() || join(defaultRoot, "settings.json");
   if (existsSync(settingsPath)) {
@@ -23,7 +24,8 @@ function dataRoot(env = process.env) {
       const value = JSON.parse(readFileSync(settingsPath, "utf8").replace(/^\uFEFF/u, ""));
       if (value && typeof value === "object" && !Array.isArray(value)) {
         const candidate = value.dataRoot;
-        if (typeof candidate === "string" && candidate.trim()) return resolve(candidate);
+        if (typeof candidate === "string" && candidate.trim())
+          return resolve(candidate);
       }
     } catch {
     }
@@ -66,7 +68,8 @@ function craftPaths(root = dataRoot()) {
 }
 function projectStorageIdentity(projectRoot) {
   const canonicalRoot = realpathSync(projectRoot);
-  if (!statSync(canonicalRoot).isDirectory()) throw new Error("Project storage root must be a directory");
+  if (!statSync(canonicalRoot).isDirectory())
+    throw new Error("Project storage root must be a directory");
   const pathHash = createHash("sha256").update(canonicalRoot).digest("hex");
   const readableName = basename(canonicalRoot).replace(/[^\p{L}\p{N}._-]+/gu, "-").replace(/^[-.]+|[-.]+$/gu, "").slice(0, 48) || "root";
   return { canonical_root: canonicalRoot, path_sha256: pathHash, directory_name: `${readableName}--${pathHash}` };
@@ -77,7 +80,8 @@ function canonicalCandidatePath(path) {
   while (!lstatSync(current, { throwIfNoEntry: false })) {
     suffix.unshift(basename(current));
     const parent = dirname(current);
-    if (parent === current) break;
+    if (parent === current)
+      break;
     current = parent;
   }
   try {
@@ -89,7 +93,8 @@ function canonicalCandidatePath(path) {
 function verifyProjectMapping(directory, identity) {
   const mappingPath = join(directory, "project.json");
   const stat2 = lstatSync(mappingPath);
-  if (stat2.isSymbolicLink() || !stat2.isFile()) throw new Error("Project storage mapping must be a regular file");
+  if (stat2.isSymbolicLink() || !stat2.isFile())
+    throw new Error("Project storage mapping must be a regular file");
   let stored;
   try {
     stored = JSON.parse(readFileSync(mappingPath, "utf8"));
@@ -106,8 +111,10 @@ function existingProjectStorageDirectory(paths, projectRoot) {
   const directory = join(projectsRoot, identity.directory_name);
   for (const path of [paths.root, projectsRoot, directory]) {
     const stat2 = lstatSync(path, { throwIfNoEntry: false });
-    if (!stat2) return null;
-    if (stat2.isSymbolicLink() || !stat2.isDirectory()) throw new Error("Project storage path must use regular directories");
+    if (!stat2)
+      return null;
+    if (stat2.isSymbolicLink() || !stat2.isDirectory())
+      throw new Error("Project storage path must use regular directories");
   }
   verifyProjectMapping(directory, identity);
   return directory;
@@ -119,7 +126,8 @@ async function renamePrivateJsonWithRetry(from, to) {
       return;
     } catch (error) {
       const code = error.code;
-      if (attempt >= 20 || code !== "EPERM" && code !== "EBUSY" && code !== "EACCES") throw error;
+      if (attempt >= 20 || code !== "EPERM" && code !== "EBUSY" && code !== "EACCES")
+        throw error;
       await new Promise((resolve9) => setTimeout(resolve9, 20));
     }
   }
@@ -147,11 +155,13 @@ async function atomicPrivateJson(path, value, platform = process.platform) {
     try {
       await unlink(temporary);
     } catch (cleanupError) {
-      if (cleanupError.code !== "ENOENT") throw new AggregateError([error, cleanupError], "Private JSON write failed and staging cleanup requires reconciliation");
+      if (cleanupError.code !== "ENOENT")
+        throw new AggregateError([error, cleanupError], "Private JSON write failed and staging cleanup requires reconciliation");
     }
     throw error;
   }
-  if (platform !== "win32") await chmod(path, 384);
+  if (platform !== "win32")
+    await chmod(path, 384);
 }
 
 // core/settings.ts
@@ -166,17 +176,18 @@ function normalizeModelPricing(value) {
   return pricing;
 }
 
-// common/craft-common-base/src/scope-policy.ts
+// ../craft-common/packages/craft-common-base/dist/scope-policy.js
 var COGNITIVE_SCOPE_KINDS = ["user", "project", "workspace", "task", "session", "team", "organization", "global"];
 
-// common/craft-common-base/src/validation.ts
+// ../craft-common/packages/craft-common-base/dist/validation.js
 function text(value, name) {
-  if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must not be empty`);
+  if (typeof value !== "string" || !value.trim())
+    throw new Error(`${name} must not be empty`);
   return value.trim();
 }
 var SCOPE_KINDS = new Set(COGNITIVE_SCOPE_KINDS);
 
-// common/craft-common-base/src/digest.ts
+// ../craft-common/packages/craft-common-base/dist/digest.js
 import { createHash as createHash2 } from "node:crypto";
 function digestJson(value) {
   return `sha256:${createHash2("sha256").update(JSON.stringify(value)).digest("hex")}`;
@@ -197,13 +208,15 @@ function stableDigestStreaming(value) {
   const append = (chunk) => {
     chunks.push(chunk);
     chunkLength += chunk.length;
-    if (chunkLength >= 32768) flush();
+    if (chunkLength >= 32768)
+      flush();
   };
   const write = (item) => {
     if (Array.isArray(item)) {
       append("[");
       for (let index = 0; index < item.length; index++) {
-        if (index) append(",");
+        if (index)
+          append(",");
         write(item[index]);
       }
       append("]");
@@ -215,29 +228,34 @@ function stableDigestStreaming(value) {
       let orderedKeys = keyOrderCache.get(signature);
       if (!orderedKeys) {
         orderedKeys = entries.map(([key2]) => key2).sort((left, right) => left.localeCompare(right, "zh"));
-        if (keyOrderCache.size < 256) keyOrderCache.set(signature, orderedKeys);
+        if (keyOrderCache.size < 256)
+          keyOrderCache.set(signature, orderedKeys);
       }
       const values = new Map(entries);
       append("{");
       orderedKeys.forEach((key2, index) => {
-        if (index) append(",");
+        if (index)
+          append(",");
         append(`${JSON.stringify(key2)}:`);
-        if (!write(values.get(key2))) append("undefined");
+        if (!write(values.get(key2)))
+          append("undefined");
       });
       append("}");
       return true;
     }
     const serialized = JSON.stringify(item);
-    if (serialized === void 0) return false;
+    if (serialized === void 0)
+      return false;
     append(serialized);
     return true;
   };
-  if (!write(value)) throw new Error(`canonicalJson cannot serialize ${typeof value}`);
+  if (!write(value))
+    throw new Error(`canonicalJson cannot serialize ${typeof value}`);
   flush();
   return `sha256:${hash2.digest("hex")}`;
 }
 
-// capability/craft-datasec/rules.ts
+// ../craft-capability/capability/craft-datasec/dist/rules.js
 var DEFAULT_RULES = [
   { name: "phone", pattern: String.raw`(?<!\d)(?:\+?86[ -]?)?1[3-9](?:[ -]?\d){9}(?!\d)` },
   { name: "identity", pattern: String.raw`(?<!\d)[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx](?!\d)`, enabled: false },
@@ -258,10 +276,12 @@ var Sanitizer = class {
     this.token = token;
     this.rules = rules.filter((rule) => rule.enabled !== false).map((rule) => {
       const group = rule.group ?? 0;
-      if (!/^[a-z][a-z0-9_]{0,31}$/.test(rule.name) || !rule.pattern || !Number.isInteger(group) || group < 0) throw new Error("Invalid rule");
+      if (!/^[a-z][a-z0-9_]{0,31}$/.test(rule.name) || !rule.pattern || !Number.isInteger(group) || group < 0)
+        throw new Error("Invalid rule");
       return { name: rule.name, regex: new RegExp(rule.pattern, [...new Set(`gd${rule.flags ?? ""}`)].join("")), group };
     });
-    if (!this.rules.length) throw new Error("No rules enabled");
+    if (!this.rules.length)
+      throw new Error("No rules enabled");
   }
   text(text2) {
     const protectedRanges = [...text2.matchAll(/\[CRAFT_DATASEC_[a-z0-9_]+_[a-f0-9]{32}\]/g)].map((match) => [match.index, match.index + match[0].length]);
@@ -269,15 +289,18 @@ var Sanitizer = class {
     for (const rule of this.rules) {
       for (const match of text2.matchAll(rule.regex)) {
         const range = match.indices[rule.group];
-        if (range && range[0] < range[1]) matches.push({ start: range[0], end: range[1], name: rule.name });
+        if (range && range[0] < range[1])
+          matches.push({ start: range[0], end: range[1], name: rule.name });
       }
     }
     matches.sort((a, b) => a.start - b.start || b.end - a.end);
     let end = 0, result = "";
     for (const match of matches) {
-      if (match.start < end || protectedRanges.some(([start, stop]) => match.start < stop && match.end > start)) continue;
+      if (match.start < end || protectedRanges.some(([start, stop]) => match.start < stop && match.end > start))
+        continue;
       const value = text2.slice(match.start, match.end);
-      if (match.name === "email" && !/^[^@]+@[^@]+$/.test(value)) throw new Error("Invalid email rule match");
+      if (match.name === "email" && !/^[^@]+@[^@]+$/.test(value))
+        throw new Error("Invalid email rule match");
       const replacement = match.name === "email" ? `${value[0]}*@${value.slice(value.indexOf("@") + 1)}` : this.token(match.name, value);
       result += text2.slice(end, match.start) + replacement;
       end = match.end;
@@ -286,14 +309,18 @@ var Sanitizer = class {
     return result + text2.slice(end);
   }
   value(value, depth = 0) {
-    if (depth > 64) throw new Error("Result nesting exceeds text redaction limit");
-    if (typeof value === "string") return this.text(value);
+    if (depth > 64)
+      throw new Error("Result nesting exceeds text redaction limit");
+    if (typeof value === "string")
+      return this.text(value);
     if (typeof value === "number") {
       const safe = this.text(String(value));
       return safe === String(value) ? value : safe;
     }
-    if (Array.isArray(value)) return value.map((item) => this.value(item, depth + 1));
-    if (value !== null && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key2, item]) => [this.text(key2), this.value(item, depth + 1)]));
+    if (Array.isArray(value))
+      return value.map((item) => this.value(item, depth + 1));
+    if (value !== null && typeof value === "object")
+      return Object.fromEntries(Object.entries(value).map(([key2, item]) => [this.text(key2), this.value(item, depth + 1)]));
     return value;
   }
 };
@@ -870,30 +897,30 @@ import { createHash as createHash3 } from "node:crypto";
 import { lstatSync as lstatSync2, readFileSync as readFileSync2 } from "node:fs";
 import { dirname as dirname2, join as join2, resolve as resolve2 } from "node:path";
 
-// common/craft-common-log/src/journal-sink.ts
+// ../craft-common/packages/craft-common-log/dist/journal-sink.js
 var queueKey = /* @__PURE__ */ Symbol.for("craft.telemetry.journal.pending");
 var processState = globalThis;
 var queues = processState[queueKey] ??= /* @__PURE__ */ new Map();
 
-// common/craft-common-store-local/src/store.ts
+// ../craft-common/packages/craft-common-store-local/dist/store.js
 import { backup, DatabaseSync as DatabaseSync4 } from "node:sqlite";
 import { AsyncLocalStorage } from "node:async_hooks";
 
-// common/craft-common-store-local/src/content-store.ts
+// ../craft-common/packages/craft-common-store-local/dist/content-store.js
 import { DatabaseSync } from "node:sqlite";
 
-// common/craft-common-store-local/src/trace-shards.ts
+// ../craft-common/packages/craft-common-store-local/dist/trace-shards.js
 import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 var TRACE_KINDS = /* @__PURE__ */ new Set(["trace", "trace_event", "trace_feedback", "telemetry_event", "trace_archive"]);
 var TRACE_SHARDED_KINDS = /* @__PURE__ */ new Set([...TRACE_KINDS, "codex_hook_turn", "codex_hook_signal", "context_hook_session"]);
 
-// common/craft-common-store-local/src/codebase-shards.ts
+// ../craft-common/packages/craft-common-store-local/dist/codebase-shards.js
 import { DatabaseSync as DatabaseSync3 } from "node:sqlite";
 
-// common/craft-common-store-local/src/store.ts
+// ../craft-common/packages/craft-common-store-local/dist/store.js
 var contextLockBudget = new AsyncLocalStorage();
 
-// common/craft-common-log/src/operation.ts
+// ../craft-common/packages/craft-common-log/dist/operation.js
 import { AsyncLocalStorage as AsyncLocalStorage2 } from "node:async_hooks";
 var contextKey = /* @__PURE__ */ Symbol.for("craft.operation.context");
 var processState2 = globalThis;
@@ -901,15 +928,23 @@ var context = processState2[contextKey] ??= new AsyncLocalStorage2();
 var object2 = (value) => value && typeof value === "object" && !Array.isArray(value) ? value : {};
 function operationErrorCode(error) {
   const value = object2(error);
-  if (value.code === "ERR_SQLITE_ERROR" && [5, 6].includes(Number(value.errcode))) return "STORAGE_BUSY";
+  if (value.code === "ERR_SQLITE_ERROR" && [5, 6].includes(Number(value.errcode)))
+    return "STORAGE_BUSY";
   const message = error instanceof Error ? error.message : "";
-  if (/database (?:is )?(?:locked|busy)|sqlite_busy|sqlite_locked/iu.test(message)) return "STORAGE_BUSY";
-  if (typeof value.code === "string" && /^(?:ERR_[A-Z_]+|EACCES|ENOENT|EEXIST|EPERM|ETIMEDOUT)$/u.test(value.code)) return value.code;
-  if (/denied|unauthorized|forbidden/iu.test(message)) return "ACCESS_DENIED";
-  if (/conflict|stale|drift/iu.test(message)) return "STATE_CONFLICT";
-  if (/budget|limit|exceed/iu.test(message)) return "LIMIT_EXCEEDED";
-  if (/unavailable|not mounted/iu.test(message)) return "UNAVAILABLE";
-  if (/must|requires?|invalid|unsupported|unknown|missing/iu.test(message)) return "INVALID_INPUT";
+  if (/database (?:is )?(?:locked|busy)|sqlite_busy|sqlite_locked/iu.test(message))
+    return "STORAGE_BUSY";
+  if (typeof value.code === "string" && /^(?:ERR_[A-Z_]+|EACCES|ENOENT|EEXIST|EPERM|ETIMEDOUT)$/u.test(value.code))
+    return value.code;
+  if (/denied|unauthorized|forbidden/iu.test(message))
+    return "ACCESS_DENIED";
+  if (/conflict|stale|drift/iu.test(message))
+    return "STATE_CONFLICT";
+  if (/budget|limit|exceed/iu.test(message))
+    return "LIMIT_EXCEEDED";
+  if (/unavailable|not mounted/iu.test(message))
+    return "UNAVAILABLE";
+  if (/must|requires?|invalid|unsupported|unknown|missing/iu.test(message))
+    return "INVALID_INPUT";
   return "OPERATION_FAILED";
 }
 
@@ -1054,7 +1089,7 @@ import { lstatSync as lstatSync4, readFileSync as readFileSync4, realpathSync as
 import { tmpdir } from "node:os";
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.20.4";
+var CRAFT_RELEASE_VERSION = "0.20.5";
 
 // core/knowledge-model-redaction.ts
 var SENSITIVE_MODEL_TEXT_PATTERNS = [

@@ -1,25 +1,25 @@
-// common/craft-common-store-local/src/store.ts
+// ../craft-common/packages/craft-common-store-local/dist/store.js
 import { backup, DatabaseSync as DatabaseSync4 } from "node:sqlite";
 import { AsyncLocalStorage } from "node:async_hooks";
 
-// common/craft-common-store-local/src/content-store.ts
+// ../craft-common/packages/craft-common-store-local/dist/content-store.js
 import { DatabaseSync } from "node:sqlite";
 
-// common/craft-common-store-local/src/trace-shards.ts
+// ../craft-common/packages/craft-common-store-local/dist/trace-shards.js
 import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 var TRACE_KINDS = /* @__PURE__ */ new Set(["trace", "trace_event", "trace_feedback", "telemetry_event", "trace_archive"]);
 var TRACE_SHARDED_KINDS = /* @__PURE__ */ new Set([...TRACE_KINDS, "codex_hook_turn", "codex_hook_signal", "context_hook_session"]);
 
-// common/craft-common-store-local/src/codebase-shards.ts
+// ../craft-common/packages/craft-common-store-local/dist/codebase-shards.js
 import { DatabaseSync as DatabaseSync3 } from "node:sqlite";
 
-// common/craft-common-store-local/src/store.ts
+// ../craft-common/packages/craft-common-store-local/dist/store.js
 var contextLockBudget = new AsyncLocalStorage();
 
-// common/craft-common-base/src/scope-policy.ts
+// ../craft-common/packages/craft-common-base/dist/scope-policy.js
 var COGNITIVE_SCOPE_KINDS = ["user", "project", "workspace", "task", "session", "team", "organization", "global"];
 
-// common/craft-common-base/src/validation.ts
+// ../craft-common/packages/craft-common-base/dist/validation.js
 var SCOPE_KINDS = new Set(COGNITIVE_SCOPE_KINDS);
 
 // core/untrusted-parser.ts
