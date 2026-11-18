@@ -22,7 +22,7 @@
       "name": "craft-notes",
       "display_name": "Craft Notes",
       "description": "Craft Notes unify required device notes with evidence-gated directory and file notes inside Craft Runtime. This catalog entry is informational; it is not a standalone Host plugin.",
-      "source": "craft-capability/capability/craft-file-dir-desc",
+      "source": "craft-capability/capability/craft-notes",
       "hosts": ["codex", "claude"],
       "default_install": false,
       "source_status": "not_packaged"

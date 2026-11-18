@@ -50,7 +50,7 @@ Craft 能注册的 MCP server / command / skill 草稿，不写宿主配置、�
 | 插件页面 | `core/plugin-workbench.ts`、Workbench `plugins/skills/connectors` 页 | 声明式页面与按 workspace 开关 |
 
 `craft-capability` 只放可独立发布的子能力（Knowledge/Memory/Experience/Codebase/
-Datasec/FileDirDesc）；`craft-common` 放公共包；`craft-eval` 独立评测。
+Datasec/CraftNotesLocation）；`craft-common` 放公共包；`craft-eval` 独立评测。
 把 MCP/Skill 加载搬进 capability 会形成「内核控制面依赖子能力」的反向依赖。
 
 ## 5. 与 Codex / Claude / DSH CLI 的差距

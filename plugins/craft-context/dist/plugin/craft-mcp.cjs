@@ -47492,12 +47492,12 @@ function buildExperienceRecord(input2) {
   };
 }
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/procedure-release.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-release.js
 var import_node_fs22 = require("node:fs");
 var import_node_path23 = require("node:path");
 init_digest();
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/scenario-catalog.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/scenario-catalog.js
 var import_node_crypto27 = require("node:crypto");
 var import_node_fs20 = require("node:fs");
 var import_node_path21 = require("node:path");
@@ -47671,7 +47671,7 @@ function checkRelationConcepts(relation, fromConcept, toConcept) {
   return { valid: true, reason: null };
 }
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/scenario-catalog.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/scenario-catalog.js
 var SCHEMA = "craft.experience-scenario-catalog.v1";
 var KEY = /^[a-z0-9][a-z0-9._/-]{0,95}$/u;
 var DIGEST = /^sha256:[a-f0-9]{64}$/u;
@@ -48177,7 +48177,7 @@ function listExperienceScenarios(experienceDir, projectId2) {
   return { catalog_version: catalog.catalog_version, scenarios, ...catalog.transitions.length ? { transitions: catalog.transitions } : {} };
 }
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/project-experience-directory.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/project-experience-directory.js
 var import_node_fs21 = require("node:fs");
 var import_node_path22 = require("node:path");
 init_digest();
@@ -48237,7 +48237,7 @@ function experienceDataDirectory(store, scope4, create = false) {
   return projectExperienceDirectory(store, `project:${parsed2.id}`, void 0, create);
 }
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/procedure-release.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-release.js
 function belongsToRetiredScenario(store, procedure) {
   const signature = procedure.scenario_signature;
   const project = signature?.project;
@@ -50026,7 +50026,7 @@ function verifyPinIntact(input2) {
 }
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.20.7";
+var CRAFT_RELEASE_VERSION = "0.20.10";
 
 // core/mcp-forward-compat.ts
 var MCP_REVISION_REQUIREMENTS = [
@@ -50496,6 +50496,8 @@ var TYPES_BY_TOOL = {
   craft_memory_maintenance_run: { principal_ids: "array" },
   craft_memory_maintenance_schedule: { budget_available: "boolean", idle: "boolean", model_available: "boolean" },
   craft_experience_observe: { source_session_id: "string", verification: "object", scope: "string", scenario_signature: "object", execution_shape: "array" },
+  craft_experience_runbook_capture: { reason: "string", title: "string", applies_when: "string", exclude_when: "string", pitfall: "string", cause: "string", correct_method: "string", synthetic_example: "string", done_criteria: "string", failure_handling: "string" },
+  craft_experience_runbook_revoke: { expected_version: "integer", reason: "string" },
   craft_experience_procedure_draft: { design_axes: "array", observation_ids: "array" },
   craft_experience_procedure_submit: { composition: "object", graph_control: "object", inputs: "array", steps: "array", nodes: "array", edges: "array", outputs: "object", checkpoint_policy: "object" },
   craft_experience_learning_evaluation_run: { dispatch_id: "string" },
@@ -50583,7 +50585,7 @@ var TOOL_DEFINITIONS = [
   tool("craft_capability_iteration_gaps", "Audit remaining P0-P2 gaps and missing subcapabilities. It separates resolved control-plane work from runtime cache, evidence and authorization blockers. Read-only; never applies changes or grants execution authority.", [], true, ["project_scope_id", "project_root", "session_id", "surface"]),
   tool("craft_context_usage_statusline", "Return a compact, content-free Context usage status line plus tokens, selected refs, omissions, feedback outcomes and recent measurements. It is a projection over existing receipts and never reads prompt bodies or grants authority.", [], true, ["session_id", "session_host"]),
   tool("craft_lsp_readiness", "Report read-only language-server readiness for the files or languages a task needs. A suggested command is only a server name and must be replaced with its absolute executable path. It never starts a server, installs anything, or lets repository files register executables.", [], true, ["files", "languages", "command"]),
-  tool("craft_context_directory_resolve", "Read existing Craft Notes for directories from the shared local registry. Provide exactly one of description (promoted entries only) or absolute path (also observed entries). No filesystem scan, recording, promotion or access grant. Defaults: limit=3 (1..5), max_chars=1200 (1..4000, serialized entries only). Complete entries that do not fit are omitted with partial=true; descriptions are never truncated. Lookup uses the registry's bounded 1000-record scan. A cloud hint is not a verified remote identity. Resolve permissions before opening the selected project.", [], true, ["description", "path", "limit", "max_chars"]),
+  tool("craft_notes_context_resolve", "Read existing Craft Notes for directories from the shared local registry. Provide exactly one of description (promoted entries only) or absolute path (also observed entries). No filesystem scan, recording, promotion or access grant. Defaults: limit=3 (1..5), max_chars=1200 (1..4000, serialized entries only). Complete entries that do not fit are omitted with partial=true; descriptions are never truncated. Lookup uses the registry's bounded 1000-record scan. A cloud hint is not a verified remote identity. Resolve permissions before opening the selected project.", [], true, ["description", "path", "limit", "max_chars"]),
   tool("craft_context_open", "Open task-relevant repository context. Defaults select at most 3 items and 1,200 characters, then return a compact response capped at a 1,500-token estimate. Codebase indexing runs automatically for code, review, debug and development tasks; other tasks skip it unless include_codebase=true or a Codebase reference is required. task_kind=knowledge selects Knowledge by default; required_refs, memory_ids, history_refs and state_refs add their required members. Other task kinds retain the standard Knowledge, Memory, Experience and Host-context set. Knowledge and Experience return short query-relevant passages, summaries and references; use the specific read tool only when the full body is needed. Use response_detail=full only when detailed receipts are needed, and set max_tokens for its response budget. Explicit members and include_codebase values override these defaults.", ["project_root", "query"], false, ["max_items", "max_chars", "members", "index_depth", "include_codebase", "source_ids", "memory_ids", "retrieval_adapter_id", "allow_restricted", "principal_id", "principal_ids", "tenant_id", "cognitive_purpose", "user_scope_id", "team_scope_id", "organization_scope_id", "session_scope_id", "session_host", "include_global", "include_working_notes", "now", "task_kind", "required_refs", "task_id", "session_id", "turn_id", "history_refs", "state_refs", "max_tokens", "response_detail"]),
   tool("craft_experience_scenario_list", "List one project's bounded Knowledge-free Experience taxonomy from its shared Craft project storage. Consult active and candidate coarse/fine keys before classifying; verifier commands are supporting evidence, not scenario identity.", [], true, ["scope", "scope_kind", "scope_id", "project_root"]),
   tool("craft_experience_scenario_classification_request_get", "Read one pinned, sanitized project Experience scenario-classification request and current taxonomy for the Codex Host Worker.", ["request_id", "scope"], true, ["project_root"]),
@@ -52141,6 +52143,8 @@ var TOOL_DEFINITIONS = [
     ["shadow_evaluation_id", "suite_version", "trials_per_case", "environment", "budget", "min_trials", "min_pass_rate_delta", "cost_metric", "max_cost_regression_ratio", "max_duration_regression_ratio"]
   ),
   tool("craft_experience_procedure_projection_draft", "Create an Experience Procedure candidate from a bounded proposal: Workflow/Graph use checked JSON definitions plus Markdown review views; Prompt uses Markdown. It is not routeable or installed.", ["proposal_id"], false, ["procedure_id", "procedure_kind", "scenario_signature", "trigger", "preconditions", "allowed_effects", "acceptance_ref", "failure_disposition", "evidence_ids", "title", "description"]),
+  tool("craft_experience_runbook_capture", "Capture one sanitized, project-scoped Runbook candidate from an accepted passing Host Observation, or record an explicit no_new_learning decision. Runbooks are readable, non-executable advice and cannot pass Procedure gates directly. Include only reusable pitfalls, causes, correct methods, synthetic examples, completion criteria and failure handling; do not include prompts, transcripts, raw logs, secrets or customer data.", ["observation_id", "decision"], false, ["reason", "title", "applies_when", "exclude_when", "pitfall", "cause", "correct_method", "synthetic_example", "done_criteria", "failure_handling"]),
+  tool("craft_experience_runbook_revoke", "Revoke an unpromoted Runbook candidate after review. Requires the exact current version and a bounded reason. Revocation removes it from Context recall and preserves its history.", ["procedure_id", "expected_version", "reason"], false),
   tool("craft_experience_procedure_gate", "Record a failed Procedure gate or revoke a Canary release. Positive gates require a bound evaluation result.", ["procedure_id", "stage", "evidence_ids"], false, ["gate_id", "passed", "verdict", "expected_version", "release_channel"]),
   tool("craft_experience_procedure_projection_get", "Read one Experience Procedure projection and its checked JSON definition reference when applicable.", ["procedure_id"], true, ["release_channel", "version"]),
   tool("craft_experience_procedure_projection_list", "List scoped Experience Procedure projections.", [], true, ["scope", "limit"]),
@@ -52686,19 +52690,19 @@ var TOOL_DEFINITIONS = [
   tool("craft_context_correction_decide", "Resolve one pending correction task as confirmed or dismissed. It never changes source status; a confirmed correction keeps its ranking penalty.", ["task_id", "decision"], false, ["reason", "now"]),
   tool("craft_codebase_symbol_usage_record", "Record one outcome-linked use of a codebase symbol (read, passed or failed) so later retrieval can rank symbols by observed value.", ["index_id", "symbol_id"], false, ["outcome", "now"]),
   tool("craft_codebase_symbol_usage_get", "Read the net per-symbol usage weight for one codebase index.", ["index_id"], true),
-  tool("craft_file_dir_desc_register_device", "Compatibility operation: register a device with its required user-authored Device Note.", ["id", "device_note"], false, ["name", "device_kind", "host_kind", "location", "tags", "health", "status"]),
-  tool("craft_file_dir_desc_device", "Read one registered device's metadata.", ["id"]),
-  tool("craft_file_dir_desc_list_devices", "List registered devices filtered by kind, host kind and status.", [], true, ["device_kind", "host_kind", "status"]),
-  tool("craft_file_dir_desc_disable_device", "Disable one device so all its places stop being recallable; places are kept for audit.", ["id"]),
-  tool("craft_file_dir_desc_enable_device", "Re-enable a disabled device so its places become recallable again.", ["id"]),
-  tool("craft_file_dir_desc_report_device_health", "Report one device's health and mark it as last-seen now.", ["id", "health"]),
-  tool("craft_file_dir_desc_record", "Compatibility operation: add a directory Note candidate. Candidates require craft_notes_confirm before default retrieval.", ["device_id", "path", "description"], false, ["device_kind", "host_kind", "repo_identity", "promote", "concept_kind", "rationale"]),
-  tool("craft_file_dir_desc_observe", "Compatibility operation: record completed task usage; provide task_id, session_id and outcome=completed. Usage can create a candidate but never confirms one.", ["device_id", "path", "task_id", "session_id", "outcome"], false, ["device_kind", "host_kind", "repo_identity", "description", "project_id", "evidence_ref"]),
-  tool("craft_file_dir_desc_relocate", "Move one place to a new path on the same device, keeping identity and use count.", ["id", "path", "device_id"]),
-  tool("craft_file_dir_desc_revoke", "Withdraw one place with attribution; keeps the audit trail.", ["id", "revoked_by", "reason"]),
-  tool("craft_file_dir_desc_promote", "Compatibility operation: confirm one exact directory Note after human review.", ["id"]),
-  tool("craft_file_dir_desc_resolve", "Bidirectional resolve: description\u2192places or path\u2192devices.", [], true, ["description", "path", "device_id", "repo_identity", "limit"]),
-  tool("craft_file_dir_desc_list", "List places filtered by status, host kind, device, with a bounded cap.", [], true, ["status", "host_kind", "device_id", "limit"]),
+  tool("craft_notes_location_register_device", "Compatibility operation: register a device with its required user-authored Device Note.", ["id", "device_note"], false, ["name", "device_kind", "host_kind", "location", "tags", "health", "status"]),
+  tool("craft_notes_location_device", "Read one registered device's metadata.", ["id"]),
+  tool("craft_notes_location_list_devices", "List registered devices filtered by kind, host kind and status.", [], true, ["device_kind", "host_kind", "status"]),
+  tool("craft_notes_location_disable_device", "Disable one device so all its places stop being recallable; places are kept for audit.", ["id"]),
+  tool("craft_notes_location_enable_device", "Re-enable a disabled device so its places become recallable again.", ["id"]),
+  tool("craft_notes_location_report_device_health", "Report one device's health and mark it as last-seen now.", ["id", "health"]),
+  tool("craft_notes_location_record", "Compatibility operation: add a directory Note candidate. Candidates require craft_notes_confirm before default retrieval.", ["device_id", "path", "description"], false, ["device_kind", "host_kind", "repo_identity", "promote", "concept_kind", "rationale"]),
+  tool("craft_notes_location_observe", "Compatibility operation: record completed task usage; provide task_id, session_id and outcome=completed. Usage can create a candidate but never confirms one.", ["device_id", "path", "task_id", "session_id", "outcome"], false, ["device_kind", "host_kind", "repo_identity", "description", "project_id", "evidence_ref"]),
+  tool("craft_notes_location_relocate", "Move one place to a new path on the same device, keeping identity and use count.", ["id", "path", "device_id"]),
+  tool("craft_notes_location_revoke", "Withdraw one place with attribution; keeps the audit trail.", ["id", "revoked_by", "reason"]),
+  tool("craft_notes_location_promote", "Compatibility operation: confirm one exact directory Note after human review.", ["id"]),
+  tool("craft_notes_location_resolve", "Bidirectional resolve: description\u2192places or path\u2192devices.", [], true, ["description", "path", "device_id", "repo_identity", "limit"]),
+  tool("craft_notes_location_list", "List places filtered by status, host kind, device, with a bounded cap.", [], true, ["status", "host_kind", "device_id", "limit"]),
   tool("craft_notes_create_device", "Register a device with its required user-authored Device Note.", ["id", "note"], false, ["name", "device_kind", "host_kind", "location", "tags", "health", "status"]),
   tool("craft_notes_observe_directory", "Record content-free completed-task usage for a directory; qualifies a human-review candidate after 3 distinct tasks across 2 Host sessions in 30 days. pin=true creates a review candidate directly.", ["path"], false, ["device_id", "note", "task_id", "session_id", "outcome", "pin", "project_id", "host", "timestamp", "evidence_ref"]),
   tool("craft_notes_observe_file", "Record an explicitly task-bound file reference and optional caller-supplied size/mtime; never opens the file. Candidates require human confirmation.", ["path"], false, ["device_id", "note", "task_id", "session_id", "outcome", "pin", "project_id", "artifact_ref", "confirmed_codebase_ref", "metadata"]),
@@ -53090,7 +53094,7 @@ var DISCOVERY_TOOL_NAMES = ["craft_context_open", "craft_context_tools_discover"
 var MAX_DISCOVERY_LIMIT = 5;
 var TASK_TOOLS = {
   recall: [
-    "craft_context_directory_resolve",
+    "craft_notes_context_resolve",
     "craft_context_open",
     "craft_context_resolution_resolve",
     "craft_context_resolution_feedback",
@@ -53115,7 +53119,7 @@ var TASK_TOOLS = {
   ],
   knowledge: ["craft_knowledge_search", "craft_knowledge_bootstrap_install", "craft_knowledge_source_list", "craft_knowledge_source_register", "craft_knowledge_source_ingest", "craft_knowledge_storage_reconcile", "craft_knowledge_scenario_list", "craft_knowledge_scenario_retire", "craft_knowledge_scenario_migration_propose", "craft_evidence_record", "craft_knowledge_claim_save", "craft_knowledge_session_evidence_record", "craft_knowledge_claim_get", "craft_knowledge_claim_list", "craft_knowledge_semantic_review_packet", "craft_knowledge_host_review", "craft_knowledge_auto_review", "craft_knowledge_promotion_policy_get", "craft_knowledge_evaluation_case_save", "craft_knowledge_evaluation_case_list", "craft_knowledge_evaluation_run", "craft_knowledge_evaluation_run_get", "craft_knowledge_evaluation_run_list", "craft_knowledge_task_effect_context", "craft_knowledge_task_effect_assess"],
   memory: ["craft_memory_governance", "craft_memory_capture_observed_fact", "craft_memory_capture_user_statement", "craft_memory_candidate_review", "craft_memory_ledger_remember_approved", "craft_memory_ledger_get", "craft_memory_ledger_list", "craft_memory_ledger_transition", "craft_memory_conflict_list", "craft_memory_conflict_resolve", "craft_memory_maintenance_run", "craft_memory_session_finalize"],
-  experience: ["craft_experience_scenario_list", "craft_experience_scenario_retire", "craft_experience_scenario_migration_propose", "craft_learning_cycle_finalize", "craft_experience_observe", "craft_scope_identity_resolve_project", "craft_evaluation_model_profile_get", "craft_evaluation_model_ticket_list", "craft_experience_procedure_submit", "craft_experience_procedure_get", "craft_experience_learning_request_get", "craft_experience_learning_evaluation_dispatch", "craft_experience_learning_evaluation_dispatch_list", "craft_experience_learning_evaluation_run", "craft_experience_learning_evaluation_result", "craft_experience_graph_inspect", "craft_experience_graph_edit", "craft_procedure_plan", "craft_procedure_host_control", "craft_procedure_decision_evaluate", "craft_procedure_invocation_bind", "craft_procedure_invocation_dispatch", "craft_procedure_invocation_report", "craft_procedure_gate", "craft_procedure_invocation_get", "craft_procedure_invocation_transition", "craft_procedure_invocation_resume"],
+  experience: ["craft_experience_scenario_list", "craft_experience_scenario_retire", "craft_experience_scenario_migration_propose", "craft_learning_cycle_finalize", "craft_experience_runbook_capture", "craft_experience_runbook_revoke", "craft_experience_observe", "craft_scope_identity_resolve_project", "craft_evaluation_model_profile_get", "craft_evaluation_model_ticket_list", "craft_experience_procedure_submit", "craft_experience_procedure_get", "craft_experience_learning_request_get", "craft_experience_learning_evaluation_dispatch", "craft_experience_learning_evaluation_dispatch_list", "craft_experience_learning_evaluation_run", "craft_experience_learning_evaluation_result", "craft_experience_graph_inspect", "craft_experience_graph_edit", "craft_procedure_plan", "craft_procedure_host_control", "craft_procedure_decision_evaluate", "craft_procedure_invocation_bind", "craft_procedure_invocation_dispatch", "craft_procedure_invocation_report", "craft_procedure_gate", "craft_procedure_invocation_get", "craft_procedure_invocation_transition", "craft_procedure_invocation_resume"],
   code: ["craft_codebase_symbol_find", "craft_codebase_symbol_explore", "craft_codebase_symbol_read", "craft_codebase_symbols_overview", "craft_codebase_callers_find", "craft_codebase_callers_query", "craft_codebase_relations_find", "craft_codebase_impact_query", "craft_codebase_change_impact", "craft_codebase_trace", "craft_codebase_context_slice"],
   "code-analysis": ["craft_codebase_symbol_find", "craft_codebase_symbol_explore", "craft_codebase_symbol_read", "craft_codebase_symbols_overview", "craft_codebase_callers_find", "craft_codebase_callers_query", "craft_codebase_relations_find", "craft_codebase_definition_find", "craft_codebase_control_flow_query", "craft_codebase_data_flow_query", "craft_codebase_diagnostics_find", "craft_lsp_readiness", "craft_codebase_impact_query", "craft_codebase_change_impact", "craft_codebase_trace", "craft_codebase_context_slice"]
 };
@@ -68275,11 +68279,11 @@ var LocalRuntimeServiceKernel = class {
   }
 };
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/procedure-automation.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-automation.js
 var import_node_crypto102 = require("node:crypto");
 init_digest();
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/procedure-definition.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-definition.js
 var import_node_fs35 = require("node:fs");
 var import_node_crypto101 = require("node:crypto");
 var import_node_path46 = require("node:path");
@@ -68457,7 +68461,7 @@ function procedureDefinitionRef(value) {
   return item.format === "json" && typeof item.procedure_id === "string" && Number.isSafeInteger(item.procedure_version) && (item.kind === "workflow" || item.kind === "graph") && (item.scope === void 0 || typeof item.scope === "string") && typeof item.path === "string" && typeof item.digest === "string";
 }
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/procedure-automation.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-automation.js
 function text12(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must not be empty`);
@@ -68884,7 +68888,7 @@ init_content_store();
 // core/knowledge-memory-bundle.ts
 init_digest2();
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/graph-version-manifest.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/graph-version-manifest.js
 var import_node_fs36 = require("node:fs");
 var import_node_crypto104 = require("node:crypto");
 var import_node_path47 = require("node:path");
@@ -81763,7 +81767,7 @@ var WorkspaceCoordinator = class {
 // core/application/procedure-invocation.ts
 init_digest2();
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/procedure-graph.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-graph.js
 init_digest();
 function rows(value, name) {
   if (!Array.isArray(value) || !value.length || value.length > 100)
@@ -81872,7 +81876,7 @@ function selectGraph(raw, selection) {
   return { control, scenario, entry: entry2, exit, nodes: raw.nodes.filter((n) => scenario.allowed_nodes.includes(String(n.id))), edges: raw.edges.filter((e) => scenario.allowed_edges.includes(String(e.id))) };
 }
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/procedure-composition.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-composition.js
 init_digest();
 function object6(value, name) {
   if (!value || typeof value !== "object" || Array.isArray(value))
@@ -84119,7 +84123,7 @@ var memoryCapability = {
   }
 };
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/context-feedback-weight.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/context-feedback-weight.js
 var POSITIVE_BONUS3 = 0.2;
 var NEGATIVE_PENALTY3 = 0.2;
 var MAX_SIGNALS3 = 5;
@@ -84178,7 +84182,7 @@ function contextFeedbackWeights3(store, member, ids6) {
   return result2;
 }
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/gate-signals.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/gate-signals.js
 var GATE_KIND = "experience_procedure_gate";
 var FAILED_PENALTY = 0.2;
 var MAX_FAILURES = 5;
@@ -84210,7 +84214,7 @@ function experienceGatePenalty(store, procedureIds) {
   return experienceGatePenaltyFromGates(store.list(GATE_KIND, 1e4, (value) => value.passed === false && wanted.has(String(value.procedure_id)), false), procedureIds);
 }
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/contribution.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/contribution.js
 function terms3(query) {
   return retrievalTerms(query);
 }
@@ -84231,7 +84235,7 @@ var ExperienceContribution = class {
     this.store = store;
   }
   /**
-   * Select routeable Procedures that match this scoped decision point.
+   * Select routeable Procedures and same-project advisory Runbooks that match this decision point.
    *
    * Matching is deliberately scoped and bounded. Experience is a Context member alongside
    * Knowledge and Memory, but it never reads an unscoped legacy record or a diagnostic pattern.
@@ -84268,6 +84272,36 @@ var ExperienceContribution = class {
       item: { ...descriptions.get(String(candidate2.procedure.id)), ranking_weight: candidate2.weight },
       reference: `procedure:${String(candidate2.procedure.id)}@${Number(candidate2.procedure.version)}`
     }));
+    const projectScopes = scopes.filter((scope4) => scope4.kind === "project");
+    const runbooks = projectScopes.length ? this.store.listScoped("experience_procedure", projectScopes, 101, (procedure) => procedure.runbook_candidate === true && procedure.lifecycle === "candidate" && procedure.routeable !== true && projectScopes.some((scope4) => matchesScope2(procedure.scope, scope4)) && scopeAllows(scopeEnvelope(procedure.scope_envelope, recordScope2(procedure.scope)), access5) && (request2.domain === void 0 ? (procedure.domain ?? null) === null : procedure.domain === request2.domain)) : [];
+    if (runbooks.length > 100)
+      throw new Error("Experience Runbook candidate budget exceeded; narrow the project scope");
+    for (const procedure of runbooks) {
+      const ref5 = procedure.content_ref;
+      if (!ref5 || typeof ref5 !== "object")
+        continue;
+      const content = this.store.contentStore.readCompatSync(ref5);
+      const retrievalText = `${String(procedure.title)} ${String(procedure.applies_when)} ${String(procedure.pitfall)} ${String(procedure.correct_method)}`;
+      const score = wanted.reduce((sum, term) => sum + Number(retrievalText.toLowerCase().includes(term)), 0);
+      if (!score)
+        continue;
+      const item = {
+        kind: "experience_runbook_candidate",
+        status: "\u5F85\u9A8C\u8BC1",
+        executable: false,
+        routeable: false,
+        scope: recordScope2(procedure.scope),
+        procedure_id: String(procedure.id),
+        procedure_version: Number(procedure.version),
+        title: String(procedure.title),
+        retrieval_text: retrievalText,
+        body: String(content.body),
+        source_observation_id: String(procedure.observation_id),
+        source_evidence_ids: procedure.evidence_ids,
+        score
+      };
+      selected.push({ item, reference: `runbook-candidate:${String(procedure.id)}@${Number(procedure.version)}` });
+    }
     const items2 = [];
     let usedChars = 0;
     const selectedReferences = [];
@@ -84293,7 +84327,8 @@ var ExperienceContribution = class {
         has_draft: hasDraft,
         routeable_count: eligible.length,
         candidate_count: scoped.filter((p) => p.lifecycle === "candidate").length,
-        reason: eligible.length ? items2.length ? "recalled_not_bound" : "query_or_budget_not_matched" : scoped.length ? "no_promoted_release" : hasDraft ? "draft_not_submitted" : "no_accessible_procedure_in_scope",
+        runbook_candidate_count: runbooks.length,
+        reason: eligible.length || runbooks.length ? items2.length ? "recalled_not_bound" : "query_or_budget_not_matched" : scoped.length ? "no_promoted_release" : hasDraft ? "draft_not_submitted" : "no_accessible_procedure_in_scope",
         next_tool: "craft_experience_graph_inspect",
         next_action: "diagnose",
         execution_started: false
@@ -84305,6 +84340,13 @@ var ExperienceContribution = class {
     const definition2 = procedure.procedure_kind === "graph" && procedureDefinitionRef(procedure.definition_ref) ? new ProcedureDefinitionStore(this.store).read(procedure.definition_ref).definition : null;
     const control = definition2?.graph_control;
     const routes = Array.isArray(control?.subscenarios) ? control.subscenarios.map((s) => ({ id: s.id, title: s.title, entry_id: s.entry_id, exit_id: s.exit_id })) : [];
+    const entrypoints = Array.isArray(procedure.entrypoints) ? procedure.entrypoints.slice(0, 8).map((entry2) => ({
+      id: String(entry2.id ?? "").slice(0, 80),
+      title: String(entry2.title ?? entry2.id ?? "").slice(0, 100)
+    })) : [];
+    const routeTitles = routes.slice(0, 8).map((route) => String(route.title ?? "").slice(0, 100)).filter(Boolean);
+    const title = String(procedure.title).slice(0, 120);
+    const trigger = String(procedure.trigger).slice(0, 180);
     return {
       kind: "experience_procedure",
       scope: recordScope2(procedure.scope),
@@ -84312,9 +84354,10 @@ var ExperienceContribution = class {
       procedure_id: String(procedure.id),
       procedure_version: Number(procedure.version),
       procedure_kind: String(procedure.procedure_kind),
-      trigger: String(procedure.trigger),
-      retrieval_text: `${String(procedure.trigger)} ${String(procedure.title)} ${JSON.stringify(procedure.entrypoints ?? [])} ${JSON.stringify(routes)}`,
-      ...Array.isArray(procedure.entrypoints) ? { entrypoints: procedure.entrypoints } : {},
+      title,
+      trigger,
+      retrieval_text: [trigger, title, ...entrypoints.map((entry2) => entry2.title), ...routeTitles].join(" ").slice(0, 500),
+      ...entrypoints.length ? { entrypoints } : {},
       acceptance_ref: String(procedure.acceptance_ref),
       scenario_signature: procedure.scenario_signature,
       content_digest: procedure.content_digest,
@@ -84329,7 +84372,7 @@ var ExperienceContribution = class {
   }
 };
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/evaluation-model-profile.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/evaluation-model-profile.js
 var import_node_crypto134 = require("node:crypto");
 var import_node_path59 = require("node:path");
 init_digest();
@@ -84354,10 +84397,10 @@ function selectModel2(spec, tier) {
   throw new Error(`Provider ${spec.provider} declares no usable model tier`);
 }
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/evaluation-model-profile.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/evaluation-model-profile.js
 init_store();
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/project-knowledge-content.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/project-knowledge-content.js
 var import_node_fs45 = require("node:fs");
 var import_node_path58 = require("node:path");
 init_digest();
@@ -84459,7 +84502,7 @@ function knowledgeDirectoryForScope3(store, scope4, options = {}) {
   return directory3 ? (0, import_node_path58.dirname)(directory3) : store.paths.knowledgeDir;
 }
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/evaluation-model-profile.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/evaluation-model-profile.js
 var PURPOSES = /* @__PURE__ */ new Set(["evaluation", "workflow_evolution", "knowledge_scenario_classification"]);
 var KNOWLEDGE_CLASSIFIABLE_STATUSES = /* @__PURE__ */ new Set(["candidate", "reviewed"]);
 var SECRET16 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
@@ -84836,7 +84879,7 @@ var EvaluationModelProfileKernel = class {
   }
 };
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/experience-deduplication.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/experience-deduplication.js
 var import_node_crypto135 = require("node:crypto");
 init_digest();
 var VERDICTS3 = /* @__PURE__ */ new Set(["accepted", "rejected", "unknown"]);
@@ -84906,7 +84949,7 @@ var ExperienceDeduplicationKernel = class {
   }
 };
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/experience-ledger.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/experience-ledger.js
 var import_node_crypto136 = require("node:crypto");
 init_store();
 init_digest();
@@ -85058,12 +85101,14 @@ var ExperienceLedgerKernel = class {
   }
 };
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/procedure-projection.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-projection.js
 var import_node_fs46 = require("node:fs");
 var import_node_path60 = require("node:path");
 init_digest();
 var STAGES2 = ["shadow", "held_out", "signoff", "canary"];
 var KINDS7 = /* @__PURE__ */ new Set(["workflow", "graph", "prompt"]);
+var RUNBOOK_FIELDS = ["applies_when", "exclude_when", "pitfall", "cause", "correct_method", "synthetic_example", "done_criteria", "failure_handling"];
+var RUNBOOK_SECRET = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
 function text22(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must not be empty`);
@@ -85092,6 +85137,179 @@ var ProcedureStore = class {
   constructor(store) {
     this.store = store;
     this.definitions = new ProcedureDefinitionStore(store);
+  }
+  /** Save a sanitized, project-local Runbook candidate from one verified Host observation. */
+  runbookCapture(args) {
+    return this.store.transaction(() => this.captureRunbook(args));
+  }
+  captureRunbook(args) {
+    const observationId = text22(args.observation_id, "observation_id");
+    const observation = this.store.get("workflow_evolution_observation", observationId);
+    const source = observation.source;
+    const scope4 = typeof source?.scope === "string" ? source.scope : "";
+    if (!/^project:[A-Za-z0-9_-]{1,96}$/u.test(scope4) || observation.outcome !== "passed" || observation.lifecycle !== "accepted" || typeof source?.kind !== "string" || !source.kind.startsWith("host:") || typeof source.session_id !== "string" || !source.session_id) {
+      throw new Error("Runbook capture requires one accepted, passing project-scoped Host observation");
+    }
+    projectExperienceDirectory(this.store, scope4, void 0, true);
+    const evidenceIds2 = strings33(observation.evidence_ids, "observation.evidence_ids", 1);
+    for (const id25 of evidenceIds2) {
+      const evidence2 = this.store.get("evidence", id25), metadata2 = evidence2.metadata;
+      if (metadata2?.provenance !== "host_completion_signal" || metadata2?.verification_outcome !== "passed" || metadata2?.project_scope_id !== scope4 || metadata2?.source_session_id !== source.session_id || metadata2?.task_id !== source.id || typeof metadata2?.turn_id !== "string" || typeof metadata2?.context_receipt_id !== "string" || metadata2?.content_stored !== false) {
+        throw new Error("Runbook capture Evidence is not a matching verified Host completion signal");
+      }
+    }
+    const priorCandidate = this.store.list("experience_procedure", 1, (item) => item.runbook_candidate === true && item.observation_id === observation.id);
+    const priorDecision = this.store.list("experience_runbook_decision", 1, (item) => item.observation_id === observation.id);
+    if (args.decision === "no_new_learning") {
+      if (priorCandidate.length)
+        throw new Error("A Runbook candidate already exists for this Observation");
+      const reason = text22(args.reason, "reason");
+      if (!["no_reusable_learning", "insufficient_evidence", "too_sensitive", "other"].includes(reason))
+        throw new Error("Runbook skip reason is unsupported");
+      const identity3 = { observation_id: observation.id, observation_version: observation.version, scope: scope4, decision: "no_new_learning", reason };
+      const id25 = `experience_runbook_decision_${stableDigest(identity3).slice(-20)}`;
+      const existing2 = this.store.find("experience_runbook_decision", id25);
+      if (existing2)
+        return { decision: existing2, idempotent: true };
+      if (priorDecision.length)
+        throw new Error("A different no_new_learning decision already exists for this Observation");
+      return { decision: this.store.create("experience_runbook_decision", id25, { ...identity3, content_stored: false }), idempotent: false };
+    }
+    if (args.decision !== "capture")
+      throw new Error("Runbook decision must be capture or no_new_learning");
+    if (priorDecision.length)
+      throw new Error("A no_new_learning decision already exists for this Observation");
+    const fields2 = {};
+    for (const field2 of RUNBOOK_FIELDS) {
+      const value = text22(args[field2], field2);
+      if (value.length > (field2 === "synthetic_example" ? 3e3 : 1e3) || RUNBOOK_SECRET.test(value) || /[\0]/u.test(value))
+        throw new Error(`${field2} is unsafe or exceeds its size limit`);
+      fields2[field2] = value;
+    }
+    const title = text22(args.title, "title");
+    if (title.length > 120 || RUNBOOK_SECRET.test(title))
+      throw new Error("Runbook title is unsafe or too long");
+    const signature = observation.scenario_signature;
+    const domain = typeof signature?.domain === "string" ? signature.domain : null;
+    const identity2 = {
+      runbook_candidate: true,
+      provenance: "verified_host_task",
+      observation_id: observation.id,
+      observation_version: observation.version,
+      session_id: source.session_id,
+      scope: scope4,
+      title,
+      ...fields2,
+      evidence_ids: evidenceIds2,
+      domain,
+      scenario_signature: signature ?? null
+    };
+    const id24 = `experience_procedure_runbook_${stableDigest(identity2).slice(-20)}`;
+    const existing = this.store.find("experience_procedure", id24);
+    if (existing) {
+      if (existing.identity_digest !== stableDigest(identity2))
+        throw new Error("Runbook capture idempotency conflict");
+      return { procedure: existing, idempotent: true };
+    }
+    if (priorCandidate.length)
+      throw new Error("A different Runbook candidate already exists for this Observation");
+    const body3 = [
+      "# " + title,
+      "",
+      "> \u5F85\u9A8C\u8BC1\uFF1A\u4EC5\u4F9B\u540C\u9879\u76EE\u53C2\u8003\uFF0C\u4E0D\u662F\u53EF\u6267\u884C Procedure\u3002",
+      "",
+      "## \u9002\u7528\u8303\u56F4",
+      fields2.applies_when,
+      "",
+      "## \u4E0D\u9002\u7528",
+      fields2.exclude_when,
+      "",
+      "## \u8E29\u5751\u73B0\u8C61",
+      fields2.pitfall,
+      "",
+      "## \u539F\u56E0",
+      fields2.cause,
+      "",
+      "## \u6B63\u786E\u505A\u6CD5",
+      fields2.correct_method,
+      "",
+      "## \u5408\u6210\u793A\u4F8B",
+      "```text",
+      fields2.synthetic_example,
+      "```",
+      "",
+      "## \u5B8C\u6210\u5224\u636E",
+      fields2.done_criteria,
+      "",
+      "## \u5931\u8D25\u5904\u7F6E",
+      fields2.failure_handling,
+      "",
+      "## \u6765\u6E90",
+      `Observation: ${observation.id}@${observation.version}`,
+      `Evidence: ${evidenceIds2.join(", ")}`,
+      "",
+      "## \u5B9E\u6D4B\u65F6\u95F4\u4E0E\u89C4\u6A21",
+      "\u672A\u6D4B\u91CF\uFF1A\u6355\u83B7\u6765\u6E90\u4E0D\u5305\u542B\u53EF\u6838\u9A8C\u7684\u65F6\u95F4\u6216\u89C4\u6A21\u6570\u636E\u3002",
+      ""
+    ].join("\n");
+    const contentRef = this.store.contentStore.writeSync({
+      kind: "experience",
+      record_id: id24,
+      version: 1,
+      scope: scope4,
+      status: "candidate",
+      sensitivity: "internal",
+      source_id: `host-observation:${String(observation.id)}`,
+      title,
+      body: body3,
+      folder: "prompts",
+      frontmatter: { runbook_candidate: "true", routeable: "false" }
+    });
+    const procedure = this.store.create("experience_procedure", id24, {
+      ...identity2,
+      version: 1,
+      lifecycle: "candidate",
+      completed_gates: [],
+      procedure_kind: "prompt",
+      trigger: fields2.applies_when,
+      preconditions: [fields2.exclude_when],
+      allowed_effects: ["read"],
+      acceptance_ref: fields2.done_criteria,
+      failure_disposition: fields2.failure_handling,
+      evidence_ids: evidenceIds2,
+      content_ref: contentRef,
+      content_digest: contentRef.digest,
+      identity_digest: stableDigest(identity2),
+      concept_kind: "procedure",
+      routeable: false,
+      publication_allowed: false,
+      execution_visible: false
+    });
+    return { procedure, idempotent: false, advisory_only: true };
+  }
+  /** Revoke an unpromoted Runbook candidate after human review. */
+  runbookRevoke(args) {
+    return this.store.transaction(() => this.revokeRunbook(args));
+  }
+  revokeRunbook(args) {
+    const id24 = text22(args.procedure_id, "procedure_id"), current2 = this.store.get("experience_procedure", id24);
+    if (current2.runbook_candidate !== true || current2.lifecycle !== "candidate" || current2.routeable === true)
+      throw new Error("Only an unpromoted Runbook candidate can be revoked");
+    if (!Number.isSafeInteger(args.expected_version) || Number(args.expected_version) !== current2.version)
+      throw new Error("Runbook candidate version is stale");
+    const reason = text22(args.reason, "reason");
+    if (!["not_reusable", "unsafe_content", "incorrect", "duplicate", "other"].includes(reason))
+      throw new Error("Runbook revocation reason is unsupported");
+    const procedure = this.store.updateIfVersion("experience_procedure", id24, Number(current2.version), {
+      ...payload(current2),
+      lifecycle: "rolled_back",
+      routeable: false,
+      publication_allowed: false,
+      revoked_by: "explicit_user_review",
+      revocation_reason: reason
+    });
+    this.store.appendEvent(`experience-runbook:${id24}`, "experience.runbook_revoked", { procedure_id: id24, version: procedure.version, reason, content_stored: false });
+    return { procedure, revoked: true };
   }
   /** Create a candidate Procedure from an existing bounded proposal record. */
   draft(args) {
@@ -85226,6 +85444,8 @@ var ProcedureStore = class {
   }
   recordGate(args) {
     const procedure = this.store.get("experience_procedure", text22(args.procedure_id, "procedure_id"));
+    if (procedure.runbook_candidate === true && args.passed === true)
+      throw new Error("Runbook candidates cannot pass Procedure gates directly; submit their learning through the multi-observation evaluation flow");
     if (belongsToRetiredScenario(this.store, procedure))
       throw new Error("Experience scenario is retired; Procedure cannot qualify");
     const stage = text22(args.stage, "stage");
@@ -85279,6 +85499,10 @@ var ProcedureStore = class {
     const procedure = args.release_channel === void 0 ? this.store.get("experience_procedure", id24, args.version === void 0 ? void 0 : Number(args.version)) : selectedProcedure(this.store, id24, args.release_channel);
     if (!procedure)
       throw new Error("Procedure release unavailable");
+    if (procedure.runbook_candidate === true && procedure.content_ref) {
+      const content = this.store.contentStore.readCompatSync(procedure.content_ref);
+      return { procedure, runbook: { status: "\u5F85\u9A8C\u8BC1", executable: false, body: content.body } };
+    }
     return { procedure };
   }
   list(args = {}) {
@@ -85440,13 +85664,13 @@ ${String(value.description)}${contracts2}`;
   }
 };
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/ownership.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/ownership.js
 var EXPERIENCE_FAMILIES = "craft_(?:experience_(?:ledger_|observe|scenario_(?:list|retire|migration_propose)|patterns_list|learning_evaluation_(?:dispatch(?:_list)?|run|result)|procedure_(?:draft|submit|get|projection_(?:draft|get|list)|gate|skill_export)|conclusion_(?:record|find|refuted))|procedure_(?:create|get|list|gate|export_skill)|automation_job_(?:save|pause|run|tick|get|eligibility)|evaluation_model_|route_workflow_proposal|workflow_(?:save|get|search|transition|rollback))";
 var EXPERIENCE_PRODUCT_EXTRAS = "craft_(?:experience_(?:graph_|pattern_|candidate_list|mine|shadow_experiment_|capture_|asset_)|procedure_(?:host_control$|decision_evaluate$|invocation_|configuration_|plan$)|component_(?:readiness_get|diagnose)|evidence_record|scope_identity_resolve_project|context_resolution_(?:resolve|feedback)|decision_context_gate_open|workflow_(?:checkpoint|resume|run_cancel|replan|export|import))";
 var EXPERIENCE_OWNS = new RegExp(`^${EXPERIENCE_FAMILIES}`);
 var EXPERIENCE_COMPONENT = new RegExp(`^(?:${EXPERIENCE_FAMILIES}|${EXPERIENCE_PRODUCT_EXTRAS})`);
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/workflow-evolution.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/workflow-evolution.js
 init_store();
 init_digest();
 var OUTCOMES3 = /* @__PURE__ */ new Set(["passed", "failed", "inconclusive"]);
@@ -85668,7 +85892,7 @@ var WorkflowEvolutionKernel = class {
   }
 };
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/capability.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/capability.js
 var EXPERIENCE_KERNELS = {
   ledger: "experience.ledger",
   workflowEvolution: "experience.workflow_evolution",
@@ -94301,10 +94525,10 @@ var ServiceFoundation = class {
   }
 };
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/procedure-configuration.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-configuration.js
 init_digest();
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/procedure-templates.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-templates.js
 var INTERNET_PRODUCT_ENGINEERING = {
   "nodes": [
     {
@@ -94634,7 +94858,7 @@ function experienceGraphTemplate(id24) {
   return structuredClone(INTERNET_PRODUCT_ENGINEERING);
 }
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/procedure-configuration.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-configuration.js
 function validateExperienceConfiguration(args) {
   text(args.title, "title");
   if (args.template_id !== void 0 && args.template_id !== null)
@@ -94749,7 +94973,7 @@ var ProcedureConfiguration = class {
   }
 };
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/graph-matching.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/graph-matching.js
 function matchGraphRoutes(definition2, query, inputKeys = []) {
   const wanted = retrievalTerms(text(query, "query")), control = definition2.graph_control;
   const entries2 = control.entries, keys = new Set(inputKeys);
@@ -94762,7 +94986,7 @@ function matchGraphRoutes(definition2, query, inputKeys = []) {
   return { routes: routes.slice(0, 20), omitted_count: Math.max(0, routes.length - 20), lexical_hint: true, execution_authorized: false };
 }
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/graph-assets.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/graph-assets.js
 var import_node_fs57 = require("node:fs");
 var import_node_crypto157 = require("node:crypto");
 var import_node_path73 = require("node:path");
@@ -95473,13 +95697,27 @@ ${answers[key3]?.trim() || "\u5F85\u786E\u8BA4"}`),
         pending_corrections: weight?.negative ?? 0
       };
     });
+    const runbookCandidates = procedureRecords.filter((item) => item.runbook_candidate === true && item.lifecycle === "candidate" && item.routeable !== true).slice(0, 50).map((item) => {
+      const content = item.content_ref && typeof item.content_ref === "object" ? this.store.contentStore.readCompatSync(item.content_ref) : null;
+      return {
+        id: item.id,
+        version: item.version,
+        title: item.title,
+        lifecycle: item.lifecycle,
+        scope: item.scope,
+        observation_id: item.observation_id,
+        evidence_ids: item.evidence_ids ?? [],
+        body: content?.body ?? ""
+      };
+    });
     return {
       scope: scope4,
       drafts,
       observations,
       patterns,
       procedures,
-      counts: { drafts: drafts.length, observations: observations.length, patterns: patterns.length, procedures: procedures.length }
+      runbook_candidates: runbookCandidates,
+      counts: { drafts: drafts.length, observations: observations.length, patterns: patterns.length, procedures: procedures.length, runbook_candidates: runbookCandidates.length }
     };
   }
   /**
@@ -95646,12 +95884,12 @@ var CognitiveWorkbenchCoordinator = class {
   }
 };
 
-// node_modules/.pnpm/@craft+capability-file-dir-desc@0.20.6/node_modules/@craft/capability-file-dir-desc/dist/file-dir-desc.js
+// node_modules/.pnpm/@craft+craft-notes@0.20.7/node_modules/@craft/craft-notes/dist/craft-notes-location.js
 var import_node_path75 = require("node:path");
 var import_node_crypto160 = require("node:crypto");
 init_store();
 
-// node_modules/.pnpm/@craft+capability-file-dir-desc@0.20.6/node_modules/@craft/capability-file-dir-desc/dist/notes.js
+// node_modules/.pnpm/@craft+craft-notes@0.20.7/node_modules/@craft/craft-notes/dist/craft-note-lifecycle.js
 var import_node_crypto159 = require("node:crypto");
 var import_node_path74 = require("node:path");
 init_store();
@@ -95882,8 +96120,8 @@ function assertExpectedVersion(value, record4) {
     throw new Error("stale Note version; reload the current candidate before deciding");
 }
 
-// node_modules/.pnpm/@craft+capability-file-dir-desc@0.20.6/node_modules/@craft/capability-file-dir-desc/dist/file-dir-desc.js
-var PROMOTION_USE_THRESHOLD = 3;
+// node_modules/.pnpm/@craft+craft-notes@0.20.7/node_modules/@craft/craft-notes/dist/craft-notes-location.js
+var CRAFT_NOTES_LOCATION_USE_THRESHOLD = 3;
 var DEVICE_KINDS = /* @__PURE__ */ new Set(["local", "ssh", "container", "remote-workspace", "cloud"]);
 var DEVICE_ID2 = /^[a-z0-9][a-z0-9._-]{0,63}$/u;
 function normalizeDeviceId(value) {
@@ -95990,12 +96228,13 @@ function deviceActive(store, deviceId2) {
   const record4 = store.find("device", deviceId2);
   return record4 ? record4.status === "active" : deviceId2 === "local";
 }
-var FileDirDescRegistry = class {
+var CraftNotesLocationRegistry = class {
   store;
   notes;
   constructor(store, validateNoteText) {
     this.store = store;
     this.notes = new CraftNotesRegistry(store, validateNoteText);
+    migrateLegacyLocationRows(store);
   }
   /** Register or update device metadata. Disabled devices stop being recallable. */
   registerDevice(args) {
@@ -96088,11 +96327,11 @@ var FileDirDescRegistry = class {
     const deviceRecord = this.store.find("device", deviceId2);
     if (deviceRecord && String(deviceRecord.status) !== "active")
       throw new Error(`device ${deviceId2} is not active; enable it before recording places`);
-    const existing = this.store.list("file_dir_desc", Number.MAX_SAFE_INTEGER, (item) => item.path === path2 && String(item.device_id ?? "local") === deviceId2)[0];
+    const existing = this.store.list("craft_notes_location", Number.MAX_SAFE_INTEGER, (item) => item.path === path2 && String(item.device_id ?? "local") === deviceId2)[0];
     if (existing) {
       const useCount2 = Number(existing.use_count ?? 0) + 1;
       const withdrawn = existing.status === "revoked";
-      const promoted2 = !withdrawn && (forcePromote || useCount2 >= PROMOTION_USE_THRESHOLD);
+      const promoted2 = !withdrawn && (forcePromote || useCount2 >= CRAFT_NOTES_LOCATION_USE_THRESHOLD);
       const payload11 = {
         ...existing,
         device_id: deviceId2,
@@ -96107,12 +96346,12 @@ var FileDirDescRegistry = class {
         concept_kind: conceptKind ?? existing.concept_kind,
         rationale: rationale ?? existing.rationale
       };
-      this.store.save("file_dir_desc", String(existing.id), payload11);
+      this.store.save("craft_notes_location", String(existing.id), payload11);
       return toRecord2(payload11);
     }
     const id24 = String(args.id ?? `fdd_${(0, import_node_crypto160.randomUUID)()}`);
     const useCount = 1;
-    const promoted = forcePromote || useCount >= PROMOTION_USE_THRESHOLD;
+    const promoted = forcePromote || useCount >= CRAFT_NOTES_LOCATION_USE_THRESHOLD;
     const payload10 = {
       id: id24,
       device_id: deviceId2,
@@ -96129,7 +96368,7 @@ var FileDirDescRegistry = class {
       concept_kind: conceptKind ?? null,
       rationale
     };
-    this.store.save("file_dir_desc", id24, payload10);
+    this.store.save("craft_notes_location", id24, payload10);
     return toRecord2(payload10);
   }
   /**
@@ -96147,11 +96386,11 @@ var FileDirDescRegistry = class {
     const conceptKind = args.concept_kind === void 0 || args.concept_kind === null ? null : String(args.concept_kind);
     const rationale = args.rationale === void 0 || args.rationale === null ? null : normalizeDescription(args.rationale);
     const now3 = (/* @__PURE__ */ new Date()).toISOString();
-    const existing = this.store.list("file_dir_desc", Number.MAX_SAFE_INTEGER, (item) => item.path === path2 && String(item.device_id ?? "local") === deviceId2)[0];
+    const existing = this.store.list("craft_notes_location", Number.MAX_SAFE_INTEGER, (item) => item.path === path2 && String(item.device_id ?? "local") === deviceId2)[0];
     if (existing) {
       const useCount = Number(existing.use_count ?? 0) + 1;
       const withdrawn = existing.status === "revoked";
-      const promoted = !withdrawn && useCount >= PROMOTION_USE_THRESHOLD;
+      const promoted = !withdrawn && useCount >= CRAFT_NOTES_LOCATION_USE_THRESHOLD;
       const payload11 = {
         ...existing,
         device_id: deviceId2,
@@ -96165,7 +96404,7 @@ var FileDirDescRegistry = class {
         concept_kind: existing.concept_kind ?? conceptKind ?? null,
         rationale: existing.rationale ?? rationale ?? null
       };
-      this.store.save("file_dir_desc", String(existing.id), payload11);
+      this.store.save("craft_notes_location", String(existing.id), payload11);
       return toRecord2(payload11);
     }
     const description = args.description === void 0 || args.description === null ? path2.split(/[\\/]/u).filter(Boolean).pop() ?? path2 : normalizeDescription(args.description);
@@ -96186,7 +96425,7 @@ var FileDirDescRegistry = class {
       updated_at: now3,
       last_used_at: now3
     };
-    this.store.save("file_dir_desc", id24, payload10);
+    this.store.save("craft_notes_location", id24, payload10);
     return toRecord2(payload10);
   }
   /**
@@ -96197,13 +96436,13 @@ var FileDirDescRegistry = class {
   relocate(args) {
     const id24 = text36(args.id, "id");
     const toPath = normalizePath(args.path);
-    const existing = this.store.find("file_dir_desc", id24);
+    const existing = this.store.find("craft_notes_location", id24);
     if (!existing)
-      throw new Error(`Unknown file_dir_desc: ${id24}`);
+      throw new Error(`Unknown craft_notes_location: ${id24}`);
     const deviceId2 = normalizeDeviceId(args.device_id ?? existing.device_id);
     if (deviceId2 !== String(existing.device_id ?? "local"))
       throw new Error("relocate cannot move a place to another device; record it on that device instead");
-    const conflict = this.store.list("file_dir_desc", Number.MAX_SAFE_INTEGER, (item) => item.path === toPath && String(item.device_id ?? "local") === deviceId2 && String(item.id) !== id24)[0];
+    const conflict = this.store.list("craft_notes_location", Number.MAX_SAFE_INTEGER, (item) => item.path === toPath && String(item.device_id ?? "local") === deviceId2 && String(item.id) !== id24)[0];
     if (conflict)
       throw new Error(`another entry already describes ${toPath}; withdraw it first`);
     const now3 = (/* @__PURE__ */ new Date()).toISOString();
@@ -96216,7 +96455,7 @@ var FileDirDescRegistry = class {
       concept_kind: existing.concept_kind ?? null,
       rationale: existing.rationale ?? null
     };
-    this.store.save("file_dir_desc", id24, payload10);
+    this.store.save("craft_notes_location", id24, payload10);
     return toRecord2(payload10);
   }
   /**
@@ -96228,9 +96467,9 @@ var FileDirDescRegistry = class {
     const id24 = text36(args.id, "id");
     const actor = boundedActor3(args.revoked_by, "revoked_by");
     const reason = text36(args.reason, "reason");
-    const existing = this.store.find("file_dir_desc", id24);
+    const existing = this.store.find("craft_notes_location", id24);
     if (!existing)
-      throw new Error(`Unknown file_dir_desc: ${id24}`);
+      throw new Error(`Unknown craft_notes_location: ${id24}`);
     const now3 = (/* @__PURE__ */ new Date()).toISOString();
     const conceptKind = args.concept_kind === void 0 || args.concept_kind === null ? null : String(args.concept_kind);
     const rationale = args.rationale === void 0 || args.rationale === null ? null : normalizeDescription(args.rationale);
@@ -96244,19 +96483,19 @@ var FileDirDescRegistry = class {
       concept_kind: conceptKind,
       rationale
     };
-    this.store.save("file_dir_desc", id24, payload10);
+    this.store.save("craft_notes_location", id24, payload10);
     return toRecord2(payload10);
   }
   /** Promote an observed entry regardless of use count (explicit user action). */
   promote(args) {
     const id24 = text36(args.id, "id");
-    const existing = this.store.find("file_dir_desc", id24);
+    const existing = this.store.find("craft_notes_location", id24);
     if (!existing)
-      throw new Error(`Unknown file_dir_desc: ${id24}`);
+      throw new Error(`Unknown craft_notes_location: ${id24}`);
     const now3 = (/* @__PURE__ */ new Date()).toISOString();
     const conceptKind = args.concept_kind === void 0 || args.concept_kind === null ? null : String(args.concept_kind);
     const rationale = args.rationale === void 0 || args.rationale === null ? null : normalizeDescription(args.rationale);
-    this.store.save("file_dir_desc", id24, {
+    this.store.save("craft_notes_location", id24, {
       ...existing,
       status: "promoted",
       updated_at: now3,
@@ -96265,7 +96504,7 @@ var FileDirDescRegistry = class {
       concept_kind: conceptKind ?? existing.concept_kind ?? null,
       rationale: rationale ?? existing.rationale ?? null
     });
-    const saved = this.store.find("file_dir_desc", id24);
+    const saved = this.store.find("craft_notes_location", id24);
     if (!saved)
       throw new Error(`Promoted entry ${id24} disappeared`);
     return toRecord2(saved);
@@ -96286,13 +96525,13 @@ var FileDirDescRegistry = class {
       const limit3 = finiteLimit2(args.limit);
       const deviceId2 = args.device_id === void 0 || args.device_id === null ? null : normalizeDeviceId(args.device_id);
       const repoIdentity = normalizeRepoIdentity(args.repo_identity);
-      const matches4 = this.store.list("file_dir_desc", 1e3, (item) => item.status === "promoted" && termMatch(String(item.description), description) && (deviceId2 === null ? true : String(item.device_id ?? "local") === deviceId2) && (repoIdentity === null ? true : sameRepo(item.repo_identity, repoIdentity)) && (String(item.status) !== "revoked" ? deviceActive(this.store, String(item.device_id ?? "local")) : true)).map(toRecord2).sort((a, b) => b.useCount - a.useCount);
+      const matches4 = this.store.list("craft_notes_location", 1e3, (item) => item.status === "promoted" && termMatch(String(item.description), description) && (deviceId2 === null ? true : String(item.device_id ?? "local") === deviceId2) && (repoIdentity === null ? true : sameRepo(item.repo_identity, repoIdentity)) && (String(item.status) !== "revoked" ? deviceActive(this.store, String(item.device_id ?? "local")) : true)).map(toRecord2).sort((a, b) => b.useCount - a.useCount);
       return { kind: "by_description", query: description, results: matches4.slice(0, limit3) };
     }
     if (args.path !== void 0 && args.path !== null) {
       const path2 = normalizePath(args.path);
       const deviceId2 = args.device_id === void 0 || args.device_id === null ? null : normalizeDeviceId(args.device_id);
-      const entries2 = this.store.list("file_dir_desc", 1e3, (item) => item.path === path2 && (deviceId2 === null ? true : String(item.device_id ?? "local") === deviceId2) && (String(item.status) !== "revoked" ? deviceActive(this.store, String(item.device_id ?? "local")) : true)).map(toRecord2);
+      const entries2 = this.store.list("craft_notes_location", 1e3, (item) => item.path === path2 && (deviceId2 === null ? true : String(item.device_id ?? "local") === deviceId2) && (String(item.status) !== "revoked" ? deviceActive(this.store, String(item.device_id ?? "local")) : true)).map(toRecord2);
       return { kind: "by_path", path: path2, results: entries2 };
     }
     throw new Error("resolve requires description or path");
@@ -96302,10 +96541,17 @@ var FileDirDescRegistry = class {
     const hostKind = args.host_kind === "cloud" ? "cloud" : args.host_kind === "local" ? "local" : null;
     const deviceId2 = args.device_id === void 0 || args.device_id === null ? null : normalizeDeviceId(args.device_id);
     const limit3 = finiteLimit2(args.limit);
-    const items2 = this.store.list("file_dir_desc", Number.MAX_SAFE_INTEGER, (item) => (status2 === null || item.status === status2) && (hostKind === null || (hostKind === "cloud" ? item.host_kind === "cloud" : item.host_kind !== "cloud")) && (deviceId2 === null || String(item.device_id ?? "local") === deviceId2)).map(toRecord2).sort((a, b) => b.useCount - a.useCount || (a.updatedAt < b.updatedAt ? 1 : -1));
+    const items2 = this.store.list("craft_notes_location", Number.MAX_SAFE_INTEGER, (item) => (status2 === null || item.status === status2) && (hostKind === null || (hostKind === "cloud" ? item.host_kind === "cloud" : item.host_kind !== "cloud")) && (deviceId2 === null || String(item.device_id ?? "local") === deviceId2)).map(toRecord2).sort((a, b) => b.useCount - a.useCount || (a.updatedAt < b.updatedAt ? 1 : -1));
     return { items: items2.slice(0, limit3) };
   }
 };
+function migrateLegacyLocationRows(store) {
+  for (const legacy of store.list("file_dir_desc", Number.MAX_SAFE_INTEGER)) {
+    const id24 = String(legacy.id);
+    if (!store.find("craft_notes_location", id24))
+      store.save("craft_notes_location", id24, legacy);
+  }
+}
 function sameRepo(value, expected) {
   if (!value || typeof value !== "object" || Array.isArray(value))
     return false;
@@ -96363,9 +96609,9 @@ function normalizeHostKind(value) {
 
 // core/craft-notes-migration.ts
 init_store2();
-function migrateFileDirDescNotes(store) {
+function migrateCraftNotesLocationNotes(store) {
   let migrated = 0, skipped = 0;
-  const legacy = store.list("file_dir_desc", Number.MAX_SAFE_INTEGER);
+  const legacy = store.list("craft_notes_location", Number.MAX_SAFE_INTEGER);
   for (const row of legacy) {
     const id24 = String(row.id);
     if (store.find("craft_note", id24)) {
@@ -96392,7 +96638,7 @@ function migrateFileDirDescNotes(store) {
       verified_at: status2 === "legacy_unreviewed" ? String(row.updated_at ?? now3) : null,
       created_at: String(row.created_at ?? now3),
       updated_at: now3,
-      legacy_source: "file_dir_desc",
+      legacy_source: "craft_notes_location",
       legacy_status: String(row.status ?? "observed"),
       legacy_use_count: Number(row.use_count ?? 0)
     };
@@ -96402,8 +96648,8 @@ function migrateFileDirDescNotes(store) {
   return { scanned: legacy.length, migrated, skipped };
 }
 
-// core/context-directory.ts
-function resolveContextDirectory(registry2, args) {
+// core/context-notes.ts
+function resolveContextNotes(registry2, args) {
   if (args.path !== void 0 === (args.description !== void 0)) {
     throw new CraftOperationError("INVALID_INPUT", "input_validation", "Provide exactly one of path or description");
   }
@@ -101542,21 +101788,21 @@ function createActionHandlers(service, mountedComponent) {
       ...codebaseLspReadiness(service.store, args),
       ...args.command === void 0 ? {} : { command_is_absolute: lspCommandIsAbsolute(args.command) }
     }),
-    craft_context_directory_resolve: (a) => service.contextDirectoryResolve(a),
+    craft_notes_context_resolve: (a) => service.contextNotesResolve(a),
     craft_context_open: (a) => service.contextOpen(a),
-    craft_file_dir_desc_register_device: service.fileDirDescRegisterDevice.bind(service),
-    craft_file_dir_desc_device: service.fileDirDescDevice.bind(service),
-    craft_file_dir_desc_list_devices: service.fileDirDescListDevices.bind(service),
-    craft_file_dir_desc_disable_device: service.fileDirDescDisableDevice.bind(service),
-    craft_file_dir_desc_enable_device: service.fileDirDescEnableDevice.bind(service),
-    craft_file_dir_desc_report_device_health: service.fileDirDescReportDeviceHealth.bind(service),
-    craft_file_dir_desc_record: service.fileDirDescRecord.bind(service),
-    craft_file_dir_desc_observe: service.fileDirDescObserve.bind(service),
-    craft_file_dir_desc_relocate: service.fileDirDescRelocate.bind(service),
-    craft_file_dir_desc_revoke: service.fileDirDescRevoke.bind(service),
-    craft_file_dir_desc_promote: service.fileDirDescPromote.bind(service),
-    craft_file_dir_desc_resolve: service.fileDirDescResolve.bind(service),
-    craft_file_dir_desc_list: service.fileDirDescList.bind(service),
+    craft_notes_location_register_device: service.craftNotesLocationRegisterDevice.bind(service),
+    craft_notes_location_device: service.craftNotesLocationDevice.bind(service),
+    craft_notes_location_list_devices: service.craftNotesLocationListDevices.bind(service),
+    craft_notes_location_disable_device: service.craftNotesLocationDisableDevice.bind(service),
+    craft_notes_location_enable_device: service.craftNotesLocationEnableDevice.bind(service),
+    craft_notes_location_report_device_health: service.craftNotesLocationReportDeviceHealth.bind(service),
+    craft_notes_location_record: service.craftNotesLocationRecord.bind(service),
+    craft_notes_location_observe: service.craftNotesLocationObserve.bind(service),
+    craft_notes_location_relocate: service.craftNotesLocationRelocate.bind(service),
+    craft_notes_location_revoke: service.craftNotesLocationRevoke.bind(service),
+    craft_notes_location_promote: service.craftNotesLocationPromote.bind(service),
+    craft_notes_location_resolve: service.craftNotesLocationResolve.bind(service),
+    craft_notes_location_list: service.craftNotesLocationList.bind(service),
     craft_notes_create_device: service.craftNotesCreateDevice.bind(service),
     craft_notes_observe_directory: service.craftNotesObserveDirectory.bind(service),
     craft_notes_observe_file: service.craftNotesObserveFile.bind(service),
@@ -101745,6 +101991,8 @@ function createActionHandlers(service, mountedComponent) {
     craft_experience_procedure_draft: (a) => service.workflowEvolutionPropose(a),
     craft_experience_procedure_submit: (a) => service.workflowEvolutionProposalSubmit(a),
     craft_experience_procedure_get: (a) => service.workflowEvolutionProposalGet(a),
+    craft_experience_runbook_capture: (a) => service.experienceRunbookCapture(a),
+    craft_experience_runbook_revoke: (a) => service.experienceRunbookRevoke(a),
     craft_experience_procedure_projection_draft: (a) => service.experienceProcedureDraft(a),
     craft_experience_procedure_gate: (a) => service.experienceProcedureGate(a),
     craft_experience_procedure_projection_get: (a) => service.experienceProcedureGet(a),
@@ -103506,12 +103754,12 @@ function installHostSessionMethods(serviceClass) {
 var import_node_crypto174 = require("node:crypto");
 var import_node_fs67 = require("node:fs");
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/learning-evaluation.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/learning-evaluation.js
 init_digest();
 var import_node_fs66 = require("node:fs");
 var import_node_path86 = require("node:path");
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/scenario-evaluation.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/scenario-evaluation.js
 init_digest();
 var AUTOMATIC_SIGNOFF_POLICY = "craft:auto-signoff:all-prior-gates-passed.v1";
 function object11(value, name) {
@@ -103629,7 +103877,7 @@ function validateReadOnlyEvaluationSteps(value) {
   });
 }
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.5/node_modules/@craft/capability-experience/dist/learning-evaluation.js
+// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/learning-evaluation.js
 var STAGES4 = ["shadow", "held_out", "signoff", "canary"];
 function text42(value, name) {
   if (typeof value !== "string" || !value.trim())
@@ -104081,6 +104329,12 @@ function installDurableExperienceMethods(serviceClass) {
   };
   serviceClass.prototype.experienceProcedureDraft = function(args) {
     return this.experienceProcedures.draft(args);
+  };
+  serviceClass.prototype.experienceRunbookCapture = function(args) {
+    return this.experienceProcedures.runbookCapture(args);
+  };
+  serviceClass.prototype.experienceRunbookRevoke = function(args) {
+    return this.experienceProcedures.runbookRevoke(args);
   };
   serviceClass.prototype.experienceProcedureGate = function(args) {
     if (args.passed === true) throw new Error("Positive Procedure gates require bound evaluation results");
@@ -109462,8 +109716,8 @@ var CraftService = class _CraftService extends ServiceFoundation {
   contextToolsDiscover(args) {
     return discoverContextTools(args);
   }
-  contextDirectoryResolve(args) {
-    return resolveContextDirectory(this.fileDirDesc, args);
+  contextNotesResolve(args) {
+    return resolveContextNotes(this.craftNotesLocation, args);
   }
   workControl;
   forgeDispatch;
@@ -109471,7 +109725,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
   cognitiveWrites;
   cognitiveSearch;
   evaluationRuns;
-  fileDirDesc;
+  craftNotesLocation;
   craftNotes;
   mods;
   modRuntime;
@@ -109526,9 +109780,9 @@ var CraftService = class _CraftService extends ServiceFoundation {
     const validateNoteText = (value) => {
       if (noteSanitizer.text(value) !== value) throw new Error("note appears to contain DataSec-sensitive content");
     };
-    this.fileDirDesc = new FileDirDescRegistry(store, validateNoteText);
+    this.craftNotesLocation = new CraftNotesLocationRegistry(store, validateNoteText);
     this.craftNotes = new CraftNotesRegistry(store, validateNoteText);
-    migrateFileDirDescNotes(store);
+    migrateCraftNotesLocationNotes(store);
     this.mods = new ModRegistry(store);
     this.modRuntime = new ModRuntime(store);
     this.inbox = new MessageInbox(store);
@@ -109662,9 +109916,9 @@ var CraftService = class _CraftService extends ServiceFoundation {
   memoryCaptureObservedFact(args) {
     return this.cognitiveWrites.captureObservedFact(args);
   }
-  /** Record or reinforce a directory↔description link; see `file-dir-desc.ts`. */
-  fileDirDescRecord(args) {
-    const place = this.fileDirDesc.record(args);
+  /** Record or reinforce a directory↔description link; see `craft-notes-location.ts`. */
+  craftNotesLocationRecord(args) {
+    const place = this.craftNotesLocation.record(args);
     try {
       this.craftNotes.observeDirectory({
         id: place.id,
@@ -109676,7 +109930,7 @@ var CraftService = class _CraftService extends ServiceFoundation {
       });
     } catch (error2) {
       if (!(error2 instanceof Error) || !/active device with a confirmed Device Note/u.test(error2.message)) throw error2;
-      migrateFileDirDescNotes(this.store);
+      migrateCraftNotesLocationNotes(this.store);
     }
     if (args.promote === true) {
       try {
@@ -109688,12 +109942,12 @@ var CraftService = class _CraftService extends ServiceFoundation {
     }
     return place;
   }
-  fileDirDescPromote(args) {
+  craftNotesLocationPromote(args) {
     const id24 = text(args.id, "id");
     const note = this.store.find("craft_note", id24);
     const expectedVersion = args.expected_version ?? (note ? Number(note.version ?? 1) : void 0);
     if (note) assertCraftNoteVersion(expectedVersion, note);
-    const place = this.fileDirDesc.promote(args);
+    const place = this.craftNotesLocation.promote(args);
     try {
       if (note) this.craftNotes.confirm({ id: id24, expected_version: expectedVersion });
     } catch (error2) {
@@ -109702,11 +109956,11 @@ var CraftService = class _CraftService extends ServiceFoundation {
     return place;
   }
   /** Automatic reinforcement from real use; never rewrites a description. */
-  fileDirDescObserve(args) {
+  craftNotesLocationObserve(args) {
     return this.craftNotesObserveDirectory(args);
   }
-  fileDirDescRelocate(args) {
-    const place = this.fileDirDesc.relocate(args);
+  craftNotesLocationRelocate(args) {
+    const place = this.craftNotesLocation.relocate(args);
     const note = this.store.find("craft_note", text(args.id, "id"));
     if (note && note.subject_type === "directory") this.store.save("craft_note", String(note.id), {
       ...note,
@@ -109716,12 +109970,12 @@ var CraftService = class _CraftService extends ServiceFoundation {
     });
     return place;
   }
-  fileDirDescRevoke(args) {
+  craftNotesLocationRevoke(args) {
     const id24 = text(args.id, "id");
     const note = this.store.find("craft_note", id24);
     const expectedVersion = args.expected_version ?? (note ? Number(note.version ?? 1) : void 0);
     if (note) assertCraftNoteVersion(expectedVersion, note);
-    const place = this.fileDirDesc.revoke(args);
+    const place = this.craftNotesLocation.revoke(args);
     try {
       if (note) this.craftNotes.revoke({ id: id24, expected_version: expectedVersion, revoked_by: args.revoked_by ?? "workbench", reason: args.reason });
     } catch (error2) {
@@ -109729,29 +109983,29 @@ var CraftService = class _CraftService extends ServiceFoundation {
     }
     return place;
   }
-  fileDirDescResolve(args) {
-    return this.fileDirDesc.resolve(args);
+  craftNotesLocationResolve(args) {
+    return this.craftNotesLocation.resolve(args);
   }
-  fileDirDescList(args = {}) {
-    return this.fileDirDesc.list(args);
+  craftNotesLocationList(args = {}) {
+    return this.craftNotesLocation.list(args);
   }
-  fileDirDescRegisterDevice(args) {
-    return this.fileDirDesc.registerDevice(args);
+  craftNotesLocationRegisterDevice(args) {
+    return this.craftNotesLocation.registerDevice(args);
   }
-  fileDirDescDevice(args) {
-    return this.fileDirDesc.device(text(args.id, "id"));
+  craftNotesLocationDevice(args) {
+    return this.craftNotesLocation.device(text(args.id, "id"));
   }
-  fileDirDescListDevices(args = {}) {
-    return this.fileDirDesc.listDevices(args);
+  craftNotesLocationListDevices(args = {}) {
+    return this.craftNotesLocation.listDevices(args);
   }
-  fileDirDescDisableDevice(args) {
-    return this.fileDirDesc.disableDevice(text(args.id, "id"));
+  craftNotesLocationDisableDevice(args) {
+    return this.craftNotesLocation.disableDevice(text(args.id, "id"));
   }
-  fileDirDescEnableDevice(args) {
-    return this.fileDirDesc.enableDevice(text(args.id, "id"));
+  craftNotesLocationEnableDevice(args) {
+    return this.craftNotesLocation.enableDevice(text(args.id, "id"));
   }
-  fileDirDescReportDeviceHealth(args) {
-    return this.fileDirDesc.reportDeviceHealth(text(args.id, "id"), text(args.health, "health"));
+  craftNotesLocationReportDeviceHealth(args) {
+    return this.craftNotesLocation.reportDeviceHealth(text(args.id, "id"), text(args.health, "health"));
   }
   craftNotesCreateDevice(args) {
     return this.craftNotes.createDevice(args);
@@ -113419,7 +113673,7 @@ ${task.goal}`.toLowerCase();
   /**
    * Coordinator: the directories this machine knows about, described the way
    * people describe them. A known workspace contributes its name and path; a
-   * promoted `craft-file-dir-desc` entry contributes a human description, so
+   * promoted `craft-notes-location` entry contributes a human description, so
    * "where does billing live" can resolve without the user typing a path.
    */
   coordinatorDirectories() {
@@ -113430,7 +113684,7 @@ ${task.goal}`.toLowerCase();
       description: null
     }));
     const known = new Set(directories.map((entry2) => canonicalRootPath(entry2.root_path)));
-    const promoted = this.fileDirDesc.list({ status: "promoted", limit: 1e3 }).items;
+    const promoted = this.craftNotesLocation.list({ status: "promoted", limit: 1e3 }).items;
     for (const record4 of Array.isArray(promoted) ? promoted : []) {
       const entry2 = record4;
       const rootPath = typeof entry2.path === "string" ? entry2.path : "";
@@ -120859,6 +121113,8 @@ var DAILY_COMPONENT_TOOLS = {
     "craft_experience_scenario_list",
     "craft_experience_scenario_migration_propose",
     "craft_learning_cycle_finalize",
+    "craft_experience_runbook_capture",
+    "craft_experience_runbook_revoke",
     "craft_component_readiness_get",
     "craft_evidence_record",
     "craft_experience_observe",
@@ -120911,7 +121167,7 @@ function surfaceToolNames(surface, activeTools, coreToolNames) {
       "craft_context_open",
       "craft_context_resolution_resolve",
       "craft_context_tools_discover",
-      "craft_context_directory_resolve",
+      "craft_notes_context_resolve",
       "craft_context_doctor",
       "craft_context_usage_statusline",
       "craft_capability_iteration_plan",
@@ -120927,12 +121183,12 @@ function surfaceToolNames(surface, activeTools, coreToolNames) {
     return [.../* @__PURE__ */ new Set([...direct, ...SYSCALL_VERBS, ...passthrough])];
   }
   if (surface === "component-context-complete") {
-    const names3 = /* @__PURE__ */ new Set(["craft_info", "craft_context_open", "craft_context_tools_discover", "craft_context_directory_resolve", "craft_context_doctor", "craft_context_usage_statusline", "craft_capability_iteration_plan", "craft_capability_iteration_gaps", "craft_lsp_readiness", "craft_learning_cycle_task_evidence_list", ...Object.values(DAILY_COMPONENT_TOOLS).flat()]);
+    const names3 = /* @__PURE__ */ new Set(["craft_info", "craft_context_open", "craft_context_tools_discover", "craft_notes_context_resolve", "craft_context_doctor", "craft_context_usage_statusline", "craft_capability_iteration_plan", "craft_capability_iteration_gaps", "craft_lsp_readiness", "craft_learning_cycle_task_evidence_list", ...Object.values(DAILY_COMPONENT_TOOLS).flat()]);
     const components = ["component-knowledge", "component-memory", "component-experience", "component-codebase"];
     return activeTools.filter((tool2) => names3.has(tool2.name) || components.some((component3) => COMPONENT_SURFACES[component3].test(tool2.name))).map((tool2) => tool2.name);
   }
   if (surface === "component-context-daily") {
-    const names3 = /* @__PURE__ */ new Set(["craft_info", "craft_context_open", "craft_context_tools_discover", "craft_context_directory_resolve", "craft_context_doctor", "craft_context_usage_statusline", "craft_capability_iteration_plan", "craft_capability_iteration_gaps", "craft_lsp_readiness", "craft_knowledge_session_evidence_record", "craft_knowledge_evaluation_case_list", "craft_knowledge_evaluation_run_get", ...Object.values(DAILY_COMPONENT_TOOLS).flat(), ...surfaceToolNames("component-codebase", activeTools, coreToolNames)]);
+    const names3 = /* @__PURE__ */ new Set(["craft_info", "craft_context_open", "craft_context_tools_discover", "craft_notes_context_resolve", "craft_context_doctor", "craft_context_usage_statusline", "craft_capability_iteration_plan", "craft_capability_iteration_gaps", "craft_lsp_readiness", "craft_knowledge_session_evidence_record", "craft_knowledge_evaluation_case_list", "craft_knowledge_evaluation_run_get", ...Object.values(DAILY_COMPONENT_TOOLS).flat(), ...surfaceToolNames("component-codebase", activeTools, coreToolNames)]);
     return activeTools.filter((tool2) => names3.has(tool2.name)).map((tool2) => tool2.name);
   }
   if (surface === "full") return activeTools.map((tool2) => tool2.name);
