@@ -1,10 +1,10 @@
 {
   "marketplace": "craft-marketplace",
-  "version": "0.20.10",
+  "version": "0.20.11",
   "source_repository": "https://github.com/wdx9413/craft.git",
-  "source_commit": "303d1847014b9a649f03999abdd88e7b36682a14",
-  "source_state": "dirty",
-  "source_note": "v0.20.10 payloads were synchronized from a dirty working tree based on 303d1847014b9a649f03999abdd88e7b36682a14; Git-visible source snapshot sha256:970e00d6a3a9205b5d7c2f5990a289a334d8ae37080b4bc470fb160b086d519f. source_commit identifies HEAD, not dirty source contents; this snapshot does not attest the build process.",
+  "source_commit": "d8c7be917f6280855b394129b87c08dbc243d564",
+  "source_state": "derived",
+  "source_note": "v0.20.11 is a narrow hotfix based on the published v0.20.10 Marketplace payload. The Codex UserPromptSubmit command now uses a source-level adapter that nests additionalContext under hookSpecificOutput; the adapter fix is in Craft source commit d8c7be917f6280855b394129b87c08dbc243d564. All other plugin payload files are inherited unchanged from v0.20.10. source_tree_digest is the deterministic digest of the resulting Craft Context payload; this release does not attest a full rebuild.",
   "components": [
     "craft-context",
     "craft-datasec"
@@ -14,9 +14,9 @@
     "craft-datasec"
   ],
   "claude_marketplace": ".claude-plugin/marketplace.json",
-  "source_tree_digest": "sha256:970e00d6a3a9205b5d7c2f5990a289a334d8ae37080b4bc470fb160b086d519f",
+  "source_tree_digest": "sha256:69d6b45e55a94f733215893b6145aed9f22856bd5f3d2182cbb596ca70160fcd",
   "component_source_commits": {
-    "craft-context": "303d1847014b9a649f03999abdd88e7b36682a14",
+    "craft-context": "d8c7be917f6280855b394129b87c08dbc243d564",
     "craft-datasec": "4a1b90c60b216f6d8d070aa0c50708cabd84c451"
   }
 }
