@@ -42,7 +42,7 @@ var __toESM = (mod, isNodeMode, target2) => (target2 = mod != null ? __create(__
   mod
 ));
 
-// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/paths.js
+// ../craft-common/packages/craft-common-store-local/dist/paths.js
 function dataRoot(env = process.env) {
   const configured = env.CRAFT_DATA_DIR?.trim();
   if (configured)
@@ -261,7 +261,8 @@ async function ensureLayout(paths = craftPaths()) {
 }
 var import_node_crypto, import_promises, import_node_fs, import_node_os, import_node_path;
 var init_paths = __esm({
-  "node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/paths.js"() {
+  "../craft-common/packages/craft-common-store-local/dist/paths.js"() {
+    "use strict";
     import_node_crypto = require("node:crypto");
     import_promises = require("node:fs/promises");
     import_node_fs = require("node:fs");
@@ -334,7 +335,7 @@ var init_codex_hook_signal_sanitizer = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-log@0.20.4/node_modules/craft-common-log/dist/telemetry.js
+// ../craft-common/packages/craft-common-log/dist/telemetry.js
 function required(value, field2) {
   if (typeof value !== "string" || !value.trim() || value.length > 256)
     throw new Error(`${field2} must be a non-empty string of at most 256 characters`);
@@ -403,7 +404,8 @@ function telemetryEvent(input2) {
 }
 var import_node_crypto4, SAFE_KEY, SECRET, CraftTelemetry;
 var init_telemetry = __esm({
-  "node_modules/.pnpm/craft-common-log@0.20.4/node_modules/craft-common-log/dist/telemetry.js"() {
+  "../craft-common/packages/craft-common-log/dist/telemetry.js"() {
+    "use strict";
     import_node_crypto4 = require("node:crypto");
     SAFE_KEY = /^(?:reason_code|database_(?:role|phase)|busy_timeout_ms|waited_ms|retryable|(?:[a-z][a-z0-9_]*_)?(?:id|digest|count|bytes|duration_ms|status|stage|provider|model|unit|cost_usd|input_tokens|output_tokens|name))$/u;
     SECRET = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]/iu;
@@ -439,7 +441,7 @@ var init_telemetry = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-log@0.20.4/node_modules/craft-common-log/dist/otlp.js
+// ../craft-common/packages/craft-common-log/dist/otlp.js
 function object(value, name) {
   if (!value || typeof value !== "object" || Array.isArray(value))
     throw new Error(`${name} must be an object`);
@@ -574,17 +576,19 @@ async function exportOtlp(endpoint5, payload10, fetchImpl) {
 }
 var import_node_crypto5, TRACE_SCHEMA, TRACE_SCHEMA_REVISION;
 var init_otlp = __esm({
-  "node_modules/.pnpm/craft-common-log@0.20.4/node_modules/craft-common-log/dist/otlp.js"() {
+  "../craft-common/packages/craft-common-log/dist/otlp.js"() {
+    "use strict";
     import_node_crypto5 = require("node:crypto");
     TRACE_SCHEMA = "craft.trace";
     TRACE_SCHEMA_REVISION = 1;
   }
 });
 
-// node_modules/.pnpm/craft-common-log@0.20.4/node_modules/craft-common-log/dist/store-sink.js
+// ../craft-common/packages/craft-common-log/dist/store-sink.js
 var StoreTelemetrySink;
 var init_store_sink = __esm({
-  "node_modules/.pnpm/craft-common-log@0.20.4/node_modules/craft-common-log/dist/store-sink.js"() {
+  "../craft-common/packages/craft-common-log/dist/store-sink.js"() {
+    "use strict";
     StoreTelemetrySink = class {
       store;
       constructor(store) {
@@ -609,17 +613,18 @@ var init_store_sink = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-log@0.20.4/node_modules/craft-common-log/dist/journal-sink.js
+// ../craft-common/packages/craft-common-log/dist/journal-sink.js
 var queueKey, processState, queues;
 var init_journal_sink = __esm({
-  "node_modules/.pnpm/craft-common-log@0.20.4/node_modules/craft-common-log/dist/journal-sink.js"() {
+  "../craft-common/packages/craft-common-log/dist/journal-sink.js"() {
+    "use strict";
     queueKey = /* @__PURE__ */ Symbol.for("craft.telemetry.journal.pending");
     processState = globalThis;
     queues = processState[queueKey] ??= /* @__PURE__ */ new Map();
   }
 });
 
-// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/digest.js
+// ../craft-common/packages/craft-common-base/dist/digest.js
 function digestJson(value) {
   return `sha256:${(0, import_node_crypto6.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
@@ -716,18 +721,20 @@ function payload(record4) {
 }
 var import_node_crypto6;
 var init_digest = __esm({
-  "node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/digest.js"() {
+  "../craft-common/packages/craft-common-base/dist/digest.js"() {
+    "use strict";
     import_node_crypto6 = require("node:crypto");
   }
 });
 
-// node_modules/.pnpm/craft-common-log@0.20.4/node_modules/craft-common-log/dist/evaluation-contract.js
+// ../craft-common/packages/craft-common-log/dist/evaluation-contract.js
 function stageIndex(stage) {
   return EVALUATION_STAGES.indexOf(stage);
 }
 var EVALUATION_STAGES, EvaluationContractKernel;
 var init_evaluation_contract = __esm({
-  "node_modules/.pnpm/craft-common-log@0.20.4/node_modules/craft-common-log/dist/evaluation-contract.js"() {
+  "../craft-common/packages/craft-common-log/dist/evaluation-contract.js"() {
+    "use strict";
     init_digest();
     EVALUATION_STAGES = ["mechanism_passed", "fixture_passed", "conformance_passed", "integration_passed", "host_verified", "business_eligible", "routeable"];
     EvaluationContractKernel = class {
@@ -813,15 +820,16 @@ var init_evaluation_contract = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/store-schema.js
+// ../craft-common/packages/craft-common-store-local/dist/store-schema.js
 var SCHEMA_VERSION;
 var init_store_schema = __esm({
-  "node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/store-schema.js"() {
+  "../craft-common/packages/craft-common-store-local/dist/store-schema.js"() {
+    "use strict";
     SCHEMA_VERSION = 4;
   }
 });
 
-// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/store-migrations.js
+// ../craft-common/packages/craft-common-store-local/dist/store-migrations.js
 function ensureMetaTable(database) {
   database.exec(`CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY,value TEXT NOT NULL)`);
 }
@@ -904,7 +912,8 @@ function backupDatabase(source, backupsDir) {
 }
 var import_node_fs4, import_node_fs5, import_node_path4, MIGRATIONS;
 var init_store_migrations = __esm({
-  "node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/store-migrations.js"() {
+  "../craft-common/packages/craft-common-store-local/dist/store-migrations.js"() {
+    "use strict";
     import_node_fs4 = require("node:fs");
     import_node_fs5 = require("node:fs");
     import_node_path4 = require("node:path");
@@ -1023,7 +1032,7 @@ var init_store_migrations = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/content-store.js
+// ../craft-common/packages/craft-common-store-local/dist/content-store.js
 function samePath(left, right) {
   return (0, import_node_path5.relative)((0, import_node_path5.resolve)(left), (0, import_node_path5.resolve)(right)) === "";
 }
@@ -1133,7 +1142,8 @@ function contentReference(value) {
 }
 var import_node_crypto7, import_promises2, import_node_fs6, import_node_path5, import_node_sqlite, SECRET2, SAFE_ID, MarkdownContentStore;
 var init_content_store = __esm({
-  "node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/content-store.js"() {
+  "../craft-common/packages/craft-common-store-local/dist/content-store.js"() {
+    "use strict";
     import_node_crypto7 = require("node:crypto");
     import_promises2 = require("node:fs/promises");
     import_node_fs6 = require("node:fs");
@@ -1551,7 +1561,7 @@ ${body3}`;
   }
 });
 
-// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/sqlite-busy-timeout.js
+// ../craft-common/packages/craft-common-store-local/dist/sqlite-busy-timeout.js
 function sqliteBusyTimeoutMs(env = process.env) {
   return env.CRAFT_HOOK_MODE === "1" ? 100 : 15e3;
 }
@@ -1559,11 +1569,12 @@ function sqliteTraceBusyTimeoutMs(env = process.env) {
   return env.CRAFT_HOOK_MODE === "1" ? 100 : 15e3;
 }
 var init_sqlite_busy_timeout = __esm({
-  "node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/sqlite-busy-timeout.js"() {
+  "../craft-common/packages/craft-common-store-local/dist/sqlite-busy-timeout.js"() {
+    "use strict";
   }
 });
 
-// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/trace-shards.js
+// ../craft-common/packages/craft-common-store-local/dist/trace-shards.js
 function payloadOnly(value) {
   return Object.fromEntries(Object.entries(value).filter(([key3]) => !RESERVED.has(key3)));
 }
@@ -1578,7 +1589,8 @@ function record(row) {
 }
 var import_node_crypto8, import_node_fs7, import_node_path6, import_node_sqlite2, TRACE_KINDS, TRACE_SHARDED_KINDS, SHARD_COUNT, RESERVED, TraceShardStore;
 var init_trace_shards = __esm({
-  "node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/trace-shards.js"() {
+  "../craft-common/packages/craft-common-store-local/dist/trace-shards.js"() {
+    "use strict";
     import_node_crypto8 = require("node:crypto");
     import_node_fs7 = require("node:fs");
     import_node_path6 = require("node:path");
@@ -1872,10 +1884,11 @@ var init_trace_shards = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/codebase-shards.js
+// ../craft-common/packages/craft-common-store-local/dist/codebase-shards.js
 var import_node_crypto9, import_node_fs8, import_node_path7, import_node_sqlite3, CODEBASE_GRAPH_KINDS, SHARD_COUNT2, RESERVED2, CodebaseShardStore;
 var init_codebase_shards = __esm({
-  "node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/codebase-shards.js"() {
+  "../craft-common/packages/craft-common-store-local/dist/codebase-shards.js"() {
+    "use strict";
     import_node_crypto9 = require("node:crypto");
     import_node_fs8 = require("node:fs");
     import_node_path7 = require("node:path");
@@ -2050,7 +2063,7 @@ var init_codebase_shards = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/store.js
+// ../craft-common/packages/craft-common-store-local/dist/store.js
 function withContextLockBudget(operation2) {
   return contextLockBudget.run(250, operation2);
 }
@@ -2210,7 +2223,8 @@ function ensureCurrentSchema(database) {
 }
 var import_node_fs9, import_node_crypto10, import_node_sqlite4, import_node_perf_hooks, import_node_async_hooks, import_node_path8, contextLockBudget, RESERVED_FIELDS, CONTENT_REFERENCE_RECORD_KINDS, MEMORY_PARTITIONED_KINDS, EXPERIENCE_PARTITIONED_KINDS, EVOLUTION_PARTITIONED_KINDS, PARTITION_LABELS, CraftStore;
 var init_store = __esm({
-  "node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/store.js"() {
+  "../craft-common/packages/craft-common-store-local/dist/store.js"() {
+    "use strict";
     import_node_fs9 = require("node:fs");
     import_node_crypto10 = require("node:crypto");
     import_node_sqlite4 = require("node:sqlite");
@@ -4977,7 +4991,7 @@ var init_store = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/scope-policy.js
+// ../craft-common/packages/craft-common-base/dist/scope-policy.js
 function required2(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must be a non-empty string`);
@@ -5094,12 +5108,13 @@ function scopeFromKey(value) {
 }
 var COGNITIVE_SCOPE_KINDS;
 var init_scope_policy = __esm({
-  "node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/scope-policy.js"() {
+  "../craft-common/packages/craft-common-base/dist/scope-policy.js"() {
+    "use strict";
     COGNITIVE_SCOPE_KINDS = ["user", "project", "workspace", "task", "session", "team", "organization", "global"];
   }
 });
 
-// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/validation.js
+// ../craft-common/packages/craft-common-base/dist/validation.js
 function text3(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must not be empty`);
@@ -5188,13 +5203,14 @@ function finiteInteger(value, name, fallback2, minimum = 1, maximum = Number.MAX
 }
 var SCOPE_KINDS;
 var init_validation = __esm({
-  "node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/validation.js"() {
+  "../craft-common/packages/craft-common-base/dist/validation.js"() {
+    "use strict";
     init_scope_policy();
     SCOPE_KINDS = new Set(COGNITIVE_SCOPE_KINDS);
   }
 });
 
-// node_modules/.pnpm/craft-common-log@0.20.4/node_modules/craft-common-log/dist/cost-ledger.js
+// ../craft-common/packages/craft-common-log/dist/cost-ledger.js
 function priceRates(record4) {
   const input2 = record4.input_per_million;
   const output = record4.output_per_million;
@@ -5218,7 +5234,8 @@ function metricTotal(entries2, key3) {
 }
 var import_node_crypto11, REPORT_LIMIT, METRICS, CostLedgerKernel;
 var init_cost_ledger = __esm({
-  "node_modules/.pnpm/craft-common-log@0.20.4/node_modules/craft-common-log/dist/cost-ledger.js"() {
+  "../craft-common/packages/craft-common-log/dist/cost-ledger.js"() {
+    "use strict";
     import_node_crypto11 = require("node:crypto");
     init_store();
     init_validation();
@@ -5286,7 +5303,7 @@ var init_cost_ledger = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-log@0.20.4/node_modules/craft-common-log/dist/operation.js
+// ../craft-common/packages/craft-common-log/dist/operation.js
 function operationErrorCode(error2) {
   const value = object3(error2);
   if (value.code === "ERR_SQLITE_ERROR" && [5, 6].includes(Number(value.errcode)))
@@ -5467,7 +5484,8 @@ function observedKernel(store, component2, kernel) {
 }
 var import_node_async_hooks2, import_node_crypto12, contextKey, processState2, context, ref, object3;
 var init_operation = __esm({
-  "node_modules/.pnpm/craft-common-log@0.20.4/node_modules/craft-common-log/dist/operation.js"() {
+  "../craft-common/packages/craft-common-log/dist/operation.js"() {
+    "use strict";
     import_node_async_hooks2 = require("node:async_hooks");
     import_node_crypto12 = require("node:crypto");
     init_digest();
@@ -5481,9 +5499,10 @@ var init_operation = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-log@0.20.4/node_modules/craft-common-log/dist/index.js
+// ../craft-common/packages/craft-common-log/dist/index.js
 var init_dist = __esm({
-  "node_modules/.pnpm/craft-common-log@0.20.4/node_modules/craft-common-log/dist/index.js"() {
+  "../craft-common/packages/craft-common-log/dist/index.js"() {
+    "use strict";
     init_telemetry();
     init_otlp();
     init_store_sink();
@@ -7023,10 +7042,11 @@ var init_compaction = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-datasec@0.1.7/node_modules/@craft/capability-datasec/dist/rules.js
+// ../craft-capability/capability/craft-datasec/dist/rules.js
 var DEFAULT_RULES, Sanitizer;
 var init_rules = __esm({
-  "node_modules/.pnpm/@craft+capability-datasec@0.1.7/node_modules/@craft/capability-datasec/dist/rules.js"() {
+  "../craft-capability/capability/craft-datasec/dist/rules.js"() {
+    "use strict";
     DEFAULT_RULES = [
       { name: "phone", pattern: String.raw`(?<!\d)(?:\+?86[ -]?)?1[3-9](?:[ -]?\d){9}(?!\d)` },
       { name: "identity", pattern: String.raw`(?<!\d)[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx](?!\d)`, enabled: false },
@@ -7829,7 +7849,7 @@ var init_component_trace = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/context-assets.js
+// ../craft-common/packages/craft-common-base/dist/context-assets.js
 function contextAssetRef(member2, item, scope4) {
   if (!CONTEXT_ASSET_MEMBERS.includes(member2))
     throw new Error("Unsupported Context asset member");
@@ -7870,7 +7890,8 @@ function requiredContextRef(value) {
 }
 var CONTEXT_ASSET_MEMBERS, DEFAULT_CONTEXT_MAX_ITEMS, DEFAULT_CONTEXT_MAX_CHARS, ContextBudgetError, ContextBudget;
 var init_context_assets = __esm({
-  "node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/context-assets.js"() {
+  "../craft-common/packages/craft-common-base/dist/context-assets.js"() {
+    "use strict";
     init_digest();
     init_scope_policy();
     init_validation();
@@ -8130,7 +8151,7 @@ var init_context_host_evaluation = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/knowledge-task-effect-proof.js
+// ../craft-capability/capability/craft-knowledge/dist/knowledge-task-effect-proof.js
 function knowledgeTaskEffectAssessmentDigest(receipt) {
   const keys = ["policy", "scope", "claim_id", "retrieval_run_id", "retrieval_run_digest", "baseline_id", "candidate_id", "dependencies", "comparison_digest", "observed_model", "execution_origin", "status", "reasons"];
   return stableDigest(Object.fromEntries(keys.map((key3) => [key3, receipt[key3]])));
@@ -8155,14 +8176,15 @@ function knowledgeTaskEffectProofVerified(store, run) {
 }
 var KNOWLEDGE_TASK_EFFECT_POLICY, knowledgeTaskEffectId;
 var init_knowledge_task_effect_proof = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/knowledge-task-effect-proof.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/knowledge-task-effect-proof.js"() {
+    "use strict";
     init_digest();
     KNOWLEDGE_TASK_EFFECT_POLICY = "craft.knowledge-task-effect.v1";
     knowledgeTaskEffectId = (run) => `knowledge_task_effect_${stableDigest({ id: run.id, version: run.version }).slice(-48)}`;
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/knowledge-evaluation-provenance.js
+// ../craft-capability/capability/craft-knowledge/dist/knowledge-evaluation-provenance.js
 function knowledgeTaskEffectEvidenceVerified(store, run) {
   return !!run && knowledgeTaskEffectProofVerified(store, run);
 }
@@ -8372,7 +8394,8 @@ function assessKnowledgeEvaluationProvenance(item, sourceEvidence, claimEvidence
   return { status: "verified_independent", evaluation_eligible: true };
 }
 var init_knowledge_evaluation_provenance = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/knowledge-evaluation-provenance.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/knowledge-evaluation-provenance.js"() {
+    "use strict";
     init_digest();
     init_knowledge_task_effect_proof();
   }
@@ -8703,7 +8726,7 @@ var init_json_schema = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/workflow.js
+// ../craft-common/packages/craft-common-base/dist/workflow.js
 function resolveInputs(definitions2, supplied) {
   const result2 = { ...supplied };
   for (const [index, definition2] of definitions2.entries()) {
@@ -8918,7 +8941,8 @@ function executeSteps(steps, root, approved, executor = runStep) {
 }
 var import_node_child_process3, import_node_fs14, import_node_path14, PLACEHOLDER, SENSITIVE, SIDE_EFFECTS;
 var init_workflow = __esm({
-  "node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/workflow.js"() {
+  "../craft-common/packages/craft-common-base/dist/workflow.js"() {
+    "use strict";
     import_node_child_process3 = require("node:child_process");
     import_node_fs14 = require("node:fs");
     import_node_path14 = require("node:path");
@@ -11750,14 +11774,15 @@ var init_distribution_and_first_run = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/bm25.js
+// ../craft-common/packages/craft-common-base/dist/bm25.js
 function tokenize(value) {
   const segmenter = new Intl.Segmenter("zh", { granularity: "word" });
   return value.toLowerCase().split(/[^\p{L}\p{N}_.:/-]+/u).map((token) => token.replace(/^[.:/]+|[.:/]+$/gu, "")).filter(Boolean).flatMap((word) => new RegExp("\\p{Script=Han}", "u").test(word) ? [...segmenter.segment(word)].filter((part) => part.isWordLike).map((part) => part.segment) : [word]);
 }
 var IDENTIFIER, Bm25Index;
 var init_bm25 = __esm({
-  "node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/bm25.js"() {
+  "../craft-common/packages/craft-common-base/dist/bm25.js"() {
+    "use strict";
     init_validation();
     IDENTIFIER = /[A-Za-z]*\d|^[0-9a-f]{8,}$|[-_/.:]{1}/u;
     Bm25Index = class {
@@ -11927,24 +11952,11 @@ var init_context_retrieval_capture = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-ontology@0.20.5/node_modules/craft-common-ontology/dist/concepts.js
-function isConceptKind(value) {
-  return typeof value === "string" && CONCEPT_KINDS.includes(value);
-}
-function isRelationKind(value) {
-  return typeof value === "string" && RELATION_KINDS.includes(value);
-}
-var CONCEPT_KINDS, CONCEPTS, EMPTY_PHRASES, RELATION_KINDS, RELATION_TYPES;
+// ../craft-common/packages/craft-common-ontology/dist/concepts.js
+var CONCEPTS, EMPTY_PHRASES, RELATION_TYPES;
 var init_concepts = __esm({
-  "node_modules/.pnpm/craft-common-ontology@0.20.5/node_modules/craft-common-ontology/dist/concepts.js"() {
-    CONCEPT_KINDS = [
-      "fact",
-      "rule",
-      "decision",
-      "term",
-      "preference",
-      "procedure"
-    ];
+  "../craft-common/packages/craft-common-ontology/dist/concepts.js"() {
+    "use strict";
     CONCEPTS = {
       fact: {
         is: "A verifiable statement about the world or the project that can be checked.",
@@ -11998,14 +12010,6 @@ var init_concepts = __esm({
       " tbd ",
       " tbc "
     ];
-    RELATION_KINDS = [
-      "derives_from",
-      "supersedes",
-      "contradicts",
-      "supports",
-      "refines",
-      "references"
-    ];
     RELATION_TYPES = {
       derives_from: {
         is: "A claim rests on a more foundational statement; both ends are propositions.",
@@ -12041,9 +12045,9 @@ var init_concepts = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-ontology@0.20.5/node_modules/craft-common-ontology/dist/validation.js
+// ../craft-common/packages/craft-common-ontology/dist/validation.js
 function validateConcept(kind4, statement) {
-  if (!isConceptKind(kind4)) {
+  if (typeof kind4 !== "string" || !(kind4 in CONCEPTS)) {
     throw new Error(`concept kind must be one of: ${Object.keys(CONCEPTS).join(", ")}`);
   }
   if (typeof statement !== "string" || !statement.trim()) {
@@ -12084,12 +12088,12 @@ function mapLegacyKind(component2, legacyKind) {
   return mapped;
 }
 function checkRelationConcepts(relation, fromConcept, toConcept) {
-  if (!isRelationKind(relation)) {
+  if (typeof relation !== "string" || !(relation in RELATION_TYPES)) {
     throw new Error(`relation must be one of: ${Object.keys(RELATION_TYPES).join(", ")}`);
   }
   const rule = RELATION_TYPES[relation];
-  const fromKnown = isConceptKind(fromConcept);
-  const toKnown = isConceptKind(toConcept);
+  const fromKnown = typeof fromConcept === "string" && fromConcept in CONCEPTS;
+  const toKnown = typeof toConcept === "string" && toConcept in CONCEPTS;
   if (!fromKnown || !toKnown)
     return { valid: true, reason: null };
   if (rule.from && !rule.from.includes(fromConcept))
@@ -12100,13 +12104,14 @@ function checkRelationConcepts(relation, fromConcept, toConcept) {
 }
 var CONCEPT_MAX_LENGTH;
 var init_validation3 = __esm({
-  "node_modules/.pnpm/craft-common-ontology@0.20.5/node_modules/craft-common-ontology/dist/validation.js"() {
+  "../craft-common/packages/craft-common-ontology/dist/validation.js"() {
+    "use strict";
     init_concepts();
     CONCEPT_MAX_LENGTH = 300;
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/scenario-catalog.js
+// ../craft-capability/capability/craft-experience/dist/scenario-catalog.js
 function classificationRequestPath(experienceDir, requestId) {
   if (!CLASSIFICATION_REQUEST_ID.test(requestId))
     throw new Error("Experience classification request id is invalid");
@@ -12608,7 +12613,8 @@ function listExperienceScenarios(experienceDir, projectId2) {
 }
 var import_node_crypto28, import_node_fs22, import_node_path22, SCHEMA, KEY, DIGEST, SECRET3, CLASSIFICATION_REQUEST_ID;
 var init_scenario_catalog = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/scenario-catalog.js"() {
+  "../craft-capability/capability/craft-experience/dist/scenario-catalog.js"() {
+    "use strict";
     import_node_crypto28 = require("node:crypto");
     import_node_fs22 = require("node:fs");
     import_node_path22 = require("node:path");
@@ -12622,7 +12628,7 @@ var init_scenario_catalog = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/project-experience-directory.js
+// ../craft-capability/capability/craft-experience/dist/project-experience-directory.js
 function projectExperienceDirectory(store, scopeId, requestedRoot, create = false, aliasDigest) {
   if (!/^project:[A-Za-z0-9_-]{1,96}$/u.test(scopeId))
     throw new Error("Experience project scope is invalid");
@@ -12679,7 +12685,8 @@ function experienceDataDirectory(store, scope4, create = false) {
 }
 var import_node_fs23, import_node_path23;
 var init_project_experience_directory = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/project-experience-directory.js"() {
+  "../craft-capability/capability/craft-experience/dist/project-experience-directory.js"() {
+    "use strict";
     import_node_fs23 = require("node:fs");
     import_node_path23 = require("node:path");
     init_digest();
@@ -12688,7 +12695,7 @@ var init_project_experience_directory = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-release.js
+// ../craft-capability/capability/craft-experience/dist/procedure-release.js
 function belongsToRetiredScenario(store, procedure) {
   const signature = procedure.scenario_signature;
   const project = signature?.project;
@@ -12776,7 +12783,8 @@ function assertProcedureTestIsolation(store, args, actualWorkspaceId) {
 }
 var import_node_fs24, import_node_path24;
 var init_procedure_release = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-release.js"() {
+  "../craft-capability/capability/craft-experience/dist/procedure-release.js"() {
+    "use strict";
     import_node_fs24 = require("node:fs");
     import_node_path24 = require("node:path");
     init_validation();
@@ -17936,7 +17944,7 @@ var init_egress = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/claim-access.js
+// ../craft-capability/capability/craft-knowledge/dist/claim-access.js
 function claimReadable(store, claim2, args) {
   const applicability = scopeFromKey(String(claim2.scope));
   if (args.scope_kind !== void 0 && args.scope_kind !== applicability.kind)
@@ -17955,12 +17963,13 @@ function claimReadable(store, claim2, args) {
   return true;
 }
 var init_claim_access = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/claim-access.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/claim-access.js"() {
+    "use strict";
     init_scope_policy();
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/scenario-catalog.js
+// ../craft-capability/capability/craft-knowledge/dist/scenario-catalog.js
 function validateKnowledgeScenarioDefinition(value) {
   if (value === void 0)
     return void 0;
@@ -18407,7 +18416,8 @@ function listKnowledgeScenarios(knowledgeDir, projectId2, scopeKind = "project")
 }
 var import_node_crypto35, import_node_fs27, import_node_path28, SCHEMA2, KEY2, DIGEST2;
 var init_scenario_catalog2 = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/scenario-catalog.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/scenario-catalog.js"() {
+    "use strict";
     import_node_crypto35 = require("node:crypto");
     import_node_fs27 = require("node:fs");
     import_node_path28 = require("node:path");
@@ -18419,7 +18429,7 @@ var init_scenario_catalog2 = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/project-knowledge-content.js
+// ../craft-capability/capability/craft-knowledge/dist/project-knowledge-content.js
 function projectRootForKnowledgeSource(source) {
   if (typeof source.locator !== "string")
     return null;
@@ -18518,7 +18528,8 @@ function knowledgeDirectoryForScope(store, scope4, options = {}) {
 }
 var import_node_fs28, import_node_path29;
 var init_project_knowledge_content = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/project-knowledge-content.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/project-knowledge-content.js"() {
+    "use strict";
     import_node_fs28 = require("node:fs");
     import_node_path29 = require("node:path");
     init_digest();
@@ -18527,7 +18538,7 @@ var init_project_knowledge_content = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/codex-task-prose.js
+// ../craft-capability/capability/craft-knowledge/dist/codex-task-prose.js
 function sanitizeCodexTaskGoal(value) {
   if (typeof value !== "string" || !value.trim() || value.length > 8e3 || SECRET4.test(value))
     return null;
@@ -18540,13 +18551,14 @@ function codexTaskGoalDigest(value) {
 }
 var import_node_crypto36, SECRET4;
 var init_codex_task_prose = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/codex-task-prose.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/codex-task-prose.js"() {
+    "use strict";
     import_node_crypto36 = require("node:crypto");
     SECRET4 = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/knowledge-source-registry.js
+// ../craft-capability/capability/craft-knowledge/dist/knowledge-source-registry.js
 function digest8(value) {
   return `sha256:${(0, import_node_crypto38.createHash)("sha256").update(value).digest("hex")}`;
 }
@@ -18594,7 +18606,8 @@ function files2(root, limit3) {
 }
 var import_node_crypto37, import_node_crypto38, import_node_fs29, import_node_path30, SOURCE_KINDS, TRUSTS2, ACCESS, TRANSITIONS, INGESTIBLE, KnowledgeSourceRegistry;
 var init_knowledge_source_registry = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/knowledge-source-registry.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/knowledge-source-registry.js"() {
+    "use strict";
     import_node_crypto37 = require("node:crypto");
     import_node_crypto38 = require("node:crypto");
     import_node_fs29 = require("node:fs");
@@ -19129,7 +19142,7 @@ var init_knowledge_source_registry = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/session-evidence.js
+// ../craft-capability/capability/craft-knowledge/dist/session-evidence.js
 function string(value, name, maximum) {
   if (typeof value !== "string" || !value.trim() || value.length > maximum || /[\r\n\0]/u.test(value)) {
     throw new Error(`${name} must be non-empty bounded text`);
@@ -19374,7 +19387,8 @@ function recordKnowledgeSessionEvidence(store, args) {
 }
 var HASH, RUNNERS, SECRET5, SENSITIVE2;
 var init_session_evidence = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/session-evidence.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/session-evidence.js"() {
+    "use strict";
     init_digest();
     init_codex_task_prose();
     init_project_knowledge_content();
@@ -19394,7 +19408,7 @@ var init_session_evidence = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/claim-governance.js
+// ../craft-capability/capability/craft-knowledge/dist/claim-governance.js
 function id2(prefix) {
   return `${prefix}_${(0, import_node_crypto39.randomUUID)().replaceAll("-", "")}`;
 }
@@ -19455,7 +19469,8 @@ function recordPayload2(record4) {
 }
 var import_node_crypto39, KNOWLEDGE_KINDS, KNOWLEDGE_REVIEW_EXIT_STATUSES, SECRET_ASSIGNMENT, KnowledgeClaimGovernance;
 var init_claim_governance = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/claim-governance.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/claim-governance.js"() {
+    "use strict";
     import_node_crypto39 = require("node:crypto");
     init_validation();
     init_scope_policy();
@@ -35815,7 +35830,7 @@ var init_verified_work_loop = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/knowledge-auto-review.js
+// ../craft-capability/capability/craft-knowledge/dist/knowledge-auto-review.js
 function digest14(value) {
   return `sha256:${(0, import_node_crypto76.createHash)("sha256").update(JSON.stringify(value)).digest("hex")}`;
 }
@@ -35833,7 +35848,8 @@ function claimContentIsIntact(store, claim2) {
 }
 var import_node_crypto76, DEFAULT_POLICY_ID, CONFIDENCE_ORDER, KnowledgeAutoReviewKernel;
 var init_knowledge_auto_review = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/knowledge-auto-review.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/knowledge-auto-review.js"() {
+    "use strict";
     import_node_crypto76 = require("node:crypto");
     init_digest();
     init_validation();
@@ -38768,7 +38784,7 @@ var init_capability_lifecycle = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/memory-consolidation.js
+// ../craft-capability/capability/craft-memory/dist/memory-consolidation.js
 function searchScope(value) {
   if (value === void 0)
     return { scope: null, skipped: false };
@@ -38798,7 +38814,8 @@ function storedScopeKey(value) {
 }
 var import_node_crypto81, SECRET8, MemoryConsolidationKernel;
 var init_memory_consolidation = __esm({
-  "node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/memory-consolidation.js"() {
+  "../craft-capability/capability/craft-memory/dist/memory-consolidation.js"() {
+    "use strict";
     import_node_crypto81 = require("node:crypto");
     init_store();
     init_validation();
@@ -40324,7 +40341,7 @@ var init_org_sync = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/project-brain.js
+// ../craft-capability/capability/craft-knowledge/dist/project-brain.js
 function list2(value, name) {
   if (value === void 0)
     return [];
@@ -40343,7 +40360,8 @@ function brainId(project) {
 }
 var import_node_crypto95, ProjectBrainKernel;
 var init_project_brain = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/project-brain.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/project-brain.js"() {
+    "use strict";
     import_node_crypto95 = require("node:crypto");
     init_store();
     init_validation();
@@ -40923,7 +40941,7 @@ var init_local_runtime_service = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-definition.js
+// ../craft-capability/capability/craft-experience/dist/procedure-definition.js
 function slug2(value) {
   const result2 = value.normalize("NFKC").replace(/[\\/]/gu, " ").replace(/[^\p{L}\p{N}._ -]/gu, " ").trim().replace(/\s+/gu, "-").replace(/-+/gu, "-").slice(0, 96);
   return result2 || "untitled";
@@ -40967,7 +40985,8 @@ function procedureDefinitionRef(value) {
 }
 var import_node_fs37, import_node_crypto102, import_node_path47, ProcedureDefinitionStore;
 var init_procedure_definition = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-definition.js"() {
+  "../craft-capability/capability/craft-experience/dist/procedure-definition.js"() {
+    "use strict";
     import_node_fs37 = require("node:fs");
     import_node_crypto102 = require("node:crypto");
     import_node_path47 = require("node:path");
@@ -41107,7 +41126,7 @@ var init_procedure_definition = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-automation.js
+// ../craft-capability/capability/craft-experience/dist/procedure-automation.js
 function text13(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must not be empty`);
@@ -41142,7 +41161,8 @@ function declaredEffects(definition2) {
 }
 var import_node_crypto103, ProcedureAutomationKernel;
 var init_procedure_automation = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-automation.js"() {
+  "../craft-capability/capability/craft-experience/dist/procedure-automation.js"() {
+    "use strict";
     import_node_crypto103 = require("node:crypto");
     init_procedure_release();
     init_digest();
@@ -41548,7 +41568,7 @@ var init_content_store2 = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/graph-version-manifest.js
+// ../craft-capability/capability/craft-experience/dist/graph-version-manifest.js
 function syncGraphVersionManifest(store, id24, scope4) {
   try {
     return store.transaction(() => {
@@ -41580,7 +41600,8 @@ test_version: ${versions.test_version}
 }
 var import_node_fs38, import_node_crypto105, import_node_path48;
 var init_graph_version_manifest = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/graph-version-manifest.js"() {
+  "../craft-capability/capability/craft-experience/dist/graph-version-manifest.js"() {
+    "use strict";
     import_node_fs38 = require("node:fs");
     import_node_crypto105 = require("node:crypto");
     import_node_path48 = require("node:path");
@@ -44042,7 +44063,7 @@ var init_engineering_quality_profile = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/capability-protocol.js
+// ../craft-common/packages/craft-common-base/dist/capability-protocol.js
 function contributesContext(hook) {
   return hook.phase === "task_settle" && (hook.writes?.length ?? 0) > 0;
 }
@@ -44151,7 +44172,8 @@ async function runPhase(phase, context2, hooks) {
 }
 var CONTEXT_MEMBERS, CONTEXT_MEMBER_SOURCES, EVAL_DOMAINS, HOOK_PHASES, GATING_PHASES, CORE_KERNELS;
 var init_capability_protocol = __esm({
-  "node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/capability-protocol.js"() {
+  "../craft-common/packages/craft-common-base/dist/capability-protocol.js"() {
+    "use strict";
     CONTEXT_MEMBERS = ["history", "knowledge", "memory", "experience", "state"];
     CONTEXT_MEMBER_SOURCES = {
       history: "host_provided",
@@ -44190,7 +44212,7 @@ var init_capability_protocol = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/context-feedback-weight.js
+// ../craft-capability/capability/craft-memory/dist/context-feedback-weight.js
 function contextFeedbackWeight2(positive5, negative) {
   return Number(Math.min(MAX_WEIGHT2, Math.max(MIN_WEIGHT2, 1 + POSITIVE_BONUS2 * Math.min(positive5, MAX_SIGNALS2) - NEGATIVE_PENALTY2 * Math.min(negative, MAX_SIGNALS2))).toFixed(6));
 }
@@ -44245,7 +44267,8 @@ function contextFeedbackWeights2(store, member2, ids6) {
 }
 var POSITIVE_BONUS2, NEGATIVE_PENALTY2, MAX_SIGNALS2, MIN_WEIGHT2, MAX_WEIGHT2;
 var init_context_feedback_weight2 = __esm({
-  "node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/context-feedback-weight.js"() {
+  "../craft-capability/capability/craft-memory/dist/context-feedback-weight.js"() {
+    "use strict";
     POSITIVE_BONUS2 = 0.2;
     NEGATIVE_PENALTY2 = 0.2;
     MAX_SIGNALS2 = 5;
@@ -44254,7 +44277,7 @@ var init_context_feedback_weight2 = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/retrieval-excerpt.js
+// ../craft-common/packages/craft-common-base/dist/retrieval-excerpt.js
 function terms2(value) {
   const segmenter = new Intl.Segmenter("zh", { granularity: "word" });
   return value.toLowerCase().split(/[^\p{L}\p{N}_.:/-]+/u).map((token) => token.replace(/^[.:/]+|[.:/]+$/gu, "")).filter(Boolean).flatMap((word) => new RegExp("\\p{Script=Han}", "u").test(word) ? [...segmenter.segment(word)].filter((part) => part.isWordLike).map((part) => part.segment) : [word]);
@@ -44306,11 +44329,12 @@ function retrievalExcerpt(value, query, maxChars = 600) {
   return { text: value.slice(start, end), source_start: start, source_end: end, source_chars: value.length, reason: "matched_passage" };
 }
 var init_retrieval_excerpt = __esm({
-  "node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/retrieval-excerpt.js"() {
+  "../craft-common/packages/craft-common-base/dist/retrieval-excerpt.js"() {
+    "use strict";
   }
 });
 
-// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/memory-temporal-policy.js
+// ../craft-common/packages/craft-common-base/dist/memory-temporal-policy.js
 function temporalMemorySelect(items2, now3, history, includeStale = false) {
   if (!Number.isFinite(now3.valueOf()))
     throw new Error("Memory Context now must be a valid timestamp");
@@ -44361,11 +44385,12 @@ function temporalMemorySelect(items2, now3, history, includeStale = false) {
   return { selected, excluded };
 }
 var init_memory_temporal_policy = __esm({
-  "node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/memory-temporal-policy.js"() {
+  "../craft-common/packages/craft-common-base/dist/memory-temporal-policy.js"() {
+    "use strict";
   }
 });
 
-// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/context-access-guard.js
+// ../craft-common/packages/craft-common-store-local/dist/context-access-guard.js
 function assertContextReadCurrent(store, receipt) {
   const refs7 = receipt?.read_refs ?? [];
   if (!refs7.length)
@@ -44389,7 +44414,8 @@ function assertContextReadCurrent(store, receipt) {
 }
 var KINDS4, ContextAccessChangedError, ContextReadGuard;
 var init_context_access_guard = __esm({
-  "node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/context-access-guard.js"() {
+  "../craft-common/packages/craft-common-store-local/dist/context-access-guard.js"() {
+    "use strict";
     KINDS4 = ["memory_ledger", "knowledge_source", "knowledge_claim", "knowledge_document", "experience_procedure", "experience_release", "scope_alias"];
     ContextAccessChangedError = class extends Error {
       constructor() {
@@ -44460,18 +44486,19 @@ var init_context_access_guard = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/retrieval-terms.js
+// ../craft-common/packages/craft-common-base/dist/retrieval-terms.js
 function retrievalTerms(value) {
   const words = value.toLowerCase().match(/[\p{L}\p{N}_-]+/gu) ?? [];
   const segmenter = new Intl.Segmenter("zh", { granularity: "word" });
   return [...new Set(words.flatMap((word) => new RegExp("\\p{Script=Han}", "u").test(word) ? [...segmenter.segment(word)].filter((part) => part.isWordLike).map((part) => part.segment) : [word]))];
 }
 var init_retrieval_terms = __esm({
-  "node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/retrieval-terms.js"() {
+  "../craft-common/packages/craft-common-base/dist/retrieval-terms.js"() {
+    "use strict";
   }
 });
 
-// node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/memory-governance.js
+// ../craft-capability/capability/craft-memory/dist/memory-governance.js
 function proposer(value, fallback2) {
   if (value === void 0 || value === null || value === "")
     return fallback2;
@@ -44526,7 +44553,8 @@ function latestMemoryConfirmation(store, memory, now3) {
 }
 var import_node_crypto111, SECRET10, KINDS5, CONFIDENCE, POLICY_MODES, POLICY_CONFIDENCE, MemoryGovernanceKernel;
 var init_memory_governance = __esm({
-  "node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/memory-governance.js"() {
+  "../craft-capability/capability/craft-memory/dist/memory-governance.js"() {
+    "use strict";
     import_node_crypto111 = require("node:crypto");
     init_store();
     init_scope_policy();
@@ -44827,7 +44855,7 @@ var init_memory_governance = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/memory-legacy-field.js
+// ../craft-capability/capability/craft-memory/dist/memory-legacy-field.js
 function legacyFieldAbsent(store, kind4, record4, field2) {
   if (typeof record4.id !== "string" || !record4.id || !Number.isSafeInteger(record4.version) || Number(record4.version) < 1)
     return false;
@@ -44839,11 +44867,12 @@ function legacyFieldAbsent(store, kind4, record4, field2) {
   return history.length === Number(record4.version) - 1 && history.every((item) => item[field2] === void 0);
 }
 var init_memory_legacy_field = __esm({
-  "node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/memory-legacy-field.js"() {
+  "../craft-capability/capability/craft-memory/dist/memory-legacy-field.js"() {
+    "use strict";
   }
 });
 
-// node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/memory-files.js
+// ../craft-capability/capability/craft-memory/dist/memory-files.js
 function legacyDirectSessionDirectory(sessionId) {
   return (0, import_node_path51.join)("/tmp", ".craft_data", "memory", sessionId);
 }
@@ -44909,7 +44938,8 @@ function existsDirectory(path2) {
 }
 var import_node_crypto112, import_node_fs40, import_node_path51, MemoryFileStore;
 var init_memory_files = __esm({
-  "node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/memory-files.js"() {
+  "../craft-capability/capability/craft-memory/dist/memory-files.js"() {
+    "use strict";
     import_node_crypto112 = require("node:crypto");
     import_node_fs40 = require("node:fs");
     import_node_path51 = require("node:path");
@@ -45310,7 +45340,7 @@ var init_memory_files = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/memory-ledger.js
+// ../craft-capability/capability/craft-memory/dist/memory-ledger.js
 function date(value, name) {
   if (value === void 0 || value === null)
     return null;
@@ -45329,7 +45359,8 @@ function supportCurrent(source) {
 }
 var import_node_crypto113, MEMORY_KINDS2, MEMORY_STATUS2, SENSITIVITIES, CONFIDENCES, LEGACY_KINDS, SharedPromotionEvidenceError, MemoryLedgerKernel;
 var init_memory_ledger = __esm({
-  "node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/memory-ledger.js"() {
+  "../craft-capability/capability/craft-memory/dist/memory-ledger.js"() {
+    "use strict";
     import_node_crypto113 = require("node:crypto");
     init_validation();
     init_digest();
@@ -45714,7 +45745,7 @@ var init_memory_ledger = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/memory-signals.js
+// ../craft-capability/capability/craft-memory/dist/memory-signals.js
 function memoryDecayWeight(input2) {
   const confirmedAt = Date.parse(text3(input2.confirmed_at, "confirmed_at"));
   const now3 = Date.parse(text3(input2.now, "now"));
@@ -45856,7 +45887,8 @@ function memoryUsageEvidence(input2) {
 }
 var HALF_LIFE_DAYS, ACCESS_CAP, ACCESS_BONUS, DECAY_FLOOR, SUPERSEDED_FACTOR, TRUST_FACTOR, STRONG_SIGNALS, AUTOMATIC_KEYS;
 var init_memory_signals = __esm({
-  "node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/memory-signals.js"() {
+  "../craft-capability/capability/craft-memory/dist/memory-signals.js"() {
+    "use strict";
     init_validation();
     init_digest();
     HALF_LIFE_DAYS = 90;
@@ -45870,10 +45902,11 @@ var init_memory_signals = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/contribution.js
+// ../craft-capability/capability/craft-memory/dist/contribution.js
 var MEMORY_INDEX_CACHE_TTL_MS, MEMORY_INDEX_CACHE_MAX_ENTRIES, MEMORY_INDEX_CACHE_MAX_SOURCE_CHARS, MemoryContribution;
 var init_contribution = __esm({
-  "node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/contribution.js"() {
+  "../craft-capability/capability/craft-memory/dist/contribution.js"() {
+    "use strict";
     init_dist();
     init_context_assets();
     init_digest();
@@ -46149,10 +46182,11 @@ var init_context_access_guard2 = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/keyword-retrieval.js
+// ../craft-common/packages/craft-common-base/dist/keyword-retrieval.js
 var KeywordRetrievalPort;
 var init_keyword_retrieval = __esm({
-  "node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/keyword-retrieval.js"() {
+  "../craft-common/packages/craft-common-base/dist/keyword-retrieval.js"() {
+    "use strict";
     init_bm25();
     KeywordRetrievalPort = class {
       async search(query, documents) {
@@ -46167,7 +46201,7 @@ var init_keyword_retrieval = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/embedding-retrieval.js
+// ../craft-common/packages/craft-common-base/dist/embedding-retrieval.js
 function cosine2(left, right) {
   const dot = left.reduce((sum, value, index) => sum + value * right[index], 0);
   const norm = (values3) => Math.sqrt(values3.reduce((sum, value) => sum + value * value, 0));
@@ -46195,7 +46229,8 @@ function embeddingRows(value, expected) {
 }
 var import_node_sqlite6, OpenAiCompatibleEmbeddingRetrievalPort;
 var init_embedding_retrieval = __esm({
-  "node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/embedding-retrieval.js"() {
+  "../craft-common/packages/craft-common-base/dist/embedding-retrieval.js"() {
+    "use strict";
     import_node_sqlite6 = require("node:sqlite");
     init_digest();
     OpenAiCompatibleEmbeddingRetrievalPort = class _OpenAiCompatibleEmbeddingRetrievalPort {
@@ -46308,9 +46343,10 @@ var init_embedding_retrieval = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/retrieval-port.js
+// ../craft-common/packages/craft-common-base/dist/retrieval-port.js
 var init_retrieval_port = __esm({
-  "node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/retrieval-port.js"() {
+  "../craft-common/packages/craft-common-base/dist/retrieval-port.js"() {
+    "use strict";
     init_keyword_retrieval();
     init_embedding_retrieval();
     init_memory_temporal_policy();
@@ -54944,7 +54980,7 @@ var init_workspace_coordinator = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-graph.js
+// ../craft-capability/capability/craft-experience/dist/procedure-graph.js
 function rows(value, name) {
   if (!Array.isArray(value) || !value.length || value.length > 100)
     throw new Error(`${name} requires 1..100 entries`);
@@ -55052,13 +55088,14 @@ function selectGraph(raw, selection) {
   return { control, scenario, entry: entry2, exit, nodes: raw.nodes.filter((n) => scenario.allowed_nodes.includes(String(n.id))), edges: raw.edges.filter((e) => scenario.allowed_edges.includes(String(e.id))) };
 }
 var init_procedure_graph = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-graph.js"() {
+  "../craft-capability/capability/craft-experience/dist/procedure-graph.js"() {
+    "use strict";
     init_validation();
     init_digest();
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-composition.js
+// ../craft-capability/capability/craft-experience/dist/procedure-composition.js
 function object6(value, name) {
   if (!value || typeof value !== "object" || Array.isArray(value))
     throw new Error(`${name} must be an object`);
@@ -55204,7 +55241,8 @@ function validateProcedureComposition(kind4, raw, rawSteps) {
 }
 var ProcedurePlanner;
 var init_procedure_composition = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-composition.js"() {
+  "../craft-capability/capability/craft-experience/dist/procedure-composition.js"() {
+    "use strict";
     init_procedure_release();
     init_procedure_graph();
     init_digest();
@@ -56192,7 +56230,7 @@ var init_procedure_invocation = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/knowledge-bound-launch.js
+// ../craft-capability/capability/craft-knowledge/dist/knowledge-bound-launch.js
 function array6(value, name) {
   if (!Array.isArray(value))
     throw new Error(`${name} must be an array`);
@@ -56209,7 +56247,8 @@ function sameJson(left, right) {
 }
 var KnowledgeBoundLaunchKernel;
 var init_knowledge_bound_launch = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/knowledge-bound-launch.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/knowledge-bound-launch.js"() {
+    "use strict";
     init_store();
     init_validation();
     init_digest();
@@ -56304,7 +56343,7 @@ Evidence: ${claim2.evidence_ids.join(", ")}
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/knowledge-relation.js
+// ../craft-capability/capability/craft-knowledge/dist/knowledge-relation.js
 function integer25(value, name, minimum, maximum) {
   const result2 = Number(value);
   if (!Number.isInteger(result2) || result2 < minimum || result2 > maximum)
@@ -56346,14 +56385,15 @@ function liveAt(record4, at) {
     return false;
   return record4.valid_to === null || Date.parse(String(record4.valid_to)) > at;
 }
-var import_node_crypto130, RELATION_KINDS2, ENDPOINT_KINDS, CONFIDENCES2, MAX_DEPTH_LIMIT, SECRET15, NODE_KEY, KnowledgeRelationKernel;
+var import_node_crypto130, RELATION_KINDS, ENDPOINT_KINDS, CONFIDENCES2, MAX_DEPTH_LIMIT, SECRET15, NODE_KEY, KnowledgeRelationKernel;
 var init_knowledge_relation = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/knowledge-relation.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/knowledge-relation.js"() {
+    "use strict";
     import_node_crypto130 = require("node:crypto");
     init_store();
     init_validation();
     init_digest();
-    RELATION_KINDS2 = /* @__PURE__ */ new Set(["derives_from", "supersedes", "contradicts", "supports", "refines", "references"]);
+    RELATION_KINDS = /* @__PURE__ */ new Set(["derives_from", "supersedes", "contradicts", "supports", "refines", "references"]);
     ENDPOINT_KINDS = /* @__PURE__ */ new Set(["knowledge_claim", "memory_ledger", "knowledge_document", "knowledge_chunk", "evidence", "capability", "wiki_page"]);
     CONFIDENCES2 = /* @__PURE__ */ new Set(["confirmed", "bounded", "unverified"]);
     MAX_DEPTH_LIMIT = 3;
@@ -56375,7 +56415,7 @@ var init_knowledge_relation = __esm({
         if (source.kind === target2.kind && source.id === target2.id)
           throw new Error("Relation endpoints must differ");
         const relation = text3(args.relation, "relation");
-        if (!RELATION_KINDS2.has(relation))
+        if (!RELATION_KINDS.has(relation))
           throw new Error("Knowledge relation is unsupported");
         const confidence3 = text3(args.confidence ?? "bounded", "confidence");
         if (!CONFIDENCES2.has(confidence3))
@@ -56431,7 +56471,7 @@ var init_knowledge_relation = __esm({
         const maxDepth = integer25(args.max_depth ?? 2, "max_depth", 1, MAX_DEPTH_LIMIT);
         const direction = args.direction === "inverse" ? "inverse" : args.direction === "both" ? "both" : "forward";
         const relation = args.relation === void 0 ? null : text3(args.relation, "relation");
-        if (relation !== null && !RELATION_KINDS2.has(relation))
+        if (relation !== null && !RELATION_KINDS.has(relation))
           throw new Error("Knowledge relation is unsupported");
         const asOf = args.as_of === void 0 ? Date.now() : Date.parse(instant19(args.as_of, "as_of"));
         const limit3 = integer25(args.limit ?? 100, "limit", 1, 1e3);
@@ -56480,7 +56520,7 @@ var init_knowledge_relation = __esm({
         const id24 = String(node2.id);
         const direction = args.direction === "inverse" ? "inverse" : args.direction === "forward" ? "forward" : "both";
         const relation = args.relation === void 0 || args.relation === null ? null : text3(args.relation, "relation");
-        if (relation !== null && !RELATION_KINDS2.has(relation))
+        if (relation !== null && !RELATION_KINDS.has(relation))
           throw new Error("Knowledge relation is unsupported");
         const at = args.as_of === void 0 || args.as_of === null ? Date.now() : Date.parse(instant19(args.as_of, "as_of"));
         const limit3 = args.limit === void 0 ? 50 : integer25(args.limit, "limit", 1, 1e3);
@@ -56517,7 +56557,7 @@ var init_knowledge_relation = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/knowledge-workbench.js
+// ../craft-capability/capability/craft-knowledge/dist/knowledge-workbench.js
 function limit2(value) {
   const result2 = value === void 0 ? 50 : Number(value);
   if (!Number.isInteger(result2) || result2 < 1 || result2 > 100)
@@ -56529,7 +56569,8 @@ function pick3(record4, fields2) {
 }
 var KnowledgeWorkbenchKernel;
 var init_knowledge_workbench = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/knowledge-workbench.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/knowledge-workbench.js"() {
+    "use strict";
     init_store();
     init_context_feedback_weight2();
     KnowledgeWorkbenchKernel = class {
@@ -56605,13 +56646,14 @@ var init_knowledge_workbench = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/local-candidate-import.js
+// ../craft-capability/capability/craft-knowledge/dist/local-candidate-import.js
 function digest21(value) {
   return `sha256:${(0, import_node_crypto131.createHash)("sha256").update(value).digest("hex")}`;
 }
 var import_node_crypto131, import_promises19, import_node_path56, LocalCandidateImportKernel;
 var init_local_candidate_import = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/local-candidate-import.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/local-candidate-import.js"() {
+    "use strict";
     import_node_crypto131 = require("node:crypto");
     import_promises19 = require("node:fs/promises");
     import_node_path56 = require("node:path");
@@ -56662,10 +56704,11 @@ var init_local_candidate_import = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/ownership.js
+// ../craft-capability/capability/craft-knowledge/dist/ownership.js
 var KNOWLEDGE_FAMILIES, KNOWLEDGE_NAMESPACE, KNOWLEDGE_CONTEXT_NAMESPACE, SHARED_CONTEXT, KNOWLEDGE_OWNS, KNOWLEDGE_COMPONENT_SOURCE, KNOWLEDGE_CONTEXT_SOURCE, KNOWLEDGE_COMPONENT;
 var init_ownership = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/ownership.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/ownership.js"() {
+    "use strict";
     KNOWLEDGE_FAMILIES = "craft_(?:relation_|knowledge_claim_|knowledge_session_evidence_record|knowledge_source_|knowledge_memory_install_builtins|knowledge_bootstrap_install|knowledge_workbench|knowledge_context_work_launch|knowledge_context_bundle_preview|knowledge_index_|knowledge_search|knowledge_scope_|knowledge_lineage_impact|wiki_skill_candidate_|wiki_candidate_local_import|project_knowledge_|project_brain_|knowledge_auto_review|knowledge_promotion_policy_|knowledge_support_record|knowledge_semantic_review_packet|knowledge_semantic_provider_review|knowledge_host_review)";
     KNOWLEDGE_NAMESPACE = "craft_(?:wiki|knowledge|claim|relation|project)";
     KNOWLEDGE_CONTEXT_NAMESPACE = "craft_(?:wiki|knowledge|claim|relation)";
@@ -56677,7 +56720,7 @@ var init_ownership = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/project-knowledge.js
+// ../craft-capability/capability/craft-knowledge/dist/project-knowledge.js
 function digest22(value) {
   return `sha256:${(0, import_node_crypto132.createHash)("sha256").update(String(value)).digest("hex")}`;
 }
@@ -56696,7 +56739,8 @@ function noSecret4(value) {
 }
 var import_node_crypto132, import_node_fs45, import_node_path57, ProjectKnowledgeKernel;
 var init_project_knowledge = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/project-knowledge.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/project-knowledge.js"() {
+    "use strict";
     import_node_crypto132 = require("node:crypto");
     import_node_fs45 = require("node:fs");
     import_node_path57 = require("node:path");
@@ -56799,7 +56843,7 @@ var init_project_knowledge = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/wiki-candidate-governance.js
+// ../craft-capability/capability/craft-knowledge/dist/wiki-candidate-governance.js
 function id14(prefix) {
   return `${prefix}_${(0, import_node_crypto133.randomUUID)().replaceAll("-", "")}`;
 }
@@ -56837,7 +56881,8 @@ function assertNoSecret4(value, name) {
 }
 var import_node_crypto133, SKILL_TARGETS, WORKFLOW_TARGETS, WikiCandidateGovernanceKernel;
 var init_wiki_candidate_governance = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/wiki-candidate-governance.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/wiki-candidate-governance.js"() {
+    "use strict";
     import_node_crypto133 = require("node:crypto");
     init_store();
     init_validation();
@@ -56962,7 +57007,7 @@ var init_wiki_candidate_governance = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/contribution.js
+// ../craft-capability/capability/craft-knowledge/dist/contribution.js
 async function currentFileDocument(locator2, document3) {
   if (typeof document3.root_digest !== "string")
     return false;
@@ -57066,7 +57111,8 @@ function advisoryFreshness(claim2, now3) {
 }
 var import_node_crypto134, import_node_fs46, import_promises20, import_node_path58, inFlightFileVerifications, KnowledgeContribution;
 var init_contribution2 = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/contribution.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/contribution.js"() {
+    "use strict";
     init_dist();
     init_context_access_guard();
     init_content_store();
@@ -57305,10 +57351,11 @@ var init_contribution2 = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/capability.js
+// ../craft-capability/capability/craft-knowledge/dist/capability.js
 var KNOWLEDGE_KERNELS, knowledgeCapability;
 var init_capability = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/capability.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/capability.js"() {
+    "use strict";
     init_dist();
     init_claim_governance();
     init_capability_protocol();
@@ -57364,10 +57411,11 @@ var init_capability = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/memory-signals-kernel.js
+// ../craft-capability/capability/craft-memory/dist/memory-signals-kernel.js
 var MemorySignalsKernel;
 var init_memory_signals_kernel = __esm({
-  "node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/memory-signals-kernel.js"() {
+  "../craft-capability/capability/craft-memory/dist/memory-signals-kernel.js"() {
+    "use strict";
     init_memory_signals();
     MemorySignalsKernel = class {
       /** Held so the kernel has the same shape as the others, and so a future signal that needs the
@@ -57398,10 +57446,11 @@ var init_memory_signals_kernel = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/ownership.js
+// ../craft-capability/capability/craft-memory/dist/ownership.js
 var MEMORY_FAMILIES, KNOWLEDGE_BOOTSTRAP, SHARED_CONTEXT2, MEMORY_OWNS, MEMORY_COMPONENT_SOURCE, MEMORY_COMPONENT;
 var init_ownership2 = __esm({
-  "node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/ownership.js"() {
+  "../craft-capability/capability/craft-memory/dist/ownership.js"() {
+    "use strict";
     MEMORY_FAMILIES = "craft_memory_(?:ledger_(?:remember|get|list|transition|compat_bind)|decay_get|hybrid_scores|usage_record|capture_propose|capture_observed_fact|promotion_preview|candidate_(?:propose|review)|policy_(?:get|save)|ledger_remember_approved|conflict_(?:list|resolve)|expiry_sweep|session_finalize|governance)\\b";
     KNOWLEDGE_BOOTSTRAP = "craft_(?:knowledge_source_|knowledge_bootstrap_install|knowledge_memory_install_builtins)";
     SHARED_CONTEXT2 = "craft_(?:context_resolution|decision_context_gate|retrieval_adapter)";
@@ -57411,10 +57460,11 @@ var init_ownership2 = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/capability.js
+// ../craft-capability/capability/craft-memory/dist/capability.js
 var MEMORY_KERNELS, memoryCapability;
 var init_capability2 = __esm({
-  "node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/capability.js"() {
+  "../craft-capability/capability/craft-memory/dist/capability.js"() {
+    "use strict";
     init_dist();
     init_capability_protocol();
     init_contribution();
@@ -57447,7 +57497,7 @@ var init_capability2 = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/context-feedback-weight.js
+// ../craft-capability/capability/craft-experience/dist/context-feedback-weight.js
 function contextFeedbackWeight3(positive5, negative) {
   return Number(Math.min(MAX_WEIGHT3, Math.max(MIN_WEIGHT3, 1 + POSITIVE_BONUS3 * Math.min(positive5, MAX_SIGNALS3) - NEGATIVE_PENALTY3 * Math.min(negative, MAX_SIGNALS3))).toFixed(6));
 }
@@ -57502,7 +57552,8 @@ function contextFeedbackWeights3(store, member2, ids6) {
 }
 var POSITIVE_BONUS3, NEGATIVE_PENALTY3, MAX_SIGNALS3, MIN_WEIGHT3, MAX_WEIGHT3;
 var init_context_feedback_weight3 = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/context-feedback-weight.js"() {
+  "../craft-capability/capability/craft-experience/dist/context-feedback-weight.js"() {
+    "use strict";
     POSITIVE_BONUS3 = 0.2;
     NEGATIVE_PENALTY3 = 0.2;
     MAX_SIGNALS3 = 5;
@@ -57511,7 +57562,7 @@ var init_context_feedback_weight3 = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/gate-signals.js
+// ../craft-capability/capability/craft-experience/dist/gate-signals.js
 function experienceGatePenaltyFromGates(gates, procedureIds) {
   const wanted = new Set(procedureIds);
   const result2 = /* @__PURE__ */ new Map();
@@ -57540,7 +57591,8 @@ function experienceGatePenalty(store, procedureIds) {
 }
 var GATE_KIND, FAILED_PENALTY, MAX_FAILURES, MIN_PENALTY;
 var init_gate_signals = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/gate-signals.js"() {
+  "../craft-capability/capability/craft-experience/dist/gate-signals.js"() {
+    "use strict";
     GATE_KIND = "experience_procedure_gate";
     FAILED_PENALTY = 0.2;
     MAX_FAILURES = 5;
@@ -57548,7 +57600,7 @@ var init_gate_signals = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/contribution.js
+// ../craft-capability/capability/craft-experience/dist/contribution.js
 function terms3(query) {
   return retrievalTerms(query);
 }
@@ -57564,7 +57616,8 @@ function matchesScope2(stored, scope4) {
 }
 var ExperienceContribution;
 var init_contribution3 = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/contribution.js"() {
+  "../craft-capability/capability/craft-experience/dist/contribution.js"() {
+    "use strict";
     init_procedure_definition();
     init_dist();
     init_context_feedback_weight3();
@@ -57580,7 +57633,7 @@ var init_contribution3 = __esm({
         this.store = store;
       }
       /**
-       * Select routeable Procedures and same-project advisory Runbooks that match this decision point.
+       * Select routeable Procedures that match this scoped decision point.
        *
        * Matching is deliberately scoped and bounded. Experience is a Context member alongside
        * Knowledge and Memory, but it never reads an unscoped legacy record or a diagnostic pattern.
@@ -57617,36 +57670,6 @@ var init_contribution3 = __esm({
           item: { ...descriptions.get(String(candidate2.procedure.id)), ranking_weight: candidate2.weight },
           reference: `procedure:${String(candidate2.procedure.id)}@${Number(candidate2.procedure.version)}`
         }));
-        const projectScopes = scopes.filter((scope4) => scope4.kind === "project");
-        const runbooks = projectScopes.length ? this.store.listScoped("experience_procedure", projectScopes, 101, (procedure) => procedure.runbook_candidate === true && procedure.lifecycle === "candidate" && procedure.routeable !== true && projectScopes.some((scope4) => matchesScope2(procedure.scope, scope4)) && scopeAllows(scopeEnvelope(procedure.scope_envelope, recordScope2(procedure.scope)), access5) && (request2.domain === void 0 ? (procedure.domain ?? null) === null : procedure.domain === request2.domain)) : [];
-        if (runbooks.length > 100)
-          throw new Error("Experience Runbook candidate budget exceeded; narrow the project scope");
-        for (const procedure of runbooks) {
-          const ref5 = procedure.content_ref;
-          if (!ref5 || typeof ref5 !== "object")
-            continue;
-          const content = this.store.contentStore.readCompatSync(ref5);
-          const retrievalText = `${String(procedure.title)} ${String(procedure.applies_when)} ${String(procedure.pitfall)} ${String(procedure.correct_method)}`;
-          const score = wanted.reduce((sum, term) => sum + Number(retrievalText.toLowerCase().includes(term)), 0);
-          if (!score)
-            continue;
-          const item = {
-            kind: "experience_runbook_candidate",
-            status: "\u5F85\u9A8C\u8BC1",
-            executable: false,
-            routeable: false,
-            scope: recordScope2(procedure.scope),
-            procedure_id: String(procedure.id),
-            procedure_version: Number(procedure.version),
-            title: String(procedure.title),
-            retrieval_text: retrievalText,
-            body: String(content.body),
-            source_observation_id: String(procedure.observation_id),
-            source_evidence_ids: procedure.evidence_ids,
-            score
-          };
-          selected.push({ item, reference: `runbook-candidate:${String(procedure.id)}@${Number(procedure.version)}` });
-        }
         const items2 = [];
         let usedChars = 0;
         const selectedReferences = [];
@@ -57672,8 +57695,7 @@ var init_contribution3 = __esm({
             has_draft: hasDraft,
             routeable_count: eligible.length,
             candidate_count: scoped.filter((p) => p.lifecycle === "candidate").length,
-            runbook_candidate_count: runbooks.length,
-            reason: eligible.length || runbooks.length ? items2.length ? "recalled_not_bound" : "query_or_budget_not_matched" : scoped.length ? "no_promoted_release" : hasDraft ? "draft_not_submitted" : "no_accessible_procedure_in_scope",
+            reason: eligible.length ? items2.length ? "recalled_not_bound" : "query_or_budget_not_matched" : scoped.length ? "no_promoted_release" : hasDraft ? "draft_not_submitted" : "no_accessible_procedure_in_scope",
             next_tool: "craft_experience_graph_inspect",
             next_action: "diagnose",
             execution_started: false
@@ -57685,13 +57707,6 @@ var init_contribution3 = __esm({
         const definition2 = procedure.procedure_kind === "graph" && procedureDefinitionRef(procedure.definition_ref) ? new ProcedureDefinitionStore(this.store).read(procedure.definition_ref).definition : null;
         const control = definition2?.graph_control;
         const routes = Array.isArray(control?.subscenarios) ? control.subscenarios.map((s) => ({ id: s.id, title: s.title, entry_id: s.entry_id, exit_id: s.exit_id })) : [];
-        const entrypoints = Array.isArray(procedure.entrypoints) ? procedure.entrypoints.slice(0, 8).map((entry2) => ({
-          id: String(entry2.id ?? "").slice(0, 80),
-          title: String(entry2.title ?? entry2.id ?? "").slice(0, 100)
-        })) : [];
-        const routeTitles = routes.slice(0, 8).map((route) => String(route.title ?? "").slice(0, 100)).filter(Boolean);
-        const title = String(procedure.title).slice(0, 120);
-        const trigger = String(procedure.trigger).slice(0, 180);
         return {
           kind: "experience_procedure",
           scope: recordScope2(procedure.scope),
@@ -57699,10 +57714,9 @@ var init_contribution3 = __esm({
           procedure_id: String(procedure.id),
           procedure_version: Number(procedure.version),
           procedure_kind: String(procedure.procedure_kind),
-          title,
-          trigger,
-          retrieval_text: [trigger, title, ...entrypoints.map((entry2) => entry2.title), ...routeTitles].join(" ").slice(0, 500),
-          ...entrypoints.length ? { entrypoints } : {},
+          trigger: String(procedure.trigger),
+          retrieval_text: `${String(procedure.trigger)} ${String(procedure.title)} ${JSON.stringify(procedure.entrypoints ?? [])} ${JSON.stringify(routes)}`,
+          ...Array.isArray(procedure.entrypoints) ? { entrypoints: procedure.entrypoints } : {},
           acceptance_ref: String(procedure.acceptance_ref),
           scenario_signature: procedure.scenario_signature,
           content_digest: procedure.content_digest,
@@ -57719,7 +57733,7 @@ var init_contribution3 = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/model-compat.js
+// ../craft-common/packages/craft-common-base/dist/model-compat.js
 function credentialStatus2(spec, env = process.env) {
   if (spec.host_managed_auth)
     return { provider: spec.provider, configured: true, api_key_env: "host-managed-auth-store" };
@@ -57739,12 +57753,13 @@ function selectModel2(spec, tier) {
 }
 var ORDER;
 var init_model_compat = __esm({
-  "node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/model-compat.js"() {
+  "../craft-common/packages/craft-common-base/dist/model-compat.js"() {
+    "use strict";
     ORDER = ["frontier", "standard", "small"];
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/project-knowledge-content.js
+// ../craft-capability/capability/craft-experience/dist/project-knowledge-content.js
 function projectRootForKnowledgeSource2(source) {
   if (typeof source.locator !== "string")
     return null;
@@ -57843,7 +57858,8 @@ function knowledgeDirectoryForScope3(store, scope4, options = {}) {
 }
 var import_node_fs47, import_node_path59;
 var init_project_knowledge_content3 = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/project-knowledge-content.js"() {
+  "../craft-capability/capability/craft-experience/dist/project-knowledge-content.js"() {
+    "use strict";
     import_node_fs47 = require("node:fs");
     import_node_path59 = require("node:path");
     init_digest();
@@ -57852,7 +57868,7 @@ var init_project_knowledge_content3 = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/evaluation-model-profile.js
+// ../craft-capability/capability/craft-experience/dist/evaluation-model-profile.js
 function text21(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must not be empty`);
@@ -57885,7 +57901,8 @@ function strings32(value, name, fallback2) {
 }
 var import_node_crypto135, import_node_path60, PURPOSES, KNOWLEDGE_CLASSIFIABLE_STATUSES, SECRET16, EvaluationModelProfileKernel;
 var init_evaluation_model_profile = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/evaluation-model-profile.js"() {
+  "../craft-capability/capability/craft-experience/dist/evaluation-model-profile.js"() {
+    "use strict";
     import_node_crypto135 = require("node:crypto");
     import_node_path60 = require("node:path");
     init_digest();
@@ -58242,7 +58259,7 @@ var init_evaluation_model_profile = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/experience-deduplication.js
+// ../craft-capability/capability/craft-experience/dist/experience-deduplication.js
 function normalizeFactor(name) {
   return name.trim().toLowerCase();
 }
@@ -58261,7 +58278,8 @@ function classifyVerdict(text47) {
 }
 var import_node_crypto136, VERDICTS3, REJECTED, ACCEPTED, ExperienceDeduplicationKernel;
 var init_experience_deduplication = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/experience-deduplication.js"() {
+  "../craft-capability/capability/craft-experience/dist/experience-deduplication.js"() {
+    "use strict";
     import_node_crypto136 = require("node:crypto");
     init_digest();
     VERDICTS3 = /* @__PURE__ */ new Set(["accepted", "rejected", "unknown"]);
@@ -58317,7 +58335,7 @@ var init_experience_deduplication = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/experience-ledger.js
+// ../craft-capability/capability/craft-experience/dist/experience-ledger.js
 function text22(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must not be empty`);
@@ -58328,7 +58346,8 @@ function text22(value, name) {
 }
 var import_node_crypto137, OBSERVATION_KINDS, PATTERN_KINDS, AXES, SUBJECT_KINDS2, SOURCES, SECRET17, ExperienceLedgerKernel;
 var init_experience_ledger = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/experience-ledger.js"() {
+  "../craft-capability/capability/craft-experience/dist/experience-ledger.js"() {
+    "use strict";
     init_experience_deduplication();
     import_node_crypto137 = require("node:crypto");
     init_store();
@@ -58476,7 +58495,7 @@ var init_experience_ledger = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-projection.js
+// ../craft-capability/capability/craft-experience/dist/procedure-projection.js
 function text23(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must not be empty`);
@@ -58499,9 +58518,10 @@ function scopeRef(value) {
     throw new Error("Experience Procedure scope is malformed");
   return { kind: value.slice(0, separator), id: value.slice(separator + 1) };
 }
-var import_node_fs48, import_node_path61, STAGES2, KINDS7, RUNBOOK_FIELDS, RUNBOOK_SECRET, ProcedureStore;
+var import_node_fs48, import_node_path61, STAGES2, KINDS7, ProcedureStore;
 var init_procedure_projection = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-projection.js"() {
+  "../craft-capability/capability/craft-experience/dist/procedure-projection.js"() {
+    "use strict";
     init_procedure_graph();
     import_node_fs48 = require("node:fs");
     import_node_path61 = require("node:path");
@@ -58512,190 +58532,14 @@ var init_procedure_projection = __esm({
     init_procedure_composition();
     init_scope_policy();
     init_validation3();
-    init_project_experience_directory();
     STAGES2 = ["shadow", "held_out", "signoff", "canary"];
     KINDS7 = /* @__PURE__ */ new Set(["workflow", "graph", "prompt"]);
-    RUNBOOK_FIELDS = ["applies_when", "exclude_when", "pitfall", "cause", "correct_method", "synthetic_example", "done_criteria", "failure_handling"];
-    RUNBOOK_SECRET = /(?:api[_-]?key|authorization|cookie|password|secret|token)\s*[:=]\s*[^\s]{8,}/iu;
     ProcedureStore = class {
       store;
       definitions;
       constructor(store) {
         this.store = store;
         this.definitions = new ProcedureDefinitionStore(store);
-      }
-      /** Save a sanitized, project-local Runbook candidate from one verified Host observation. */
-      runbookCapture(args) {
-        return this.store.transaction(() => this.captureRunbook(args));
-      }
-      captureRunbook(args) {
-        const observationId = text23(args.observation_id, "observation_id");
-        const observation = this.store.get("workflow_evolution_observation", observationId);
-        const source = observation.source;
-        const scope4 = typeof source?.scope === "string" ? source.scope : "";
-        if (!/^project:[A-Za-z0-9_-]{1,96}$/u.test(scope4) || observation.outcome !== "passed" || observation.lifecycle !== "accepted" || typeof source?.kind !== "string" || !source.kind.startsWith("host:") || typeof source.session_id !== "string" || !source.session_id) {
-          throw new Error("Runbook capture requires one accepted, passing project-scoped Host observation");
-        }
-        projectExperienceDirectory(this.store, scope4, void 0, true);
-        const evidenceIds2 = strings33(observation.evidence_ids, "observation.evidence_ids", 1);
-        for (const id25 of evidenceIds2) {
-          const evidence2 = this.store.get("evidence", id25), metadata2 = evidence2.metadata;
-          if (metadata2?.provenance !== "host_completion_signal" || metadata2?.verification_outcome !== "passed" || metadata2?.project_scope_id !== scope4 || metadata2?.source_session_id !== source.session_id || metadata2?.task_id !== source.id || typeof metadata2?.turn_id !== "string" || typeof metadata2?.context_receipt_id !== "string" || metadata2?.content_stored !== false) {
-            throw new Error("Runbook capture Evidence is not a matching verified Host completion signal");
-          }
-        }
-        const priorCandidate = this.store.list("experience_procedure", 1, (item) => item.runbook_candidate === true && item.observation_id === observation.id);
-        const priorDecision = this.store.list("experience_runbook_decision", 1, (item) => item.observation_id === observation.id);
-        if (args.decision === "no_new_learning") {
-          if (priorCandidate.length)
-            throw new Error("A Runbook candidate already exists for this Observation");
-          const reason = text23(args.reason, "reason");
-          if (!["no_reusable_learning", "insufficient_evidence", "too_sensitive", "other"].includes(reason))
-            throw new Error("Runbook skip reason is unsupported");
-          const identity3 = { observation_id: observation.id, observation_version: observation.version, scope: scope4, decision: "no_new_learning", reason };
-          const id25 = `experience_runbook_decision_${stableDigest(identity3).slice(-20)}`;
-          const existing2 = this.store.find("experience_runbook_decision", id25);
-          if (existing2)
-            return { decision: existing2, idempotent: true };
-          if (priorDecision.length)
-            throw new Error("A different no_new_learning decision already exists for this Observation");
-          return { decision: this.store.create("experience_runbook_decision", id25, { ...identity3, content_stored: false }), idempotent: false };
-        }
-        if (args.decision !== "capture")
-          throw new Error("Runbook decision must be capture or no_new_learning");
-        if (priorDecision.length)
-          throw new Error("A no_new_learning decision already exists for this Observation");
-        const fields2 = {};
-        for (const field2 of RUNBOOK_FIELDS) {
-          const value = text23(args[field2], field2);
-          if (value.length > (field2 === "synthetic_example" ? 3e3 : 1e3) || RUNBOOK_SECRET.test(value) || /[\0]/u.test(value))
-            throw new Error(`${field2} is unsafe or exceeds its size limit`);
-          fields2[field2] = value;
-        }
-        const title = text23(args.title, "title");
-        if (title.length > 120 || RUNBOOK_SECRET.test(title))
-          throw new Error("Runbook title is unsafe or too long");
-        const signature = observation.scenario_signature;
-        const domain = typeof signature?.domain === "string" ? signature.domain : null;
-        const identity2 = {
-          runbook_candidate: true,
-          provenance: "verified_host_task",
-          observation_id: observation.id,
-          observation_version: observation.version,
-          session_id: source.session_id,
-          scope: scope4,
-          title,
-          ...fields2,
-          evidence_ids: evidenceIds2,
-          domain,
-          scenario_signature: signature ?? null
-        };
-        const id24 = `experience_procedure_runbook_${stableDigest(identity2).slice(-20)}`;
-        const existing = this.store.find("experience_procedure", id24);
-        if (existing) {
-          if (existing.identity_digest !== stableDigest(identity2))
-            throw new Error("Runbook capture idempotency conflict");
-          return { procedure: existing, idempotent: true };
-        }
-        if (priorCandidate.length)
-          throw new Error("A different Runbook candidate already exists for this Observation");
-        const body3 = [
-          "# " + title,
-          "",
-          "> \u5F85\u9A8C\u8BC1\uFF1A\u4EC5\u4F9B\u540C\u9879\u76EE\u53C2\u8003\uFF0C\u4E0D\u662F\u53EF\u6267\u884C Procedure\u3002",
-          "",
-          "## \u9002\u7528\u8303\u56F4",
-          fields2.applies_when,
-          "",
-          "## \u4E0D\u9002\u7528",
-          fields2.exclude_when,
-          "",
-          "## \u8E29\u5751\u73B0\u8C61",
-          fields2.pitfall,
-          "",
-          "## \u539F\u56E0",
-          fields2.cause,
-          "",
-          "## \u6B63\u786E\u505A\u6CD5",
-          fields2.correct_method,
-          "",
-          "## \u5408\u6210\u793A\u4F8B",
-          "```text",
-          fields2.synthetic_example,
-          "```",
-          "",
-          "## \u5B8C\u6210\u5224\u636E",
-          fields2.done_criteria,
-          "",
-          "## \u5931\u8D25\u5904\u7F6E",
-          fields2.failure_handling,
-          "",
-          "## \u6765\u6E90",
-          `Observation: ${observation.id}@${observation.version}`,
-          `Evidence: ${evidenceIds2.join(", ")}`,
-          "",
-          "## \u5B9E\u6D4B\u65F6\u95F4\u4E0E\u89C4\u6A21",
-          "\u672A\u6D4B\u91CF\uFF1A\u6355\u83B7\u6765\u6E90\u4E0D\u5305\u542B\u53EF\u6838\u9A8C\u7684\u65F6\u95F4\u6216\u89C4\u6A21\u6570\u636E\u3002",
-          ""
-        ].join("\n");
-        const contentRef = this.store.contentStore.writeSync({
-          kind: "experience",
-          record_id: id24,
-          version: 1,
-          scope: scope4,
-          status: "candidate",
-          sensitivity: "internal",
-          source_id: `host-observation:${String(observation.id)}`,
-          title,
-          body: body3,
-          folder: "prompts",
-          frontmatter: { runbook_candidate: "true", routeable: "false" }
-        });
-        const procedure = this.store.create("experience_procedure", id24, {
-          ...identity2,
-          version: 1,
-          lifecycle: "candidate",
-          completed_gates: [],
-          procedure_kind: "prompt",
-          trigger: fields2.applies_when,
-          preconditions: [fields2.exclude_when],
-          allowed_effects: ["read"],
-          acceptance_ref: fields2.done_criteria,
-          failure_disposition: fields2.failure_handling,
-          evidence_ids: evidenceIds2,
-          content_ref: contentRef,
-          content_digest: contentRef.digest,
-          identity_digest: stableDigest(identity2),
-          concept_kind: "procedure",
-          routeable: false,
-          publication_allowed: false,
-          execution_visible: false
-        });
-        return { procedure, idempotent: false, advisory_only: true };
-      }
-      /** Revoke an unpromoted Runbook candidate after human review. */
-      runbookRevoke(args) {
-        return this.store.transaction(() => this.revokeRunbook(args));
-      }
-      revokeRunbook(args) {
-        const id24 = text23(args.procedure_id, "procedure_id"), current2 = this.store.get("experience_procedure", id24);
-        if (current2.runbook_candidate !== true || current2.lifecycle !== "candidate" || current2.routeable === true)
-          throw new Error("Only an unpromoted Runbook candidate can be revoked");
-        if (!Number.isSafeInteger(args.expected_version) || Number(args.expected_version) !== current2.version)
-          throw new Error("Runbook candidate version is stale");
-        const reason = text23(args.reason, "reason");
-        if (!["not_reusable", "unsafe_content", "incorrect", "duplicate", "other"].includes(reason))
-          throw new Error("Runbook revocation reason is unsupported");
-        const procedure = this.store.updateIfVersion("experience_procedure", id24, Number(current2.version), {
-          ...payload(current2),
-          lifecycle: "rolled_back",
-          routeable: false,
-          publication_allowed: false,
-          revoked_by: "explicit_user_review",
-          revocation_reason: reason
-        });
-        this.store.appendEvent(`experience-runbook:${id24}`, "experience.runbook_revoked", { procedure_id: id24, version: procedure.version, reason, content_stored: false });
-        return { procedure, revoked: true };
       }
       /** Create a candidate Procedure from an existing bounded proposal record. */
       draft(args) {
@@ -58830,8 +58674,6 @@ var init_procedure_projection = __esm({
       }
       recordGate(args) {
         const procedure = this.store.get("experience_procedure", text23(args.procedure_id, "procedure_id"));
-        if (procedure.runbook_candidate === true && args.passed === true)
-          throw new Error("Runbook candidates cannot pass Procedure gates directly; submit their learning through the multi-observation evaluation flow");
         if (belongsToRetiredScenario(this.store, procedure))
           throw new Error("Experience scenario is retired; Procedure cannot qualify");
         const stage = text23(args.stage, "stage");
@@ -58885,10 +58727,6 @@ var init_procedure_projection = __esm({
         const procedure = args.release_channel === void 0 ? this.store.get("experience_procedure", id24, args.version === void 0 ? void 0 : Number(args.version)) : selectedProcedure(this.store, id24, args.release_channel);
         if (!procedure)
           throw new Error("Procedure release unavailable");
-        if (procedure.runbook_candidate === true && procedure.content_ref) {
-          const content = this.store.contentStore.readCompatSync(procedure.content_ref);
-          return { procedure, runbook: { status: "\u5F85\u9A8C\u8BC1", executable: false, body: content.body } };
-        }
         return { procedure };
       }
       list(args = {}) {
@@ -59052,10 +58890,11 @@ ${String(value.description)}${contracts2}`;
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/ownership.js
+// ../craft-capability/capability/craft-experience/dist/ownership.js
 var EXPERIENCE_FAMILIES, EXPERIENCE_PRODUCT_EXTRAS, EXPERIENCE_OWNS, EXPERIENCE_COMPONENT;
 var init_ownership3 = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/ownership.js"() {
+  "../craft-capability/capability/craft-experience/dist/ownership.js"() {
+    "use strict";
     EXPERIENCE_FAMILIES = "craft_(?:experience_(?:ledger_|observe|scenario_(?:list|retire|migration_propose)|patterns_list|learning_evaluation_(?:dispatch(?:_list)?|run|result)|procedure_(?:draft|submit|get|projection_(?:draft|get|list)|gate|skill_export)|conclusion_(?:record|find|refuted))|procedure_(?:create|get|list|gate|export_skill)|automation_job_(?:save|pause|run|tick|get|eligibility)|evaluation_model_|route_workflow_proposal|workflow_(?:save|get|search|transition|rollback))";
     EXPERIENCE_PRODUCT_EXTRAS = "craft_(?:experience_(?:graph_|pattern_|candidate_list|mine|shadow_experiment_|capture_|asset_)|procedure_(?:host_control$|decision_evaluate$|invocation_|configuration_|plan$)|component_(?:readiness_get|diagnose)|evidence_record|scope_identity_resolve_project|context_resolution_(?:resolve|feedback)|decision_context_gate_open|workflow_(?:checkpoint|resume|run_cancel|replan|export|import))";
     EXPERIENCE_OWNS = new RegExp(`^${EXPERIENCE_FAMILIES}`);
@@ -59063,7 +58902,7 @@ var init_ownership3 = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/workflow-evolution.js
+// ../craft-capability/capability/craft-experience/dist/workflow-evolution.js
 function text24(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must not be empty`);
@@ -59082,7 +58921,8 @@ function strings34(value, name, minimum = 0) {
 }
 var OUTCOMES3, AXES2, PROCEDURE_KINDS, SECRET18, WorkflowEvolutionKernel;
 var init_workflow_evolution = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/workflow-evolution.js"() {
+  "../craft-capability/capability/craft-experience/dist/workflow-evolution.js"() {
+    "use strict";
     init_procedure_graph();
     init_store();
     init_procedure_composition();
@@ -59292,10 +59132,11 @@ var init_workflow_evolution = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/capability.js
+// ../craft-capability/capability/craft-experience/dist/capability.js
 var EXPERIENCE_KERNELS, experienceCapability;
 var init_capability3 = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/capability.js"() {
+  "../craft-capability/capability/craft-experience/dist/capability.js"() {
+    "use strict";
     init_dist();
     init_capability_protocol();
     init_contribution3();
@@ -59340,7 +59181,7 @@ var init_capability3 = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/context-search.js
+// ../craft-capability/capability/craft-codebase/dist/context-search.js
 function identifierTerms(value) {
   const expanded = value.replace(/([A-Z]+)([A-Z][a-z])/gu, "$1 $2").replace(/([a-z0-9])([A-Z])/gu, "$1 $2").replace(/[_./\\-]+/gu, " ");
   return [.../* @__PURE__ */ new Set([...retrievalTerms(value), ...retrievalTerms(expanded)])];
@@ -59393,7 +59234,8 @@ function codeContextCandidates(index, query, limit3 = 100, searchIndex) {
 }
 var INTENTS2, CODE_TERM_ALIASES, ACTION_TERMS, SYMBOL_ACTION_TERMS, GENERIC_ACTION_TERMS, STRUCTURE_TERMS, STRUCTURAL_DECLARATION_KINDS, GENERIC_TASK_TERMS, GENERIC_SYMBOL_IDENTIFIERS, CONTEXT_BM25_WEIGHT, CONTEXT_MATCH_SCORE, CODE_USAGE_BOOST, QUERY_LANGUAGE_BOOST, QUERY_LANGUAGE_ALIASES, CodeSymbolSearchIndex;
 var init_context_search = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/context-search.js"() {
+  "../craft-capability/capability/craft-codebase/dist/context-search.js"() {
+    "use strict";
     init_bm25();
     init_retrieval_terms();
     INTENTS2 = {
@@ -59663,7 +59505,7 @@ var init_context_search = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/usage-signals.js
+// ../craft-capability/capability/craft-codebase/dist/usage-signals.js
 function text25(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must be a non-empty string`);
@@ -59709,14 +59551,15 @@ function recordCodebaseSymbolUsage(store, args) {
 }
 var USAGE_KIND, OUTCOMES4;
 var init_usage_signals = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/usage-signals.js"() {
+  "../craft-capability/capability/craft-codebase/dist/usage-signals.js"() {
+    "use strict";
     init_digest();
     USAGE_KIND = "codebase_symbol_usage";
     OUTCOMES4 = /* @__PURE__ */ new Set(["read", "passed", "failed"]);
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/definition-query.js
+// ../craft-capability/capability/craft-codebase/dist/definition-query.js
 function matchDefinitionEdges(edges, offset, limit3) {
   if (!Number.isSafeInteger(offset) || offset < 0)
     throw new Error("Definition offset must be a non-negative safe integer");
@@ -59738,12 +59581,13 @@ function matchDefinitionEdges(edges, offset, limit3) {
 }
 var DEFINITION_EDGE_KINDS;
 var init_definition_query = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/definition-query.js"() {
+  "../craft-capability/capability/craft-codebase/dist/definition-query.js"() {
+    "use strict";
     DEFINITION_EDGE_KINDS = /* @__PURE__ */ new Set(["definitions", "references", "calls", "imports", "type_definition"]);
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/typescript-runtime.js
+// ../craft-capability/capability/craft-codebase/dist/typescript-runtime.js
 function getTypeScriptVersion() {
   if (version2 === void 0) {
     const metadata2 = requireLocal(bundled ? "./craft-typescript-version.json" : "typescript/package.json");
@@ -59764,7 +59608,8 @@ function getTypeScript() {
 }
 var import_node_module, import_node_url5, moduleUrl, bundled, requireLocal, compiler, version2;
 var init_typescript_runtime = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/typescript-runtime.js"() {
+  "../craft-capability/capability/craft-codebase/dist/typescript-runtime.js"() {
+    "use strict";
     import_node_module = require("node:module");
     import_node_url5 = require("node:url");
     moduleUrl = typeof __filename === "string" ? (0, import_node_url5.pathToFileURL)(__filename).href : void 0;
@@ -59773,7 +59618,7 @@ var init_typescript_runtime = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/control-flow.js
+// ../craft-capability/capability/craft-codebase/dist/control-flow.js
 function isFunctionLike(node2) {
   return getTypeScript().isFunctionDeclaration(node2) || getTypeScript().isMethodDeclaration(node2) || getTypeScript().isConstructorDeclaration(node2) || getTypeScript().isGetAccessorDeclaration(node2) || getTypeScript().isSetAccessorDeclaration(node2) || getTypeScript().isFunctionExpression(node2) || getTypeScript().isArrowFunction(node2);
 }
@@ -60030,7 +59875,8 @@ function buildControlFlowGraph(content, path2, symbolId, symbolOffset) {
 }
 var MAX_BLOCKS, MAX_EDGES;
 var init_control_flow = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/control-flow.js"() {
+  "../craft-capability/capability/craft-codebase/dist/control-flow.js"() {
+    "use strict";
     init_typescript_runtime();
     init_digest();
     MAX_BLOCKS = 500;
@@ -60038,7 +59884,7 @@ var init_control_flow = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/data-flow.js
+// ../craft-capability/capability/craft-codebase/dist/data-flow.js
 function isFunctionLike2(node2) {
   return getTypeScript().isFunctionDeclaration(node2) || getTypeScript().isMethodDeclaration(node2) || getTypeScript().isConstructorDeclaration(node2) || getTypeScript().isGetAccessorDeclaration(node2) || getTypeScript().isSetAccessorDeclaration(node2) || getTypeScript().isFunctionExpression(node2) || getTypeScript().isArrowFunction(node2);
 }
@@ -60432,7 +60278,8 @@ function sameSet(left, right) {
 }
 var MAX_SOURCE_CHARS, MAX_EVENTS, MAX_TOTAL_EVENTS, MAX_VARIABLE_CANDIDATES, MAX_FLOWS, MAX_FIXED_POINT_STEPS;
 var init_data_flow = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/data-flow.js"() {
+  "../craft-capability/capability/craft-codebase/dist/data-flow.js"() {
+    "use strict";
     init_typescript_runtime();
     init_digest();
     init_control_flow();
@@ -60445,7 +60292,7 @@ var init_data_flow = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/lsp-config.js
+// ../craft-capability/capability/craft-codebase/dist/lsp-config.js
 function configuredLspWorkerEnvironment(language2, codebaseDataRoot, inherited = process.env) {
   return language2 === "go" ? { ...inherited, GOPLSCACHE: (0, import_node_path62.join)(codebaseDataRoot, "gopls-cache"), GOCACHE: (0, import_node_path62.join)(codebaseDataRoot, "go-build-cache") } : inherited;
 }
@@ -60527,7 +60374,8 @@ function languageIdForFile(path2) {
 }
 var import_node_fs49, import_node_fs50, import_node_path62, CODEBASE_LSP_CONFIG, MAX_LSP_DOCUMENTS, MAX_RELATION_SYMBOLS, LSP_LANGUAGE_IDS;
 var init_lsp_config = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/lsp-config.js"() {
+  "../craft-capability/capability/craft-codebase/dist/lsp-config.js"() {
+    "use strict";
     import_node_fs49 = require("node:fs");
     import_node_fs50 = require("node:fs");
     import_node_path62 = require("node:path");
@@ -60612,13 +60460,14 @@ var init_lsp_config = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/symbol-kind.js
+// ../craft-capability/capability/craft-codebase/dist/symbol-kind.js
 function lspDeclarationKind(value) {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 1 && value < LSP_SYMBOL_KINDS.length ? LSP_SYMBOL_KINDS[value] : void 0;
 }
 var LSP_SYMBOL_KINDS;
 var init_symbol_kind = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/symbol-kind.js"() {
+  "../craft-capability/capability/craft-codebase/dist/symbol-kind.js"() {
+    "use strict";
     LSP_SYMBOL_KINDS = [
       void 0,
       "file",
@@ -60651,7 +60500,7 @@ var init_symbol_kind = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/lsp-adapter.js
+// ../craft-capability/capability/craft-codebase/dist/lsp-adapter.js
 function lspDocumentSymbolsDigest(input2) {
   return stableDigest({
     analyzer: input2.analyzer,
@@ -60791,7 +60640,8 @@ function normalizeLspSymbols(input2) {
 }
 var import_node_crypto138, MAX_LSP_SYMBOLS;
 var init_lsp_adapter = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/lsp-adapter.js"() {
+  "../craft-capability/capability/craft-codebase/dist/lsp-adapter.js"() {
+    "use strict";
     import_node_crypto138 = require("node:crypto");
     init_digest();
     init_symbol_kind();
@@ -60799,7 +60649,7 @@ var init_lsp_adapter = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/lsp-relations.js
+// ../craft-capability/capability/craft-codebase/dist/lsp-relations.js
 function checkpointPath(path2) {
   return path2.replaceAll("\\", "/");
 }
@@ -61149,13 +60999,14 @@ function enclosingSymbol(symbols, offset) {
 }
 var import_node_url6, import_node_path63;
 var init_lsp_relations = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/lsp-relations.js"() {
+  "../craft-capability/capability/craft-codebase/dist/lsp-relations.js"() {
+    "use strict";
     import_node_url6 = require("node:url");
     import_node_path63 = require("node:path");
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/lsp-stdio-client.js
+// ../craft-capability/capability/craft-codebase/dist/lsp-stdio-client.js
 function ignoreLspStdinError(_error) {
 }
 async function analyzeLspSnapshot(input2, timeoutMs = input2.request_timeout_ms ?? DEFAULT_TIMEOUT_MS2, environment = process.env) {
@@ -61932,7 +61783,8 @@ function waitForClose(child, timeoutMs) {
 }
 var import_node_child_process10, import_node_crypto139, import_node_fs51, import_node_path64, import_node_url7, MAX_DOCUMENT_BYTES, MAX_TOTAL_BYTES, MAX_SYMBOL_CACHE_BYTES, MAX_RESPONSE_BYTES, MAX_TYPE_HIERARCHY_ITEMS, MAX_DEFINITION_REFERENCES_PER_SYMBOL, MAX_DEFINITION_LOOKUPS, MAX_DIAGNOSTICS_PER_DOCUMENT, MAX_DIAGNOSTICS_TOTAL, MAX_DIAGNOSTIC_MESSAGE_LENGTH, TYPE_HIERARCHY_SYMBOL_KINDS, CALL_HIERARCHY_SYMBOL_KINDS, GO_IMPLEMENTATION_SYMBOL_KINDS, GO_TYPE_DEFINITION_SYMBOL_KINDS, LSP_REQUEST_CONCURRENCY, DEFAULT_TIMEOUT_MS2;
 var init_lsp_stdio_client = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/lsp-stdio-client.js"() {
+  "../craft-capability/capability/craft-codebase/dist/lsp-stdio-client.js"() {
+    "use strict";
     import_node_child_process10 = require("node:child_process");
     import_node_crypto139 = require("node:crypto");
     import_node_fs51 = require("node:fs");
@@ -61960,7 +61812,7 @@ var init_lsp_stdio_client = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/lsp-diagnostics-query.js
+// ../craft-capability/capability/craft-codebase/dist/lsp-diagnostics-query.js
 async function queryCheckpointDiagnostics(input2) {
   const path2 = input2.path.trim();
   const entries2 = Array.isArray(input2.checkpoint.entries) ? input2.checkpoint.entries : [];
@@ -62131,7 +61983,8 @@ async function queryCheckpointCallers(input2) {
 }
 var import_node_fs52, import_node_os4, import_node_path65;
 var init_lsp_diagnostics_query = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/lsp-diagnostics-query.js"() {
+  "../craft-capability/capability/craft-codebase/dist/lsp-diagnostics-query.js"() {
+    "use strict";
     import_node_fs52 = require("node:fs");
     import_node_os4 = require("node:os");
     import_node_path65 = require("node:path");
@@ -62141,10 +61994,11 @@ var init_lsp_diagnostics_query = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/graph-budget.js
+// ../craft-capability/capability/craft-codebase/dist/graph-budget.js
 var GRAPH_BUDGET;
 var init_graph_budget = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/graph-budget.js"() {
+  "../craft-capability/capability/craft-codebase/dist/graph-budget.js"() {
+    "use strict";
     GRAPH_BUDGET = Object.freeze({
       maxNodes: 12e4,
       maxEdges: 5e5,
@@ -62156,7 +62010,7 @@ var init_graph_budget = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/typescript-analysis.js
+// ../craft-capability/capability/craft-codebase/dist/typescript-analysis.js
 function typeScriptFileUnitDigest(unit) {
   return stableDigest({
     path: unit.path,
@@ -62722,7 +62576,8 @@ function analyzeTypeScript(files5, analysisOptions = {}) {
 }
 var import_node_path66, TYPESCRIPT_ANALYZER_VERSION, parsed, programs, DEFAULT_MAX_GRAPH_NODES, MAX_GRAPH_EDGES, BUILTIN_TYPE_GLOBALS, BUILTIN_CALLABLES, declarationKinds, MAX_ANALYSIS_CHARS, MAX_FILE_UNIT_CHARS, MAX_FILE_UNITS_TOTAL_CHARS;
 var init_typescript_analysis = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/typescript-analysis.js"() {
+  "../craft-capability/capability/craft-codebase/dist/typescript-analysis.js"() {
+    "use strict";
     init_typescript_runtime();
     import_node_path66 = require("node:path");
     init_digest();
@@ -62974,7 +62829,7 @@ var init_typescript_analysis = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/python-incremental.js
+// ../craft-capability/capability/craft-codebase/dist/python-incremental.js
 function pythonFileUnitDigest(unit) {
   return stableDigest({
     path: unit.path,
@@ -63037,12 +62892,13 @@ function full(paths, reason) {
   return { mode: "full", affected_paths: [...paths].sort(), reused_paths: [], reason };
 }
 var init_python_incremental = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/python-incremental.js"() {
+  "../craft-capability/capability/craft-codebase/dist/python-incremental.js"() {
+    "use strict";
     init_digest();
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/python-fallback.js
+// ../craft-capability/capability/craft-codebase/dist/python-fallback.js
 function nodeId(path2, name, start) {
   return `python_symbol_${stableDigest({ path: path2, name, start }).slice(-24)}`;
 }
@@ -63154,7 +63010,8 @@ function analyzePythonFallback(files5) {
 }
 var DEFINITION, CALL, KEYWORDS2;
 var init_python_fallback = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/python-fallback.js"() {
+  "../craft-capability/capability/craft-codebase/dist/python-fallback.js"() {
+    "use strict";
     init_digest();
     DEFINITION = /^(\s*)(?:async\s+)?(def|class)\s+([A-Za-z_][A-Za-z0-9_]*)\b/u;
     CALL = /\b([A-Za-z_][A-Za-z0-9_]*)\s*\(/gu;
@@ -63162,7 +63019,7 @@ var init_python_fallback = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/python-analysis.js
+// ../craft-capability/capability/craft-codebase/dist/python-analysis.js
 function defaultPythonCommand(platform2 = process.platform) {
   return platform2 === "win32" ? "py" : "python3";
 }
@@ -63307,7 +63164,8 @@ function analyzePythonDataFlow(file, symbol, variable, options = {}) {
 }
 var import_node_child_process11, import_node_fs53, import_node_path67, import_node_url8, MAX_INPUT_CHARS, MAX_OUTPUT_BYTES2, MAX_TIMEOUT_MS2, cachedPythonExecutable;
 var init_python_analysis = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/python-analysis.js"() {
+  "../craft-capability/capability/craft-codebase/dist/python-analysis.js"() {
+    "use strict";
     import_node_child_process11 = require("node:child_process");
     import_node_fs53 = require("node:fs");
     import_node_path67 = require("node:path");
@@ -63321,7 +63179,7 @@ var init_python_analysis = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/java-incremental.js
+// ../craft-capability/capability/craft-codebase/dist/java-incremental.js
 function javaFileUnitDigest(unit) {
   return stableDigest({
     path: unit.path,
@@ -63398,13 +63256,14 @@ function full2(paths, reason) {
 }
 var JAVA_ANALYZER_VERSION;
 var init_java_incremental = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/java-incremental.js"() {
+  "../craft-capability/capability/craft-codebase/dist/java-incremental.js"() {
+    "use strict";
     init_digest();
     JAVA_ANALYZER_VERSION = "craft-java-javac-v1";
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/java-analysis.js
+// ../craft-capability/capability/craft-codebase/dist/java-analysis.js
 function moduleAnalyzerCandidate(moduleUrl2, fileName) {
   if (!moduleUrl2)
     return [];
@@ -63580,7 +63439,8 @@ function analyzeJavaControlFlow(file, symbol, options = {}) {
 }
 var import_node_child_process12, import_node_crypto140, import_node_fs54, import_node_os5, import_node_path68, import_node_url9, MAX_INPUT_BYTES, MAX_OUTPUT_BYTES3, MAX_TIMEOUT_MS3;
 var init_java_analysis = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/java-analysis.js"() {
+  "../craft-capability/capability/craft-codebase/dist/java-analysis.js"() {
+    "use strict";
     import_node_child_process12 = require("node:child_process");
     import_node_crypto140 = require("node:crypto");
     import_node_fs54 = require("node:fs");
@@ -63594,7 +63454,7 @@ var init_java_analysis = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/project-graph-store.js
+// ../craft-capability/capability/craft-codebase/dist/project-graph-store.js
 function safeDirectory2(rootPath, workspaceId, paths) {
   if (!/^[A-Za-z0-9_-]{1,128}$/u.test(workspaceId))
     throw new Error("Invalid Codebase workspace id");
@@ -63611,7 +63471,8 @@ function safeDirectory2(rootPath, workspaceId, paths) {
 }
 var import_node_crypto141, import_node_fs55, import_node_path69, GRAPH_RECORD_ID, ProjectGraphStore;
 var init_project_graph_store = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/project-graph-store.js"() {
+  "../craft-capability/capability/craft-codebase/dist/project-graph-store.js"() {
+    "use strict";
     import_node_crypto141 = require("node:crypto");
     import_node_fs55 = require("node:fs");
     import_node_path69 = require("node:path");
@@ -63682,7 +63543,7 @@ var init_project_graph_store = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/codebase-index.js
+// ../craft-capability/capability/craft-codebase/dist/codebase-index.js
 function publicationGuard(value) {
   if (value === void 0)
     return void 0;
@@ -63925,7 +63786,8 @@ function contentAddressedShardIds(shardDigests) {
 }
 var import_node_crypto142, import_node_fs56, import_node_path70, ANALYZER, SOURCE_EXTENSIONS, MAX_RESULTS, MAX_GRAPH_NODES, MAX_GRAPH_EDGES2, MAX_IMPORT_GRAPH_BYTES, MAX_GRAPH_BYTES, MAX_SHARD_BYTES, MAX_ROUTE_BYTES, MAX_ROUTE_SHARD_BYTES, CURRENT_GRAPH_STORAGE, PROJECT_GRAPH_STORAGE, SEARCH_CONTEXT_DECLARATION_KINDS, SEARCH_CONTEXT_CONTAINER_KINDS, RELATION_COVERAGE_STATES, RELATION_DIAGNOSTIC_COUNTS, CodebaseIndexKernel;
 var init_codebase_index = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/codebase-index.js"() {
+  "../craft-capability/capability/craft-codebase/dist/codebase-index.js"() {
+    "use strict";
     init_dist();
     init_context_search();
     init_usage_signals();
@@ -65325,19 +65187,21 @@ var init_codebase_index = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/ownership.js
+// ../craft-capability/capability/craft-codebase/dist/ownership.js
 var CODEBASE_FAMILIES, CODEBASE_OWNS;
 var init_ownership4 = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/ownership.js"() {
+  "../craft-capability/capability/craft-codebase/dist/ownership.js"() {
+    "use strict";
     CODEBASE_FAMILIES = "craft_codebase_(?:activate|deactivate|status|index_build|analysis_import|symbol_find|symbol_explore|symbol_read|symbols_overview|callers_find|callers_query|relations_find|definition_find|control_flow_query|data_flow_query|diagnostics_find|impact_query|context_slice)\\b";
     CODEBASE_OWNS = new RegExp(`^${CODEBASE_FAMILIES}`);
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/capability.js
+// ../craft-capability/capability/craft-codebase/dist/capability.js
 var CODEBASE_KERNELS, codebaseCapability;
 var init_capability4 = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/capability.js"() {
+  "../craft-capability/capability/craft-codebase/dist/capability.js"() {
+    "use strict";
     init_dist();
     init_capability_protocol();
     init_codebase_index();
@@ -68406,7 +68270,7 @@ var init_service_foundation = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-templates.js
+// ../craft-capability/capability/craft-experience/dist/procedure-templates.js
 function experienceGraphTemplate(id24) {
   if (id24 !== "internet-product-engineering")
     throw new Error("Unknown Experience graph template");
@@ -68414,7 +68278,8 @@ function experienceGraphTemplate(id24) {
 }
 var INTERNET_PRODUCT_ENGINEERING;
 var init_procedure_templates = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-templates.js"() {
+  "../craft-capability/capability/craft-experience/dist/procedure-templates.js"() {
+    "use strict";
     INTERNET_PRODUCT_ENGINEERING = {
       "nodes": [
         {
@@ -68741,7 +68606,7 @@ var init_procedure_templates = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-configuration.js
+// ../craft-capability/capability/craft-experience/dist/procedure-configuration.js
 function validateExperienceConfiguration(args) {
   text3(args.title, "title");
   if (args.template_id !== void 0 && args.template_id !== null)
@@ -68776,7 +68641,8 @@ function validateExperienceConfiguration(args) {
 }
 var ProcedureConfiguration;
 var init_procedure_configuration = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/procedure-configuration.js"() {
+  "../craft-capability/capability/craft-experience/dist/procedure-configuration.js"() {
+    "use strict";
     init_digest();
     init_validation();
     init_scope_policy();
@@ -68870,7 +68736,7 @@ var init_procedure_configuration = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/graph-matching.js
+// ../craft-capability/capability/craft-experience/dist/graph-matching.js
 function matchGraphRoutes(definition2, query, inputKeys = []) {
   const wanted = retrievalTerms(text3(query, "query")), control = definition2.graph_control;
   const entries2 = control.entries, keys = new Set(inputKeys);
@@ -68883,16 +68749,18 @@ function matchGraphRoutes(definition2, query, inputKeys = []) {
   return { routes: routes.slice(0, 20), omitted_count: Math.max(0, routes.length - 20), lexical_hint: true, execution_authorized: false };
 }
 var init_graph_matching = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/graph-matching.js"() {
+  "../craft-capability/capability/craft-experience/dist/graph-matching.js"() {
+    "use strict";
     init_retrieval_terms();
     init_validation();
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/graph-assets.js
+// ../craft-capability/capability/craft-experience/dist/graph-assets.js
 var import_node_fs59, import_node_crypto158, import_node_path74, rows2, templateId, schema, ExperienceGraphAssets;
 var init_graph_assets = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/graph-assets.js"() {
+  "../craft-capability/capability/craft-experience/dist/graph-assets.js"() {
+    "use strict";
     init_graph_matching();
     init_procedure_release();
     import_node_fs59 = require("node:fs");
@@ -69834,7 +69702,7 @@ var init_cognitive_workbench = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+craft-notes@0.20.7/node_modules/@craft/craft-notes/dist/craft-note-lifecycle.js
+// ../craft-capability/capability/craft-notes/dist/craft-note-lifecycle.js
 function text36(value, name, max = 500) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must be a non-empty string`);
@@ -69894,7 +69762,8 @@ function assertExpectedVersion(value, record4) {
 }
 var import_node_crypto160, import_node_path75, NOTE_USAGE_THRESHOLD, NOTE_USAGE_WINDOW_DAYS, NOTE_INDEPENDENT_SESSION_THRESHOLD, SECRET24, DEVICE_ID, CraftNotesRegistry;
 var init_craft_note_lifecycle = __esm({
-  "node_modules/.pnpm/@craft+craft-notes@0.20.7/node_modules/@craft/craft-notes/dist/craft-note-lifecycle.js"() {
+  "../craft-capability/capability/craft-notes/dist/craft-note-lifecycle.js"() {
+    "use strict";
     import_node_crypto160 = require("node:crypto");
     import_node_path75 = require("node:path");
     init_store();
@@ -70070,7 +69939,7 @@ var init_craft_note_lifecycle = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+craft-notes@0.20.7/node_modules/@craft/craft-notes/dist/craft-notes-location.js
+// ../craft-capability/capability/craft-notes/dist/craft-notes-location.js
 function normalizeDeviceId(value) {
   if (value === void 0 || value === null || value === "")
     return "local";
@@ -70238,7 +70107,8 @@ function normalizeHostKind(value) {
 }
 var import_node_path76, import_node_crypto161, CRAFT_NOTES_LOCATION_USE_THRESHOLD, DEVICE_KINDS, DEVICE_ID2, CraftNotesLocationRegistry;
 var init_craft_notes_location = __esm({
-  "node_modules/.pnpm/@craft+craft-notes@0.20.7/node_modules/@craft/craft-notes/dist/craft-notes-location.js"() {
+  "../craft-capability/capability/craft-notes/dist/craft-notes-location.js"() {
+    "use strict";
     import_node_path76 = require("node:path");
     import_node_crypto161 = require("node:crypto");
     init_store();
@@ -70566,9 +70436,10 @@ var init_craft_notes_location = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+craft-notes@0.20.7/node_modules/@craft/craft-notes/dist/index.js
+// ../craft-capability/capability/craft-notes/dist/index.js
 var init_dist2 = __esm({
-  "node_modules/.pnpm/@craft+craft-notes@0.20.7/node_modules/@craft/craft-notes/dist/index.js"() {
+  "../craft-capability/capability/craft-notes/dist/index.js"() {
+    "use strict";
     init_craft_notes_location();
     init_craft_note_lifecycle();
   }
@@ -75421,10 +75292,11 @@ var init_cognitive_search = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/memory-capture.js
+// ../craft-capability/capability/craft-memory/dist/memory-capture.js
 var MemoryCapture;
 var init_memory_capture = __esm({
-  "node_modules/.pnpm/@craft+capability-memory@0.20.5/node_modules/@craft/capability-memory/dist/memory-capture.js"() {
+  "../craft-capability/capability/craft-memory/dist/memory-capture.js"() {
+    "use strict";
     init_digest();
     init_validation();
     init_paths();
@@ -77266,11 +77138,15 @@ function boundedState(directory4, name) {
 }
 function countStatus(store, kind4) {
   const counts = {};
-  for (const item of store.list(kind4, 10001, void 0, false)) {
-    const status2 = typeof item.status === "string" ? item.status : "unknown";
-    counts[status2] = (counts[status2] ?? 0) + 1;
+  try {
+    for (const item of store.list(kind4, 10001, void 0, false)) {
+      const status2 = typeof item.status === "string" ? item.status : "unknown";
+      counts[status2] = (counts[status2] ?? 0) + 1;
+    }
+    return { counts, status: "available" };
+  } catch {
+    return { counts: {}, status: "incomplete" };
   }
-  return counts;
 }
 function feedbackOutcomes(store) {
   const outcomes = {};
@@ -77292,6 +77168,7 @@ function latestInjectedTokens(store) {
 function contextReadinessDoctor(store, args = {}) {
   const projectRoot = typeof args.project_root === "string" && args.project_root.trim() ? args.project_root.trim() : null;
   const sessionId = typeof args.session_id === "string" && args.session_id.trim() ? args.session_id.trim() : null;
+  const correctionStatus = countStatus(store, "context_correction_task");
   let identity2 = null;
   let registryMigration = null;
   if (projectRoot !== null) {
@@ -77327,17 +77204,19 @@ function contextReadinessDoctor(store, args = {}) {
       session_adjudication: boundedState(store.paths.knowledgeDir, "session-adjudication-cursor.json"),
       classification_attempts: boundedState(store.paths.knowledgeDir, "classification-attempts.json")
     },
-    components: Object.fromEntries(COMPONENTS2.map((component2) => [component2, {
-      records: store.count(component2 === "experience" ? "experience_observation" : component2 === "memory" ? "memory_ledger" : "knowledge_claim"),
-      status_counts: countStatus(store, component2 === "experience" ? "experience_observation" : component2 === "memory" ? "memory_ledger" : "knowledge_claim")
-    }])),
+    components: Object.fromEntries(COMPONENTS2.map((component2) => {
+      const kind4 = component2 === "experience" ? "experience_observation" : component2 === "memory" ? "memory_ledger" : "knowledge_claim";
+      const status2 = countStatus(store, kind4);
+      return [component2, { records: store.count(kind4), status_counts: status2.counts, status_counts_status: status2.status }];
+    })),
     context: {
       receipts: store.count("context_resolution_receipt"),
       working_sets: store.count("context_working_set_receipt"),
       emissions: store.count("context_emission"),
       feedback: store.count("context_feedback"),
       feedback_outcomes: feedbackOutcomes(store),
-      corrections: countStatus(store, "context_correction_task"),
+      corrections: correctionStatus.counts,
+      correction_status_counts_status: correctionStatus.status,
       correction_states: CORRECTION_STATES,
       resume_snapshots: store.count("context_resume_snapshot"),
       latest_injected_tokens: latestInjectedTokens(store)
@@ -79265,7 +79144,7 @@ var init_knowledge_memory = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/knowledge-lineage-impact.js
+// ../craft-capability/capability/craft-knowledge/dist/knowledge-lineage-impact.js
 function hopFactor(confidence3) {
   if (confidence3 === "confirmed")
     return 1;
@@ -79302,7 +79181,8 @@ function knowledgeLineageImpact(store, args) {
 }
 var MAX_DEPTH, MAX_NODES, KnowledgeLineageImpactKernel;
 var init_knowledge_lineage_impact = __esm({
-  "node_modules/.pnpm/@craft+capability-knowledge@0.20.5/node_modules/@craft/capability-knowledge/dist/knowledge-lineage-impact.js"() {
+  "../craft-capability/capability/craft-knowledge/dist/knowledge-lineage-impact.js"() {
+    "use strict";
     init_knowledge_relation();
     init_validation3();
     MAX_DEPTH = 3;
@@ -79639,7 +79519,7 @@ var init_host_session = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/scenario-evaluation.js
+// ../craft-capability/capability/craft-experience/dist/scenario-evaluation.js
 function object10(value, name) {
   if (!value || typeof value !== "object" || Array.isArray(value))
     throw new Error(`${name} must be an object`);
@@ -79756,14 +79636,15 @@ function validateReadOnlyEvaluationSteps(value) {
 }
 var AUTOMATIC_SIGNOFF_POLICY;
 var init_scenario_evaluation = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/scenario-evaluation.js"() {
+  "../craft-capability/capability/craft-experience/dist/scenario-evaluation.js"() {
+    "use strict";
     init_digest();
     init_capability_protocol();
     AUTOMATIC_SIGNOFF_POLICY = "craft:auto-signoff:all-prior-gates-passed.v1";
   }
 });
 
-// node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/learning-evaluation.js
+// ../craft-capability/capability/craft-experience/dist/learning-evaluation.js
 function text43(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must not be empty`);
@@ -79792,7 +79673,8 @@ function currentForEvaluation(store, procedureId) {
 }
 var import_node_fs68, import_node_path87, STAGES4, ExperienceLearningEvaluation;
 var init_learning_evaluation = __esm({
-  "node_modules/.pnpm/@craft+capability-experience@0.20.9/node_modules/@craft/capability-experience/dist/learning-evaluation.js"() {
+  "../craft-capability/capability/craft-experience/dist/learning-evaluation.js"() {
+    "use strict";
     init_procedure_release();
     init_digest();
     import_node_fs68 = require("node:fs");
@@ -81149,11 +81031,22 @@ function component(value) {
 }
 function countByStatus(store, kind4) {
   const counts = {};
-  for (const item of store.list(kind4, 1e4)) {
-    const status2 = typeof item.status === "string" ? item.status : "unknown";
-    counts[status2] = (counts[status2] ?? 0) + 1;
+  try {
+    for (const item of store.list(kind4, 1e4)) {
+      const status2 = typeof item.status === "string" ? item.status : "unknown";
+      counts[status2] = (counts[status2] ?? 0) + 1;
+    }
+    return { counts, status: "available" };
+  } catch {
+    return { counts: {}, status: "incomplete" };
   }
-  return counts;
+}
+function safeActiveSourceCount(store) {
+  try {
+    return store.list("knowledge_source", 1e4, (item) => item.status === "active").length;
+  } catch {
+    return null;
+  }
 }
 function readDiagnosticState(directory4, name) {
   const parent = (0, import_node_fs71.lstatSync)(directory4);
@@ -81302,18 +81195,35 @@ var init_component_readiness = __esm({
         };
       }
       knowledge() {
-        const activeSources = this.store.list("knowledge_source", 1e4, (item) => item.status === "active").length;
-        const claims = countByStatus(this.store, "knowledge_claim");
+        const activeSources = safeActiveSourceCount(this.store);
+        const claimStatus = countByStatus(this.store, "knowledge_claim");
+        const claims = claimStatus.counts;
         const receipts = this.store.count("context_resolution_receipt");
         const evaluationCases = this.store.count("knowledge_evaluation_case");
-        const hasQualifiedClaim = this.store.list("knowledge_claim", 1e4, (item) => item.status === "reviewed", false).some((claim2) => knowledgeClaimPromotionProofVerified(this.store, claim2));
-        const state4 = activeSources === 0 ? "bootstrap_required" : (claims.reviewed ?? 0) === 0 ? "evidence_review_pending" : hasQualifiedClaim ? "ready" : "effect_evaluation_pending";
+        let qualificationStatus = "available";
+        let hasQualifiedClaim = false;
+        if (claimStatus.status === "available") {
+          try {
+            hasQualifiedClaim = this.store.list("knowledge_claim", 1e4, (item) => item.status === "reviewed", false).some((claim2) => knowledgeClaimPromotionProofVerified(this.store, claim2));
+          } catch {
+            qualificationStatus = "incomplete";
+          }
+        } else qualificationStatus = "incomplete";
+        const diagnosticsComplete = activeSources !== null && claimStatus.status === "available" && qualificationStatus === "available";
+        const state4 = !diagnosticsComplete ? "storage_diagnostics_incomplete" : activeSources === 0 ? "bootstrap_required" : (claims.reviewed ?? 0) === 0 ? "evidence_review_pending" : hasQualifiedClaim ? "ready" : "effect_evaluation_pending";
         return {
           component: "knowledge",
           state: state4,
-          counts: { active_sources: activeSources, claims, context_receipts: receipts, evaluation_cases: evaluationCases },
+          counts: {
+            active_sources: activeSources,
+            claims,
+            claim_status_counts_status: claimStatus.status,
+            qualification_status: qualificationStatus,
+            context_receipts: receipts,
+            evaluation_cases: evaluationCases
+          },
           task_effect_gate: "available",
-          next_action: state4 === "bootstrap_required" ? "install_or_register_a_scoped_source" : state4 === "evidence_review_pending" ? "search_or_draft_evidence_backed_claims_then_review_them" : state4 === "effect_evaluation_pending" ? "collect_independent_controlled_task_effect_evidence" : "resolve_a_bounded_context_receipt_for_the_current_scope",
+          next_action: state4 === "storage_diagnostics_incomplete" ? "repair_or_explicitly_migrate_unavailable_project_storage" : state4 === "bootstrap_required" ? "install_or_register_a_scoped_source" : state4 === "evidence_review_pending" ? "search_or_draft_evidence_backed_claims_then_review_them" : state4 === "effect_evaluation_pending" ? "collect_independent_controlled_task_effect_evidence" : "resolve_a_bounded_context_receipt_for_the_current_scope",
           model_effect_proven: false,
           usage: {
             kind: "readiness_only",
@@ -81323,14 +81233,16 @@ var init_component_readiness = __esm({
         };
       }
       memory() {
-        const activeSources = this.store.list("knowledge_source", 1e4, (item) => item.status === "active").length;
-        const ledger = countByStatus(this.store, "memory_ledger");
-        const candidates = countByStatus(this.store, "memory_candidate");
+        const activeSources = safeActiveSourceCount(this.store);
+        const ledgerStatus = countByStatus(this.store, "memory_ledger");
+        const candidateStatus = countByStatus(this.store, "memory_candidate");
+        const ledger = ledgerStatus.counts, candidates = candidateStatus.counts;
         const signals = this.store.count("memory_usage_signal");
         const feedback = this.store.list("context_feedback", 10001, (item) => Array.isArray(item.memory_refs) && item.memory_refs.length > 0);
         const feedbackCount = Math.min(feedback.length, 1e4);
         const verifiedHelpfulFeedback = feedback.slice(0, 1e4).filter((item) => item.outcome === "helpful" && item.evidence_verified === true).length;
-        const state4 = activeSources === 0 ? "bootstrap_required" : (ledger.active ?? 0) === 0 ? "candidate_or_approval_required" : "ready";
+        const diagnosticsComplete = activeSources !== null && ledgerStatus.status === "available" && candidateStatus.status === "available";
+        const state4 = !diagnosticsComplete ? "storage_diagnostics_incomplete" : activeSources === 0 ? "bootstrap_required" : (ledger.active ?? 0) === 0 ? "candidate_or_approval_required" : "ready";
         return {
           component: "memory",
           state: state4,
@@ -81338,13 +81250,15 @@ var init_component_readiness = __esm({
             active_sources: activeSources,
             ledger,
             candidates,
+            ledger_status_counts_status: ledgerStatus.status,
+            candidate_status_counts_status: candidateStatus.status,
             usage_signals: signals,
             memory_feedback_records: feedbackCount,
             verified_helpful_memory_feedback_records: verifiedHelpfulFeedback,
             memory_feedback_records_truncated: feedback.length > 1e4,
             context_receipts: this.store.count("context_resolution_receipt")
           },
-          next_action: state4 === "bootstrap_required" ? "install_or_register_a_scoped_source" : state4 === "candidate_or_approval_required" ? "propose_and_review_one_scoped_evidence_linked_memory" : "resolve_only_the_current_scope_and_record_outcome_linked_usage",
+          next_action: state4 === "storage_diagnostics_incomplete" ? "repair_or_explicitly_migrate_unavailable_project_storage" : state4 === "bootstrap_required" ? "install_or_register_a_scoped_source" : state4 === "candidate_or_approval_required" ? "propose_and_review_one_scoped_evidence_linked_memory" : "resolve_only_the_current_scope_and_record_outcome_linked_usage",
           model_effect_proven: false,
           usage: {
             kind: "readiness_only",
@@ -81355,16 +81269,28 @@ var init_component_readiness = __esm({
       }
       experience() {
         const observations = this.store.count("workflow_evolution_observation") + this.store.count("experience_observation");
-        const requests = countByStatus(this.store, "workflow_evolution_request");
-        const proposals = countByStatus(this.store, "workflow_evolution_proposal");
-        const procedures = countByStatus(this.store, "experience_procedure");
+        const requestStatus = countByStatus(this.store, "workflow_evolution_request");
+        const proposalStatus = countByStatus(this.store, "workflow_evolution_proposal");
+        const procedureStatus = countByStatus(this.store, "experience_procedure");
+        const requests = requestStatus.counts, proposals = proposalStatus.counts, procedures = procedureStatus.counts;
         const patterns = this.store.count("experience_pattern");
-        const state4 = observations < 2 ? "independent_observations_required" : (proposals.draft ?? 0) === 0 ? "draft_proposal_available" : "evaluation_required";
+        const diagnosticsComplete = requestStatus.status === "available" && proposalStatus.status === "available" && procedureStatus.status === "available";
+        const state4 = !diagnosticsComplete ? "storage_diagnostics_incomplete" : observations < 2 ? "independent_observations_required" : (proposals.draft ?? 0) === 0 ? "draft_proposal_available" : "evaluation_required";
         return {
           component: "experience",
           state: state4,
-          counts: { observations, patterns, requests, draft_proposals: proposals.draft ?? 0, procedures, shadow_experiments: this.store.count("experience_shadow_experiment") },
-          next_action: state4 === "independent_observations_required" ? "record_two_sanitized_evidence_backed_outcomes_for_one_scenario" : state4 === "draft_proposal_available" ? "propose_a_workflow_change_with_at_most_two_design_axes" : "evaluate_the_draft_in_shadow_then_use_signoff_and_canary_before_routing",
+          counts: {
+            observations,
+            patterns,
+            requests,
+            draft_proposals: proposals.draft ?? 0,
+            procedures,
+            request_status_counts_status: requestStatus.status,
+            proposal_status_counts_status: proposalStatus.status,
+            procedure_status_counts_status: procedureStatus.status,
+            shadow_experiments: this.store.count("experience_shadow_experiment")
+          },
+          next_action: state4 === "storage_diagnostics_incomplete" ? "repair_or_explicitly_migrate_unavailable_project_storage" : state4 === "independent_observations_required" ? "record_two_sanitized_evidence_backed_outcomes_for_one_scenario" : state4 === "draft_proposal_available" ? "propose_a_workflow_change_with_at_most_two_design_axes" : "evaluate_the_draft_in_shadow_then_use_signoff_and_canary_before_routing",
           model_effect_proven: false,
           usage: {
             kind: "readiness_only",
@@ -81460,7 +81386,7 @@ var init_quality_profile = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/repository-files.js
+// ../craft-capability/capability/craft-codebase/dist/repository-files.js
 function repositoryPolicySnapshot(root, runGit2 = git) {
   root = (0, import_node_fs72.realpathSync)(root);
   const configPath = (0, import_node_path89.join)(root, ".craft-codebase.json");
@@ -81703,7 +81629,8 @@ function repositoryFiles(root, _query = "", runGit2 = git) {
 }
 var import_node_child_process14, import_node_crypto176, import_node_fs72, import_node_path89, import_node_os7, LANGUAGE_EXTENSIONS, LANGUAGE_GROUPS, EXTENSIONS, GENERATED, REPOSITORY_SELECTION_LIMITS, MAX_FILES5, MAX_FILE_BYTES, MAX_TOTAL_BYTES2, GO_CONTEXT_FILES, MAX_CONTEXT_FILE_BYTES, MAX_CONTEXT_TOTAL_BYTES, git, fileVersion;
 var init_repository_files = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/repository-files.js"() {
+  "../craft-capability/capability/craft-codebase/dist/repository-files.js"() {
+    "use strict";
     import_node_child_process14 = require("node:child_process");
     import_node_crypto176 = require("node:crypto");
     import_node_fs72 = require("node:fs");
@@ -81800,7 +81727,7 @@ var init_codebase_failure = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/basic-analysis.js
+// ../craft-capability/capability/craft-codebase/dist/basic-analysis.js
 function basicAnalysis(store, workspaceId, files5) {
   const nodes = [];
   let analyzed = 0;
@@ -81846,13 +81773,14 @@ function basicAnalysis(store, workspaceId, files5) {
 }
 var ANALYZER_VERSION;
 var init_basic_analysis = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/basic-analysis.js"() {
+  "../craft-capability/capability/craft-codebase/dist/basic-analysis.js"() {
+    "use strict";
     init_digest();
     ANALYZER_VERSION = "3";
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/shell-analysis.js
+// ../craft-capability/capability/craft-codebase/dist/shell-analysis.js
 function nodeId3(path2, kind4, name, start) {
   return `shell_${stableDigest({ path: path2, kind: kind4, name, start }).slice(-24)}`;
 }
@@ -82035,7 +81963,8 @@ function analyzeShell(files5, limits2 = {}) {
 }
 var SHELL_ANALYZER, SHELL_ANALYZER_VERSION, SHELL_LANGUAGES, POWERSHELL_LANGUAGES, MAX_SYMBOLS_PER_FILE, MAX_CALLS_PER_FILE, IDENTIFIER4;
 var init_shell_analysis = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/shell-analysis.js"() {
+  "../craft-capability/capability/craft-codebase/dist/shell-analysis.js"() {
+    "use strict";
     init_digest();
     init_graph_budget();
     SHELL_ANALYZER = "shell-static";
@@ -82048,7 +81977,7 @@ var init_shell_analysis = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/typescript-incremental.js
+// ../craft-capability/capability/craft-codebase/dist/typescript-incremental.js
 function planTypeScriptIncremental(files5, cached2, analyzerVersion, previousPathSetDigest) {
   const current2 = new Map(files5.map((file) => [file.path, file]));
   const currentPathSetDigest = stableDigest([...current2.keys()].sort());
@@ -82118,14 +82047,15 @@ function full3(paths, reason) {
   return { mode: "full", affected_paths: [...paths].sort(), reused_paths: [], reason };
 }
 var init_typescript_incremental = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/typescript-incremental.js"() {
+  "../craft-capability/capability/craft-codebase/dist/typescript-incremental.js"() {
+    "use strict";
     init_typescript_runtime();
     init_digest();
     init_typescript_analysis();
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/multi-language-analysis.js
+// ../craft-capability/capability/craft-codebase/dist/multi-language-analysis.js
 function combineLanguageAnalyses(analyses, diagnostics = []) {
   const usable = analyses.filter((item) => Array.isArray(item.nodes) && Array.isArray(item.edges));
   if (!usable.length)
@@ -82211,7 +82141,8 @@ function combineLanguageAnalyses(analyses, diagnostics = []) {
 }
 var MAX_NODES2, MAX_EDGES2, MAX_CHARS;
 var init_multi_language_analysis = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/multi-language-analysis.js"() {
+  "../craft-capability/capability/craft-codebase/dist/multi-language-analysis.js"() {
+    "use strict";
     init_graph_budget();
     MAX_NODES2 = GRAPH_BUDGET.maxNodes;
     MAX_EDGES2 = GRAPH_BUDGET.maxEdges;
@@ -82219,17 +82150,18 @@ var init_multi_language_analysis = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/lsp-worker.js
+// ../craft-capability/capability/craft-codebase/dist/lsp-worker.js
 var CODEBASE_LSP_WORKER_FLAG, MAX_REQUEST_BYTES;
 var init_lsp_worker = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/lsp-worker.js"() {
+  "../craft-capability/capability/craft-codebase/dist/lsp-worker.js"() {
+    "use strict";
     init_lsp_stdio_client();
     CODEBASE_LSP_WORKER_FLAG = "--craft-codebase-lsp-worker";
     MAX_REQUEST_BYTES = 70 * 1024 * 1024;
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/lsp-snapshot-files.js
+// ../craft-capability/capability/craft-codebase/dist/lsp-snapshot-files.js
 function snapshotPath(root, path2) {
   const target2 = (0, import_node_path90.resolve)(root, path2);
   const pathFromRoot = (0, import_node_path90.relative)(root, target2);
@@ -82253,14 +82185,15 @@ function stageLspSnapshotFiles(root, files5, contextFiles = []) {
 }
 var import_node_crypto177, import_node_fs73, import_node_path90;
 var init_lsp_snapshot_files = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/lsp-snapshot-files.js"() {
+  "../craft-capability/capability/craft-codebase/dist/lsp-snapshot-files.js"() {
+    "use strict";
     import_node_crypto177 = require("node:crypto");
     import_node_fs73 = require("node:fs");
     import_node_path90 = require("node:path");
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/project-analysis-cache.js
+// ../craft-capability/capability/craft-codebase/dist/project-analysis-cache.js
 function ensureRegularDirectory(path2, message) {
   (0, import_node_fs74.mkdirSync)(path2, { recursive: true, mode: 448 });
   const stat10 = (0, import_node_fs74.lstatSync)(path2, { throwIfNoEntry: false });
@@ -82277,7 +82210,8 @@ function ensureDirectory2(path2, paths) {
 }
 var import_node_crypto178, import_node_fs74, import_node_path91, CACHE_KINDS, CACHE_ID, CACHE_FORMAT, ProjectAnalysisCache;
 var init_project_analysis_cache = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/project-analysis-cache.js"() {
+  "../craft-capability/capability/craft-codebase/dist/project-analysis-cache.js"() {
+    "use strict";
     import_node_crypto178 = require("node:crypto");
     import_node_fs74 = require("node:fs");
     import_node_path91 = require("node:path");
@@ -82430,7 +82364,7 @@ var init_project_analysis_cache = __esm({
   }
 });
 
-// node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/repository-onboarding.js
+// ../craft-capability/capability/craft-codebase/dist/repository-onboarding.js
 function hasSemanticAdapterFailure(prior) {
   const diagnostics = Array.isArray(prior?.summary?.diagnostics) ? prior.summary.diagnostics : [];
   return diagnostics.some((diagnostic) => Array.isArray(diagnostic.degraded_languages) && diagnostic.degraded_languages.some((language2) => language2.semantic_adapter_status === "unavailable"));
@@ -83110,7 +83044,8 @@ function lspCacheId(workspaceId, language2, path2) {
 }
 var import_node_child_process15, import_node_fs75, import_node_os8, import_node_path92, REPOSITORY_INDEX_POLICY, SEMANTIC_RETRY_DELAY_MS;
 var init_repository_onboarding = __esm({
-  "node_modules/.pnpm/@craft+capability-codebase@0.20.5_typescript@6.0.3/node_modules/@craft/capability-codebase/dist/repository-onboarding.js"() {
+  "../craft-capability/capability/craft-codebase/dist/repository-onboarding.js"() {
+    "use strict";
     init_digest();
     init_repository_files();
     init_basic_analysis();
@@ -90592,7 +90527,7 @@ var init_v4_mini = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js
 function isZ4Schema(s) {
   const schema2 = s;
   return !!schema2._zod;
@@ -90655,7 +90590,7 @@ function getLiteralValue(schema2) {
   return void 0;
 }
 var init_zod_compat = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-compat.js"() {
     init_v4_mini();
   }
 });
@@ -91891,10 +91826,10 @@ var init_v4 = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/types.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/types.js
 var LATEST_PROTOCOL_VERSION, SUPPORTED_PROTOCOL_VERSIONS, RELATED_TASK_META_KEY, JSONRPC_VERSION, AssertObjectSchema, ProgressTokenSchema, CursorSchema, TaskCreationParamsSchema, TaskMetadataSchema, RelatedTaskMetadataSchema, RequestMetaSchema, BaseRequestParamsSchema, TaskAugmentedRequestParamsSchema, isTaskAugmentedRequestParams, RequestSchema, NotificationsParamsSchema, NotificationSchema, ResultSchema, RequestIdSchema, JSONRPCRequestSchema, isJSONRPCRequest, JSONRPCNotificationSchema, isJSONRPCNotification, JSONRPCResultResponseSchema, isJSONRPCResultResponse, ErrorCode, JSONRPCErrorResponseSchema, isJSONRPCErrorResponse, JSONRPCMessageSchema, JSONRPCResponseSchema, EmptyResultSchema, CancelledNotificationParamsSchema, CancelledNotificationSchema, IconSchema, IconsSchema, BaseMetadataSchema, ImplementationSchema, FormElicitationCapabilitySchema, ElicitationCapabilitySchema, ClientTasksCapabilitySchema, ServerTasksCapabilitySchema, ClientCapabilitiesSchema, InitializeRequestParamsSchema, InitializeRequestSchema, ServerCapabilitiesSchema, InitializeResultSchema, InitializedNotificationSchema, isInitializedNotification, PingRequestSchema, ProgressSchema, ProgressNotificationParamsSchema, ProgressNotificationSchema, PaginatedRequestParamsSchema, PaginatedRequestSchema, PaginatedResultSchema, TaskStatusSchema, TaskSchema, CreateTaskResultSchema, TaskStatusNotificationParamsSchema, TaskStatusNotificationSchema, GetTaskRequestSchema, GetTaskResultSchema, GetTaskPayloadRequestSchema, GetTaskPayloadResultSchema, ListTasksRequestSchema, ListTasksResultSchema, CancelTaskRequestSchema, CancelTaskResultSchema, ResourceContentsSchema, TextResourceContentsSchema, Base64Schema, BlobResourceContentsSchema, RoleSchema, AnnotationsSchema, ResourceSchema, ResourceTemplateSchema, ListResourcesRequestSchema, ListResourcesResultSchema, ListResourceTemplatesRequestSchema, ListResourceTemplatesResultSchema, ResourceRequestParamsSchema, ReadResourceRequestParamsSchema, ReadResourceRequestSchema, ReadResourceResultSchema, ResourceListChangedNotificationSchema, SubscribeRequestParamsSchema, SubscribeRequestSchema, UnsubscribeRequestParamsSchema, UnsubscribeRequestSchema, ResourceUpdatedNotificationParamsSchema, ResourceUpdatedNotificationSchema, PromptArgumentSchema, PromptSchema, ListPromptsRequestSchema, ListPromptsResultSchema, GetPromptRequestParamsSchema, GetPromptRequestSchema, TextContentSchema, ImageContentSchema, AudioContentSchema, ToolUseContentSchema, EmbeddedResourceSchema, ResourceLinkSchema, ContentBlockSchema, PromptMessageSchema, GetPromptResultSchema, PromptListChangedNotificationSchema, ToolAnnotationsSchema, ToolExecutionSchema, ToolSchema, ListToolsRequestSchema, ListToolsResultSchema, CallToolResultSchema, CompatibilityCallToolResultSchema, CallToolRequestParamsSchema, CallToolRequestSchema, ToolListChangedNotificationSchema, ListChangedOptionsBaseSchema, LoggingLevelSchema, SetLevelRequestParamsSchema, SetLevelRequestSchema, LoggingMessageNotificationParamsSchema, LoggingMessageNotificationSchema, ModelHintSchema, ModelPreferencesSchema, ToolChoiceSchema, ToolResultContentSchema, SamplingContentSchema, SamplingMessageContentBlockSchema, SamplingMessageSchema, CreateMessageRequestParamsSchema, CreateMessageRequestSchema, CreateMessageResultSchema, CreateMessageResultWithToolsSchema, BooleanSchemaSchema, StringSchemaSchema, NumberSchemaSchema, UntitledSingleSelectEnumSchemaSchema, TitledSingleSelectEnumSchemaSchema, LegacyTitledEnumSchemaSchema, SingleSelectEnumSchemaSchema, UntitledMultiSelectEnumSchemaSchema, TitledMultiSelectEnumSchemaSchema, MultiSelectEnumSchemaSchema, EnumSchemaSchema, PrimitiveSchemaDefinitionSchema, ElicitRequestFormParamsSchema, ElicitRequestURLParamsSchema, ElicitRequestParamsSchema, ElicitRequestSchema, ElicitationCompleteNotificationParamsSchema, ElicitationCompleteNotificationSchema, ElicitResultSchema, ResourceTemplateReferenceSchema, PromptReferenceSchema, CompleteRequestParamsSchema, CompleteRequestSchema, CompleteResultSchema, RootSchema, ListRootsRequestSchema, ListRootsResultSchema, RootsListChangedNotificationSchema, ClientRequestSchema, ClientNotificationSchema, ClientResultSchema, ServerRequestSchema, ServerNotificationSchema, ServerResultSchema, McpError, UrlElicitationRequiredError;
 var init_types = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/types.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/types.js"() {
     init_v4();
     LATEST_PROTOCOL_VERSION = "2025-11-25";
     SUPPORTED_PROTOCOL_VERSIONS = [LATEST_PROTOCOL_VERSION, "2025-06-18", "2025-03-26", "2024-11-05", "2024-10-07"];
@@ -93416,12 +93351,12 @@ var init_types = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js
 function isTerminal(status2) {
   return status2 === "completed" || status2 === "failed" || status2 === "cancelled";
 }
 var init_interfaces = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/interfaces.js"() {
   }
 });
 
@@ -93773,7 +93708,7 @@ var init_esm = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-json-schema-compat.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-json-schema-compat.js
 function getMethodLiteral(schema2) {
   const shape = getObjectShape(schema2);
   const methodSchema = shape?.method;
@@ -93794,13 +93729,13 @@ function parseWithCompat(schema2, data) {
   return result2.data;
 }
 var init_zod_json_schema_compat = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-json-schema-compat.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/server/zod-json-schema-compat.js"() {
     init_zod_compat();
     init_esm();
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js
 function isPlainObject2(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
@@ -93822,7 +93757,7 @@ function mergeCapabilities(base, additional) {
 }
 var DEFAULT_REQUEST_TIMEOUT_MSEC, Protocol;
 var init_protocol = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/protocol.js"() {
     init_zod_compat();
     init_types();
     init_interfaces();
@@ -102008,7 +101943,7 @@ var require_dist2 = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/validation/ajv-provider.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/validation/ajv-provider.js
 function createDefaultAjvInstance() {
   const ajv = new import_ajv.default({
     strict: false,
@@ -102022,7 +101957,7 @@ function createDefaultAjvInstance() {
 }
 var import_ajv, import_ajv_formats, AjvJsonSchemaValidator;
 var init_ajv_provider = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/validation/ajv-provider.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/validation/ajv-provider.js"() {
     import_ajv = __toESM(require_ajv(), 1);
     import_ajv_formats = __toESM(require_dist2(), 1);
     AjvJsonSchemaValidator = class {
@@ -102081,10 +102016,10 @@ var init_ajv_provider = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/client.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/client.js
 var ExperimentalClientTasks;
 var init_client = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/client.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/client.js"() {
     init_types();
     ExperimentalClientTasks = class {
       constructor(_client) {
@@ -102241,7 +102176,7 @@ var init_client = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/helpers.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/helpers.js
 function assertToolsCallTaskCapability(requests, method, entityName) {
   if (!requests) {
     throw new Error(`${entityName} does not support task creation (required for ${method})`);
@@ -102276,11 +102211,11 @@ function assertClientRequestTaskCapability(requests, method, entityName) {
   }
 }
 var init_helpers = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/helpers.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/experimental/tasks/helpers.js"() {
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js
 var client_exports = {};
 __export(client_exports, {
   Client: () => Client,
@@ -102329,7 +102264,7 @@ function getSupportedElicitationModes(capabilities) {
 }
 var Client;
 var init_client2 = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/client/index.js"() {
     init_protocol();
     init_types();
     init_ajv_provider();
@@ -103304,7 +103239,7 @@ var require_cross_spawn = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/stdio.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/stdio.js
 function deserializeMessage(line2) {
   return JSONRPCMessageSchema.parse(JSON.parse(line2));
 }
@@ -103313,7 +103248,7 @@ function serializeMessage(message) {
 }
 var STDIO_DEFAULT_MAX_BUFFER_SIZE, ReadBuffer;
 var init_stdio = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/stdio.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/stdio.js"() {
     init_types();
     STDIO_DEFAULT_MAX_BUFFER_SIZE = 10 * 1024 * 1024;
     ReadBuffer = class {
@@ -103347,7 +103282,7 @@ var init_stdio = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/client/stdio.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/client/stdio.js
 var stdio_exports = {};
 __export(stdio_exports, {
   DEFAULT_INHERITED_ENV_VARS: () => DEFAULT_INHERITED_ENV_VARS,
@@ -103370,7 +103305,7 @@ function getDefaultEnvironment() {
 }
 var import_cross_spawn, import_node_process2, import_node_stream2, DEFAULT_INHERITED_ENV_VARS, StdioClientTransport;
 var init_stdio2 = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/client/stdio.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/client/stdio.js"() {
     import_cross_spawn = __toESM(require_cross_spawn(), 1);
     import_node_process2 = __toESM(require("node:process"), 1);
     import_node_stream2 = require("node:stream");
@@ -103637,7 +103572,7 @@ var require_content_type = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/mediaType.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/mediaType.js
 function mediaTypeEssence(header) {
   if (!header) {
     return void 0;
@@ -103654,12 +103589,12 @@ function mediaTypeEssence(header) {
 }
 var import_content_type;
 var init_mediaType = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/mediaType.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/mediaType.js"() {
     import_content_type = __toESM(require_content_type(), 1);
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/transport.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/transport.js
 function normalizeHeaders(headers) {
   if (!headers)
     return {};
@@ -103746,7 +103681,7 @@ function unfollowedRedirect(response, requestUrl) {
 }
 var MAX_REDIRECTS, REDIRECT_STATUSES, followingFetches;
 var init_transport = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/transport.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/transport.js"() {
     MAX_REDIRECTS = 5;
     REDIRECT_STATUSES = [301, 302, 303, 307, 308];
     followingFetches = /* @__PURE__ */ new WeakSet();
@@ -103796,10 +103731,10 @@ var init_index_node = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth.js
 var SafeUrlSchema, OAuthProtectedResourceMetadataSchema, OAuthMetadataSchema, OpenIdProviderMetadataSchema, OpenIdProviderDiscoveryMetadataSchema, OAuthTokensSchema, OAuthErrorResponseSchema, OptionalSafeUrlSchema, OAuthClientMetadataSchema, OAuthClientInformationSchema, OAuthClientInformationFullSchema, OAuthClientRegistrationErrorSchema, OAuthTokenRevocationRequestSchema;
 var init_auth = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth.js"() {
     init_v4();
     SafeUrlSchema = url2().superRefine((val, ctx) => {
       if (!URL.canParse(val)) {
@@ -103956,7 +103891,7 @@ var init_auth = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth-utils.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth-utils.js
 function resourceUrlFromServerUrl(url3) {
   const resourceURL = typeof url3 === "string" ? new URL(url3) : new URL(url3.href);
   resourceURL.hash = "";
@@ -103976,14 +103911,14 @@ function checkResourceAllowed({ requestedResource, configuredResource }) {
   return requestedPath.startsWith(configuredPath);
 }
 var init_auth_utils = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth-utils.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/shared/auth-utils.js"() {
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/server/auth/errors.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/server/auth/errors.js
 var OAuthError, InvalidRequestError, InvalidClientError, InvalidGrantError, UnauthorizedClientError, UnsupportedGrantTypeError, InvalidScopeError, AccessDeniedError, ServerError, TemporarilyUnavailableError, UnsupportedResponseTypeError, UnsupportedTokenTypeError, InvalidTokenError, MethodNotAllowedError, TooManyRequestsError, InvalidClientMetadataError, InsufficientScopeError, InvalidTargetError, OAUTH_ERRORS;
 var init_errors3 = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/server/auth/errors.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/server/auth/errors.js"() {
     OAuthError = class extends Error {
       constructor(message, errorUri) {
         super(message);
@@ -104080,7 +104015,7 @@ var init_errors3 = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/client/auth.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/client/auth.js
 function isClientAuthMethod(method) {
   return ["client_secret_basic", "client_secret_post", "none"].includes(method);
 }
@@ -104664,7 +104599,7 @@ async function registerClient(authorizationServerUrl, { metadata: metadata2, cli
 }
 var UnauthorizedError, AUTHORIZATION_CODE_RESPONSE_TYPE, AUTHORIZATION_CODE_CHALLENGE_METHOD, TokenResponseSchema, RegistrationResponseSchema;
 var init_auth2 = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/client/auth.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/client/auth.js"() {
     init_index_node();
     init_types();
     init_auth();
@@ -104896,7 +104831,7 @@ var init_stream = __esm({
   }
 });
 
-// node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/client/streamableHttp.js
+// node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/client/streamableHttp.js
 var streamableHttp_exports = {};
 __export(streamableHttp_exports, {
   StreamableHTTPClientTransport: () => StreamableHTTPClientTransport,
@@ -104904,7 +104839,7 @@ __export(streamableHttp_exports, {
 });
 var DEFAULT_STREAMABLE_HTTP_RECONNECTION_OPTIONS, StreamableHTTPError, StreamableHTTPClientTransport;
 var init_streamableHttp = __esm({
-  "node_modules/.pnpm/@modelcontextprotocol+sdk@1.32.2_supports-color@7.1.0_zod@4.6.7/node_modules/@modelcontextprotocol/sdk/dist/esm/client/streamableHttp.js"() {
+  "node_modules/.pnpm/@modelcontextprotocol+sdk@1_90517c734e55065f6d9bf2278c77f74e/node_modules/@modelcontextprotocol/sdk/dist/esm/client/streamableHttp.js"() {
     init_mediaType();
     init_transport();
     init_types();
@@ -106022,7 +105957,7 @@ var init_dsh_plugin_host_runtime = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/command-process.js
+// ../craft-eval/dist/src/command-process.js
 function stopManagedCommand(pid) {
   if (pid === void 0)
     return;
@@ -106106,7 +106041,8 @@ function evaluationNodeBinary() {
 }
 var import_node_child_process19, import_node_fs79, import_node_path100, commands;
 var init_command_process = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/command-process.js"() {
+  "../craft-eval/dist/src/command-process.js"() {
+    "use strict";
     import_node_child_process19 = require("node:child_process");
     import_node_fs79 = require("node:fs");
     import_node_path100 = require("node:path");
@@ -106114,7 +106050,7 @@ var init_command_process = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/bounded-command.js
+// ../craft-eval/dist/src/bounded-command.js
 async function runBoundedCommand(command3, args, options) {
   const control = Object.freeze({ ...options });
   control.signal?.throwIfAborted();
@@ -106161,12 +106097,13 @@ async function runBoundedCommand(command3, args, options) {
   });
 }
 var init_bounded_command = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/bounded-command.js"() {
+  "../craft-eval/dist/src/bounded-command.js"() {
+    "use strict";
     init_command_process();
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/calibration.js
+// ../craft-eval/dist/src/calibration.js
 function validateMinimum(value, name) {
   if (value === void 0)
     return void 0;
@@ -106323,14 +106260,15 @@ async function calibrateJudge(manifestPath, options = {}) {
 }
 var import_promises27, import_node_path101;
 var init_calibration = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/calibration.js"() {
+  "../craft-eval/dist/src/calibration.js"() {
+    "use strict";
     import_promises27 = require("node:fs/promises");
     import_node_path101 = require("node:path");
     init_bounded_command();
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/http-mock.js
+// ../craft-eval/dist/src/http-mock.js
 function readBody(request2) {
   return new Promise((done) => {
     const chunks = [];
@@ -106394,12 +106332,13 @@ async function startHttpMocks(specs) {
 }
 var import_node_http2;
 var init_http_mock = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/http-mock.js"() {
+  "../craft-eval/dist/src/http-mock.js"() {
+    "use strict";
     import_node_http2 = require("node:http");
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/loopback.js
+// ../craft-eval/dist/src/loopback.js
 function probeLoopback(serverFactory = import_node_net3.createServer) {
   return new Promise((resolve74) => {
     const server = serverFactory();
@@ -106411,12 +106350,13 @@ function probeLoopback(serverFactory = import_node_net3.createServer) {
 }
 var import_node_net3;
 var init_loopback = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/loopback.js"() {
+  "../craft-eval/dist/src/loopback.js"() {
+    "use strict";
     import_node_net3 = require("node:net");
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/task-context.js
+// ../craft-eval/dist/src/task-context.js
 function validateTaskContext(value) {
   if (!value || typeof value !== "object" || Array.isArray(value))
     throw new Error("subject.context must be an object");
@@ -106444,13 +106384,14 @@ ${task}`;
 }
 var import_node_crypto183, sha2565;
 var init_task_context = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/task-context.js"() {
+  "../craft-eval/dist/src/task-context.js"() {
+    "use strict";
     import_node_crypto183 = require("node:crypto");
     sha2565 = (text47) => (0, import_node_crypto183.createHash)("sha256").update(text47, "utf8").digest("hex");
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/contract.js
+// ../craft-eval/dist/src/contract.js
 function object15(value, name) {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     throw new Error(`${name} must be an object`);
@@ -106733,7 +106674,8 @@ function validateSuiteMetadata(value) {
 }
 var ID, DATE, HOSTS3, DIFFICULTIES, RISKS3, METRIC_KINDS, DIRECTIONS;
 var init_contract = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/contract.js"() {
+  "../craft-eval/dist/src/contract.js"() {
+    "use strict";
     ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
     DATE = /^\d{4}-\d{2}-\d{2}$/;
     HOSTS3 = /* @__PURE__ */ new Set(["codex", "claude", "local"]);
@@ -106744,7 +106686,7 @@ var init_contract = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/statistics.js
+// ../craft-eval/dist/src/statistics.js
 function signProbability(wins, losses) {
   const total = wins + losses;
   if (total === 0) {
@@ -106897,11 +106839,12 @@ function pairedContinuousEffect(pairs, seed = 1) {
   };
 }
 var init_statistics = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/statistics.js"() {
+  "../craft-eval/dist/src/statistics.js"() {
+    "use strict";
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/suite-diff.js
+// ../craft-eval/dist/src/suite-diff.js
 function declaredVersion(value) {
   return typeof value === "string" && value.trim() !== "" ? value : null;
 }
@@ -106938,13 +106881,14 @@ function suiteLineage(suites) {
 }
 var LINEAGE_SCHEMA;
 var init_suite_diff = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/suite-diff.js"() {
+  "../craft-eval/dist/src/suite-diff.js"() {
+    "use strict";
     init_evaluation2();
     LINEAGE_SCHEMA = "craft-eval.suite-lineage.v1";
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/audit.js
+// ../craft-eval/dist/src/audit.js
 var audit_exports = {};
 __export(audit_exports, {
   auditSuiteFiles: () => auditSuiteFiles,
@@ -107400,7 +107344,8 @@ async function coverageSuiteFiles(paths) {
 }
 var import_node_crypto184, import_promises28, MIN_NEAR_DUPLICATE_LENGTH;
 var init_audit = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/audit.js"() {
+  "../craft-eval/dist/src/audit.js"() {
+    "use strict";
     import_node_crypto184 = require("node:crypto");
     import_promises28 = require("node:fs/promises");
     init_evaluation2();
@@ -107409,7 +107354,7 @@ var init_audit = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/evaluation.js
+// ../craft-eval/dist/src/evaluation.js
 function jsonBytes(value) {
   return Buffer.from(JSON.stringify(sortDeep(value)), "utf8");
 }
@@ -110118,7 +110063,8 @@ async function compareRuns(baselinePath, candidatePath, expected) {
 }
 var import_node_async_hooks3, import_node_child_process20, import_node_crypto185, import_node_fs80, import_promises29, import_node_fs81, import_node_os12, import_node_path102, import_node_url12, SCHEMA4, ID2, ENV_KEY, RUNTIME_KEYS, MAX_TRACE_BYTES, MAX_JSON_BYTES, DEFAULT_OUTPUT_BYTES, SUPPORTED_SUBJECT_KINDS, IGNORED, ENV_KEEP, symlinkProbe, loopbackProbe, executionControl;
 var init_evaluation2 = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/evaluation.js"() {
+  "../craft-eval/dist/src/evaluation.js"() {
+    "use strict";
     import_node_async_hooks3 = require("node:async_hooks");
     init_command_process();
     init_calibration();
@@ -110170,7 +110116,7 @@ var init_evaluation2 = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/context-audit.js
+// ../craft-eval/dist/src/context-audit.js
 function object16(value, name) {
   if (value === null || typeof value !== "object" || Array.isArray(value))
     throw new Error(`${name} must be an object`);
@@ -110451,7 +110397,8 @@ function auditContextPack(packValue, manifestValue) {
 }
 var import_node_crypto186, MEMBERS, BODY_FIELDS, MAX_INPUT_BYTES2;
 var init_context_audit = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/context-audit.js"() {
+  "../craft-eval/dist/src/context-audit.js"() {
+    "use strict";
     import_node_crypto186 = require("node:crypto");
     MEMBERS = /* @__PURE__ */ new Set(["knowledge", "memory", "experience", "codebase", "history", "state", "host"]);
     BODY_FIELDS = ["content", "content_excerpt", "text", "body", "source", "source_text", "code", "snippet"];
@@ -110459,7 +110406,7 @@ var init_context_audit = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/attribution.js
+// ../craft-eval/dist/src/attribution.js
 function failedCheck(results) {
   return results.find((item) => item.passed === false) ?? null;
 }
@@ -110664,11 +110611,12 @@ function attributeRun(report) {
   };
 }
 var init_attribution = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/attribution.js"() {
+  "../craft-eval/dist/src/attribution.js"() {
+    "use strict";
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/experiment.js
+// ../craft-eval/dist/src/experiment.js
 function stringList6(value, name) {
   if (!Array.isArray(value) || value.length === 0 || value.length > 100) {
     throw new Error(`${name} must be a non-empty array of at most 100 paths`);
@@ -111056,7 +111004,8 @@ function slotKey(job) {
 }
 var import_node_crypto187, import_promises30, import_node_path103;
 var init_experiment = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/experiment.js"() {
+  "../craft-eval/dist/src/experiment.js"() {
+    "use strict";
     import_node_crypto187 = require("node:crypto");
     import_promises30 = require("node:fs/promises");
     import_node_path103 = require("node:path");
@@ -111064,7 +111013,7 @@ var init_experiment = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/scenario.js
+// ../craft-eval/dist/src/scenario.js
 function identifier23(value, name) {
   if (typeof value !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value)) {
     throw new Error(`${name} must be a safe identifier`);
@@ -111333,14 +111282,15 @@ async function runScenario(scenario, options) {
 }
 var import_promises31, import_node_path104;
 var init_scenario = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/scenario.js"() {
+  "../craft-eval/dist/src/scenario.js"() {
+    "use strict";
     import_promises31 = require("node:fs/promises");
     import_node_path104 = require("node:path");
     init_evaluation2();
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/report-html.js
+// ../craft-eval/dist/src/report-html.js
 function table(headers, rows4) {
   return `<table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;font-size:13px">
   <tr>${headers.map((header) => `<th>${esc2(header)}</th>`).join("")}</tr>
@@ -111443,7 +111393,8 @@ async function writeHtmlReport(runDir, outputPath, extras = {}) {
 }
 var import_promises32, import_node_path105, NOT_MEASURED;
 var init_report_html = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/report-html.js"() {
+  "../craft-eval/dist/src/report-html.js"() {
+    "use strict";
     import_promises32 = require("node:fs/promises");
     import_node_path105 = require("node:path");
     init_evaluation2();
@@ -111452,7 +111403,7 @@ var init_report_html = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/mutation.js
+// ../craft-eval/dist/src/mutation.js
 async function loadManifest(path2) {
   const raw = JSON.parse(await (0, import_promises33.readFile)(path2, "utf8"));
   if (raw === null || typeof raw !== "object" || !Array.isArray(raw.mutations)) {
@@ -111542,7 +111493,8 @@ async function runMutations(manifestPath, suitePath, runtimePath, workspace, out
 }
 var import_promises33, import_node_fs82, import_node_os13, import_node_path106;
 var init_mutation = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/mutation.js"() {
+  "../craft-eval/dist/src/mutation.js"() {
+    "use strict";
     import_promises33 = require("node:fs/promises");
     import_node_fs82 = require("node:fs");
     import_node_os13 = require("node:os");
@@ -111551,7 +111503,7 @@ var init_mutation = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/index.js
+// ../craft-eval/dist/src/index.js
 var src_exports = {};
 __export(src_exports, {
   SCHEMA: () => SCHEMA4,
@@ -111585,7 +111537,8 @@ __export(src_exports, {
   writeScenarioReport: () => writeScenarioReport
 });
 var init_src = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/dist/src/index.js"() {
+  "../craft-eval/dist/src/index.js"() {
+    "use strict";
     init_evaluation2();
     init_audit();
     init_task_context();
@@ -111678,10 +111631,10 @@ var init_evaluation_process = __esm({
   }
 });
 
-// node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/package.json
+// ../craft-eval/package.json
 var package_default;
 var init_package = __esm({
-  "node_modules/.pnpm/craft-eval@0.7.3/node_modules/craft-eval/package.json"() {
+  "../craft-eval/package.json"() {
     package_default = {
       name: "craft-eval",
       version: "0.7.3",
@@ -124325,6 +124278,30 @@ function automaticMemoryFact(prompt) {
 function sanitizedExperienceTaskGoal(value) {
   return sanitizeCodexTaskGoal2(value);
 }
+function extractDurableStatements(prompt) {
+  const results = [];
+  const source = prompt.trim();
+  if (!source || source.length > 1e3 || SECRET28.test(source) || source.includes("{{") || source.includes("}}")) return results;
+  const sentences = source.split(/(?<=[。！!？?。]\s*)|(?<=[.!?]\s+)/u).map((item) => item.trim()).filter(Boolean);
+  for (const sentence of sentences) {
+    const pref = /^(?:我偏好|我更喜欢|我长期使用|我习惯|I prefer|I usually use|my default is)\s*[:：,，]?\s*(.+)$/iu.exec(sentence);
+    if (pref?.[1] && pref[1].trim().length > 2) {
+      results.push({ kind: "preference", statement: sentence });
+      continue;
+    }
+    const rule = /^(?:(?:本项目|这个项目|该项目)(?:的)?(?:约定|规范|默认规则|标准操作)(?:是)?\s*[:：,，]?\s*|(?:我们约定|项目要求|编码规范是|必须|始终|always|must|never|do not|don't)\s*[:：,，]?\s*|(?:以后|今后)(?:在本项目中)?(?:请)?(?:默认)?(?:使用|采用|遵循|保持|优先|避免|不要|总是)\s*[:：,，]?\s*)(.+)$/iu.exec(sentence);
+    if (rule?.[1] && rule[1].trim().length > 2) {
+      results.push({ kind: "rule", statement: sentence });
+      continue;
+    }
+    const fact = /^(?:(?:本项目|这个项目|该项目)(?:目前)?(?:默认)?(?:使用|采用|基于|运行在|部署在)\s*[:：,，]?\s*|(?:the project|this project|we use|it uses|default)\s*[:：,，]?\s*)(.+)$/iu.exec(sentence);
+    if (fact?.[1] && fact[1].trim().length > 2) {
+      results.push({ kind: "fact", statement: sentence });
+      continue;
+    }
+  }
+  return results;
+}
 function experienceTaskGoalArgs(service, input2, scope4) {
   const root = text46(input2.cwd), sessionId = text46(input2.session_id), turnId = text46(input2.turn_id);
   if (!root || !sessionId || !turnId || !scope4) return null;
@@ -124393,6 +124370,7 @@ var init_codex_hook_bridge = __esm({
     init_project_experience_directory2();
     init_experience_task_goals();
     init_codex_task_prose2();
+    init_validation3();
     init_version();
     init_codex_hook_signal_sanitizer();
     init_memory_archive_worker();
@@ -124758,6 +124736,77 @@ var init_codex_hook_bridge = __esm({
           return turnId ? { ...input2, turn_id: turnId } : input2;
         });
       }
+      /**
+       * Write side of conversation self-evolution: turn durable user statements into
+       * governed ledger records. Every write goes through the capability's own
+       * validation and stays best-effort so a malformed statement can never block
+       * the user's prompt. Facts/preferences become scoped Memory candidates; rules
+       * additionally become reviewable Knowledge claims.
+       */
+      accumulateDurableStatements(prompt, input2, scope4, members4) {
+        const autoStatements = extractDurableStatements(prompt);
+        if (!autoStatements.length) return { written: false, count: 0 };
+        const sessionId = text46(input2.session_id);
+        const sessionHost = hookHost(input2);
+        const explicit = explicitMemoryStatement(prompt);
+        let written = false;
+        let count3 = 0;
+        const shouldWriteMemory = members4.includes("memory");
+        const shouldWriteKnowledge = members4.includes("knowledge") || members4.includes("context") || members4.includes("memory");
+        if (shouldWriteMemory && sessionId) {
+          try {
+            this.service.store.bindSessionStorageHost(sessionId, sessionHost);
+            for (const item of autoStatements) {
+              if (explicit && item.statement === explicit) continue;
+              const legacyKind = item.kind === "preference" ? "preference" : item.kind === "rule" ? "procedural" : "working";
+              validateConcept(mapLegacyKind("memory", legacyKind), item.statement);
+              const captured = this.service.memoryCaptureObservedFact({
+                content: item.statement,
+                kind: legacyKind,
+                session_id: sessionId,
+                session_host: sessionHost,
+                scope_kind: "session",
+                scope_id: sessionId,
+                project_scope_id: scope4.id,
+                project_root: input2.cwd,
+                sensitivity: "internal",
+                ...item.kind === "rule" ? { tags: ["auto_extracted_rule"] } : {}
+              });
+              written = written || captured.auto_committed === true;
+              count3 += 1;
+            }
+          } catch (error2) {
+            this.service.store.appendEvent("codex-hook", "codex_hook.failed", { member: "memory", event: "UserPromptSubmit", error_type: error2 instanceof Error ? error2.name : "unknown" });
+          }
+        }
+        if (shouldWriteKnowledge) {
+          try {
+            for (const item of autoStatements.filter((entry2) => entry2.kind === "rule")) {
+              const evidenceId = `codex_hook_rule_${stableDigest({ statement: item.statement, session_id: sessionId ?? "" }).slice(-24)}`;
+              this.service.evidenceRecord({
+                evidence_id: evidenceId,
+                source_type: "codex-hook",
+                claim: "user-stated-convention",
+                confidence: "unverified",
+                locator: sessionId ?? "codex-hook"
+              });
+              this.service.knowledgeClaimSave({
+                kind: "rule",
+                content: item.statement,
+                scope: scope4.id,
+                project_root: input2.cwd,
+                evidence_ids: [evidenceId],
+                tags: ["auto_extracted_rule"],
+                proposed_by: sessionId ?? "codex-hook"
+              });
+              count3 += 1;
+            }
+          } catch (error2) {
+            this.service.store.appendEvent("codex-hook", "codex_hook.failed", { member: "knowledge", event: "UserPromptSubmit", error_type: error2 instanceof Error ? error2.name : "unknown" });
+          }
+        }
+        return { written, count: count3 };
+      }
       async prompt(member2, input2, scope4) {
         const prompt = text46(input2.prompt) ?? text46(input2.user_prompt);
         if (!scope4 || !prompt) return {};
@@ -124836,9 +124885,11 @@ var init_codex_hook_bridge = __esm({
         }
         let memoryWritten = false;
         let captureSummary = null;
+        const autoAccumulation = this.accumulateDurableStatements(prompt, input2, scope4, members4);
+        memoryWritten = memoryWritten || autoAccumulation.written;
         if (members4.includes("memory")) {
           const explicitStatement = explicitMemoryStatement(prompt);
-          const statement = explicitStatement ?? automaticMemoryFact(prompt);
+          const statement = explicitStatement;
           const sessionId2 = text46(input2.session_id);
           if (statement && sessionId2) {
             try {
@@ -125141,6 +125192,7 @@ __export(codex_hook_bridge_exports, {
   automaticMemoryFact: () => automaticMemoryFact,
   codexProjectScope: () => codexProjectScope,
   explicitMemoryStatement: () => explicitMemoryStatement,
+  extractDurableStatements: () => extractDurableStatements,
   sanitizedExperienceTaskGoal: () => sanitizedExperienceTaskGoal
 });
 var init_codex_hook_bridge2 = __esm({
@@ -125254,6 +125306,18 @@ function beginHookRuntimeDiagnostic(args) {
       ...typeof timing.retryable === "boolean" ? { retryable: timing.retryable } : {}
     });
   } };
+}
+
+// core/interfaces/codex-hook-output.ts
+function formatCodexHookOutput(event, output) {
+  if (event !== "UserPromptSubmit" || typeof output.additionalContext !== "string") return output;
+  const { additionalContext, ...rest } = output;
+  const priorSpecific = rest.hookSpecificOutput;
+  const specific = priorSpecific && typeof priorSpecific === "object" && !Array.isArray(priorSpecific) ? priorSpecific : {};
+  return {
+    ...rest,
+    hookSpecificOutput: { ...specific, hookEventName: "UserPromptSubmit", additionalContext }
+  };
 }
 
 // bin/craft-codex-hook.ts
@@ -125370,7 +125434,7 @@ async function main() {
       handlerMs = performance.now() - handlerStarted;
     }
     const outputStarted = performance.now();
-    process.stdout.write(`${JSON.stringify(output)}
+    process.stdout.write(`${JSON.stringify(formatCodexHookOutput(event, output))}
 `);
     outputWriteMs = performance.now() - outputStarted;
   } catch (error2) {

@@ -5,7 +5,7 @@ import { homedir as homedir2 } from "node:os";
 import { fileURLToPath } from "node:url";
 import { resolve as resolve3, join as join4 } from "node:path";
 
-// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/paths.js
+// ../craft-common/packages/craft-common-store-local/dist/paths.js
 import { closeSync, existsSync, fsyncSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
@@ -149,10 +149,10 @@ function beginHookRuntimeDiagnostic(args) {
   } };
 }
 
-// node_modules/.pnpm/@craft+capability-datasec@0.1.7/node_modules/@craft/capability-datasec/dist/hook.js
+// ../craft-capability/capability/craft-datasec/dist/hook.js
 import { extname } from "node:path";
 
-// node_modules/.pnpm/@craft+capability-datasec@0.1.7/node_modules/@craft/capability-datasec/dist/rules.js
+// ../craft-capability/capability/craft-datasec/dist/rules.js
 var DEFAULT_RULES = [
   { name: "phone", pattern: String.raw`(?<!\d)(?:\+?86[ -]?)?1[3-9](?:[ -]?\d){9}(?!\d)` },
   { name: "identity", pattern: String.raw`(?<!\d)[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx](?!\d)`, enabled: false },
@@ -230,7 +230,7 @@ var Sanitizer = class {
   }
 };
 
-// node_modules/.pnpm/@craft+capability-datasec@0.1.7/node_modules/@craft/capability-datasec/dist/vault.js
+// ../craft-capability/capability/craft-datasec/dist/vault.js
 import { createHash as createHash2, createHmac, randomBytes } from "node:crypto";
 import { constants, closeSync as closeSync3, fstatSync, linkSync as linkSync2, lstatSync as lstatSync3, mkdirSync as mkdirSync3, mkdtempSync, openSync as openSync3, readFileSync as readFileSync2, rmSync, writeFileSync as writeFileSync2 } from "node:fs";
 import { join as join3 } from "node:path";
@@ -363,7 +363,7 @@ var TokenVault = class {
   }
 };
 
-// node_modules/.pnpm/@craft+capability-datasec@0.1.7/node_modules/@craft/capability-datasec/dist/hook.js
+// ../craft-capability/capability/craft-datasec/dist/hook.js
 var FAILURE = "craft-datasec\uFF1A\u672C\u5730\u8131\u654F\u5931\u8D25\uFF0C\u5185\u5BB9\u5DF2\u9690\u85CF\u3002\u8BF7\u68C0\u67E5\u672C\u5730\u89C4\u5219\u548C\u79C1\u6709\u6620\u5C04\u76EE\u5F55\u3002";
 var BINARY = /\.(?:xls[xmb]?|xlt[xm]|pdf|png|jpe?g|gif|webp|bmp|svg|ico|zip|gz|tar|7z|docx?|pptx?|mp[34]|wav)$/i;
 var EDIT = /^(?:Edit|Write|MultiEdit|NotebookEdit|apply_patch)$/;
