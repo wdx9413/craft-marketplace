@@ -64,8 +64,8 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 
 本仓库同时是插件聚合市场：把 Craft 自有插件与业界常见插件列到目录里，由用户自行安装；Craft 内核不实现这些外部插件，也不默认执行安装命令。
 
-- `catalog/host-priority.json` 定义固定解析顺序：`codex` → `claude` → `dsh` → `pi`。一个插件若同时支持多种 Host，按第一个可用清单解析一次，避免重复注册 Hook/MCP。
-- `catalog/recommended-plugins.json` 列出推荐插件：`craft-context`、`craft-datasec` 为默认安装；`craft-file-dir-desc` 等为可选源码能力；业界插件包括 computer-use、agent-desktop、github、context7、playwright、linear、notion、slack、sentry 等。
+- `catalog/host-priority.json` 定义固定解析顺序：`codex` → `claude` → `dsh` → `pi`。一个插件若同时支持多种 Host，按第一个实际存在清单的 Host 解析，避免重复注册 Hook/MCP。
+- `catalog/recommended-plugins.json` 列出推荐插件：`craft-context`、`craft-datasec` 为默认安装；Craft Notes 是 Craft Context 使用的目录注记能力，目前没有独立 Host 插件载荷，因此解析结果会明确标为不可安装；业界插件包括 computer-use、agent-desktop、github、context7、playwright、linear、notion、slack、sentry 等。
 - `scripts/resolve-plugin-host.mjs` 提供只读解析与推荐目录投影；`node --test tests/resolve-plugin-host.test.mjs` 验证优先级与单清单解析。
 - 支持用户自定义导入 codex/claude/dsh/pi 清单，仍按上述顺序解析；导入的插件不会自动获得执行权。
 

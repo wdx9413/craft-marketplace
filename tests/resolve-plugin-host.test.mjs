@@ -40,7 +40,7 @@ test("recommended catalog resolves bundled defaults via codex first", () => {
   assert.equal(context.selected_host, "codex");
   assert.equal(datasec.selected_host, "codex");
   assert.equal(report.plugins.some(plugin => plugin.name === "github"), true);
-  assert.equal(report.plugins.some(plugin => plugin.name === "craft-file-dir-desc"), true);
+  assert.equal(report.plugins.some(plugin => plugin.name === "craft-notes"), true);
 });
 
 test("high-risk desktop/remote-control plugins are never default installs", () => {

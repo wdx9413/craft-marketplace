@@ -24,19 +24,27 @@ export function resolvePluginHost(plugin, { root = process.cwd(), priority = loa
   if (!name) throw new Error("Plugin name is required");
   const declared = Array.isArray(plugin.hosts) ? plugin.hosts : [];
   const source = typeof plugin.source === "string" ? plugin.source : "";
-  const localSource = source.startsWith("./") ? resolve(root, source) : null;
+  const localSource = source.startsWith("./") || source.startsWith("../") || source.startsWith("/")
+    ? resolve(root, source)
+    : null;
+  const unresolvedSourceReference = Boolean(source)
+    && localSource === null
+    && !/^(?:https?:|git\+|npm:)/iu.test(source);
+  const explicitlyNotPackaged = plugin.source_status === "not_packaged";
   const candidates = [];
   for (const host of priority.hosts) {
     const manifestPath = priority.manifest_paths?.[host];
     if (!manifestPath) continue;
-    const available = localSource ? existsSync(join(localSource, manifestPath)) && declared.includes(host) : declared.includes(host);
+    const available = declared.includes(host)
+      && !explicitlyNotPackaged
+      && (localSource ? existsSync(join(localSource, manifestPath)) : !unresolvedSourceReference);
     candidates.push({ host, manifest_path: manifestPath, available, install_command: priority.install_commands?.[host] ?? null });
   }
   const selected = candidates.find(candidate => candidate.available) ?? null;
   return {
     name,
     selected_host: selected?.host ?? null,
-    install_command: selected ? selected.install_command.replace("<name>", name) : null,
+    install_command: selected?.install_command?.replace("<name>", name) ?? null,
     resolution: selected ? "single_manifest" : "no_available_host",
     candidates,
   };
