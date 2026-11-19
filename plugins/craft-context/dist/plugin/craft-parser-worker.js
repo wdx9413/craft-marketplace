@@ -1,25 +1,25 @@
-// ../craft-common/packages/craft-common-store-local/dist/store.js
+// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/store.js
 import { backup, DatabaseSync as DatabaseSync4 } from "node:sqlite";
 import { AsyncLocalStorage } from "node:async_hooks";
 
-// ../craft-common/packages/craft-common-store-local/dist/content-store.js
+// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/content-store.js
 import { DatabaseSync } from "node:sqlite";
 
-// ../craft-common/packages/craft-common-store-local/dist/trace-shards.js
+// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/trace-shards.js
 import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 var TRACE_KINDS = /* @__PURE__ */ new Set(["trace", "trace_event", "trace_feedback", "telemetry_event", "trace_archive"]);
 var TRACE_SHARDED_KINDS = /* @__PURE__ */ new Set([...TRACE_KINDS, "codex_hook_turn", "codex_hook_signal", "context_hook_session"]);
 
-// ../craft-common/packages/craft-common-store-local/dist/codebase-shards.js
+// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/codebase-shards.js
 import { DatabaseSync as DatabaseSync3 } from "node:sqlite";
 
-// ../craft-common/packages/craft-common-store-local/dist/store.js
+// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/store.js
 var contextLockBudget = new AsyncLocalStorage();
 
-// ../craft-common/packages/craft-common-base/dist/scope-policy.js
+// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/scope-policy.js
 var COGNITIVE_SCOPE_KINDS = ["user", "project", "workspace", "task", "session", "team", "organization", "global"];
 
-// ../craft-common/packages/craft-common-base/dist/validation.js
+// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/validation.js
 var SCOPE_KINDS = new Set(COGNITIVE_SCOPE_KINDS);
 
 // core/untrusted-parser.ts

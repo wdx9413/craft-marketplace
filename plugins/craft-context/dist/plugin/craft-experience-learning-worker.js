@@ -7,7 +7,7 @@ import { createInterface } from "node:readline";
 import { join as join11 } from "node:path";
 import { pathToFileURL } from "node:url";
 
-// ../craft-common/packages/craft-common-store-local/dist/paths.js
+// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/paths.js
 import { createHash, randomUUID } from "node:crypto";
 import { chmod, mkdir, open, rename, unlink } from "node:fs/promises";
 import { closeSync, existsSync, fsyncSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, statSync, unlinkSync, writeFileSync } from "node:fs";
@@ -176,10 +176,10 @@ function normalizeModelPricing(value) {
   return pricing;
 }
 
-// ../craft-common/packages/craft-common-base/dist/scope-policy.js
+// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/scope-policy.js
 var COGNITIVE_SCOPE_KINDS = ["user", "project", "workspace", "task", "session", "team", "organization", "global"];
 
-// ../craft-common/packages/craft-common-base/dist/validation.js
+// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/validation.js
 function text(value, name) {
   if (typeof value !== "string" || !value.trim())
     throw new Error(`${name} must not be empty`);
@@ -187,7 +187,7 @@ function text(value, name) {
 }
 var SCOPE_KINDS = new Set(COGNITIVE_SCOPE_KINDS);
 
-// ../craft-common/packages/craft-common-base/dist/digest.js
+// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/digest.js
 import { createHash as createHash2 } from "node:crypto";
 function digestJson(value) {
   return `sha256:${createHash2("sha256").update(JSON.stringify(value)).digest("hex")}`;
@@ -255,7 +255,7 @@ function stableDigestStreaming(value) {
   return `sha256:${hash2.digest("hex")}`;
 }
 
-// ../craft-capability/capability/craft-datasec/dist/rules.js
+// node_modules/.pnpm/@craft+capability-datasec@0.1.7/node_modules/@craft/capability-datasec/dist/rules.js
 var DEFAULT_RULES = [
   { name: "phone", pattern: String.raw`(?<!\d)(?:\+?86[ -]?)?1[3-9](?:[ -]?\d){9}(?!\d)` },
   { name: "identity", pattern: String.raw`(?<!\d)[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx](?!\d)`, enabled: false },
@@ -897,30 +897,30 @@ import { createHash as createHash3 } from "node:crypto";
 import { lstatSync as lstatSync2, readFileSync as readFileSync2 } from "node:fs";
 import { dirname as dirname2, join as join2, resolve as resolve2 } from "node:path";
 
-// ../craft-common/packages/craft-common-log/dist/journal-sink.js
+// node_modules/.pnpm/craft-common-log@0.20.12/node_modules/craft-common-log/dist/journal-sink.js
 var queueKey = /* @__PURE__ */ Symbol.for("craft.telemetry.journal.pending");
 var processState = globalThis;
 var queues = processState[queueKey] ??= /* @__PURE__ */ new Map();
 
-// ../craft-common/packages/craft-common-store-local/dist/store.js
+// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/store.js
 import { backup, DatabaseSync as DatabaseSync4 } from "node:sqlite";
 import { AsyncLocalStorage } from "node:async_hooks";
 
-// ../craft-common/packages/craft-common-store-local/dist/content-store.js
+// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/content-store.js
 import { DatabaseSync } from "node:sqlite";
 
-// ../craft-common/packages/craft-common-store-local/dist/trace-shards.js
+// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/trace-shards.js
 import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 var TRACE_KINDS = /* @__PURE__ */ new Set(["trace", "trace_event", "trace_feedback", "telemetry_event", "trace_archive"]);
 var TRACE_SHARDED_KINDS = /* @__PURE__ */ new Set([...TRACE_KINDS, "codex_hook_turn", "codex_hook_signal", "context_hook_session"]);
 
-// ../craft-common/packages/craft-common-store-local/dist/codebase-shards.js
+// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/codebase-shards.js
 import { DatabaseSync as DatabaseSync3 } from "node:sqlite";
 
-// ../craft-common/packages/craft-common-store-local/dist/store.js
+// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/store.js
 var contextLockBudget = new AsyncLocalStorage();
 
-// ../craft-common/packages/craft-common-log/dist/operation.js
+// node_modules/.pnpm/craft-common-log@0.20.12/node_modules/craft-common-log/dist/operation.js
 import { AsyncLocalStorage as AsyncLocalStorage2 } from "node:async_hooks";
 var contextKey = /* @__PURE__ */ Symbol.for("craft.operation.context");
 var processState2 = globalThis;
@@ -1089,7 +1089,7 @@ import { lstatSync as lstatSync4, readFileSync as readFileSync4, realpathSync as
 import { tmpdir } from "node:os";
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.20.5";
+var CRAFT_RELEASE_VERSION = "0.20.13";
 
 // core/knowledge-model-redaction.ts
 var SENSITIVE_MODEL_TEXT_PATTERNS = [
@@ -5329,6 +5329,9 @@ async function collectCodexSessionsWithLock(client, recheckVerified) {
     await release();
   }
 }
+function learningTaskCandidateResult(ingestion, taskCandidates) {
+  return { ...ingestion, ...taskCandidates.status !== "idle" && (taskCandidates.status !== "skipped" || Number(taskCandidates.blocked_skips) > 0) ? { task_candidates: taskCandidates } : {}, ...taskCandidates.status === "failed" ? { failure_kind: taskCandidates.failure_kind } : {} };
+}
 async function runEvaluationOnce(client) {
   const queued = await client.call("craft_experience_learning_evaluation_dispatch_list", { limit: 100 });
   const pending = array4(queued.dispatches, "evaluation dispatches");
@@ -5338,6 +5341,15 @@ async function runEvaluationOnce(client) {
     const dispatchId = string2(dispatch.id, "dispatch.id", 200);
     if (seen.has(dispatchId)) continue;
     seen.add(dispatchId);
+    if (dispatch.stage === "held_out") {
+      outcomes.push({
+        dispatch_id: dispatchId,
+        stage: dispatch.stage,
+        status: "awaiting_adapter",
+        reason: "trusted_task_effect_evaluation_required"
+      });
+      continue;
+    }
     const result = await client.call("craft_experience_learning_evaluation_run", { dispatch_id: dispatchId });
     const resolved = object10(result.dispatch, "evaluation result dispatch");
     outcomes.push({
@@ -5434,11 +5446,7 @@ async function runLearningTick2(deps, syncKnowledge = false, components = ["expe
         } catch (error) {
           taskCandidates = { status: "failed", failure_kind: learningFailureKind(error), raw_content_stored: false };
         }
-        return {
-          ...ingestion,
-          ...taskCandidates.status !== "idle" && (taskCandidates.status !== "skipped" || Number(taskCandidates.blocked_skips) > 0) ? { task_candidates: taskCandidates } : {},
-          ...taskCandidates.status === "failed" ? { failure_kind: taskCandidates.failure_kind } : {}
-        };
+        return learningTaskCandidateResult(ingestion, taskCandidates);
       }
       if (stage === "session_evaluation") {
         let evaluationCases;
@@ -5977,6 +5985,7 @@ export {
   learningComponents,
   learningMcpRequestTimeoutMs,
   learningPollInterval,
+  learningTaskCandidateResult,
   learningWorkFound,
   mcpCommandOptions,
   runDistillationOnce,
