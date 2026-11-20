@@ -4,7 +4,7 @@
 import { spawn as spawn2 } from "node:child_process";
 import { realpathSync as realpathSync4 } from "node:fs";
 import { createInterface } from "node:readline";
-import { join as join11 } from "node:path";
+import { join as join12 } from "node:path";
 import { pathToFileURL } from "node:url";
 
 // node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/paths.js
@@ -128,7 +128,7 @@ async function renamePrivateJsonWithRetry(from, to) {
       const code = error.code;
       if (attempt >= 20 || code !== "EPERM" && code !== "EBUSY" && code !== "EACCES")
         throw error;
-      await new Promise((resolve9) => setTimeout(resolve9, 20));
+      await new Promise((resolve10) => setTimeout(resolve10, 20));
     }
   }
 }
@@ -370,6 +370,7 @@ var ENV_NAME = /^[A-Z_][A-Z0-9_]*$/u;
 var TIER_ORDER = ["frontier", "standard", "small"];
 var PROVIDER_CATALOG = [
   { provider: "codex-cli", label: "Codex CLI Host", protocol: "openai-compatible", base_url: "https://codex-cli-host.invalid", api_key_env: "CODEX_CLI_AUTH_STORE", chat_path: "/host/exec", models: { small: "gpt-6-luna" }, cost_hint: 1, supports_tools: false, host_managed_auth: true, context_cache: NO_CONTEXT_CACHE },
+  { provider: "claude-code", label: "Claude Code Host", protocol: "openai-compatible", base_url: "https://claude-code-host.invalid", api_key_env: "CLAUDE_CODE_AUTH_STORE", chat_path: "/host/exec", models: { small: "claude-sonnet-4-6" }, cost_hint: 1, supports_tools: false, host_managed_auth: true, context_cache: NO_CONTEXT_CACHE },
   { provider: "deepseek", label: "DeepSeek", protocol: "openai-compatible", base_url: "https://api.deepseek.com/v1", api_key_env: "DEEPSEEK_API_KEY", chat_path: "/chat/completions", models: { small: "deepseek-chat", standard: "deepseek-chat", frontier: "deepseek-reasoner" }, cost_hint: 1, supports_tools: true, context_cache: DEEPSEEK_CONTEXT_CACHE },
   { provider: "volcengine", label: "\u706B\u5C71\u5F15\u64CE\u65B9\u821F", protocol: "openai-compatible", base_url: "https://ark.cn-beijing.volces.com/api/v3", api_key_env: "ARK_API_KEY", chat_path: "/chat/completions", models: { small: "doubao-lite", standard: "doubao-pro", frontier: "doubao-pro-32k" }, cost_hint: 2, supports_tools: true, context_cache: NO_CONTEXT_CACHE },
   { provider: "qwen", label: "\u901A\u4E49\u5343\u95EE", protocol: "openai-compatible", base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1", api_key_env: "DASHSCOPE_API_KEY", chat_path: "/chat/completions", models: { small: "qwen-turbo", standard: "qwen-plus", frontier: "qwen-max" }, cost_hint: 2, supports_tools: true, context_cache: NO_CONTEXT_CACHE },
@@ -1089,7 +1090,7 @@ import { lstatSync as lstatSync4, readFileSync as readFileSync4, realpathSync as
 import { tmpdir } from "node:os";
 
 // core/version.ts
-var CRAFT_RELEASE_VERSION = "0.20.13";
+var CRAFT_RELEASE_VERSION = "0.20.14";
 
 // core/knowledge-model-redaction.ts
 var SENSITIVE_MODEL_TEXT_PATTERNS = [
@@ -1402,6 +1403,7 @@ async function runKnowledgeScenarioClassificationOnce(deps) {
     let responseText = null;
     let traceId = null;
     let modelFingerprint = "";
+    const modelSource = provider.host_managed_auth ? `${provider.provider}-learning-transport` : "model-gateway";
     try {
       const messages = [{ role: "system", content: system }, { role: "user", content: JSON.stringify(packet) }];
       const model = String(profile.model);
@@ -1440,7 +1442,7 @@ async function runKnowledgeScenarioClassificationOnce(deps) {
         trace_id: traceId,
         event_kind: "model.request",
         actor: "knowledge-classification-worker",
-        source: "codex-cli-learning-transport",
+        source: modelSource,
         trust: "observed",
         operation_id: ticketId,
         input_refs: [inputDigest],
@@ -1461,7 +1463,7 @@ async function runKnowledgeScenarioClassificationOnce(deps) {
         max_tokens: Math.min(Number(profile.max_output_tokens ?? 2048), 2048),
         temperature: Number(profile.temperature ?? 0)
       });
-      if (provider.provider === "codex-cli") modelRequest.body.codex_output_schema = isCandidateReview ? outputReviewSchema : outputDecisionSchema;
+      if (provider.host_managed_auth) modelRequest.body.codex_output_schema = isCandidateReview ? outputReviewSchema : outputDecisionSchema;
       const response = await transport.complete(provider, modelRequest);
       responseText = response.text;
       processingStage = "response_parse";
@@ -1469,14 +1471,14 @@ async function runKnowledgeScenarioClassificationOnce(deps) {
         trace_id: traceId,
         event_kind: "model.completed",
         actor: "knowledge-classification-worker",
-        source: "codex-cli-learning-transport",
+        source: modelSource,
         trust: "observed",
         operation_id: ticketId,
         model_fingerprint: modelFingerprint,
         duration_ms: Math.max(0, Date.now() - startedAt),
         usage: response.usage ?? {},
         data: { model: response.model, response_digest: stableDigest(response.text) },
-        summary: "Codex Host returned a bounded Knowledge worker response"
+        summary: "Model returned a bounded Knowledge worker response"
       });
       const decision = parse(response.text);
       processingStage = "response_validate";
@@ -1489,7 +1491,7 @@ async function runKnowledgeScenarioClassificationOnce(deps) {
         processingStage = "host_review";
         const reviewResult = await deps.client.call("craft_knowledge_host_review", {
           claim_id: claim.id,
-          host_kind: "codex-cli",
+          host_kind: provider.host_managed_auth ? provider.provider : "independent",
           host_run_key: `learning:${ticketId}`,
           model_ref: `${response.model}:knowledge-evidence-review`,
           source_digest: source.content_digest,
@@ -1661,7 +1663,7 @@ async function runKnowledgeScenarioClassificationOnce(deps) {
           trace_id: traceId,
           event_kind: processingStage === "model_request" ? "model.failed" : "classification.failed",
           actor: "knowledge-classification-worker",
-          source: processingStage === "model_request" ? "codex-cli-learning-transport" : "craft-knowledge",
+          source: processingStage === "model_request" ? modelSource : "craft-knowledge",
           trust: "observed",
           operation_id: ticketId,
           model_fingerprint: modelFingerprint,
@@ -4773,7 +4775,7 @@ async function runClassificationTicket(deps, ticket) {
 // core/codex-cli-model-transport.ts
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir as tmpdir2 } from "node:os";
-import { join as join9 } from "node:path";
+import { join as join10 } from "node:path";
 
 // core/host-driver.ts
 import { spawn, execFile } from "node:child_process";
@@ -4786,14 +4788,14 @@ var HostProcessCleanupError = class extends Error {
 };
 function stopWindowsHostProcessTree(pid) {
   if (!Number.isSafeInteger(pid) || pid < 1) return Promise.reject(new Error("Host process id must be a positive safe integer"));
-  return new Promise((resolve9, reject) => {
+  return new Promise((resolve10, reject) => {
     execFile(
       win32.join(process.env.SystemRoot ?? "C:\\Windows", "System32", "taskkill.exe"),
       ["/PID", String(pid), "/T", "/F"],
       { windowsHide: true, timeout: 2e3, maxBuffer: 16384 },
       (error, stdout, stderr) => {
         if (!error) {
-          resolve9();
+          resolve10();
           return;
         }
         const code = error.code;
@@ -4801,7 +4803,7 @@ function stopWindowsHostProcessTree(pid) {
 ${String(stderr ?? "")}
 ${error.message}`;
         if (code === 128 || /not found|not running|no process|not exist/i.test(text2)) {
-          resolve9();
+          resolve10();
           return;
         }
         reject(error);
@@ -4898,6 +4900,94 @@ var executeHostProcess = async (request) => new Promise((accept, reject) => {
   child.stdin.end(request.stdin);
 });
 
+// core/infrastructure/claude-executable.ts
+import { accessSync, closeSync as closeSync2, constants as constants2, openSync as openSync2, readFileSync as readFileSync11, readSync, statSync as statSync3 } from "node:fs";
+import { delimiter, isAbsolute as isAbsolute2, join as join9, resolve as resolve9 } from "node:path";
+
+// core/infrastructure/cli-path.ts
+import { homedir as homedir3 } from "node:os";
+import { posix, win32 as win322 } from "node:path";
+function workbenchCliPath(pathValue = process.env.PATH ?? "", home = homedir3(), platform = process.platform, env = process.env) {
+  const windows = platform === "win32";
+  const path = windows ? win322 : posix;
+  const delimiter2 = windows ? ";" : ":";
+  const additions = path.isAbsolute(home) ? [path.join(home, ".local", "bin")] : [];
+  if (windows) {
+    for (const root of [env.APPDATA, env.LOCALAPPDATA]) if (root) additions.push(path.join(root, "npm"));
+  }
+  if (!windows) additions.push("/usr/local/bin");
+  if (platform === "darwin") additions.push("/opt/homebrew/bin");
+  const entries = pathValue.split(delimiter2).filter(Boolean);
+  for (const directory of additions) if (!entries.includes(directory)) entries.push(directory);
+  return entries.join(delimiter2);
+}
+
+// core/infrastructure/claude-executable.ts
+function usableFile(file) {
+  try {
+    return statSync3(file).isFile() && Boolean(accessSync(file, constants2.X_OK) ?? true);
+  } catch {
+    return false;
+  }
+}
+function configuredClaudeExecutable(settingsFile = craftPaths().settingsFile) {
+  const fromEnvironment = process.env.CRAFT_CLAUDE_EXECUTABLE?.trim();
+  if (fromEnvironment) {
+    if (!isAbsolute2(fromEnvironment)) throw new Error("CRAFT_CLAUDE_EXECUTABLE must be an absolute path");
+    return resolve9(fromEnvironment);
+  }
+  try {
+    const value = JSON.parse(readFileSync11(settingsFile, "utf8").replace(/^\uFEFF/u, ""));
+    const candidate = value?.workbench?.claudeExecutable;
+    if (typeof candidate === "string" && candidate.trim() && isAbsolute2(candidate.trim())) return resolve9(candidate.trim());
+  } catch {
+  }
+  return null;
+}
+function findClaudeExecutable(pathValue = workbenchCliPath(), platform = process.platform, settingsFile = craftPaths().settingsFile) {
+  const configured = configuredClaudeExecutable(settingsFile);
+  if (configured !== null) {
+    if (!usableFile(configured)) throw Object.assign(new Error(`Configured Claude executable is not usable: ${configured}`), { code: "ENOENT" });
+    return configured;
+  }
+  let wrapper;
+  const names = platform === "win32" ? ["claude.exe", "claude.cmd", "claude.bat", "claude"] : ["claude"];
+  for (const directory of pathValue.split(delimiter)) {
+    if (!directory || !isAbsolute2(directory)) continue;
+    if (platform === "win32") {
+      const packaged = join9(directory, "node_modules", "@anthropic-ai", "claude-code", "bin", "claude.exe");
+      if (usableFile(packaged)) return packaged;
+    }
+    for (const name of names) {
+      const candidate = join9(directory, name);
+      try {
+        if (!statSync3(candidate).isFile()) continue;
+        accessSync(candidate, constants2.X_OK);
+        if (platform === "win32" && /\.(?:cmd|bat)$/iu.test(candidate)) {
+          wrapper ??= candidate;
+          continue;
+        }
+        const fd = openSync2(candidate, "r");
+        let count;
+        const prefix = Buffer.alloc(2);
+        try {
+          count = readSync(fd, prefix, 0, 2, 0);
+        } finally {
+          closeSync2(fd);
+        }
+        if (count === 2 && prefix.toString("ascii") === "#!") {
+          wrapper ??= candidate;
+          continue;
+        }
+        return candidate;
+      } catch {
+      }
+    }
+  }
+  if (wrapper) return wrapper;
+  throw Object.assign(new Error("Claude Code executable was not found in the service PATH"), { code: "ENOENT" });
+}
+
 // core/token-budget.ts
 var CJK = /[\u3000-\u303f\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff00-\uffef]/u;
 function estimateTokens(value) {
@@ -4909,6 +4999,7 @@ function estimateTokens(value) {
 
 // core/codex-cli-model-transport.ts
 var MODEL = "gpt-6-luna";
+var CLAUDE_MODEL = "claude-sonnet-4-6";
 var TIMEOUT_MS = 12e4;
 var OUTPUT_LIMIT = 65536;
 var OUTPUT_SCHEMA_LIMIT = 16384;
@@ -4986,8 +5077,8 @@ ${message.content}`).join("\n\n");
       const argv = ["exec", "--ignore-user-config", "--ephemeral", "--sandbox", "read-only", "--skip-git-repo-check"];
       argv.push("-c", "skills.max_context_tokens=1", "-c", "features.shell_tool=false", "-c", "features.view_image=false", "-c", 'web_search="disabled"');
       if (schema) {
-        schemaDirectory = await mkdtemp(join9(tmpdir2(), "craft-learning-schema-"));
-        const schemaPath = join9(schemaDirectory, "output-schema.json");
+        schemaDirectory = await mkdtemp(join10(tmpdir2(), "craft-learning-schema-"));
+        const schemaPath = join10(schemaDirectory, "output-schema.json");
         await writeFile(schemaPath, JSON.stringify(schema), { encoding: "utf8", flag: "wx", mode: 384 });
         argv.push("--output-schema", schemaPath);
       }
@@ -5007,8 +5098,63 @@ ${message.content}`).join("\n\n");
     }
   }
 };
+async function completeClaudeLearning(executor, spec, request, signal) {
+  signal?.throwIfAborted();
+  if (!spec.host_managed_auth) throw new Error("Claude Code transport requires a Host-managed provider");
+  const outbound = sanitizeModelEgressRequest(spec, request);
+  if (outbound.body.model !== CLAUDE_MODEL) throw new Error(`Claude Code model must be ${CLAUDE_MODEL}`);
+  const prompt = messagesFrom(outbound).map((message2) => `## ${message2.role}
+${message2.content}`).join("\n\n");
+  if (estimateTokens(prompt) > DEFAULT_LEARNING_INPUT_TOKEN_LIMIT) throw Object.assign(new Error("Claude Code input exceeds its token budget"), { code: "ERR_CLAUDE_INPUT_BUDGET_EXCEEDED" });
+  const schema = outputSchemaFrom(outbound);
+  const argv = [
+    "--print",
+    "--safe-mode",
+    "--strict-mcp-config",
+    "--tools",
+    "",
+    "--no-session-persistence",
+    "--max-turns",
+    "1",
+    "--model",
+    CLAUDE_MODEL,
+    "--output-format",
+    "json"
+  ];
+  if (schema) argv.push("--json-schema", JSON.stringify(schema));
+  let result;
+  try {
+    const executable = executor ? "claude" : findClaudeExecutable();
+    result = await (executor ?? executeHostProcess)({ executable, argv, cwd: tmpdir2(), stdin: prompt, timeoutMs: TIMEOUT_MS, outputLimit: OUTPUT_LIMIT, signal });
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+    throw Object.assign(new Error("Claude Code executable is unavailable"), { name: "ClaudeHostUnavailable", code: "ERR_CLAUDE_HOST_UNAVAILABLE" });
+  }
+  signal?.throwIfAborted();
+  const failure = (code, name = "ClaudeHostResponseInvalid") => Object.assign(new Error("Claude Code did not return one complete model response"), { name, code });
+  if (result.timedOut) throw failure("ERR_CLAUDE_HOST_TIMEOUT", "ClaudeHostTimeout");
+  if (result.outputLimited) throw failure("ERR_CLAUDE_OUTPUT_BUDGET_EXCEEDED", "ClaudeHostOutputLimit");
+  if (result.signal !== null || result.cancelled) throw failure("ERR_CLAUDE_HOST_RESPONSE_INVALID");
+  let parsed;
+  try {
+    const value = JSON.parse(result.stdout);
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw failure("ERR_CLAUDE_HOST_RESPONSE_INVALID");
+    parsed = value;
+  } catch {
+    throw failure("ERR_CLAUDE_HOST_RESPONSE_INVALID");
+  }
+  if (parsed.is_error === true && typeof parsed.result === "string" && /\b(?:please run \/login|not logged in)\b/iu.test(parsed.result)) {
+    throw failure("ERR_CLAUDE_HOST_AUTHENTICATION", "ClaudeHostAuthentication");
+  }
+  const modelUsage = parsed.modelUsage;
+  const structured = parsed.structured_output;
+  const message = schema ? structured && typeof structured === "object" && !Array.isArray(structured) ? JSON.stringify(structured) : null : typeof parsed.result === "string" ? parsed.result : null;
+  if (result.exitCode !== 0 || parsed.type !== "result" || parsed.subtype !== "success" || parsed.is_error !== false || !modelUsage || typeof modelUsage !== "object" || Object.keys(modelUsage).length !== 1 || !Object.hasOwn(modelUsage, CLAUDE_MODEL) || !message) throw failure("ERR_CLAUDE_HOST_RESPONSE_INVALID");
+  const usage = parsed.usage;
+  return { text: message, model: CLAUDE_MODEL, usage: usage && Number.isSafeInteger(usage.input_tokens) && Number.isSafeInteger(usage.output_tokens) ? { input_tokens: Number(usage.input_tokens), output_tokens: Number(usage.output_tokens) } : null };
+}
 function createLearningModelTransport(host, executor) {
-  if (host !== "codex-cli") return void 0;
+  if (host !== "codex-cli" && host !== "claude-code") return void 0;
   const codex = new CodexCliModelTransport(executor);
   const api = createFetchTransport({ maxAttempts: 1 });
   let used = false;
@@ -5019,7 +5165,10 @@ function createLearningModelTransport(host, executor) {
       used = true;
       return true;
     },
-    complete: (spec, request, signal) => spec.provider === "codex-cli" ? codex.complete(spec, request, signal) : api.complete(spec, request, signal)
+    complete: (spec, request, signal) => {
+      if (spec.provider === host) return host === "codex-cli" ? codex.complete(spec, request, signal) : completeClaudeLearning(executor, spec, request, signal);
+      return api.complete(spec, request, signal);
+    }
   };
 }
 
@@ -5039,7 +5188,10 @@ var SAFE_CLASSIFICATION_SKIP_REASONS = /* @__PURE__ */ new Set([
   "no_configured_model",
   "provider_unavailable",
   "unavailable",
-  "explicitly_enable_network_execution"
+  "explicitly_enable_network_execution",
+  "host_model_provider_unavailable",
+  "host_model_profile_mismatch",
+  "unsupported_learning_model_host"
 ]);
 function classificationSkipReason(classification) {
   const reason = classification.reason;
@@ -5179,7 +5331,7 @@ function learningFailureKind(error) {
 // core/infrastructure/learning-worker-lock.ts
 import { createHash as createHash8, randomUUID as randomUUID3 } from "node:crypto";
 import { link, mkdir as mkdir3, open as open3, readFile as readFile3, rename as rename2, unlink as unlink2 } from "node:fs/promises";
-import { join as join10 } from "node:path";
+import { join as join11 } from "node:path";
 import { DatabaseSync as DatabaseSync6 } from "node:sqlite";
 var workerLockFileSystem = { link, mkdir: mkdir3, open: open3, readFile: readFile3, rename: rename2, unlink: unlink2 };
 function learningWorkerOwnerAlive(pid, kill = process.kill) {
@@ -5285,7 +5437,7 @@ async function acquireLearningWorkerLocks(runtimeDir, components, dependencies =
   for (const component of [...new Set(components)].sort()) {
     let release;
     try {
-      release = await acquireGuardedComponentLock(join10(runtimeDir, `learning-worker-${component}.lock.json`), fileSystem, isOwnerAlive, dependencies.runtime_version);
+      release = await acquireGuardedComponentLock(join11(runtimeDir, `learning-worker-${component}.lock.json`), fileSystem, isOwnerAlive, dependencies.runtime_version);
     } catch (error) {
       const cleanup = await Promise.allSettled(releases.reverse().map((item) => item()));
       const failures = cleanup.filter((item) => item.status === "rejected");
@@ -5399,23 +5551,23 @@ async function runLearningTick2(deps, syncKnowledge = false, components = ["expe
   const configuredDeps = {
     ...deps,
     contentLanguage: deps.contentLanguage ?? config?.contentLanguage ?? "zh-CN",
-    experience_classification_state_file: deps.experience_classification_state_file ?? join11(paths.runtimeDir, "experience-classification-attempts.json")
+    experience_classification_state_file: deps.experience_classification_state_file ?? join12(paths.runtimeDir, "experience-classification-attempts.json")
   };
   const includesExperience = components.includes("experience"), includesKnowledge = components.includes("knowledge");
-  const passOrder = includesExperience && includesKnowledge ? await nextLearningPassOrder(deps.learning_pass_cursor_file ?? join11(paths.runtimeDir, "learning-pass-order.json")) : includesKnowledge ? "knowledge_first" : "experience_first";
+  const passOrder = includesExperience && includesKnowledge ? await nextLearningPassOrder(deps.learning_pass_cursor_file ?? join12(paths.runtimeDir, "learning-pass-order.json")) : includesKnowledge ? "knowledge_first" : "experience_first";
   return runLearningTick({
     pass_order: passOrder,
     ...runSessionCollection ? { run_session_collection: runSessionCollection } : {},
     run_experience_pass: () => includesExperience ? runOnce(configuredDeps) : Promise.resolve({ processed: 0, outcomes: [], skipped: true }),
     run_knowledge_pass: async () => {
-      const storage = syncKnowledge ? await runKnowledgeStorageReconcileOnce(deps.client, join11(paths.knowledgeDir, "storage-migration-state.json")) : null;
+      const storage = syncKnowledge ? await runKnowledgeStorageReconcileOnce(deps.client, join12(paths.knowledgeDir, "storage-migration-state.json")) : null;
       const ingestion = syncKnowledge ? {
         ...await runKnowledgeSyncOnce(deps.client),
         ...storage && (Number(storage.examined) > Number(storage.skipped) || storage.has_more === true) ? { storage_reconciliation: storage } : {}
       } : { status: "not_due", processed: 0, content_stored: false, raw_content_stored: false };
       const knowledgeDir = paths.knowledgeDir;
       const stage = await nextKnowledgeLearningStage(
-        deps.knowledge_stage_cursor_file ?? join11(knowledgeDir, "learning-stage-cursor.json"),
+        deps.knowledge_stage_cursor_file ?? join12(knowledgeDir, "learning-stage-cursor.json"),
         runSessionCollection ? void 0 : ["classification"]
       );
       if (stage === "classification") {
@@ -5426,7 +5578,7 @@ async function runLearningTick2(deps, syncKnowledge = false, components = ["expe
             providers: configuredDeps.providers,
             transport: configuredDeps.transport,
             contentLanguage: configuredDeps.contentLanguage,
-            state_file: join11(knowledgeDir, "classification-attempts.json")
+            state_file: join12(knowledgeDir, "classification-attempts.json")
           });
         } catch (error) {
           classification = { status: "failed", failure_kind: learningFailureKind(error) };
@@ -5471,7 +5623,7 @@ async function runLearningTick2(deps, syncKnowledge = false, components = ["expe
       try {
         adjudication = await runSessionKnowledgeAdjudicationOnce({
           ...configuredDeps,
-          knowledge_adjudication_cursor_file: join11(paths.knowledgeDir, "session-adjudication-cursor.json")
+          knowledge_adjudication_cursor_file: join12(paths.knowledgeDir, "session-adjudication-cursor.json")
         });
       } catch (error) {
         adjudication = { status: "failed", failure_kind: learningFailureKind(error), raw_content_stored: false };
@@ -5630,7 +5782,7 @@ async function runDistillationOnce(deps) {
     }), "Experience distillation Trace start");
     const traceId = String(object10(started.trace, "Experience distillation Trace").id ?? "");
     if (!traceId) throw new Error("Experience distillation Trace has no id");
-    const modelSource = provider.provider === "codex-cli" ? "codex-cli-learning-transport" : "model-gateway";
+    const modelSource = provider.host_managed_auth ? `${provider.provider}-learning-transport` : "model-gateway";
     let processingStage = "trace_request";
     let responseDigest = null;
     try {
@@ -5812,12 +5964,12 @@ var McpStdioClient = class {
   request(method, params = {}) {
     if (this.closed) return Promise.reject(new Error("Craft MCP child is closed"));
     const id = this.nextId++;
-    return new Promise((resolve9, reject) => {
+    return new Promise((resolve10, reject) => {
       let timer;
       this.pending.set(id, {
         resolve: (value) => {
           clearTimeout(timer);
-          resolve9(value);
+          resolve10(value);
         },
         reject: (error) => {
           clearTimeout(timer);
@@ -5923,12 +6075,12 @@ async function main() {
   };
   process.once("SIGINT", stop);
   process.once("SIGTERM", stop);
-  const waitForNextTick = () => new Promise((resolve9) => {
+  const waitForNextTick = () => new Promise((resolve10) => {
     let timer;
     const finish = () => {
       clearTimeout(timer);
       if (wakePoll === finish) wakePoll = null;
-      resolve9();
+      resolve10();
     };
     wakePoll = finish;
     timer = setTimeout(finish, nextPollMs);
@@ -5940,12 +6092,13 @@ async function main() {
     do {
       const syncKnowledge = knowledgeEnabled && Date.now() - lastKnowledgeSync >= knowledgePollMs;
       const recheckVerified = Date.now() - lastVerifiedRecheck >= 3e5;
-      const modelTransport = createLearningModelTransport(process.env.CRAFT_LEARNING_MODEL_HOST);
+      const modelHost = process.env.CRAFT_LEARNING_MODEL_HOST;
+      const modelTransport = createLearningModelTransport(modelHost);
       const result = await runLearningTick2(
         { client, ...modelTransport ? { transport: modelTransport } : {} },
         syncKnowledge,
         components,
-        () => collectCodexSessionsWithLock(client, recheckVerified)
+        modelHost === "claude-code" ? void 0 : () => collectCodexSessionsWithLock(client, recheckVerified)
       );
       const sessionCollection = result.session_collection;
       if (recheckVerified && sessionCollection && !sessionCollection.failure_kind && sessionCollection.status !== "skipped_locked" && sessionCollection.evidence_reconciliation?.status !== "partial") lastVerifiedRecheck = Date.now();
