@@ -5,7 +5,7 @@ import { homedir as homedir2 } from "node:os";
 import { fileURLToPath } from "node:url";
 import { resolve as resolve3, join as join4 } from "node:path";
 
-// ../craft-common/packages/craft-common-store-local/dist/paths.js
+// node_modules/.pnpm/craft-common-store-local@0.21.1/node_modules/craft-common-store-local/dist/paths.js
 import { closeSync, existsSync, fsyncSync, linkSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
@@ -149,10 +149,10 @@ function beginHookRuntimeDiagnostic(args) {
   } };
 }
 
-// ../craft-capability/capability/craft-datasec/dist/hook.js
+// node_modules/.pnpm/@craft+capability-datasec@0.2.0/node_modules/@craft/capability-datasec/dist/hook.js
 import { extname } from "node:path";
 
-// ../craft-capability/capability/craft-datasec/dist/rules.js
+// node_modules/.pnpm/@craft+capability-datasec@0.2.0/node_modules/@craft/capability-datasec/dist/rules.js
 var DEFAULT_RULES = [
   { name: "phone", pattern: String.raw`(?<!\d)(?:\+?86[ -]?)?1[3-9](?:[ -]?\d){9}(?!\d)` },
   { name: "identity", pattern: String.raw`(?<!\d)[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx](?!\d)`, enabled: false },
@@ -230,7 +230,7 @@ var Sanitizer = class {
   }
 };
 
-// ../craft-capability/capability/craft-datasec/dist/vault.js
+// node_modules/.pnpm/@craft+capability-datasec@0.2.0/node_modules/@craft/capability-datasec/dist/vault.js
 import { createCipheriv, createDecipheriv, createHash as createHash2, createHmac, randomBytes } from "node:crypto";
 import { constants, closeSync as closeSync3, existsSync as existsSync2, fstatSync, linkSync as linkSync2, lstatSync as lstatSync3, mkdirSync as mkdirSync3, mkdtempSync, openSync as openSync3, readFileSync as readFileSync2, rmSync, writeFileSync as writeFileSync2 } from "node:fs";
 import { join as join3 } from "node:path";
@@ -313,17 +313,11 @@ var TokenVault = class {
     const file = join3(this.directory, "mappings.sqlite");
     if (existsSync2(file)) {
       closeSync3(openPrivate(file));
-      const database = new DatabaseSync(file, { readOnly: true });
+      this.database = new DatabaseSync(file, { readOnly: true });
       try {
-        database.exec("PRAGMA busy_timeout=1500;");
-        const mappings = database.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='mappings'").get();
-        if (mappings) {
-          database.prepare("SELECT token, name, value FROM mappings LIMIT 0").all();
-          this.database = database;
-        } else
-          database.close();
+        this.database.prepare("SELECT token, name, value FROM mappings LIMIT 0").all();
       } catch (error) {
-        database.close();
+        this.database.close();
         throw error;
       }
     }
@@ -363,7 +357,6 @@ var TokenVault = class {
       throw new Error("Mapping publication conflict");
   }
   token(name, value) {
-    this.assertOpen();
     const cacheKey = `${name}\0${value}`;
     const cached = this.cache.get(cacheKey);
     if (cached)
@@ -376,7 +369,6 @@ var TokenVault = class {
   }
   /** Immutable authenticated files are safe to publish concurrently and retry. */
   flush() {
-    this.assertOpen();
     for (const [token, record] of this.pending) {
       this.publishMapping(token, record);
       this.pending.delete(token);
@@ -390,10 +382,6 @@ var TokenVault = class {
       this.key.fill(0);
       this.closed = true;
     }
-  }
-  assertOpen() {
-    if (this.closed)
-      throw new Error("Vault is closed");
   }
   /** Session-end cleanup removes the mapping and key together. */
   static removeSession(root, session, host) {
@@ -417,10 +405,9 @@ var TokenVault = class {
       return;
     if (!isPrivateDirectory(lstatSync3(directory)))
       throw new Error("Unsafe vault directory");
-    rmSync(directory, { recursive: true, force: true, maxRetries: 3, retryDelay: 50 });
+    rmSync(directory, { recursive: true });
   }
   restore(text) {
-    this.assertOpen();
     const restored = text.replace(TOKEN, (token) => {
       const record = this.pending.get(token) ?? this.readMapping(token);
       if (!record)
@@ -436,7 +423,7 @@ var TokenVault = class {
   }
 };
 
-// ../craft-capability/capability/craft-datasec/dist/hook.js
+// node_modules/.pnpm/@craft+capability-datasec@0.2.0/node_modules/@craft/capability-datasec/dist/hook.js
 var FAILURE = "craft-datasec\uFF1A\u672C\u5730\u8131\u654F\u5931\u8D25\uFF0C\u5185\u5BB9\u5DF2\u9690\u85CF\u3002\u8BF7\u68C0\u67E5\u672C\u5730\u89C4\u5219\u548C\u79C1\u6709\u6620\u5C04\u76EE\u5F55\u3002";
 var BINARY = /\.(?:xls[xmb]?|xlt[xm]|pdf|png|jpe?g|gif|webp|bmp|svg|ico|zip|gz|tar|7z|docx?|pptx?|mp[34]|wav)$/i;
 var EDIT = /^(?:Edit|Write|MultiEdit|NotebookEdit|apply_patch)$/;
@@ -478,6 +465,10 @@ function handleHook(host, event, input, root, rules = DEFAULT_RULES) {
   const apply = () => {
     if (input.hook_event_name !== event)
       throw new Error("Mismatched hook event");
+    if (event === "SessionEnd") {
+      TokenVault.removeSession(root, input.session_id ?? "", host);
+      return {};
+    }
     const sanitizer = new Sanitizer(rules, (name, text) => getVault().token(name, text));
     if (event === "PreToolUse") {
       const args = input.tool_input ?? {};
@@ -510,6 +501,8 @@ function handleHook(host, event, input, root, rules = DEFAULT_RULES) {
     if (event === "PostToolUse") {
       const replacement = input.tool_response ?? null;
       output = { ...hidden(host, FAILURE, blankResult(replacement)), continue: false, stopReason: FAILURE };
+    } else if (event === "SessionEnd") {
+      output = { systemMessage: FAILURE };
     } else {
       output = denied(FAILURE);
     }
