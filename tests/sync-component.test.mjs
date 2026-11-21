@@ -1,7 +1,7 @@
 import {createHash} from "node:crypto";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, symlinkSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, symlinkSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -19,9 +19,11 @@ function fixture() {
     writeFileSync(join(path,"dist","build-inputs.json"),JSON.stringify({schema:"craft.component-build-inputs.v1",component:name,version,artifacts:[{file:"hook.mjs",digest:`sha256:${createHash("sha256").update(text).digest("hex")}`}]}));
   };
   manifest(source,"craft-context","1.1.0","new context");manifest(source,"craft-datasec","0.1.0","new datasec");
+  execFileSync("git",["-C",source,"add","-A"]);
+  execFileSync("git",["-C",source,"-c","user.name=Fixture","-c","user.email=fixture","commit","--quiet","-m","component payloads"]);
   manifest(market,"craft-context","1.0.0","old context");manifest(market,"craft-datasec","0.1.0","unchanged installed datasec");
   mkdirSync(join(market,"plugins","craft-context","skills"));writeFileSync(join(market,"plugins","craft-context","skills","SKILL.md"),"market-owned skill");
-  writeFileSync(join(market,"release.json"),JSON.stringify({version:"8.0.0",component_releases:{"craft-datasec":{version:"0.1.0"}}}));
+  writeFileSync(join(market,"release.json"),JSON.stringify({version:"8.0.0",component_source_commits:{"craft-datasec":"a".repeat(40)},component_releases:{"craft-datasec":{version:"0.1.0"}}}));
   return{root,source,market,close(){rmSync(root,{recursive:true,force:true});}};
 }
 test("one component publishes without changing other component bytes or catalog version",()=>{
@@ -34,8 +36,20 @@ test("one component publishes without changing other component bytes or catalog 
   assert.equal(readFileSync(join(f.market,"plugins","craft-context","skills","SKILL.md"),"utf8"),"market-owned skill");
   const release=JSON.parse(readFileSync(join(f.market,"release.json"),"utf8"));
   assert.equal(release.version,"8.0.0");assert.equal(release.component_releases["craft-context"].version,"1.1.0");assert.equal(release.component_releases["craft-datasec"].version,"0.1.0");
+  assert.equal(release.component_source_commits["craft-datasec"],"a".repeat(40));
+  assert.equal(release.component_source_commits["craft-context"],execFileSync("git",["-C",f.source,"log","-1","--format=%H","--","plugins/craft-context"],{encoding:"utf8"}).trim());
+  assert.equal(release.source_state,"committed");assert.match(release.source_tree_digest,/^sha256:/u);
+  const payloadDigest=release.component_releases["craft-context"].payload_digest;
+  writeFileSync(join(f.market,"plugins","craft-context","skills","SKILL.md"),"market-owned skill changed");
+  const lockPath=join(f.market,".component-release.lock");writeFileSync(lockPath,"123\n");
+  assert.throws(()=>syncComponent(f.source,f.market,"craft-context",true),/Another component publication/u);
+  unlinkSync(lockPath);
+  assert.equal(syncComponent(f.source,f.market,"craft-context",true).changed,false);
+  assert.equal(JSON.parse(readFileSync(join(f.market,"release.json"),"utf8")).component_releases["craft-context"].payload_digest,payloadDigest);
   assert.equal(syncComponent(f.source,f.market,"craft-context",true).changed,false);
   writeFileSync(join(f.source,"plugins","craft-context","dist","hook.mjs"),"changed again");
+  const buildFile=join(f.source,"plugins","craft-context","dist","build-inputs.json"),build=JSON.parse(readFileSync(buildFile,"utf8"));
+  build.artifacts[0].digest=`sha256:${createHash("sha256").update("changed again").digest("hex")}`;writeFileSync(buildFile,JSON.stringify(build));
   assert.throws(()=>syncComponent(f.source,f.market,"craft-context",true),/new independent version/u);
   assert.equal(readFileSync(join(f.market,"plugins","craft-context","dist","hook.mjs"),"utf8"),"new context");
   assert.throws(()=>syncComponent(f.source,f.market,"craft-foreign"),/exported/u);
@@ -64,7 +78,7 @@ test("new component publication checks metadata and preserves the independent Da
   rmSync(metaFile);assert.throws(()=>syncComponent(f.source,f.market,"craft-context"),/metadata is required/u);
   writeFileSync(metaFile,JSON.stringify({...meta,component:"wrong"}));assert.throws(()=>syncComponent(f.source,f.market,"craft-context"),/disagrees/u);
   writeFileSync(metaFile,JSON.stringify({...meta,artifacts:[]}));assert.throws(()=>syncComponent(f.source,f.market,"craft-context"),/disagrees/u);
-  writeFileSync(metaFile,JSON.stringify({...meta,artifacts:[{file:"../foreign",digest:"bad"}]}));assert.throws(()=>syncComponent(f.source,f.market,"craft-context"),/digest mismatch/u);
+  writeFileSync(metaFile,JSON.stringify({...meta,artifacts:[{file:"../foreign",digest:"bad"}]}));assert.throws(()=>syncComponent(f.source,f.market,"craft-context"),/executable path is invalid/u);
   writeFileSync(metaFile,JSON.stringify({...meta,artifacts:[{file:"hook.mjs",digest:"bad"}]}));assert.throws(()=>syncComponent(f.source,f.market,"craft-context"),/digest mismatch/u);
   writeFileSync(metaFile,JSON.stringify(meta));syncComponent(f.source,f.market,"craft-context",true);
   upgrade("craft-context","1.9.0");assert.throws(()=>syncComponent(f.source,f.market,"craft-context"),/independent version/u);
@@ -88,9 +102,9 @@ test("component CLI publishes selected bytes and rejects invalid command forms",
   const script=join(import.meta.dirname,"../scripts/sync-component.mjs");
   const dry=execFileSync(process.execPath,[script,f.source,"craft-context"],{cwd:f.market,encoding:"utf8"});assert.equal(JSON.parse(dry).applied,false);
   const out=execFileSync(process.execPath,[script,f.source,"craft-context","--apply"],{cwd:f.market,encoding:"utf8"});assert.equal(JSON.parse(out).applied,true);
-  assert.throws(()=>execFileSync(process.execPath,[script,f.source,"craft-context","--apply","--apply"],{cwd:f.market,stdio:"pipe"}),/Command failed/u);
-  assert.throws(()=>execFileSync(process.execPath,[script],{cwd:f.market,stdio:"pipe"}),/Command failed/u);
-  assert.throws(()=>execFileSync(process.execPath,[script,f.source,"craft-context","--invalid"],{cwd:f.market,stdio:"pipe"}),/Command failed/u);
+  assert.throws(()=>execFileSync(process.execPath,[script,f.source,"craft-context","--apply","--apply"],{cwd:f.market,stdio:"pipe"}),/Usage: node scripts\/sync-component\.mjs/u);
+  assert.throws(()=>execFileSync(process.execPath,[script],{cwd:f.market,stdio:"pipe"}),/Usage: node scripts\/sync-component\.mjs/u);
+  assert.throws(()=>execFileSync(process.execPath,[script,f.source,"craft-context","--invalid"],{cwd:f.market,stdio:"pipe"}),/Usage: node scripts\/sync-component\.mjs/u);
  }finally{f.close();}
 });
 
@@ -100,7 +114,8 @@ test("publication records plugin bundle inputs and refuses non-file payloads",()
   writeFileSync(join(dir,"hook.mjs"),readFileSync(join(source,"dist","hook.mjs")));
   writeFileSync(join(dir,"build-inputs.json"),readFileSync(join(source,"dist","build-inputs.json")));
   assert.equal(syncComponent(f.source,f.market,"craft-context").build_inputs.component,"craft-context");
-  execFileSync("mkfifo",[join(source,"dist","untrusted-pipe")]);
-  assert.throws(()=>syncComponent(f.source,f.market,"craft-context"),/regular files/u);
+  mkdirSync(join(source,"dist","untrusted-directory"));
+  symlinkSync("hook.mjs",join(source,"dist","untrusted-link.mjs"));
+  assert.throws(()=>syncComponent(f.source,f.market,"craft-context"),/symbolic/u);
  }finally{f.close();}
 });

@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
 import { sourceProvenance } from "./source-provenance.mjs";
+import { COMPONENT_OWNED_PATHS, isGeneratedCacheEntry, MARKETPLACE_OWNED_PATHS } from "./component-contract.mjs";
 
 /**
  * Syncs this marketplace's plugin payloads from the craft source repository.
@@ -99,8 +100,8 @@ function claudeEntries() {
  * has one, and the loop skips what is absent.
  */
 // Skill files are maintained in the Marketplace: Craft source excludes them from Git.
-const OWNED = ["plugin.json", "mcp.json", "dist", "hooks", "assets", ".mcp.json", ".codex-plugin", ".claude-plugin", "README.md", "scripts"];
-const generatedCache = (name) => name === "__pycache__" || name.endsWith(".pyc") || name.endsWith(".pyo");
+const OWNED = COMPONENT_OWNED_PATHS;
+const generatedCache = isGeneratedCacheEntry;
 /**
  * Payload files this marketplace ships that the Craft source does not generate.
  *
@@ -109,10 +110,7 @@ const generatedCache = (name) => name === "__pycache__" || name.endsWith(".pyc")
  * directory would silently drop it, so it is preserved across a sync and
  * accepted by verification in addition to the source tree.
  */
-const MARKETPLACE_OWNED = {
-  "craft-datasec": ["dist/opencode.mjs"],
-};
-const marketplaceOwned = (component) => MARKETPLACE_OWNED[component] ?? [];
+const marketplaceOwned = (component) => MARKETPLACE_OWNED_PATHS[component] ?? [];
 const extraOwnedNames = (owned) => marketplaceOwned(owned.component)
   .filter((path) => joinedMatches(path, owned.path));
 
