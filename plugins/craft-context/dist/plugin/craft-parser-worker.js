@@ -1,25 +1,61 @@
-// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/store.js
+// node_modules/.pnpm/craft-common-store-local@0.21.0/node_modules/craft-common-store-local/dist/store.js
 import { backup, DatabaseSync as DatabaseSync4 } from "node:sqlite";
 import { AsyncLocalStorage } from "node:async_hooks";
 
-// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/content-store.js
+// node_modules/.pnpm/craft-common-store-local@0.21.0/node_modules/craft-common-store-local/dist/content-store.js
 import { DatabaseSync } from "node:sqlite";
 
-// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/trace-shards.js
+// node_modules/.pnpm/craft-common-store-local@0.21.0/node_modules/craft-common-store-local/dist/record-files.js
+var KIND_FIELDS = new Map(Object.entries({
+  experience_procedure: ["lifecycle"],
+  knowledge_claim: ["document_id", "claim_id"],
+  knowledge_document: ["document_id"],
+  memory_confirmation: ["memory_id", "memory_version"],
+  memory_observation: ["observed_at_ms", "source_session_id"],
+  codex_hook_signal: ["turn_id", "observed_at_ms"],
+  context_ephemeral_index: ["turn_id"],
+  context_resume_snapshot: ["turn_id"],
+  trace: ["last_event_at", "started_at"],
+  trace_event: ["trace_id", "sequence"],
+  trace_feedback: ["trace_id"],
+  telemetry_event: ["trace_id"],
+  workbench_message_queue: ["link_id", "state", "sequence"],
+  workbench_agent_session_link: ["workspace"],
+  scope_alias: ["alias_kind", "alias", "alias_digest", "identity_digest", "root_path", "canonical_root_path"],
+  project_identity: ["identity_digest", "project_kind", "remote_digest", "local_path_alias", "root_path", "canonical_root_path"],
+  event: ["transition_id"]
+}));
+var PROSE_FIELDS = new Map(Object.entries({
+  craft_note: ["text"],
+  craft_notes_location: ["description"],
+  device: ["device_note", "note", "description"],
+  program_memory_candidate: ["statement"],
+  task: ["prompt", "description", "goal"],
+  evidence: ["claim"],
+  knowledge_claim: ["content"],
+  knowledge_document: ["content", "body"],
+  wiki_page: ["body"],
+  memory_candidate: ["content"],
+  memory_ledger: ["content"],
+  episodic_memory: ["content"],
+  semantic_memory: ["content"]
+}));
+
+// node_modules/.pnpm/craft-common-store-local@0.21.0/node_modules/craft-common-store-local/dist/trace-shards.js
 import { DatabaseSync as DatabaseSync2 } from "node:sqlite";
 var TRACE_KINDS = /* @__PURE__ */ new Set(["trace", "trace_event", "trace_feedback", "telemetry_event", "trace_archive"]);
 var TRACE_SHARDED_KINDS = /* @__PURE__ */ new Set([...TRACE_KINDS, "codex_hook_turn", "codex_hook_signal", "context_hook_session"]);
 
-// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/codebase-shards.js
+// node_modules/.pnpm/craft-common-store-local@0.21.0/node_modules/craft-common-store-local/dist/codebase-shards.js
 import { DatabaseSync as DatabaseSync3 } from "node:sqlite";
 
-// node_modules/.pnpm/craft-common-store-local@0.20.4/node_modules/craft-common-store-local/dist/store.js
+// node_modules/.pnpm/craft-common-store-local@0.21.0/node_modules/craft-common-store-local/dist/store.js
 var contextLockBudget = new AsyncLocalStorage();
 
-// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/scope-policy.js
+// node_modules/.pnpm/craft-common-base@0.20.5/node_modules/craft-common-base/dist/scope-policy.js
 var COGNITIVE_SCOPE_KINDS = ["user", "project", "workspace", "task", "session", "team", "organization", "global"];
 
-// node_modules/.pnpm/craft-common-base@0.20.4/node_modules/craft-common-base/dist/validation.js
+// node_modules/.pnpm/craft-common-base@0.20.5/node_modules/craft-common-base/dist/validation.js
 var SCOPE_KINDS = new Set(COGNITIVE_SCOPE_KINDS);
 
 // core/untrusted-parser.ts
