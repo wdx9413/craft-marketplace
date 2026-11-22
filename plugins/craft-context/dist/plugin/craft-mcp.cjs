@@ -22079,7 +22079,7 @@ var CRAFT_RELEASE_VERSION;
 var init_version = __esm({
   "core/version.ts"() {
     "use strict";
-    CRAFT_RELEASE_VERSION = "0.21.4";
+    CRAFT_RELEASE_VERSION = "0.21.5";
   }
 });
 
@@ -63052,9 +63052,16 @@ var init_evaluation_model_profile = __esm({
         if (ticket.status === "completed") {
           if (ticket.result_digest !== resultDigest)
             throw new Error("Evaluation Model Ticket completion digest conflicts with its prior result");
-          const traceId2 = ticket.purpose === "knowledge_scenario_classification" || args.trace_id !== void 0 ? text26(args.trace_id, "trace_id") : void 0;
+          const target3 = ticket.target;
+          const requiresExperienceTrace2 = ticket.purpose === "workflow_evolution" && target3?.kind === "experience_scenario_classification_request";
+          if (requiresExperienceTrace2 && args.trace_id === void 0)
+            throw new Error("Experience classification ticket requires its exact model and result Trace before completion");
+          const traceId2 = ticket.purpose === "knowledge_scenario_classification" || requiresExperienceTrace2 || args.trace_id !== void 0 ? text26(args.trace_id, "trace_id") : void 0;
           if (traceId2 && ticket.purpose === "knowledge_scenario_classification" && !this.knowledgeResultTraceMatches(ticket, traceId2, resultDigest)) {
             throw new Error("Knowledge classification ticket requires its exact model and result Trace before completion");
+          }
+          if (traceId2 && requiresExperienceTrace2 && !this.experienceResultTraceMatches(ticket, traceId2, resultDigest)) {
+            throw new Error("Experience classification ticket requires its exact model and result Trace before completion");
           }
           if (traceId2 && ticket.trace_id !== traceId2)
             throw new Error("Evaluation Model Ticket completion Trace conflicts with its prior result");
@@ -63062,12 +63069,15 @@ var init_evaluation_model_profile = __esm({
         }
         if (ticket.status !== "ready_for_adapter")
           throw new Error("Evaluation Model Ticket is not ready for completion");
-        const traceId = ticket.purpose === "knowledge_scenario_classification" || args.trace_id !== void 0 ? text26(args.trace_id, "trace_id") : void 0;
+        const target2 = ticket.target;
+        const requiresExperienceTrace = ticket.purpose === "workflow_evolution" && target2.kind === "experience_scenario_classification_request";
+        if (requiresExperienceTrace && args.trace_id === void 0)
+          throw new Error("Experience classification ticket requires its exact model and result Trace before completion");
+        const traceId = ticket.purpose === "knowledge_scenario_classification" || requiresExperienceTrace || args.trace_id !== void 0 ? text26(args.trace_id, "trace_id") : void 0;
         if (traceId && ticket.purpose === "knowledge_scenario_classification" && !this.knowledgeResultTraceMatches(ticket, traceId, resultDigest)) {
           throw new Error("Knowledge classification ticket requires its exact model and result Trace before completion");
         }
         if (ticket.purpose === "workflow_evolution") {
-          const target2 = ticket.target;
           if (traceId) {
             const trace2 = this.store.find("trace", traceId);
             const profile = this.store.get("evaluation_model_profile", String(ticket.profile_id), Number(ticket.profile_version));
@@ -63076,6 +63086,9 @@ var init_evaluation_model_profile = __esm({
             }
           }
           if (target2.kind === "experience_scenario_classification_request") {
+            if (!traceId || !this.experienceResultTraceMatches(ticket, traceId, resultDigest)) {
+              throw new Error("Experience classification ticket requires its exact model and result Trace before completion");
+            }
             const request2 = this.store.find("experience_scenario_classification_request_ref", String(target2.id));
             if (!request2 || request2.scope !== target2.scope || !["classified", "unclassified"].includes(String(request2.status)) || request2.result_digest !== resultDigest)
               throw new Error("Experience classification ticket requires its exact resolved request before completion");
@@ -63096,6 +63109,31 @@ var init_evaluation_model_profile = __esm({
         });
         this.store.appendEvent(`evaluation-model:${ticket.profile_id}`, "evaluation_model.ticket_completed", { ticket_id: ticket.id, purpose: ticket.purpose, result_digest: resultDigest });
         return { ticket: completed, idempotent: completed === ticket };
+      }
+      experienceResultTraceMatches(ticket, traceId, resultDigest) {
+        const target2 = ticket.target;
+        const profile = this.store.find("evaluation_model_profile", String(ticket.profile_id), Number(ticket.profile_version));
+        let trace2 = this.store.find("trace", traceId);
+        let archivedEvents;
+        if (!trace2 && this.store.find("trace_archive", traceId)) {
+          if (!this.traceReader)
+            throw new Error("Archived model Trace reader is unavailable");
+          const archived = this.traceReader.get({ trace_id: traceId });
+          if (!archived.trace || typeof archived.trace !== "object" || Array.isArray(archived.trace) || !Array.isArray(archived.events) || archived.trace.id !== traceId)
+            throw new Error("Archived model Trace is malformed");
+          trace2 = archived.trace;
+          archivedEvents = archived.events;
+        }
+        if (!target2 || target2.kind !== "experience_scenario_classification_request" || !profile || !trace2 || trace2.task_id !== `experience:${target2.id}` || trace2.operation_id !== ticket.id || trace2.status !== "completed" || trace2.model_fingerprint !== stableDigest({ provider: profile.provider, model: profile.model }))
+          return false;
+        const count3 = Number(trace2.event_count);
+        if (!Number.isSafeInteger(count3) || count3 < 2 || count3 > 1e4)
+          return false;
+        const events = archivedEvents ?? Array.from({ length: count3 }, (_, index) => this.store.find("trace_event", `${traceId}:${index + 1}`)).filter((event) => Boolean(event));
+        const fingerprint5 = stableDigest({ provider: profile.provider, model: profile.model });
+        const modelEvent = events.find((event) => event.event_kind === "model.completed" && event.operation_id === ticket.id && event.actor === "experience-learning-worker" && typeof event.source === "string" && event.source.startsWith("model-transport:") && event.trust === "observed" && event.model_fingerprint === fingerprint5 && Array.isArray(event.output_refs) && event.output_refs.length === 1 && /^sha256:[a-f0-9]{64}$/u.test(String(event.output_refs[0])));
+        const resultEvent = events.find((event) => event.event_kind === "model.result_bound" && event.actor === "experience-learning-worker" && event.source === "craft-experience" && event.trust === "observed" && event.operation_id === ticket.id && Array.isArray(event.input_refs) && event.input_refs.length === 1 && Array.isArray(event.output_refs) && event.output_refs.includes(String(target2.id)) && event.output_refs.includes(resultDigest) && /^sha256:[a-f0-9]{64}$/u.test(String(event.data_digest)));
+        return Boolean(modelEvent && resultEvent && Number(modelEvent.sequence) < Number(resultEvent.sequence) && modelEvent.output_refs[0] === resultEvent.input_refs[0]);
       }
       issue(args) {
         const profile = this.store.get("evaluation_model_profile", text26(args.profile_id, "profile_id"));
@@ -80410,7 +80448,7 @@ var init_evaluation_runs = __esm({
         const comparison = this.store.get("evaluation_comparison", text2(args.comparison_id, "comparison_id"));
         const baselineRun = this.store.get("evaluation_run", String(comparison.baseline_run_id));
         const candidateRun = this.store.get("evaluation_run", String(comparison.candidate_run_id));
-        const minTrials = finiteInteger(args.min_trials, "min_trials", 20, 2, 1e4);
+        const minTrials = finiteInteger(args.min_trials, "min_trials", 5, 2, 1e4);
         const maxBudgetRatio = Number(args.max_budget_ratio ?? 1);
         if (!Number.isFinite(maxBudgetRatio) || maxBudgetRatio < 0) throw new Error("max_budget_ratio must be non-negative");
         const paired = this.evaluationPairedComparison(baselineRun, candidateRun);
@@ -80938,14 +80976,17 @@ var init_cognitive_search = __esm({
 function globalPromotionContentDecision(content, sensitivity) {
   if (sensitivity !== "public" && sensitivity !== "internal")
     return { eligible: false, reason_code: "sensitivity_not_shareable" };
+  if (PROJECT_SCOPE_REFERENCE.test(content))
+    return { eligible: false, reason_code: "project_scope_not_shareable" };
   if (IDENTIFIER4.test(content))
     return { eligible: false, reason_code: "deidentification_required" };
   return { eligible: true };
 }
-var IDENTIFIER4;
+var IDENTIFIER4, PROJECT_SCOPE_REFERENCE;
 var init_global_promotion_gate = __esm({
   "node_modules/.pnpm/@craft+capability-memory@0.20.10/node_modules/@craft/capability-memory/dist/global-promotion-gate.js"() {
     IDENTIFIER4 = /(?:\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b|\bhttps?:\/\/\S+|\b(?:\d{1,3}\.){3}\d{1,3}\b|\b[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\b|(?:^|\s)(?:\/Users\/|\/home\/|[A-Z]:\\)|\b(?:project|repo(?:sitory)?|customer|client|tenant|workspace|ticket|issue|pull request|pr)(?:\s+(?:id|name))?\s*[:#=]?\s*[A-Z0-9][A-Z0-9._/-]*(?:[-_/][A-Z0-9]{2,}|\d{3,})\b)/iu;
+    PROJECT_SCOPE_REFERENCE = /(?:本项目|这个项目|当前项目|此项目|本仓库|这个仓库|当前仓库|本代码库|这个代码库|当前代码库|本工作区|当前工作区|本\s*repo|本\s*workspace|\b(?:this|current|local)\s+(?:project|repo(?:sitory)?|codebase|workspace)\b)/iu;
   }
 });
 
@@ -81896,7 +81937,7 @@ function memberOwner(member) {
   if (member === "evolutionProgramMemoryExperienceSubmit") return "experience";
   if (/^(?:workbench)?knowledge|^wiki|^projectKnowledge|^projectBrain|^relation/iu.test(member)) return "knowledge";
   if (/^(?:workbench)?memory|^episodic|^semanticMemory/iu.test(member)) return "memory";
-  if (/^(?:workbench)?experience|^workflowEvolution|^procedure|^workflowTrial|^workbenchWorkflow|^learningCycle/iu.test(member)) return "experience";
+  if (/^(?:workbench)?experience|^evaluationModel|^workflowEvolution|^procedure|^workflowTrial|^workbenchWorkflow|^learningCycle/iu.test(member)) return "experience";
   if (/^codebase/iu.test(member)) return "codebase";
   if (/^craftNotes|^contextNotesResolve/iu.test(member)) return "notes";
   if (/^evaluationContract|^workbenchEvaluation|^evalCampaign|^evalSummary/iu.test(member)) return "eval";
@@ -82712,7 +82753,6 @@ function taskLedgerSample(seed) {
   return {
     schema: TASK_LEDGER_SCHEMA,
     project_scope_id: seed.project_scope_id,
-    minimum_records: MIN_TASK_RECORDS,
     minimum_independent_sessions: MIN_INDEPENDENT_SESSIONS,
     privacy: { sanitized: true, content_stored: false, raw_conversation_excluded: true, secret_excluded: true },
     records: [{
@@ -82789,7 +82829,7 @@ function governedQualityPlan(args) {
   const baseline = stringValue3(args.baseline_id, "baseline_id");
   const candidate2 = stringValue3(args.candidate_id, "candidate_id");
   return {
-    status: cases.length >= 2 ? "trial_plan_ready" : "insufficient_cases",
+    status: cases.length >= MIN_SCREENING_PAIRS ? "screening_plan_ready" : "insufficient_cases",
     subject: { id: subject, version: version5 },
     frozen: {
       cases,
@@ -82800,6 +82840,8 @@ function governedQualityPlan(args) {
     arms: { baseline, candidate: candidate2 },
     equal_budget: true,
     repeated_trials: true,
+    screening_minimum_pairs: MIN_SCREENING_PAIRS,
+    effect_decision_minimum_pairs: MIN_EFFECT_DECISION_PAIRS,
     required_stages: ["shadow", "held_out", "signoff", "canary", "rollback_target"],
     automatic_publication: false
   };
@@ -82816,9 +82858,20 @@ function buildCapabilityIterationPlan(store, args = {}) {
   const records2 = Array.isArray(suppliedRecords) ? suppliedRecords.map(normaliseTaskRecord) : [];
   const sessions = unique3(records2.map((item) => String(item.session_id)));
   const verified = records2.filter((item) => item.verification_outcome === "passed");
-  const baselineCandidatePairs = verified.filter((item) => Array.isArray(item.injected_refs) && item.injected_refs.length > 0 && Array.isArray(item.used_refs) && item.used_refs.length > 0).length;
-  const evidenceSufficient = records2.length >= MIN_TASK_RECORDS && sessions.length >= MIN_INDEPENDENT_SESSIONS && baselineCandidatePairs >= MIN_INDEPENDENT_SESSIONS;
-  const outcome2 = evidenceSufficient ? "eligible_for_controlled_effect_assessment" : "inconclusive";
+  const usageSessionsByRef = /* @__PURE__ */ new Map();
+  for (const item of verified) {
+    const used = new Set(item.used_refs);
+    for (const ref7 of new Set(item.injected_refs)) {
+      if (!used.has(ref7)) continue;
+      const refSessions = usageSessionsByRef.get(ref7) ?? /* @__PURE__ */ new Set();
+      refSessions.add(String(item.session_id));
+      usageSessionsByRef.set(ref7, refSessions);
+    }
+  }
+  const recurrentAssetRefs = [...usageSessionsByRef].filter(([, refSessions]) => refSessions.size >= MIN_INDEPENDENT_SESSIONS).map(([ref7]) => ref7).sort();
+  const assetUsageObservations = verified.filter((item) => recurrentAssetRefs.some((ref7) => item.injected_refs.includes(ref7) && item.used_refs.includes(ref7))).length;
+  const evidenceSufficient = recurrentAssetRefs.length > 0;
+  const outcome2 = evidenceSufficient ? "project_candidate_ready_for_paired_assessment" : "inconclusive";
   const digest41 = stableDigest({ projectScope, projectRoot, records: records2, outcome: outcome2 });
   const learningRecord = {
     schema: LEARNING_RECORD_SCHEMA,
@@ -82827,17 +82880,19 @@ function buildCapabilityIterationPlan(store, args = {}) {
     independent_sessions: sessions.length,
     verification_outcomes: countBy(records2.map((item) => String(item.verification_outcome))),
     feedback_outcomes: countBy(records2.map((item) => String(item.turn_outcome))),
-    baseline_candidate_pairs: baselineCandidatePairs,
+    recurrent_asset_refs: recurrentAssetRefs,
+    asset_usage_observations: assetUsageObservations,
+    matched_task_pairs: 0,
     evidence_threshold: {
-      minimum_records: MIN_TASK_RECORDS,
-      minimum_independent_sessions: MIN_INDEPENDENT_SESSIONS,
-      minimum_baseline_candidate_pairs: MIN_INDEPENDENT_SESSIONS
+      minimum_recurrent_asset_sessions: MIN_INDEPENDENT_SESSIONS,
+      screening_minimum_matched_task_pairs: MIN_SCREENING_PAIRS,
+      effect_decision_minimum_matched_task_pairs: MIN_EFFECT_DECISION_PAIRS
     },
     model_effect_proven: false,
     business_eligible: false,
     routeable: false,
     outcome: outcome2,
-    outcome_reason: evidenceSufficient ? "threshold_met; independent controlled task runs still required" : "threshold_not_met",
+    outcome_reason: evidenceSufficient ? "asset_recurred_across_independent_sessions; paired_effect_not_established" : "no_asset_recurred_across_independent_sessions",
     sanitized: true,
     content_stored: false,
     raw_conversation_excluded: true
@@ -82856,7 +82911,8 @@ function buildCapabilityIterationPlan(store, args = {}) {
       record_digests: records2.map(recordDigest4),
       independent_sessions: sessions.length,
       verification_outcomes: learningRecord.verification_outcomes,
-      baseline_candidate_pairs: baselineCandidatePairs,
+      recurrent_asset_refs: recurrentAssetRefs,
+      asset_usage_observations: assetUsageObservations,
       sample_template: taskLedgerSample({ project_scope_id: projectScope })
     },
     learning_record: learningRecord,
@@ -82889,10 +82945,10 @@ function buildCapabilityIterationPlan(store, args = {}) {
       baseline_id: values3.baseline_id ?? "baseline:no-context",
       candidate_id: values3.candidate_id ?? "candidate:minimal-sufficient-context"
     }),
-    next_safe_actions: outcome2 === "inconclusive" ? ["collect_sanitized_independent_task_records", "freeze_cases_and_equal_budget", "run_controlled_baseline_candidate_tasks", "do_not_promote"] : ["attach_exact_controlled_task_effect_evidence", "review_held_out_trials", "obtain_signoff", "canary_with_rollback_target"]
+    next_safe_actions: outcome2 === "inconclusive" ? ["collect_sanitized_independent_task_records", "keep_project_scoped", "do_not_claim_effect_or_promote"] : ["freeze_cases_and_equal_budget", "run_three_pair_screening", "require_five_pairs_for_earliest_effect_decision", "review_safety_and_practical_effect", "do_not_promote_on_usage_alone"]
   };
 }
-var TASK_LEDGER_SCHEMA, LEARNING_RECORD_SCHEMA, ITERATION_PLAN_SCHEMA, MAX_ITEMS, MAX_STRING_CHARS, MIN_INDEPENDENT_SESSIONS, MIN_TASK_RECORDS, MAX_ACTIVATION_TOOLS;
+var TASK_LEDGER_SCHEMA, LEARNING_RECORD_SCHEMA, ITERATION_PLAN_SCHEMA, MAX_ITEMS, MAX_STRING_CHARS, MIN_INDEPENDENT_SESSIONS, MIN_SCREENING_PAIRS, MIN_EFFECT_DECISION_PAIRS, MAX_ACTIVATION_TOOLS;
 var init_capability_iteration_plan = __esm({
   "core/capability-iteration-plan.ts"() {
     "use strict";
@@ -82903,7 +82959,8 @@ var init_capability_iteration_plan = __esm({
     MAX_ITEMS = 100;
     MAX_STRING_CHARS = 2e3;
     MIN_INDEPENDENT_SESSIONS = 2;
-    MIN_TASK_RECORDS = 20;
+    MIN_SCREENING_PAIRS = 3;
+    MIN_EFFECT_DECISION_PAIRS = 5;
     MAX_ACTIVATION_TOOLS = 5;
   }
 });
@@ -83441,11 +83498,17 @@ function capabilityIterationGaps(store, args = {}) {
   if (learning.outcome === "inconclusive") remediation.push(
     gap(
       "evidence_pending",
-      "controlled_task_effect",
-      "Independent sanitized Host task effects are not available.",
-      "collect_at_least_20_records_from_two_sessions_then_run_equal_budget_baseline_candidate_pairs"
+      "project_asset_recurrence",
+      "No exact asset has verified use across two independent sessions.",
+      "capture_two_verified_uses_of_the_same_asset_across_independent_sessions"
     )
   );
+  remediation.push(gap(
+    "evidence_pending",
+    "controlled_task_effect",
+    "Asset usage or recurrence does not establish task benefit; independent matched results are still required.",
+    "freeze_contract_then_run_three_pair_screening_and_at_least_five_pairs_for_effect_decision"
+  ));
   if (activation.components?.some((item) => item.status !== "executed")) remediation.push(
     gap(
       "runtime_pending",
@@ -118042,7 +118105,7 @@ var knowledge_task_effects_exports = {};
 __export(knowledge_task_effects_exports, {
   KnowledgeTaskEffects: () => KnowledgeTaskEffects
 });
-var import_promises37, import_node_crypto200, sha3, same3, reject, KnowledgeTaskEffects;
+var import_promises37, import_node_crypto200, sha3, same3, reject, MIN_SCREENING_PAIRS2, MIN_EFFECT_DECISION_PAIRS2, MIN_EFFECT_DECISION_SESSIONS, MIN_GLOBAL_EFFECT_PROJECTS, KnowledgeTaskEffects;
 var init_knowledge_task_effects = __esm({
   "core/knowledge-task-effects.ts"() {
     "use strict";
@@ -118062,6 +118125,10 @@ var init_knowledge_task_effects = __esm({
     reject = (condition, message) => {
       if (!condition) throw new Error(message);
     };
+    MIN_SCREENING_PAIRS2 = 3;
+    MIN_EFFECT_DECISION_PAIRS2 = 5;
+    MIN_EFFECT_DECISION_SESSIONS = 3;
+    MIN_GLOBAL_EFFECT_PROJECTS = 3;
     KnowledgeTaskEffects = class {
       store;
       evaluations;
@@ -118080,7 +118147,7 @@ var init_knowledge_task_effects = __esm({
         const source = this.store.get("knowledge_source", String(claim2.source_id));
         reject(claim2.status === "candidate" && claim2.version === ref7.claim_version && claim2.identity_digest === ref7.identity_digest && claim2.content_digest === ref7.content_digest && typeof claim2.content === "string" && claim2.content.trim() && knowledgeEvaluationSourceMatches(run, claim2, source), "Knowledge effect Claim or Source revision is unavailable");
         const caseRefs = run.case_refs;
-        reject(Array.isArray(caseRefs) && caseRefs.length >= 21 && caseRefs.length <= 200 && same3(caseRefs.map((ref8) => ref8.case_id), run.case_ids) && new Set(caseRefs.map((ref8) => ref8.case_id)).size === caseRefs.length, "Knowledge effect requires 21..200 distinct held-out cases");
+        reject(Array.isArray(caseRefs) && caseRefs.length >= MIN_SCREENING_PAIRS2 && caseRefs.length <= 200 && same3(caseRefs.map((ref8) => ref8.case_id), run.case_ids) && new Set(caseRefs.map((ref8) => ref8.case_id)).size === caseRefs.length, `Knowledge effect screening requires ${MIN_SCREENING_PAIRS2}..200 distinct held-out cases`);
         const dependencyMap = /* @__PURE__ */ new Map();
         const depend = (kind4, id24) => {
           const value = this.store.find(kind4, String(id24), void 0, false);
@@ -118088,7 +118155,7 @@ var init_knowledge_task_effects = __esm({
           dependencyMap.set(`${kind4}:${String(id24)}`, { kind: kind4, id: value.id, version: value.version, digest: stableDigest(value) });
         };
         depend("knowledge_source", source.id);
-        const sessions = /* @__PURE__ */ new Set();
+        const sessions = /* @__PURE__ */ new Map(), projects = /* @__PURE__ */ new Set();
         let positives = 0, negatives = 0;
         const cases = caseRefs.map((ref8) => {
           const item = this.store.get("knowledge_evaluation_case", String(ref8.case_id));
@@ -118097,8 +118164,17 @@ var init_knowledge_task_effects = __esm({
           const adjudication = this.store.get("knowledge_evaluation_adjudication", String(item.adjudication_id));
           const contract = knowledgeTaskContract(item.task_contract);
           reject(adjudication.task_contract_digest === stableDigest(contract), "Knowledge task checks were not adjudicated with the independent outcome evidence");
-          reject(typeof item.source_session_id === "string" && !sessions.has(item.source_session_id), "Knowledge effect cases must come from distinct independent sessions");
-          sessions.add(String(item.source_session_id));
+          reject(typeof item.source_session_id === "string" && !!item.source_session_id.trim(), "Knowledge effect case requires an independent source session");
+          const projectScopeId = item.project_scope_id;
+          reject(
+            typeof projectScopeId === "string" && /^project:[A-Za-z0-9_-]{1,96}$/u.test(projectScopeId) && evidence2.sourceEvidence.length > 0 && evidence2.sourceEvidence.every((record4) => record4.metadata?.project_scope_id === projectScopeId),
+            "Knowledge effect case requires source Evidence bound to its canonical project scope"
+          );
+          if (String(claim2.scope).startsWith("project:")) reject(projectScopeId === claim2.scope, "Project-scoped Knowledge effects cannot use evidence from another project");
+          projects.add(String(projectScopeId));
+          const session = String(item.source_session_id), sessionCases = (sessions.get(session) ?? 0) + 1;
+          reject(sessionCases <= 2, "Knowledge effect allows at most two held-out tasks per source session");
+          sessions.set(session, sessionCases);
           const expected = item.expected_claim_ids;
           if (expected.length === 1 && expected[0] === claim2.id) positives++;
           else {
@@ -118110,11 +118186,21 @@ var init_knowledge_task_effects = __esm({
           for (const record4 of [...evidence2.sourceEvidence, ...evidence2.claimEvidence.map((entry2) => entry2.evidence)]) depend("evidence", record4.id);
           return item;
         });
-        reject(positives >= 20 && negatives >= 1, "Knowledge effect requires at least 20 positive tasks and one negative task");
+        reject(positives >= 2 && negatives >= 1, "Knowledge effect screening requires at least two positive tasks and one negative task");
         const text50 = JSON.stringify({ claim_id: claim2.id, claim_version: claim2.version, content_digest: claim2.content_digest, source_id: source.id, source_version: source.version, source_digest: source.content_digest, content: claim2.content });
         reject(Buffer.byteLength(text50) <= 64 * 1024, "Knowledge effect context exceeds the bounded input budget");
         const context2 = { id: `knowledge-effect-${sha3(text50).slice(0, 32)}`, text: text50 };
-        return { run, claim: claim2, claim_record_digest: stableDigest(this.store.find("knowledge_claim", String(claim2.id), void 0, false)), source, cases, context: context2, dependencies: [...dependencyMap.values()] };
+        return {
+          run,
+          claim: claim2,
+          claim_record_digest: stableDigest(this.store.find("knowledge_claim", String(claim2.id), void 0, false)),
+          source,
+          cases,
+          independent_sessions: sessions.size,
+          independent_projects: projects.size,
+          context: context2,
+          dependencies: [...dependencyMap.values()]
+        };
       }
       /** Exact Subject.context to use for the candidate; baseline must omit context. */
       context(runId) {
@@ -118132,8 +118218,8 @@ var init_knowledge_task_effects = __esm({
         reject(same3(left.suite, right.suite) && left.suite.subject_kind === "agent" && left.suite.partition === "held_out" && left.suite.sanitized === true && typeof left.suite.approved_by === "string" && same3(left.runtime, right.runtime), "Knowledge effect suites and runtime contracts must match");
         const metrics2 = left.suite.metrics, primary = metrics2?.primary;
         reject(
-          primary?.kind === "binary_pass_rate" && primary.direction === "higher_is_better" && Array.isArray(metrics2?.guardrails) && metrics2.guardrails.some((guardrail) => guardrail.metric === "duration_ms" && guardrail.required === true && guardrail.comparator === "lte" && typeof guardrail.threshold === "number" && Number.isFinite(guardrail.threshold) && guardrail.threshold > 0),
-          "Knowledge effect requires a binary task metric and an explicit required duration budget"
+          primary?.kind === "binary_pass_rate" && primary.direction === "higher_is_better" && Array.isArray(metrics2?.guardrails) && typeof primary.minimum_meaningful_effect === "number" && Number.isFinite(primary.minimum_meaningful_effect) && primary.minimum_meaningful_effect > 0 && metrics2.guardrails.some((guardrail) => guardrail.metric === "duration_ms" && guardrail.required === true && guardrail.comparator === "lte" && typeof guardrail.threshold === "number" && Number.isFinite(guardrail.threshold) && guardrail.threshold > 0),
+          "Knowledge effect requires a binary task metric, a positive predeclared minimum meaningful effect, and an explicit required duration budget"
         );
         const baseline = { ...left.subject }, candidate2 = { ...right.subject };
         reject(baseline.context === void 0 && same3(candidate2.context, material.context), "Knowledge effect context does not match the exact Claim revision");
@@ -118180,8 +118266,12 @@ var init_knowledge_task_effects = __esm({
         const comparisonResult = await this.evaluations.compare(baselineId, candidateId2);
         const comparison = comparisonResult.comparison.metrics;
         const reasons = [];
+        if (material.cases.length < MIN_EFFECT_DECISION_PAIRS2) reasons.push("fewer_than_five_matched_task_pairs_screening_only");
+        if (material.independent_sessions < MIN_EFFECT_DECISION_SESSIONS) reasons.push("fewer_than_three_independent_sessions");
+        if (material.claim.scope === "global" && material.independent_projects < MIN_GLOBAL_EFFECT_PROJECTS) reasons.push("fewer_than_three_independent_projects_global_shadow_blocked");
         if (comparison.status !== "comparable" || !comparison.independent_task_runs || comparison.unmeasured_pairs !== 0) reasons.push("incomplete_or_reused_task_runs");
         if (comparison.one_sided_p === null || comparison.one_sided_p > 0.05 || !(comparison.primary_effect.risk_difference_ci95 && comparison.primary_effect.risk_difference_ci95[0] > 0)) reasons.push("task_gain_not_supported");
+        if (!(comparison.primary_effect.risk_difference_ci95 && comparison.primary_effect.risk_difference_ci95[0] > Number(primary.minimum_meaningful_effect))) reasons.push("minimum_meaningful_effect_not_established");
         if (results.some((items2) => items2.some((result2) => result2.safety_verdict !== "passed")) || comparison.guardrails.some((guardrail) => guardrail.status !== "passed")) reasons.push("safety_or_budget_guardrail_not_passed");
         const negativeIds = new Set(material.cases.filter((item) => item.expected_claim_ids.length === 0).map((item) => item.id));
         if (results[1].some((result2) => negativeIds.has(result2.case_id) && result2.task_verdict !== "passed")) reasons.push("negative_task_regression");
@@ -127202,14 +127292,16 @@ Evidence: ${item.evidence_ids.join(", ")}
           ...provenance2,
           ...candidateClaimRefs === void 0 ? {} : { candidate_claim_refs: candidateClaimRefs }
         };
+        const evidence2 = knowledgeEvaluationEvidence(this.store, identity2);
+        const sourceProjectScopes = new Set(evidence2.sourceEvidence.map((record4) => record4.metadata?.project_scope_id).filter((value) => typeof value === "string" && /^project:[A-Za-z0-9_-]{1,96}$/u.test(value)));
+        const boundIdentity = evidence2.sourceEvidence.length > 0 && sourceProjectScopes.size === 1 && evidence2.sourceEvidence.every((record4) => record4.metadata?.project_scope_id === [...sourceProjectScopes][0]) ? { ...identity2, project_scope_id: [...sourceProjectScopes][0] } : identity2;
         if (existing) {
-          if (existing.identity_digest !== valueDigest3(identity2)) throw new Error("Knowledge evaluation case idempotency conflict");
+          if (existing.identity_digest !== valueDigest3(boundIdentity)) throw new Error("Knowledge evaluation case idempotency conflict");
           return { case: existing, idempotent: true };
         }
-        const evidence2 = knowledgeEvaluationEvidence(this.store, identity2);
         if (identity2.label_source === "host_adjudicated") throw new Error("host_adjudicated labels can only be created from a completed Knowledge adjudication Trace");
         const assessment = assessKnowledgeEvaluationProvenance(identity2, evidence2.sourceEvidence, evidence2.claimEvidence);
-        return { case: this.store.create("knowledge_evaluation_case", caseId, { ...identity2, ...assessment, identity_digest: valueDigest3(identity2) }), idempotent: false };
+        return { case: this.store.create("knowledge_evaluation_case", caseId, { ...boundIdentity, ...assessment, identity_digest: valueDigest3(boundIdentity) }), idempotent: false };
       }
       /** The public MCP path owns both the model execution and its Trace. */
       async knowledgeEvaluationCaseAdjudicateManaged(args) {
