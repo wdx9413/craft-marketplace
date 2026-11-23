@@ -1,0 +1,4 @@
+{
+  "exclude_paths": ["generated", "private"],
+  "note": "Project-level Craft Codebase configuration for craft-context. Indexing respects Git ignores; exclude_paths are relative path prefixes skipped during automatic indexing."
+}
