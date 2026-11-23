@@ -22383,7 +22383,7 @@ var CRAFT_RELEASE_VERSION;
 var init_version = __esm({
   "core/version.ts"() {
     "use strict";
-    CRAFT_RELEASE_VERSION = "0.21.5";
+    CRAFT_RELEASE_VERSION = "0.21.6";
   }
 });
 
@@ -63356,16 +63356,9 @@ var init_evaluation_model_profile = __esm({
         if (ticket.status === "completed") {
           if (ticket.result_digest !== resultDigest)
             throw new Error("Evaluation Model Ticket completion digest conflicts with its prior result");
-          const target3 = ticket.target;
-          const requiresExperienceTrace2 = ticket.purpose === "workflow_evolution" && target3?.kind === "experience_scenario_classification_request";
-          if (requiresExperienceTrace2 && args.trace_id === void 0)
-            throw new Error("Experience classification ticket requires its exact model and result Trace before completion");
-          const traceId2 = ticket.purpose === "knowledge_scenario_classification" || requiresExperienceTrace2 || args.trace_id !== void 0 ? text27(args.trace_id, "trace_id") : void 0;
+          const traceId2 = ticket.purpose === "knowledge_scenario_classification" || args.trace_id !== void 0 ? text27(args.trace_id, "trace_id") : void 0;
           if (traceId2 && ticket.purpose === "knowledge_scenario_classification" && !this.knowledgeResultTraceMatches(ticket, traceId2, resultDigest)) {
             throw new Error("Knowledge classification ticket requires its exact model and result Trace before completion");
-          }
-          if (traceId2 && requiresExperienceTrace2 && !this.experienceResultTraceMatches(ticket, traceId2, resultDigest)) {
-            throw new Error("Experience classification ticket requires its exact model and result Trace before completion");
           }
           if (traceId2 && ticket.trace_id !== traceId2)
             throw new Error("Evaluation Model Ticket completion Trace conflicts with its prior result");
@@ -63373,15 +63366,12 @@ var init_evaluation_model_profile = __esm({
         }
         if (ticket.status !== "ready_for_adapter")
           throw new Error("Evaluation Model Ticket is not ready for completion");
-        const target2 = ticket.target;
-        const requiresExperienceTrace = ticket.purpose === "workflow_evolution" && target2.kind === "experience_scenario_classification_request";
-        if (requiresExperienceTrace && args.trace_id === void 0)
-          throw new Error("Experience classification ticket requires its exact model and result Trace before completion");
-        const traceId = ticket.purpose === "knowledge_scenario_classification" || requiresExperienceTrace || args.trace_id !== void 0 ? text27(args.trace_id, "trace_id") : void 0;
+        const traceId = ticket.purpose === "knowledge_scenario_classification" || args.trace_id !== void 0 ? text27(args.trace_id, "trace_id") : void 0;
         if (traceId && ticket.purpose === "knowledge_scenario_classification" && !this.knowledgeResultTraceMatches(ticket, traceId, resultDigest)) {
           throw new Error("Knowledge classification ticket requires its exact model and result Trace before completion");
         }
         if (ticket.purpose === "workflow_evolution") {
+          const target2 = ticket.target;
           if (traceId) {
             const trace2 = this.store.find("trace", traceId);
             const profile = this.store.get("evaluation_model_profile", String(ticket.profile_id), Number(ticket.profile_version));
@@ -63390,9 +63380,6 @@ var init_evaluation_model_profile = __esm({
             }
           }
           if (target2.kind === "experience_scenario_classification_request") {
-            if (!traceId || !this.experienceResultTraceMatches(ticket, traceId, resultDigest)) {
-              throw new Error("Experience classification ticket requires its exact model and result Trace before completion");
-            }
             const request2 = this.store.find("experience_scenario_classification_request_ref", String(target2.id));
             if (!request2 || request2.scope !== target2.scope || !["classified", "unclassified"].includes(String(request2.status)) || request2.result_digest !== resultDigest)
               throw new Error("Experience classification ticket requires its exact resolved request before completion");
@@ -63413,31 +63400,6 @@ var init_evaluation_model_profile = __esm({
         });
         this.store.appendEvent(`evaluation-model:${ticket.profile_id}`, "evaluation_model.ticket_completed", { ticket_id: ticket.id, purpose: ticket.purpose, result_digest: resultDigest });
         return { ticket: completed, idempotent: completed === ticket };
-      }
-      experienceResultTraceMatches(ticket, traceId, resultDigest) {
-        const target2 = ticket.target;
-        const profile = this.store.find("evaluation_model_profile", String(ticket.profile_id), Number(ticket.profile_version));
-        let trace2 = this.store.find("trace", traceId);
-        let archivedEvents;
-        if (!trace2 && this.store.find("trace_archive", traceId)) {
-          if (!this.traceReader)
-            throw new Error("Archived model Trace reader is unavailable");
-          const archived = this.traceReader.get({ trace_id: traceId });
-          if (!archived.trace || typeof archived.trace !== "object" || Array.isArray(archived.trace) || !Array.isArray(archived.events) || archived.trace.id !== traceId)
-            throw new Error("Archived model Trace is malformed");
-          trace2 = archived.trace;
-          archivedEvents = archived.events;
-        }
-        if (!target2 || target2.kind !== "experience_scenario_classification_request" || !profile || !trace2 || trace2.task_id !== `experience:${target2.id}` || trace2.operation_id !== ticket.id || trace2.status !== "completed" || trace2.model_fingerprint !== stableDigest({ provider: profile.provider, model: profile.model }))
-          return false;
-        const count3 = Number(trace2.event_count);
-        if (!Number.isSafeInteger(count3) || count3 < 2 || count3 > 1e4)
-          return false;
-        const events = archivedEvents ?? Array.from({ length: count3 }, (_, index) => this.store.find("trace_event", `${traceId}:${index + 1}`)).filter((event) => Boolean(event));
-        const fingerprint5 = stableDigest({ provider: profile.provider, model: profile.model });
-        const modelEvent = events.find((event) => event.event_kind === "model.completed" && event.operation_id === ticket.id && event.actor === "experience-learning-worker" && typeof event.source === "string" && event.source.startsWith("model-transport:") && event.trust === "observed" && event.model_fingerprint === fingerprint5 && Array.isArray(event.output_refs) && event.output_refs.length === 1 && /^sha256:[a-f0-9]{64}$/u.test(String(event.output_refs[0])));
-        const resultEvent = events.find((event) => event.event_kind === "model.result_bound" && event.actor === "experience-learning-worker" && event.source === "craft-experience" && event.trust === "observed" && event.operation_id === ticket.id && Array.isArray(event.input_refs) && event.input_refs.length === 1 && Array.isArray(event.output_refs) && event.output_refs.includes(String(target2.id)) && event.output_refs.includes(resultDigest) && /^sha256:[a-f0-9]{64}$/u.test(String(event.data_digest)));
-        return Boolean(modelEvent && resultEvent && Number(modelEvent.sequence) < Number(resultEvent.sequence) && modelEvent.output_refs[0] === resultEvent.input_refs[0]);
       }
       issue(args) {
         const profile = this.store.get("evaluation_model_profile", text27(args.profile_id, "profile_id"));
