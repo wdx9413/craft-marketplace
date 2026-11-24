@@ -16,7 +16,7 @@
   "claude_marketplace": ".claude-plugin/marketplace.json",
   "source_tree_digest": "sha256:c7c995422c52a6ea90e9097f34a50ca323520b7ba24596a56607de8068ba4099",
   "component_source_commits": {
-    "craft-context": "5a0ebd6c8c3cc041d0407694b344cb53bdb3166d",
+    "craft-context": "3021c1ba50006df8b78bd567b6f3d1e17680138a",
     "craft-datasec": "cb9ba202d50ee9ed3c0429123f49ce227e9b1595"
   },
   "build_inputs": [
