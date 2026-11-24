@@ -1,0 +1,58 @@
+{
+  "schema": "craft.component-build-inputs.v1",
+  "component": "craft-datasec",
+  "version": "0.2.1",
+  "runtime_version": null,
+  "compiler": "0.28.2",
+  "lock_digest": "sha256:afa36dd190fded958831cb2333d905fab4cb4ebafdd605cdcf2c7481c0dcd6d9",
+  "artifacts": [
+    {
+      "file": "hook.mjs",
+      "digest": "sha256:d478827817a29dc268606201442a0bceb59e444c69bc29e6a8476d0c8a0730aa",
+      "inputs": [
+        {
+          "package": "craft",
+          "version": "0.21.9",
+          "file": "bin/craft-datasec-hook.ts",
+          "digest": "sha256:0501c37c4f8bd0cf20ed2ae6bf88ad5a07ccb8f1891cab4d4f331c060c117d63"
+        },
+        {
+          "package": "craft",
+          "version": "0.21.9",
+          "file": "core/infrastructure/paths.ts",
+          "digest": "sha256:2736bebef0af9ebca2743bd3e7dbd6d9eb7f224d0e8b767212985e120b3a2890"
+        },
+        {
+          "package": "craft",
+          "version": "0.21.9",
+          "file": "core/interfaces/codex-hook-runtime-diagnostics.ts",
+          "digest": "sha256:53b45ba03efdd9729cebbf3e048fb1d49491fc5a3e8709bbb390d9f87b152dae"
+        },
+        {
+          "package": "@craft/capability-datasec",
+          "version": "0.2.0",
+          "file": "dist/hook.js",
+          "digest": "sha256:6cdc903421aec22f3b2e7166499564e2dbfe5d9ab8940b92de2fc8bcfd5d8c3c"
+        },
+        {
+          "package": "@craft/capability-datasec",
+          "version": "0.2.0",
+          "file": "dist/rules.js",
+          "digest": "sha256:0bed9adc15fe3522f07c57a2c6f652b1daf44cf37d9c81b684fc6e1c8a119d8f"
+        },
+        {
+          "package": "@craft/capability-datasec",
+          "version": "0.2.0",
+          "file": "dist/vault.js",
+          "digest": "sha256:ff0caa756e0dadf480ad37e9ccea06953db1a26e87b4a6911be926232c6e677a"
+        },
+        {
+          "package": "craft-common-store-local",
+          "version": "0.21.1",
+          "file": "dist/paths.js",
+          "digest": "sha256:8ad600323762db4c7065cea865269af7a843da4656d64caddb6e199f6bb11301"
+        }
+      ]
+    }
+  ]
+}
