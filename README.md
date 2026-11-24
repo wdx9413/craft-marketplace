@@ -55,9 +55,9 @@ Craft 可以作为 Codex、Claude 或 IDE 的外挂控制台使用；它不替�
 - Craft 源码仓库：[wdx9413/craft](https://github.com/wdx9413/craft)
 - Source revision/state and working-tree digest：见 `release.json`
 - Context bundle 所用 Capability 与 Common 源码提交：见 `release.json` 的 `build_inputs`
-- Craft version：`0.21.7`
+- Craft version：`0.21.8`
 
-发布前应从源码仓库运行打包与 MCP smoke 检查；不要在本仓库手工修改 bundle。
+发布前应从源码仓库运行打包与 MCP smoke 检查；不要在本仓库手工修改 bundle。 修改打包配置、插件入口或随包资源时，用受影响的宿主加载本次生成的发布包，调用一次改动涉及的功能，记录宿主、包版本和实际结果。
 
 安装 `craft-context` 即可通过统一入口使用四层组件；Host 不需要再安装独立子组件插件。
 
