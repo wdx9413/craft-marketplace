@@ -20,7 +20,7 @@ const archive = join(packages, `craft-marketplace-${version}.zip`);
 rmSync(archive, { force: true });
 
 const included = execFileSync("git", ["ls-files", "-z"], { cwd: root, encoding: "utf8" })
-  .split("\0").filter(Boolean);
+  .split("\0").filter(Boolean).filter((path) => !path.startsWith("dist/packages/"));
 const extra = ["catalog/host-priority.json", "catalog/recommended-plugins.json",
   "scripts/resolve-plugin-host.mjs", "tests/resolve-plugin-host.test.mjs", "scripts/pack-marketplace.mjs"];
 for (const path of extra) if (existsSync(join(root, path))) included.push(path);
