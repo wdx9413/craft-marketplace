@@ -22123,7 +22123,7 @@ var CRAFT_RELEASE_VERSION;
 var init_version = __esm({
   "core/version.ts"() {
     "use strict";
-    CRAFT_RELEASE_VERSION = "0.21.9";
+    CRAFT_RELEASE_VERSION = "0.21.10";
   }
 });
 
@@ -133746,6 +133746,11 @@ init_learning_worker_lock();
 init_version();
 init_learning_worker_lock();
 init_paths2();
+function shouldStartEmbeddedLearningWorker(platform2, env) {
+  if (env.CRAFT_CONTINUOUS_LEARNING === "0") return false;
+  if (platform2 === "darwin") return env.CRAFT_LEARNING_WORKER_MODE === "embedded";
+  return true;
+}
 function resolveLearningWorkerLaunch(serverEntrypoint, exists2 = import_node_fs93.existsSync) {
   try {
     const server = (0, import_node_fs93.realpathSync)(serverEntrypoint), directory3 = (0, import_node_path119.dirname)(server);
@@ -133770,7 +133775,7 @@ async function startContextLearningWorker(options) {
     "component-experience-daily": { product: "experience", learning: "experience" }
   };
   const component2 = components[options.mode];
-  if (!component2 || options.env?.CRAFT_CONTINUOUS_LEARNING === "0") return void 0;
+  if (!component2 || !shouldStartEmbeddedLearningWorker(options.platform ?? process.platform, options.env ?? process.env)) return void 0;
   const launch = options.server_entrypoint ? resolveLearningWorkerLaunch(options.server_entrypoint, options.exists) : null;
   if (!launch) {
     options.on_failure?.("worker_entrypoint_unavailable");

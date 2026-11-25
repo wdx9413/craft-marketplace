@@ -22427,7 +22427,7 @@ var CRAFT_RELEASE_VERSION;
 var init_version = __esm({
   "core/version.ts"() {
     "use strict";
-    CRAFT_RELEASE_VERSION = "0.21.9";
+    CRAFT_RELEASE_VERSION = "0.21.10";
   }
 });
 
@@ -133924,8 +133924,10 @@ __export(learning_worker_launch_agent_exports, {
   LEARNING_WORKER_LAUNCH_AGENT_LABEL: () => LEARNING_WORKER_LAUNCH_AGENT_LABEL,
   ensureLearningWorkerLaunchAgent: () => ensureLearningWorkerLaunchAgent,
   installLearningWorkerLaunchAgent: () => installLearningWorkerLaunchAgent,
+  launchAgentModulePath: () => launchAgentModulePath,
   learningWorkerLaunchAgentStatus: () => learningWorkerLaunchAgentStatus,
   renderLearningWorkerLaunchAgent: () => renderLearningWorkerLaunchAgent,
+  resolveLearningWorkerEntrypoint: () => resolveLearningWorkerEntrypoint,
   startLearningWorkerLaunchAgent: () => startLearningWorkerLaunchAgent,
   stopLearningWorkerLaunchAgent: () => stopLearningWorkerLaunchAgent,
   uninstallLearningWorkerLaunchAgent: () => uninstallLearningWorkerLaunchAgent,
@@ -133944,15 +133946,26 @@ function paths(deps) {
     plist: (0, import_node_path122.join)(home, "Library", "LaunchAgents", `${label}.plist`)
   };
 }
-function workerEntrypoint(deps) {
-  if (deps.worker_entrypoint) return (0, import_node_path122.resolve)(deps.worker_entrypoint);
-  const moduleDirectory = (0, import_node_path122.dirname)((0, import_node_url15.fileURLToPath)(void 0));
-  const packaged = (0, import_node_path122.resolve)(moduleDirectory, "../plugin/craft-experience-learning-worker.js");
+function launchAgentModulePath(moduleUrl2, argvPath) {
+  if (typeof moduleUrl2 === "string" && moduleUrl2.startsWith("file:")) return (0, import_node_url15.fileURLToPath)(moduleUrl2);
+  if (argvPath) return (0, import_node_path122.resolve)(argvPath);
+  throw new Error("learning_worker_launch_agent_worker_unavailable");
+}
+function resolveLearningWorkerEntrypoint(moduleUrl2, argvPath, exists2 = import_node_fs96.existsSync) {
+  const moduleDirectory = (0, import_node_path122.dirname)((0, import_node_path122.resolve)(launchAgentModulePath(moduleUrl2, argvPath)));
+  const packagedCandidates = [
+    (0, import_node_path122.resolve)(moduleDirectory, "craft-experience-learning-worker.js"),
+    (0, import_node_path122.resolve)(moduleDirectory, "../plugin/craft-experience-learning-worker.js")
+  ];
+  const packaged = packagedCandidates.find(exists2);
+  if (packaged) return packaged;
   const source = (0, import_node_path122.resolve)(moduleDirectory, "../deploy/experience-learning/worker.ts");
-  const exists2 = deps.exists ?? import_node_fs96.existsSync;
-  if (exists2(packaged)) return packaged;
   if (exists2(source)) return source;
   throw new Error("learning_worker_launch_agent_worker_unavailable");
+}
+function workerEntrypoint(deps) {
+  if (deps.worker_entrypoint) return (0, import_node_path122.resolve)(deps.worker_entrypoint);
+  return resolveLearningWorkerEntrypoint(void 0, process.argv[1], deps.exists ?? import_node_fs96.existsSync);
 }
 function workerMcpArgs(worker, exists2) {
   const packagedServer = (0, import_node_path122.join)((0, import_node_path122.dirname)(worker), "craft-mcp.cjs");
