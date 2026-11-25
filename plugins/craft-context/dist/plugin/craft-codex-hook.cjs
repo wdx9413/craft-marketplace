@@ -22427,7 +22427,7 @@ var CRAFT_RELEASE_VERSION;
 var init_version = __esm({
   "core/version.ts"() {
     "use strict";
-    CRAFT_RELEASE_VERSION = "0.21.11";
+    CRAFT_RELEASE_VERSION = "0.21.12";
   }
 });
 
@@ -132936,7 +132936,7 @@ function surfaceToolNames(surface, activeTools, coreToolNames) {
     return [.../* @__PURE__ */ new Set([...direct, ...SYSCALL_VERBS, ...passthrough])];
   }
   if (surface === "component-context-complete") {
-    const names3 = /* @__PURE__ */ new Set(["craft_info", "craft_context_open", "craft_context_tools_discover", "craft_notes_context_resolve", "craft_notes_qualification_run", "craft_context_doctor", "craft_context_usage_statusline", "craft_capability_iteration_plan", "craft_capability_iteration_gaps", "craft_lsp_readiness", "craft_learning_cycle_task_evidence_list", ...Object.values(DAILY_COMPONENT_TOOLS).flat()]);
+    const names3 = /* @__PURE__ */ new Set(["craft_info", "craft_context_open", "craft_context_tools_discover", "craft_notes_context_resolve", "craft_notes_qualification_run", "craft_context_doctor", "craft_context_usage_statusline", "craft_capability_iteration_plan", "craft_capability_iteration_gaps", "craft_lsp_readiness", "craft_learning_cycle_task_evidence_list", ...Object.values(DAILY_COMPONENT_TOOLS).flat(), ...ASYNC_KNOWLEDGE_EVALUATION_TOOLS]);
     const components = ["component-knowledge", "component-memory", "component-experience", "component-codebase"];
     return activeTools.filter((tool2) => names3.has(tool2.name) || components.some((component3) => COMPONENT_SURFACES[component3].test(tool2.name))).map((tool2) => tool2.name);
   }
@@ -132974,7 +132974,7 @@ function surfaceToolNames(surface, activeTools, coreToolNames) {
   if (!SURFACE_RULES.some((rule) => rule.name === surface)) throw new Error(`Unknown Craft MCP surface: ${surface}`);
   return activeTools.filter((tool2) => !coreToolNames.has(tool2.name) && domainSurfaceOf(tool2.name) === surface).map((tool2) => tool2.name);
 }
-var QUALITY_TOOLS, SURFACE_RULES, COMPONENT_SURFACES, DAILY_COMPONENT_TOOLS, OWNED_ONLY_SURFACES, COMPONENT_SURFACE_NAMES, DOMAIN_SURFACE_NAMES, SURFACE_NAMES;
+var QUALITY_TOOLS, SURFACE_RULES, COMPONENT_SURFACES, DAILY_COMPONENT_TOOLS, ASYNC_KNOWLEDGE_EVALUATION_TOOLS, OWNED_ONLY_SURFACES, COMPONENT_SURFACE_NAMES, DOMAIN_SURFACE_NAMES, SURFACE_NAMES;
 var init_surface_registry = __esm({
   "core/interfaces/mcp/surface-registry.ts"() {
     "use strict";
@@ -133127,6 +133127,14 @@ var init_surface_registry = __esm({
         "craft_decision_context_gate_open"
       ]
     };
+    ASYNC_KNOWLEDGE_EVALUATION_TOOLS = [
+      "craft_knowledge_evaluation_case_adjudicate",
+      "craft_knowledge_evaluation_case_list",
+      "craft_knowledge_evaluation_case_save",
+      "craft_knowledge_evaluation_run",
+      "craft_knowledge_evaluation_run_get",
+      "craft_knowledge_evaluation_run_list"
+    ];
     OWNED_ONLY_SURFACES = {
       "component-runtime-owned": /^craft_(?:task_|work_|host_|trace_|evidence_|artifact_|workspace_|runtime_|execution_|sandbox_|local_)/u,
       "component-notes-owned": /^craft_notes_(?:location_list_devices|create_device|observe_directory|observe_file|candidate_list|qualification_run|confirm|revoke|resolve)$/u,

@@ -12,19 +12,19 @@
       "inputs": [
         {
           "package": "craft",
-          "version": "0.21.11",
+          "version": "0.21.12",
           "file": "bin/craft-datasec-hook.ts",
           "digest": "sha256:0501c37c4f8bd0cf20ed2ae6bf88ad5a07ccb8f1891cab4d4f331c060c117d63"
         },
         {
           "package": "craft",
-          "version": "0.21.11",
+          "version": "0.21.12",
           "file": "core/infrastructure/paths.ts",
           "digest": "sha256:2736bebef0af9ebca2743bd3e7dbd6d9eb7f224d0e8b767212985e120b3a2890"
         },
         {
           "package": "craft",
-          "version": "0.21.11",
+          "version": "0.21.12",
           "file": "core/interfaces/codex-hook-runtime-diagnostics.ts",
           "digest": "sha256:53b45ba03efdd9729cebbf3e048fb1d49491fc5a3e8709bbb390d9f87b152dae"
         },
