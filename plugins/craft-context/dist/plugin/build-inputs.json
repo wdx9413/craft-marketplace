@@ -1,7 +1,7 @@
 {
   "schema": "craft.component-build-inputs.v1",
   "component": "craft-context",
-  "version": "0.21.10",
+  "version": "0.21.11",
   "runtime_version": "0.21.11",
   "compiler": "0.28.2",
   "lock_digest": "sha256:afa36dd190fded958831cb2333d905fab4cb4ebafdd605cdcf2c7481c0dcd6d9",

@@ -1,7 +1,7 @@
 {
   "schema": "craft.marketplace-package.v1",
   "version": "0.21.11",
-  "source_commit": "dd2bfddcf4366a4a5987471d780bf9ee059f2e87",
+  "source_commit": "268495c911b55df53d800f14d12768400330bfa0",
   "source_state": "committed",
   "components": [
     "craft-context",
