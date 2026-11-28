@@ -78,7 +78,7 @@ function errorResult(message) {
 
 async function handle(message, store) {
   if (message.method === "initialize") {
-    return { protocolVersion: "2025-06-18", capabilities: { tools: {} }, serverInfo: { name: "craft-self-evolution", version: "0.21.14" } };
+    return { protocolVersion: "2025-06-18", capabilities: { tools: {} }, serverInfo: { name: "craft-self-evolution", version: "0.21.15" } };
   }
   if (message.method === "tools/list") return { tools: TOOLS };
   if (message.method === "tools/call") {
