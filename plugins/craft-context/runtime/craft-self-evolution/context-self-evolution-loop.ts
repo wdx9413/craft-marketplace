@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+﻿import { createHash } from "node:crypto";
 
 export type JsonObject = Record<string, unknown>;
 export interface SelfEvolutionStore {
@@ -16,6 +16,11 @@ export interface SelfEvolutionVerdict {
   readonly evidence_ref: string;
   readonly verifier: string;
   readonly gates?: { readonly scope_leak_count?: number; readonly unsupported_claim_rate_max?: number };
+  readonly session_id?: string;
+  readonly task_id?: string;
+  readonly turn_id?: string;
+  readonly context_receipt_id?: string;
+  readonly report_digest?: string;
 }
 
 const CONTENT_KIND = "self_evolution_content";
@@ -58,11 +63,22 @@ function verdictAllows(verdict: SelfEvolutionVerdict): boolean {
     && gates.unsupported_claim_rate_max === 0;
 }
 
+function inferScenario(statement: string): { scenario_key: string; domain: string } {
+  const lower = statement.toLocaleLowerCase();
+  if (/(报错|错误|失败|debug|fix|patch|test|repo|仓库|构建|编译)/u.test(lower)) return { scenario_key: "coding", domain: "experience" };
+  if (/(会议|决议|模板|文档|表格|ppt|流程|审批|附件)/u.test(lower)) return { scenario_key: "office", domain: "experience" };
+  if (/(行程|航班|酒店|入住|出发|到达|签证|预算)/u.test(lower)) return { scenario_key: "travel", domain: "memory" };
+  if (/(prompt|风格|素材|生成|图片|视频|文章|幻灯片|封面)/u.test(lower)) return { scenario_key: "creation", domain: "knowledge" };
+  if (/(论文|假设|实验|结果|反例|复现|文献|参数)/u.test(lower)) return { scenario_key: "research", domain: "knowledge" };
+  return { scenario_key: "general", domain: "knowledge" };
+}
+
 /** Record a candidate without persisting the statement body. */
 export function selfEvolutionAccumulate(store: SelfEvolutionStore, args: JsonObject): JsonObject {
   const statement = text(args.statement);
-  const scenarioKey = text(args.scenario_key) || "general";
-  const domain = text(args.domain) || "knowledge";
+  const inferred = inferScenario(statement);
+  const scenarioKey = text(args.scenario_key) || inferred.scenario_key;
+  const domain = text(args.domain) || inferred.domain;
   const scopeId = projectScope(args);
   if (!statement || !scopeId) throw new Error("statement and project scope are required");
   const id = contentId(args, scopeId);
@@ -104,6 +120,11 @@ export function selfEvolutionPromote(store: SelfEvolutionStore, args: JsonObject
     status,
     evidence_ref: text((verdict as JsonObject).evidence_ref),
     verifier: text((verdict as JsonObject).verifier),
+    session_id: text((verdict as JsonObject).session_id),
+    task_id: text((verdict as JsonObject).task_id),
+    turn_id: text((verdict as JsonObject).turn_id),
+    context_receipt_id: text((verdict as JsonObject).context_receipt_id),
+    report_digest: text((verdict as JsonObject).report_digest),
     at: new Date().toISOString(),
   };
   store.save(PROMOTION_KIND, promotionId, promotion);
@@ -136,6 +157,7 @@ export function selfEvolutionSearch(store: SelfEvolutionStore, args: JsonObject)
       domain: String(entry.domain ?? ""),
       scenario_key: String(entry.scenario_key),
       status: "current",
+      version: String(entry.version ?? "v1"),
     })),
   };
   return { entries, receipt };
@@ -172,4 +194,27 @@ export interface SelfEvolutionSearchResult {
     scenario_key: string;
     entries: Array<{ id: string; digest: string; domain: string; scenario_key: string; status: string }>;
   };
+}
+
+/** Build a compact prompt receipt for automatic UserPromptSubmit injection. */
+export function selfEvolutionPromptReceipt(store: SelfEvolutionStore, args: JsonObject): { additionalContext: string; result: SelfEvolutionSearchResult } {
+  const result = selfEvolutionSearch(store, args);
+  const lines = result.receipt.entries.map((entry) =>
+    `- ${entry.id} @ ${entry.version ?? "v1"} [${entry.domain}/${entry.scenario_key}] digest=${entry.digest}`);
+  const additionalContext = lines.length
+    ? `Craft reusable self-evolution for ${result.receipt.scope}/${result.receipt.scenario_key}:\n${lines.join("\n")}`
+    : "";
+  return { additionalContext, result };
+}
+
+/** Content-free status projection for doctor/status tooling. */
+export function selfEvolutionStatus(store: SelfEvolutionStore, args: JsonObject): JsonObject {
+  const scopeId = projectScope(args);
+  const rows = store.list(CONTENT_KIND, 1000, (entry) => !scopeId || normalizeScope(entry.project_scope_id) === scopeId, false);
+  const byStatus = { candidate: 0, current: 0, diagnostic: 0, revoked: 0 };
+  for (const row of rows) {
+    const status = String(row.status);
+    if (status === "candidate" || status === "current" || status === "diagnostic" || status === "revoked") byStatus[status] += 1;
+  }
+  return { scope: scopeId, total: rows.length, by_status: byStatus, store_kind: "self_evolution_content" };
 }

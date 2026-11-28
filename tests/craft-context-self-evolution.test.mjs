@@ -23,12 +23,21 @@ test("plugin carries the self-evolution runtime fallback", () => {
   const cli = read("runtime/craft-self-evolution/craft-self-evolution.ts");
   const core = read("runtime/craft-self-evolution/context-self-evolution-loop.ts");
   const mcp = read("runtime/craft-self-evolution/mcp-server.mjs");
+  const hook = read("runtime/craft-self-evolution/hook.mjs");
   assert.match(cli, /runSelfEvolutionCli/u);
   assert.match(core, /selfEvolutionAccumulate/u);
   assert.match(core, /selfEvolutionPromote/u);
   assert.match(core, /selfEvolutionSearch/u);
   assert.match(core, /selfEvolutionFeedback/u);
   assert.match(mcp, /craft_self_evolution_accumulate/u);
+  assert.match(hook, /UserPromptSubmit/u);
+});
+
+test("hooks call the self-evolution runtime for prompt and feedback events", () => {
+  const hooks = JSON.parse(read("hooks/codex-hooks.json"));
+  for (const event of ["UserPromptSubmit", "PostToolUse", "Stop"]) {
+    assert.match(JSON.stringify(hooks.hooks[event]), /runtime\/craft-self-evolution\/hook\.mjs/u);
+  }
 });
 
 test("plugin manifests register the self-evolution MCP server", () => {

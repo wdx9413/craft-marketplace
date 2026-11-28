@@ -1,7 +1,7 @@
 import { createInterface } from "node:readline";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { selfEvolutionAccumulate, selfEvolutionFeedback, selfEvolutionPromote, selfEvolutionSearch } from "./context-self-evolution-loop.ts";
+import { selfEvolutionAccumulate, selfEvolutionFeedback, selfEvolutionPromote, selfEvolutionPromptReceipt, selfEvolutionSearch, selfEvolutionStatus } from "./context-self-evolution-loop.ts";
 
 class FileStore {
   constructor(root) {
@@ -82,6 +82,12 @@ const TOOLS = [
       required: ["id", "status"],
     },
   },
+  {
+    name: "craft_self_evolution_status",
+    description: "Return a content-free status summary for accumulated self-evolution entries.",
+    inputSchema: { type: "object", properties: { project_scope_id: { type: "string" }, project_root: { type: "string" } }, required: [] },
+    annotations: { readOnlyHint: true },
+  },
 ];
 
 const HANDLERS = {
@@ -89,6 +95,7 @@ const HANDLERS = {
   craft_self_evolution_promote: selfEvolutionPromote,
   craft_self_evolution_search: selfEvolutionSearch,
   craft_self_evolution_feedback: selfEvolutionFeedback,
+  craft_self_evolution_status: selfEvolutionStatus,
 };
 
 function jsonResult(value) {
@@ -101,7 +108,7 @@ function errorResult(message) {
 
 async function handle(message, store) {
   if (message.method === "initialize") {
-    return { protocolVersion: "2025-06-18", capabilities: { tools: {} }, serverInfo: { name: "craft-self-evolution", version: "0.21.12" } };
+    return { protocolVersion: "2025-06-18", capabilities: { tools: {} }, serverInfo: { name: "craft-self-evolution", version: "0.21.13" } };
   }
   if (message.method === "tools/list") return { tools: TOOLS };
   if (message.method === "tools/call") {

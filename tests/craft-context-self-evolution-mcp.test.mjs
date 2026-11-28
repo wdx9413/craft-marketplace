@@ -37,6 +37,7 @@ test("MCP server lists the four self-evolution tools", async () => {
     "craft_self_evolution_promote",
     "craft_self_evolution_search",
     "craft_self_evolution_feedback",
+    "craft_self_evolution_status",
   ]);
 });
 

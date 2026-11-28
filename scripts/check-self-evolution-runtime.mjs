@@ -8,11 +8,13 @@ const required = [
   "runtime/craft-self-evolution/craft-self-evolution.ts",
   "runtime/craft-self-evolution/context-self-evolution-loop.ts",
   "runtime/craft-self-evolution/mcp-server.mjs",
+  "runtime/craft-self-evolution/hook.mjs",
   "skills/craft-context/SKILL.md",
   "install.ps1",
   "INSTALL.md",
   "mcp.json",
   ".mcp.json",
+  "hooks/codex-hooks.json",
 ];
 
 for (const relative of required) {
@@ -33,6 +35,12 @@ for (const tool of [
 for (const manifest of ["mcp.json", ".mcp.json"]) {
   const config = JSON.parse(readFileSync(join(pluginRoot, manifest), "utf8"));
   if (!config.mcpServers?.["craft-self-evolution"]) throw new Error(`${manifest} does not register craft-self-evolution`);
+}
+
+const hooks = JSON.parse(readFileSync(join(pluginRoot, "hooks/codex-hooks.json"), "utf8"));
+for (const event of ["UserPromptSubmit", "PostToolUse", "Stop"]) {
+  const commands = JSON.stringify(hooks.hooks[event]);
+  if (!commands.includes("runtime/craft-self-evolution/hook.mjs")) throw new Error(`${event} hook does not call self-evolution hook`);
 }
 
 process.stdout.write("craft-context self-evolution runtime is packaged for marketplace git distribution\n");
