@@ -3,24 +3,13 @@
     "craft-context": {
       "command": "node",
       "args": [
-        "dist/plugin/craft-mcp.cjs",
-        "--product",
-        "context"
+        "--experimental-strip-types",
+        "runtime/craft-self-evolution/proxy.mjs"
       ],
       "cwd": ".",
       "env": {
         "CRAFT_LEARNING_MODEL_HOST": "codex-cli",
-        "CRAFT_CONTEXT_MEMBERS": "knowledge,memory,experience,codebase,notes,eval,runtime"
-      }
-    },
-    "craft-self-evolution": {
-      "command": "node",
-      "args": [
-        "--experimental-strip-types",
-        "runtime/craft-self-evolution/mcp-server.mjs"
-      ],
-      "cwd": ".",
-      "env": {
+        "CRAFT_CONTEXT_MEMBERS": "knowledge,memory,experience,codebase,notes,eval,runtime",
         "CRAFT_SELF_EVOLUTION_DATA_DIR": "${PLUGIN_DATA}"
       }
     }

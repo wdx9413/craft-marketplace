@@ -9,6 +9,8 @@ const required = [
   "runtime/craft-self-evolution/context-self-evolution-loop.ts",
   "runtime/craft-self-evolution/mcp-server.mjs",
   "runtime/craft-self-evolution/hook.mjs",
+  "runtime/craft-self-evolution/proxy.mjs",
+  "runtime/craft-self-evolution/file-store.mjs",
   "skills/craft-context/SKILL.md",
   "install.ps1",
   "INSTALL.md",
@@ -34,7 +36,8 @@ for (const tool of [
 
 for (const manifest of ["mcp.json", ".mcp.json"]) {
   const config = JSON.parse(readFileSync(join(pluginRoot, manifest), "utf8"));
-  if (!config.mcpServers?.["craft-self-evolution"]) throw new Error(`${manifest} does not register craft-self-evolution`);
+  const args = JSON.stringify(config.mcpServers?.["craft-context"]?.args ?? []);
+  if (!args.includes("runtime/craft-self-evolution/proxy.mjs")) throw new Error(`${manifest} does not proxy self-evolution through craft-context`);
 }
 
 const hooks = JSON.parse(readFileSync(join(pluginRoot, "hooks/codex-hooks.json"), "utf8"));

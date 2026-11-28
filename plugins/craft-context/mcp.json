@@ -5,23 +5,12 @@
       "type": "stdio",
       "command": "node",
       "args": [
-        "${PLUGIN_ROOT}/dist/plugin/craft-mcp.cjs",
-        "--product",
-        "context"
+        "--experimental-strip-types",
+        "${PLUGIN_ROOT}/runtime/craft-self-evolution/proxy.mjs"
       ],
       "env": {
         "CRAFT_LEARNING_MODEL_HOST": "codex-cli",
-        "CRAFT_CONTEXT_MEMBERS": "knowledge,memory,experience,codebase,notes,eval,runtime"
-      }
-    },
-    "craft-self-evolution": {
-      "type": "stdio",
-      "command": "node",
-      "args": [
-        "--experimental-strip-types",
-        "${PLUGIN_ROOT}/runtime/craft-self-evolution/mcp-server.mjs"
-      ],
-      "env": {
+        "CRAFT_CONTEXT_MEMBERS": "knowledge,memory,experience,codebase,notes,eval,runtime",
         "CRAFT_SELF_EVOLUTION_DATA_DIR": "${PLUGIN_DATA}"
       }
     }

@@ -40,11 +40,13 @@ test("hooks call the self-evolution runtime for prompt and feedback events", () 
   }
 });
 
-test("plugin manifests register the self-evolution MCP server", () => {
+test("plugin manifests proxy self-evolution through the craft-context MCP server", () => {
   const portable = JSON.parse(read("mcp.json"));
   const codex = JSON.parse(read(".mcp.json"));
-  assert.ok(portable.mcpServers["craft-self-evolution"]);
-  assert.ok(codex.mcpServers["craft-self-evolution"]);
+  for (const config of [portable, codex]) {
+    assert.match(JSON.stringify(config.mcpServers["craft-context"].args), /runtime\/craft-self-evolution\/proxy\.mjs/u);
+    assert.equal(config.mcpServers["craft-self-evolution"], undefined);
+  }
 });
 
 test("install script copies the self-evolution runtime", () => {

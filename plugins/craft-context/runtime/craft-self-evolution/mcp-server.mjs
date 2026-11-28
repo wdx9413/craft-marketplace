@@ -1,38 +1,8 @@
 import { createInterface } from "node:readline";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { FileStore } from "./file-store.mjs";
 import { selfEvolutionAccumulate, selfEvolutionFeedback, selfEvolutionPromote, selfEvolutionPromptReceipt, selfEvolutionSearch, selfEvolutionStatus } from "./context-self-evolution-loop.ts";
 
-class FileStore {
-  constructor(root) {
-    this.file = resolve(root, "self-evolution-store.json");
-    mkdirSync(dirname(this.file), { recursive: true });
-    this.rows = {};
-    try { this.rows = JSON.parse(readFileSync(this.file, "utf8")); } catch { this.rows = {}; }
-  }
-  key(kind, id) { return `${kind}:${id}`; }
-  find(kind, id) { return this.rows[this.key(kind, id)] ?? null; }
-  create(kind, id, payload) {
-    const key = this.key(kind, id);
-    if (this.rows[key]) throw new Error(`${kind} already exists: ${id}`);
-    return this.save(kind, id, payload);
-  }
-  save(kind, id, payload) {
-    const row = { ...payload, id };
-    this.rows[this.key(kind, id)] = row;
-    writeFileSync(this.file, JSON.stringify(this.rows, null, 2));
-    return row;
-  }
-  list(kind, limit = 20, predicate) {
-    return Object.entries(this.rows)
-      .filter(([key]) => key.startsWith(`${kind}:`))
-      .map(([, value]) => value)
-      .filter((value) => !predicate || predicate(value))
-      .slice(0, limit);
-  }
-}
-
-const TOOLS = [
+export const TOOLS = [
   {
     name: "craft_self_evolution_accumulate",
     description: "Record one task-derived candidate without storing the statement body. Requires a project scope.",
@@ -90,7 +60,7 @@ const TOOLS = [
   },
 ];
 
-const HANDLERS = {
+export const HANDLERS = {
   craft_self_evolution_accumulate: selfEvolutionAccumulate,
   craft_self_evolution_promote: selfEvolutionPromote,
   craft_self_evolution_search: selfEvolutionSearch,
@@ -108,7 +78,7 @@ function errorResult(message) {
 
 async function handle(message, store) {
   if (message.method === "initialize") {
-    return { protocolVersion: "2025-06-18", capabilities: { tools: {} }, serverInfo: { name: "craft-self-evolution", version: "0.21.13" } };
+    return { protocolVersion: "2025-06-18", capabilities: { tools: {} }, serverInfo: { name: "craft-self-evolution", version: "0.21.14" } };
   }
   if (message.method === "tools/list") return { tools: TOOLS };
   if (message.method === "tools/call") {
