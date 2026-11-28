@@ -23,7 +23,14 @@ $null = New-Item -ItemType Directory -Path $CodexPluginRoot -Force | Out-Null
 Copy-Item -Path "$PluginRoot\*" -Destination $CodexPluginRoot -Recurse -Force -Exclude node_modules,dist,*.log,*.tmp
 Copy-Item -Path "$PluginRoot\dist\plugin\*" -Destination "$CodexPluginRoot\dist\plugin" -Recurse -Force
 
-# 4. Write project-level .craft-codebase.json template into the current workspace if absent.
+# 4. Copy the self-evolution CLI source and core loop into the installed plugin.
+$runtimeSource = Join-Path -Path $PluginRoot -ChildPath "runtime\craft-self-evolution"
+if (!(Test-Path -Path $runtimeSource)) { throw "Self-evolution runtime not found at $runtimeSource" }
+$runtimeDestination = Join-Path -Path $CodexPluginRoot -ChildPath "runtime\craft-self-evolution"
+$null = New-Item -ItemType Directory -Path $runtimeDestination -Force | Out-Null
+Copy-Item -Path "$runtimeSource\*" -Destination $runtimeDestination -Recurse -Force
+
+# 5. Write project-level .craft-codebase.json template into the current workspace if absent.
 $workspaceConfig = Join-Path -Path (Get-Location) -ChildPath '.craft-codebase.json'
 if (!(Test-Path -Path $workspaceConfig)) {
   Set-Content -Path $workspaceConfig -Value '{"exclude_paths":["generated","private"]}' -Encoding UTF8
@@ -32,7 +39,7 @@ if (!(Test-Path -Path $workspaceConfig)) {
   Write-Host ".craft-codebase.json already exists; left unchanged" -ForegroundColor Gray
 }
 
-# 5. Verify installation.
+# 6. Verify installation.
 $pluginJson = Join-Path -Path $CodexPluginRoot -ChildPath '.codex-plugin\plugin.json'
 if (!(Test-Path -Path $pluginJson)) {
   throw "Installation verification failed: $pluginJson not present"

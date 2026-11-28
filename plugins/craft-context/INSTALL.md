@@ -32,6 +32,10 @@
 
 重启 Codex 后，任意对话中应触发 `UserPromptSubmit` Hook，返回一段受限的 Craft Context receipt；可通过 `craft-eval context-audit` 对 receipt 做确定性审计（见 `craft-eval/examples/context-audit/`）。
 
+自进化闭环工具：`craft_self_evolution_accumulate`、`craft_self_evolution_promote`、`craft_self_evolution_search`、`craft_self_evolution_feedback` 可通过 `craft_context_tools_discover(intent="evolution")` 发现。晋升只接受完整外部 verdict，插件自身不执行 `craft-eval`。安装脚本同时复制 `runtime/craft-self-evolution/` 中的 CLI 源码，供没有重建 dist 的本地安装作为可验证入口。
+
+发布到远端 git 市场时，将本仓库作为 marketplace 源提交并推送；用户通过 `codex plugin marketplace add <git-url>` 或团队既有更新流程获取。更新后需重启 Codex，并在 `/hooks` 重新信任变更过的 hook 定义。若当前 dist 未包含上述工具，CLI runtime 仍可用于本地验收，但 MCP 工具调用需等待主仓 `pnpm run build` 重建 `dist/plugin/craft-mcp.cjs` 后再打包。
+
 ## 卸载
 
 删除 Codex 插件根目录下的 `craft-context/` 子目录，并移除工作区中的 `.craft-codebase.json`（如由本插件写入）。
